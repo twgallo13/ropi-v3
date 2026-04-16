@@ -1,37 +1,70 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { fetchProduct, completeProduct, type ProductDetail } from "../lib/api";
+import {
+  fetchProduct,
+  fetchAttributeRegistry,
+  completeProduct,
+  type ProductDetail,
+  type AttributeRegistryEntry,
+} from "../lib/api";
 
-const PROVENANCE_STYLES: Record<
-  string,
-  { border: string; badge: string; badgeLabel: string }
-> = {
-  "System-Applied": {
-    border: "border-l-4 border-blue-400",
-    badge: "bg-blue-100 text-blue-700",
-    badgeLabel: "Smart Rule",
-  },
-  "Needs-Review": {
-    border: "border-l-4 border-amber-400",
-    badge: "bg-amber-100 text-amber-700",
-    badgeLabel: "⚠️ Needs Review",
-  },
-  "Human-Verified": {
-    border: "border-l-4 border-gray-300",
-    badge: "bg-gray-100 text-gray-600",
-    badgeLabel: "🔒 Verified",
-  },
-};
+// ── Provenance helpers (keyed on origin_type) ──────────────────
+function provenanceBorder(originType: string | null): string {
+  if (originType === 'Smart Rule') return 'border-l-4 border-blue-400';
+  if (originType === 'Human') return 'border-l-4 border-gray-400';
+  return ''; // RO-Import and others — no left border
+}
 
-const DEFAULT_STYLE = {
-  border: "",
-  badge: "bg-gray-50 text-gray-400",
-  badgeLabel: "Empty",
-};
+function ProvenanceBadge({ originType }: { originType: string | null }) {
+  if (originType === 'Smart Rule')
+    return <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0">Smart Rule</span>;
+  if (originType === 'Human')
+    return <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 shrink-0">🔒</span>;
+  return null; // RO-Import — no badge
+}
 
+// ── Tab config — four operator tabs, system hidden ─────────────
+const TABS: { key: string; label: string }[] = [
+  { key: "core_information",  label: "Core Information" },
+  { key: "product_attributes", label: "Product Attributes" },
+  { key: "descriptions_seo",  label: "Descriptions & SEO" },
+  { key: "launch_media",      label: "Launch & Media" },
+];
+
+// ── Attribute row ──────────────────────────────────────────────
+function AttrRow({
+  displayLabel,
+  attr,
+}: {
+  displayLabel: string;
+  attr: { value: unknown; origin_type: string | null; verification_state: string | null } | undefined;
+}) {
+  const originType = attr?.origin_type ?? null;
+  const value = attr?.value;
+
+  return (
+    <div
+      className={`flex items-center gap-3 px-3 py-2 bg-white rounded ${provenanceBorder(originType)}`}
+    >
+      <span className="w-52 text-sm font-medium text-gray-600 shrink-0">
+        {displayLabel}
+      </span>
+      <span className={`flex-1 text-sm font-mono truncate ${originType === 'RO-Import' ? 'text-gray-400' : 'text-gray-800'}`}>
+        {value !== null && value !== undefined && value !== ""
+          ? String(value)
+          : <span className="text-gray-300 italic">—</span>}
+      </span>
+      <ProvenanceBadge originType={originType} />
+    </div>
+  );
+}
+
+// ── Main page ──────────────────────────────────────────────────
 export default function ProductDetailPage() {
   const { mpn } = useParams<{ mpn: string }>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [registry, setRegistry] = useState<AttributeRegistryEntry[]>([]);
+  const [activeTab, setActiveTab] = useState("core_information");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [completing, setCompleting] = useState(false);
@@ -40,8 +73,11 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!mpn) return;
     setLoading(true);
-    fetchProduct(mpn)
-      .then(setProduct)
+    Promise.all([fetchProduct(mpn), fetchAttributeRegistry()])
+      .then(([prod, reg]) => {
+        setProduct(prod);
+        setRegistry(reg);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [mpn]);
@@ -53,7 +89,6 @@ export default function ProductDetailPage() {
     try {
       await completeProduct(mpn);
       setCompleteMsg("Product marked complete!");
-      // Reload
       const updated = await fetchProduct(mpn);
       setProduct(updated);
     } catch (err: unknown) {
@@ -68,9 +103,7 @@ export default function ProductDetailPage() {
     }
   }
 
-  if (loading) {
-    return <div className="p-8 text-center text-gray-400">Loading…</div>;
-  }
+  if (loading) return <div className="p-8 text-center text-gray-400">Loading…</div>;
   if (error || !product) {
     return (
       <div className="p-8 text-center text-red-600">
@@ -81,17 +114,27 @@ export default function ProductDetailPage() {
 
   const p = product;
   const cp = p.completion_progress;
-  const attrs = Object.entries(p.attribute_values).sort(([a], [b]) =>
-    a.localeCompare(b)
-  );
+
+  // Group registry entries by destination_tab (exclude system tab from UI)
+  const byTab: Record<string, AttributeRegistryEntry[]> = {};
+  for (const tab of TABS) byTab[tab.key] = [];
+  for (const entry of registry) {
+    if (entry.destination_tab !== "system" && byTab[entry.destination_tab]) {
+      byTab[entry.destination_tab].push(entry);
+    }
+  }
+
+  // Sort each tab's entries alphabetically by display_label
+  for (const tab of TABS) {
+    byTab[tab.key].sort((a, b) => a.display_label.localeCompare(b.display_label));
+  }
+
+  const tabEntries = byTab[activeTab] || [];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Back link */}
-      <Link
-        to="/queue/completion"
-        className="text-sm text-blue-600 hover:underline"
-      >
+      <Link to="/queue/completion" className="text-sm text-blue-600 hover:underline">
         ← Back to Queue
       </Link>
 
@@ -100,8 +143,7 @@ export default function ProductDetailPage() {
         <div>
           <h1 className="text-2xl font-bold">{p.name || p.mpn}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            MPN: <span className="font-mono">{p.mpn}</span> · SKU: {p.sku} ·
-            Brand: {p.brand}
+            MPN: <span className="font-mono">{p.mpn}</span> · SKU: {p.sku} · Brand: {p.brand}
           </p>
         </div>
         <div className="text-right">
@@ -133,11 +175,7 @@ export default function ProductDetailPage() {
         <div className="w-full bg-gray-200 rounded-full h-3">
           <div
             className={`h-3 rounded-full transition-all ${
-              cp.pct === 100
-                ? "bg-green-500"
-                : cp.pct >= 50
-                ? "bg-yellow-500"
-                : "bg-red-500"
+              cp.pct === 100 ? "bg-green-500" : cp.pct >= 50 ? "bg-yellow-500" : "bg-red-500"
             }`}
             style={{ width: `${cp.pct}%` }}
           />
@@ -146,9 +184,7 @@ export default function ProductDetailPage() {
           <div className="mt-2">
             <p className="text-xs text-gray-500">Blockers:</p>
             <ul className="text-xs text-red-600 list-disc ml-4">
-              {cp.blockers.map((b, i) => (
-                <li key={i}>{b}</li>
-              ))}
+              {cp.blockers.map((b, i) => <li key={i}>{b}</li>)}
             </ul>
           </div>
         )}
@@ -156,13 +192,23 @@ export default function ProductDetailPage() {
 
       {/* Complete button */}
       <div className="mt-4 flex items-center gap-3">
-        <button
-          onClick={handleComplete}
-          disabled={completing || p.completion_state === "complete"}
-          className="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 disabled:opacity-50"
-        >
-          {completing ? "Completing…" : "Mark Complete"}
-        </button>
+        {(() => {
+          const hasBlockers = cp.blockers.length > 0;
+          const isDisabled = completing || p.completion_state === "complete" || hasBlockers;
+          return (
+            <button
+              onClick={handleComplete}
+              disabled={isDisabled}
+              className={`px-4 py-2 rounded font-medium ${
+                isDisabled
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+            >
+              {completing ? "Completing…" : "Mark Complete"}
+            </button>
+          );
+        })()}
         {completeMsg && (
           <span
             className={`text-sm ${
@@ -180,14 +226,8 @@ export default function ProductDetailPage() {
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
         <InfoCard label="Status" value={p.status} />
         <InfoCard label="Image Status" value={p.image_status || "—"} />
-        <InfoCard
-          label="Store Inv"
-          value={String(p.inventory_store)}
-        />
-        <InfoCard
-          label="WH Inv"
-          value={String(p.inventory_warehouse)}
-        />
+        <InfoCard label="Store Inv" value={String(p.inventory_store)} />
+        <InfoCard label="WH Inv" value={String(p.inventory_warehouse)} />
         <InfoCard label="SCOM" value={`$${p.scom.toFixed(2)}`} />
         <InfoCard label="SCOM Sale" value={`$${p.scom_sale.toFixed(2)}`} />
         <InfoCard label="RICS Retail" value={`$${p.rics_retail.toFixed(2)}`} />
@@ -200,10 +240,7 @@ export default function ProductDetailPage() {
           <h2 className="text-lg font-semibold mb-2">Site Targets</h2>
           <div className="flex gap-2">
             {p.site_targets.map((st) => (
-              <span
-                key={st.site_id}
-                className="bg-blue-50 text-blue-700 px-3 py-1 rounded text-sm"
-              >
+              <span key={st.site_id} className="bg-blue-50 text-blue-700 px-3 py-1 rounded text-sm">
                 {st.site_id} ({st.domain})
               </span>
             ))}
@@ -211,38 +248,58 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      {/* Attribute Values */}
-      <div className="mt-6">
+      {/* ── Attribute tabs ─────────────────────────────────────── */}
+      <div className="mt-8">
         <h2 className="text-lg font-semibold mb-3">Attributes</h2>
-        <div className="space-y-1">
-          {attrs.map(([key, attr]) => {
-            const vs = attr.verification_state || "";
-            const style = PROVENANCE_STYLES[vs] || DEFAULT_STYLE;
+
+        {/* Tab bar */}
+        <div className="flex border-b mb-4">
+          {TABS.map((tab) => {
+            const filled = byTab[tab.key].filter(
+              (e) => p.attribute_values[e.field_key]?.value !== undefined &&
+                     p.attribute_values[e.field_key]?.value !== null &&
+                     p.attribute_values[e.field_key]?.value !== ""
+            ).length;
+            const total = byTab[tab.key].length;
+            const isActive = activeTab === tab.key;
             return (
-              <div
-                key={key}
-                className={`flex items-center gap-3 px-3 py-2 bg-white rounded ${style.border}`}
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  isActive
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
-                <span className="w-48 text-sm font-medium text-gray-600 shrink-0">
-                  {key}
+                {tab.label}
+                <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+                  isActive ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+                }`}>
+                  {filled}/{total}
                 </span>
-                <span className="flex-1 text-sm font-mono truncate">
-                  {attr.value !== null && attr.value !== undefined
-                    ? String(attr.value)
-                    : "—"}
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded ${style.badge} shrink-0`}
-                >
-                  {style.badgeLabel}
-                </span>
-              </div>
+              </button>
             );
           })}
         </div>
+
+        {/* Tab content */}
+        <div className="space-y-1">
+          {tabEntries.length === 0 ? (
+            <p className="text-sm text-gray-400 italic py-4">No attributes in this tab.</p>
+          ) : (
+            tabEntries.map((entry) => (
+              <AttrRow
+                key={entry.field_key}
+                displayLabel={entry.display_label}
+                attr={p.attribute_values[entry.field_key]}
+              />
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Source Inputs */}
+      {/* Source Inputs (raw) */}
       {Object.keys(p.source_inputs).length > 0 && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-3">Source Inputs (Raw)</h2>
