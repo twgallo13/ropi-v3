@@ -142,9 +142,9 @@ async function main() {
   const requiredFields = {
     age_group: "Adult",
     gender: "Unisex",
-    product_type: "Footwear",
-    subcategory: "Casual",
-    category: "Clogs",
+    department: "Footwear",
+    class: "Sneakers",
+    category: "Lifestyle",
     style_code: "206991-6SW",
     is_in_stock: true,
     sku: product.sku || "SKU-206991-6SW",

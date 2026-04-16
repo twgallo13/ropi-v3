@@ -42,9 +42,23 @@ const CORE_INFORMATION = [
   attr("sku",              "SKU",                  "text",     "core_information", { required: true }),
   attr("upc",              "UPC / Barcode",        "text",     "core_information"),
   attr("brand",            "Brand",                "text",     "core_information", { required: true,  ai_prompt: true, cadence: true }),
-  attr("category",         "Category",             "text",     "core_information", { required: true,  ai_prompt: true, cadence: true }),
-  attr("subcategory",      "Subcategory (Class)",  "text",     "core_information", { required: true,  ai_prompt: true }),
-  attr("product_type",     "Department",           "text",     "core_information", { required: true }),
+  attr("category",         "Category",             "dropdown", "core_information", {
+    required: true,  ai_prompt: true, cadence: true,
+    options: ["Basketball", "Bootcut", "Fitted Hat", "Flat", "Jersey",
+      "Lifestyle", "Low Heel", "Mini Dress", "Pullover Hoodie",
+      "Pumps", "Short Sleeve", "Short Sleeve Graphic Tees",
+      "Slides", "Socks", "Varsity", "Winter Vests"],
+  }),
+  attr("class",             "Class",                "dropdown", "core_information", {
+    required: true,  ai_prompt: true,
+    options: ["Boots", "Dresses", "Hats", "High Heels", "Jackets",
+      "Jerseys", "Pants", "Sandals", "Sneakers",
+      "Socks & Underwear", "Sweatshirts", "T-shirts", "Vests"],
+  }),
+  attr("department",        "Department",           "dropdown", "core_information", {
+    required: true,
+    options: ["Footwear", "Clothing", "Accessories", "Hats", "Socks", "Underwear", "Other"],
+  }),
   attr("gender",           "Gender",               "dropdown", "core_information", {
     required: true, cadence: true,
     options: ["men", "women", "unisex", "kids", "toddler", "infant"],
@@ -53,7 +67,13 @@ const CORE_INFORMATION = [
     required: true, cadence: true,
     options: ["adult", "youth", "toddler", "infant"],
   }),
-  attr("color",            "Primary Color",        "text",     "core_information", { ai_prompt: true }),
+  attr("primary_color",    "Primary Color",        "dropdown", "core_information", {
+    ai_prompt: true,
+    options: ["Black", "White", "Grey", "Brown", "Tan", "Beige", "Navy", "Blue",
+      "Royal Blue", "Sky Blue", "Teal", "Green", "Olive", "Lime", "Yellow", "Gold",
+      "Orange", "Red", "Pink", "Purple", "Burgundy", "Cream", "Multi", "Clear",
+      "Metallic", "Silver", "Rose Gold", "Camo", "Tie Dye", "Natural", "Iridescent", "Other"],
+  }),
   attr("color_family",     "Color Family",         "dropdown", "core_information", {
     options: ["black", "white", "red", "blue", "green", "brown", "grey", "pink", "yellow", "orange", "purple", "multi"],
   }),
