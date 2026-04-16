@@ -114,21 +114,6 @@ export async function completeProduct(mpn: string): Promise<{ completion_state: 
   return data;
 }
 
-export interface ConfirmPricingResponse {
-  pricing_domain_state: string;
-  message: string;
-}
-
-export async function confirmPricing(mpn: string): Promise<ConfirmPricingResponse> {
-  const res = await fetch(`${BASE}/api/v1/products/${encodeURIComponent(mpn)}/confirm-pricing`, {
-    method: "POST",
-    headers: await headers(),
-  });
-  const data = await res.json();
-  if (!res.ok) throw data;
-  return data;
-}
-
 export interface SaveFieldResponse {
   field_key: string;
   value: unknown;
@@ -139,6 +124,9 @@ export interface SaveFieldResponse {
     pct: number;
     blockers: string[];
   };
+  map_auto_populate?:
+    | { triggered: true; rics_retail: number }
+    | { triggered: false };
 }
 
 export async function saveField(mpn: string, fieldKey: string, value: unknown, action?: "verify"): Promise<SaveFieldResponse> {

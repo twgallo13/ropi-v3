@@ -5,11 +5,10 @@ import {
   fetchAttributeRegistry,
   completeProduct,
   saveField,
-  confirmPricing,
   type ProductDetail,
   type AttributeRegistryEntry,
+  type SaveFieldResponse,
 } from "../lib/api";
-import { useAuth } from "../contexts/AuthContext";
 
 // ── Provenance helpers — used only for info cards ──────────────
 // (EditableAttrRow handles its own provenance display)
@@ -36,7 +35,7 @@ function EditableAttrRow({
   fieldType: string;
   dropdownOptions: string[];
   attr: { value: unknown; origin_type: string | null; verification_state: string | null } | undefined;
-  onSaved: (fieldKey: string, value: unknown, completion_progress: { total_required: number; completed: number; pct: number; blockers: string[] }) => void;
+  onSaved: (fieldKey: string, resp: SaveFieldResponse) => void;
 }) {
   const originType = attr?.origin_type ?? null;
   const verificationState = attr?.verification_state ?? null;
@@ -79,7 +78,7 @@ function EditableAttrRow({
       if (fieldType === "number") finalValue = draft === "" ? "" : Number(draft);
       else if (fieldType === "toggle") finalValue = draft === "true" || draft === "YES";
       const resp = await saveField(mpn, fieldKey, finalValue);
-      onSaved(fieldKey, resp.value, resp.completion_progress);
+      onSaved(fieldKey, resp);
       setEditing(false);
     } catch (err: any) {
       setSaveError(err?.error || "Save failed");
@@ -94,7 +93,7 @@ function EditableAttrRow({
     setSaveError("");
     try {
       const resp = await saveField(mpn, fieldKey, currentValue, "verify");
-      onSaved(fieldKey, resp.value, resp.completion_progress);
+      onSaved(fieldKey, resp);
     } catch (err: any) {
       setSaveError(err?.error || "Verify failed");
     } finally {
@@ -236,56 +235,58 @@ function StatusBar({
   completionState,
   completionProgress,
   pricingDomainState,
-  role,
-  confirming,
-  confirmMsg,
-  onConfirmPricing,
 }: {
   completionState: string;
   completionProgress: CompletionProgress;
   pricingDomainState: string;
-  role: string | null;
-  confirming: boolean;
-  confirmMsg: string;
-  onConfirmPricing: () => void;
 }) {
   const isComplete = completionState === "complete";
   const cp = completionProgress;
 
-  // Derive export signal based on pricing_domain_state
-  const isExportReady = pricingDomainState === "export_ready";
-  const isPricingCurrent = pricingDomainState === "Pricing Current";
-  const canConfirm = isPricingCurrent && (role === "product_ops" || role === "admin");
-
-  let exportLabel = "Not Ready";
-  let exportClass = "bg-gray-100 text-gray-600";
-  if (isExportReady) {
+  // Derive export signal based on completion_state + pricing_domain_state.
+  // TALLY-107 — Valid states: Awaiting Completion, Export Ready ✅, Exported ✓,
+  // Scheduled 📅, Blocked ⛔ [reason].
+  let exportLabel: string;
+  let exportClass: string;
+  if (!isComplete) {
+    exportLabel = "Awaiting Completion";
+    exportClass = "bg-gray-100 text-gray-600";
+  } else if (pricingDomainState === "export_ready") {
     exportLabel = "Export Ready ✅";
     exportClass = "bg-green-100 text-green-700";
-  } else if (isPricingCurrent) {
-    exportLabel = "Pending Pricing Confirmation";
-    exportClass = "bg-blue-50 text-blue-700";
+  } else if (pricingDomainState === "exported") {
+    exportLabel = "Exported ✓";
+    exportClass = "bg-green-100 text-green-700";
   } else if (pricingDomainState === "scheduled") {
-    exportLabel = "Scheduled";
+    exportLabel = "Scheduled 📅";
     exportClass = "bg-purple-50 text-purple-700";
   } else if (
     pricingDomainState === "discrepancy" ||
     pricingDomainState === "Pricing Discrepancy"
   ) {
-    exportLabel = "Blocked — Discrepancy";
+    exportLabel = "Blocked ⛔ Discrepancy";
     exportClass = "bg-red-50 text-red-700";
   } else if (
     pricingDomainState === "loss_leader_review" ||
     pricingDomainState === "Loss-Leader Review Pending"
   ) {
-    exportLabel = "Blocked — Loss-Leader Review";
+    exportLabel = "Blocked ⛔ Loss-Leader Review";
     exportClass = "bg-red-50 text-red-700";
+  } else if (
+    pricingDomainState === "buyer_denied" ||
+    pricingDomainState === "loss_leader_vetoed"
+  ) {
+    exportLabel = `Blocked ⛔ ${pricingDomainState}`;
+    exportClass = "bg-red-50 text-red-700";
+  } else {
+    exportLabel = "Awaiting Completion";
+    exportClass = "bg-gray-100 text-gray-600";
   }
 
   // Pricing signal label/color
   const pricingLabel = pricingDomainState || "pending";
   let pricingClass = "bg-gray-100 text-gray-600";
-  if (pricingDomainState === "Pricing Current" || pricingDomainState === "export_ready") {
+  if (pricingDomainState === "export_ready" || pricingDomainState === "exported") {
     pricingClass = "bg-green-50 text-green-700";
   } else if (
     pricingDomainState === "discrepancy" ||
@@ -343,31 +344,11 @@ function StatusBar({
         {/* Export signal */}
         <div>
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Export Status</p>
-          <div className="mt-1 flex items-center gap-2 flex-wrap">
+          <div className="mt-1">
             <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${exportClass}`}>
               {exportLabel}
             </span>
-            {canConfirm && (
-              <button
-                onClick={onConfirmPricing}
-                disabled={confirming}
-                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {confirming ? "Confirming…" : "Confirm Pricing"}
-              </button>
-            )}
           </div>
-          {confirmMsg && (
-            <p
-              className={`mt-1 text-xs ${
-                confirmMsg.toLowerCase().startsWith("failed") || confirmMsg.toLowerCase().startsWith("cannot")
-                  ? "text-red-600"
-                  : "text-green-600"
-              }`}
-            >
-              {confirmMsg}
-            </p>
-          )}
         </div>
       </div>
 
@@ -391,7 +372,6 @@ function StatusBar({
 // ── Main page ──────────────────────────────────────────────────
 export default function ProductDetailPage() {
   const { mpn } = useParams<{ mpn: string }>();
-  const { role } = useAuth();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [registry, setRegistry] = useState<AttributeRegistryEntry[]>([]);
   const [activeTab, setActiveTab] = useState("core_information");
@@ -399,8 +379,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState("");
   const [completing, setCompleting] = useState(false);
   const [completeMsg, setCompleteMsg] = useState("");
-  const [confirming, setConfirming] = useState(false);
-  const [confirmMsg, setConfirmMsg] = useState("");
+  const [mapAutoMsg, setMapAutoMsg] = useState("");
 
   useEffect(() => {
     if (!mpn) return;
@@ -416,7 +395,8 @@ export default function ProductDetailPage() {
 
   // Callback after a field is saved — update product state in place
   const handleFieldSaved = useCallback(
-    (fieldKey: string, value: unknown, completionProgress: { total_required: number; completed: number; pct: number; blockers: string[] }) => {
+    (fieldKey: string, resp: SaveFieldResponse) => {
+      const value = resp.value;
       setProduct((prev) => {
         if (!prev) return prev;
         const updated = { ...prev };
@@ -432,13 +412,41 @@ export default function ProductDetailPage() {
           },
         };
         // Update completion_progress
-        updated.completion_progress = completionProgress;
+        updated.completion_progress = resp.completion_progress;
         // If name field, update the product name
         if (fieldKey === "name" || fieldKey === "product_name") {
           updated.name = typeof value === "string" ? value : updated.name;
         }
+        // TALLY-107 — MAP auto-populate: mirror new scom/scom_sale into local state
+        if (resp.map_auto_populate && resp.map_auto_populate.triggered) {
+          const retail = resp.map_auto_populate.rics_retail;
+          updated.scom = retail;
+          updated.scom_sale = retail;
+          const humanStamp = {
+            origin_type: "Human",
+            origin_detail: "MAP auto-populate",
+            verification_state: "Human-Verified",
+            written_at: new Date().toISOString(),
+          };
+          updated.attribute_values = {
+            ...updated.attribute_values,
+            scom: { value: retail, ...humanStamp },
+            scom_sale: { value: retail, ...humanStamp },
+          };
+        }
+        // Mirror scom / scom_sale top-level values when edited directly
+        if (fieldKey === "scom" && typeof value === "number") updated.scom = value;
+        if (fieldKey === "scom_sale" && typeof value === "number") updated.scom_sale = value;
         return updated;
       });
+
+      // Toast for MAP auto-populate
+      if (resp.map_auto_populate && resp.map_auto_populate.triggered) {
+        setMapAutoMsg(
+          `MAP detected — Web prices set to $${resp.map_auto_populate.rics_retail.toFixed(2)}`
+        );
+        setTimeout(() => setMapAutoMsg(""), 6000);
+      }
     },
     []
   );
@@ -461,25 +469,6 @@ export default function ProductDetailPage() {
       }
     } finally {
       setCompleting(false);
-    }
-  }
-
-  async function handleConfirmPricing() {
-    if (!mpn) return;
-    setConfirming(true);
-    setConfirmMsg("");
-    try {
-      const resp = await confirmPricing(mpn);
-      setConfirmMsg(resp.message || "Pricing confirmed.");
-      // Optimistically update pricing_domain_state so Status Bar reflects export_ready without reload
-      setProduct((prev) =>
-        prev ? { ...prev, pricing_domain_state: resp.pricing_domain_state } : prev
-      );
-    } catch (err: unknown) {
-      const e = err as { error?: string };
-      setConfirmMsg(e.error || "Failed to confirm pricing");
-    } finally {
-      setConfirming(false);
     }
   }
 
@@ -541,11 +530,14 @@ export default function ProductDetailPage() {
         completionState={p.completion_state}
         completionProgress={cp}
         pricingDomainState={p.pricing_domain_state || "pending"}
-        role={role}
-        confirming={confirming}
-        confirmMsg={confirmMsg}
-        onConfirmPricing={handleConfirmPricing}
       />
+
+      {/* MAP auto-populate toast */}
+      {mapAutoMsg && (
+        <div className="mt-3 px-3 py-2 rounded bg-blue-50 text-blue-800 text-sm border border-blue-200">
+          {mapAutoMsg}
+        </div>
+      )}
 
       {/* Complete button */}
       <div className="mt-4 flex items-center gap-3">

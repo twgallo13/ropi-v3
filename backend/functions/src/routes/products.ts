@@ -453,10 +453,50 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
       return;
     }
 
-    // All required fields are Human-Verified → mark complete
+    // TALLY-107 — lightweight pricing discrepancy check before flipping state.
+    // Only block for genuine data errors (e.g. sale price > regular price).
+    const product = productSnap.data() || {};
+    const scom = Number(product.scom) || 0;
+    const scom_sale = Number(product.scom_sale) || 0;
+    const discrepancyReasons: string[] = [];
+    if (scom_sale > 0 && scom > 0 && scom_sale > scom) {
+      discrepancyReasons.push(
+        `Web sale price ($${scom_sale}) exceeds web regular price ($${scom})`
+      );
+    }
+
+    if (discrepancyReasons.length > 0) {
+      // Block with discrepancy — Joey re-imports corrected data
+      await productRef.set(
+        {
+          completion_state: "complete",
+          pricing_domain_state: "discrepancy",
+          discrepancy_reasons: discrepancyReasons,
+          completed_at: db.FieldValue.serverTimestamp(),
+          completed_by: req.user?.uid || "unknown",
+        },
+        { merge: true }
+      );
+
+      res.status(200).json({
+        mpn,
+        doc_id: docId,
+        completion_state: "complete",
+        pricing_domain_state: "discrepancy",
+        discrepancy_reasons: discrepancyReasons,
+        completed_at: new Date().toISOString(),
+        completed_by: req.user?.uid || "unknown",
+        message:
+          "Product completed but blocked by pricing discrepancy. Flag for re-import.",
+      });
+      return;
+    }
+
+    // No discrepancy — go straight to export_ready
     await productRef.set(
       {
         completion_state: "complete",
+        pricing_domain_state: "export_ready",
         completed_at: db.FieldValue.serverTimestamp(),
         completed_by: req.user?.uid || "unknown",
       },
@@ -467,8 +507,10 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
       mpn,
       doc_id: docId,
       completion_state: "complete",
+      pricing_domain_state: "export_ready",
       completed_at: new Date().toISOString(),
       completed_by: req.user?.uid || "unknown",
+      message: "Product complete and queued for export.",
     });
   } catch (err: any) {
     console.error("POST /products/:mpn/complete error:", err);
@@ -552,6 +594,71 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
       );
     }
 
+    // 4b. TALLY-107 — scom / scom_sale also mirror to top-level product document
+    //     so downstream reads (ProductDetailPage, exportSerializer) see the new value.
+    if (fieldKey === "scom" || fieldKey === "scom_sale") {
+      const numericValue =
+        typeof finalValue === "number"
+          ? finalValue
+          : Number(finalValue) || 0;
+      await productRef.set(
+        {
+          [fieldKey]: numericValue,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    // 4c. TALLY-107 — MAP auto-populate:
+    //     When `map` is set to a MAP-active value, auto-populate scom / scom_sale
+    //     from rics_retail so the product is immediately priced at MAP.
+    let mapAutoPopulate:
+      | { triggered: true; rics_retail: number }
+      | { triggered: false }
+      = { triggered: false };
+    if (fieldKey === "map") {
+      const mapValStr =
+        finalValue === null || finalValue === undefined
+          ? ""
+          : String(finalValue).trim();
+      const upper = mapValStr.toUpperCase();
+      const isMapActive =
+        mapValStr !== "" && upper !== "NO" && upper !== "DISALLOWED";
+
+      if (isMapActive) {
+        const freshSnap = await productRef.get();
+        const pdata = freshSnap.data() || {};
+        const ricsRetail = Number(pdata.rics_retail) || 0;
+        if (ricsRetail > 0) {
+          const provenance = {
+            value: ricsRetail,
+            origin_type: "Human",
+            origin_detail: `MAP auto-populate — User: ${userId}`,
+            verification_state: "Human-Verified",
+            written_at: db.FieldValue.serverTimestamp(),
+          };
+          await productRef
+            .collection("attribute_values")
+            .doc("scom")
+            .set(provenance, { merge: true });
+          await productRef
+            .collection("attribute_values")
+            .doc("scom_sale")
+            .set(provenance, { merge: true });
+          await productRef.set(
+            {
+              scom: ricsRetail,
+              scom_sale: ricsRetail,
+              updated_at: db.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          mapAutoPopulate = { triggered: true, rics_retail: ricsRetail };
+        }
+      }
+    }
+
     // 5. Write audit_log entry
     await firestore.collection("audit_log").add({
       product_mpn: mpn,
@@ -574,98 +681,11 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
       value: finalValue,
       verification_state: "Human-Verified",
       completion_progress,
+      map_auto_populate: mapAutoPopulate,
     });
   } catch (err: any) {
     console.error("POST /products/:mpn/attributes/:field_key error:", err);
     res.status(500).json({ error: "Failed to save field." });
-  }
-});
-
-// ────────────────────────────────────────────────
-//  POST /api/v1/products/:mpn/confirm-pricing
-//  TALLY-105 — Product Ops confirms pricing before export
-// ────────────────────────────────────────────────
-router.post("/:mpn/confirm-pricing", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const firestore = admin.firestore();
-    const { mpn } = req.params;
-    const docId = mpnToDocId(mpn);
-    const userId = req.user?.uid;
-
-    // Role check — product_ops or admin only. Reject explicit buyer role.
-    // Role comes from custom claims on the Firebase ID token.
-    const role = (req.user as any)?.role || (req.user as any)?.claims?.role || null;
-    if (role === "buyer") {
-      res.status(403).json({
-        error: "Forbidden: buyer role cannot confirm pricing. Product Ops or admin only.",
-      });
-      return;
-    }
-
-    // Fetch product
-    const productRef = firestore.collection("products").doc(docId);
-    const productSnap = await productRef.get();
-
-    if (!productSnap.exists) {
-      res.status(404).json({ error: `Product with MPN "${mpn}" not found.` });
-      return;
-    }
-
-    const product = productSnap.data()!;
-    const currentState = product.pricing_domain_state;
-
-    // Validation 1: must be Pricing Current
-    if (currentState !== "Pricing Current") {
-      res.status(409).json({
-        error: `Cannot confirm pricing: product is in state "${currentState}", must be "Pricing Current".`,
-      });
-      return;
-    }
-
-    // Validation 2: not in discrepancy
-    if (currentState === "discrepancy" || currentState === "Pricing Discrepancy") {
-      res.status(409).json({
-        error: "Cannot confirm pricing: product is in discrepancy state.",
-      });
-      return;
-    }
-
-    // Validation 3: not in loss_leader_review pending veto
-    if (
-      currentState === "loss_leader_review" ||
-      currentState === "Loss-Leader Review Pending"
-    ) {
-      res.status(409).json({
-        error: "Cannot confirm pricing: product is awaiting loss-leader veto decision.",
-      });
-      return;
-    }
-
-    // All good — flip state to export_ready
-    await productRef.set(
-      {
-        pricing_domain_state: "export_ready",
-        pricing_confirmed_by: userId,
-        pricing_confirmed_at: db.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    // Audit log entry
-    await firestore.collection("audit_log").add({
-      product_mpn: mpn,
-      event_type: "pricing_confirmed_by_ops",
-      acting_user_id: userId,
-      created_at: db.FieldValue.serverTimestamp(),
-    });
-
-    res.status(200).json({
-      pricing_domain_state: "export_ready",
-      message: "Pricing confirmed. Product is now queued for export.",
-    });
-  } catch (err: any) {
-    console.error("POST /products/:mpn/confirm-pricing error:", err);
-    res.status(500).json({ error: "Failed to confirm pricing." });
   }
 });
 

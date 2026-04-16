@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Seed: attribute_registry — 67 docs
+ * Seed: attribute_registry — 70 docs
  * SPEC-compliant schema: field_key, display_label, field_type, destination_tab,
  * required_for_completion, include_in_ai_prompt, include_in_cadence_targeting,
  * active, export_enabled, dropdown_options, created_at.
@@ -125,6 +125,13 @@ const PRODUCT_ATTRIBUTES = [
   attr("sale_price",        "Sale Price",          "number",   "product_attributes", { cadence: true }),
   attr("cost_price",        "Cost Price",          "number",   "product_attributes"),
   attr("msrp",              "MSRP",                "number",   "product_attributes"),
+  // Web selling prices — editable for Product Ops (TALLY-107)
+  attr("scom",              "Web Regular Price (SCOM)", "number", "product_attributes"),
+  attr("scom_sale",         "Web Sale Price (SCOM Sale)", "number", "product_attributes"),
+  // MAP designation — toggling to a MAP-active value auto-populates SCOM from RICS Retail (TALLY-107)
+  attr("map",               "MAP",                 "dropdown", "product_attributes", {
+    options: ["NO", "MAP", "UMAP", "iMAP", "Disallowed"],
+  }),
   attr("currency",          "Currency",            "dropdown", "product_attributes", {
     options: ["USD", "CAD", "GBP", "EUR"],
   }),
@@ -203,7 +210,7 @@ const ATTRIBUTES = [
   ...DESCRIPTIONS_SEO,      // 11
   ...LAUNCH_MEDIA,          //  7
   ...SYSTEM,                //  2
-  // Total: 67
+  // Total: 70
 ];
 
 async function main() {
@@ -213,8 +220,8 @@ async function main() {
   console.log(`\n🌱  Seeding "${COLLECTION}" (${ATTRIBUTES.length} docs) …`);
 
   // Verify count matches spec before writing anything
-  if (ATTRIBUTES.length !== 67) {
-    console.error(`❌  Expected 67 attributes, got ${ATTRIBUTES.length}. Aborting.`);
+  if (ATTRIBUTES.length !== 70) {
+    console.error(`❌  Expected 70 attributes, got ${ATTRIBUTES.length}. Aborting.`);
     process.exit(1);
   }
 
