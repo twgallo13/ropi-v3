@@ -12,7 +12,7 @@ const db = admin.firestore;
 
 // TALLY-078 — Required columns for Full Product Import
 const REQUIRED_COLUMNS = [
-  "MPN", "SKU", "Brand", "Name", "Status",
+  "MPN", "SKU", "Brand", "Name", "RO Status",
   "Web Regular Price", "Web Sale Price", "Retail Price", "Retail Sale Price",
   "Store Inv", "Warehouse Inv", "WHS inv",
   "Website", "Media Status",
@@ -163,7 +163,12 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
 
     // Load site_registry for Website field validation (TALLY-079)
     const sitesSnap = await firestore.collection("site_registry").get();
-    const validSites = new Set(sitesSnap.docs.map((d) => d.id));
+    // Map domain → doc ID for matching CSV website values to registry entries
+    const domainToSiteId = new Map<string, string>();
+    sitesSnap.docs.forEach((d) => {
+      const domain = (d.data().domain || "").toLowerCase();
+      if (domain) domainToSiteId.set(domain, d.id);
+    });
 
     // Counters
     let committedRows = 0;
@@ -225,7 +230,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           sku: (row.SKU || "").trim(),
           brand: (row.Brand || "").trim(),
           name: (row.Name || "").trim(),
-          status: (row.Status || "").trim(),
+          status: (row["RO Status"] || "").trim(),
           last_received_at: db.FieldValue.serverTimestamp(),
           updated_at: db.FieldValue.serverTimestamp(),
         };
@@ -270,7 +275,9 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           .filter((s) => s !== "");
 
         // ── Step C — Write Product to Firestore ──
-        const productRef = firestore.collection("products").doc(mpn);
+        // Sanitize MPN for Firestore doc ID (forward slashes are not allowed)
+        const docId = mpn.replace(/\//g, "__");
+        const productRef = firestore.collection("products").doc(docId);
 
         // Check if product exists for first_received_at logic
         const existingSnap = await productRef.get();
@@ -300,13 +307,15 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
 
         // Write site_targets
         for (const site of siteList) {
-          if (validSites.has(site)) {
+          const siteId = domainToSiteId.get(site);
+          if (siteId) {
             await productRef
               .collection("site_targets")
-              .doc(site)
+              .doc(siteId)
               .set(
                 {
-                  site_id: site,
+                  site_id: siteId,
+                  domain: site,
                   active: true,
                   updated_at: db.FieldValue.serverTimestamp(),
                 },
@@ -346,7 +355,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         }
 
         // ── Step D — Fire Smart Rules (Section 19.10) ──
-        const ruleResult = await executeSmartRules(mpn, batch_id);
+        const ruleResult = await executeSmartRules(docId, batch_id);
         totalRulesFired += ruleResult.rules_fired;
         if (ruleResult.uuid_names_cleaned) uuidNamesCleaned++;
         if (ruleResult.image_status_set === "NO") noImageProducts++;
