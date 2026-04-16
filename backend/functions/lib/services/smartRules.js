@@ -80,16 +80,8 @@ async function executeSmartRules(mpn, batchId) {
     if (!productSnap.exists)
         return result;
     const productData = productSnap.data();
-    // Load attribute_registry keys for validation
-    const registrySnap = await firestore.collection("attribute_registry").get();
-    const registryKeys = new Set(registrySnap.docs.map((d) => d.id));
     for (const ruleDoc of sortedDocs) {
         const rule = { id: ruleDoc.id, ...ruleDoc.data() };
-        // Validate target_attribute exists in attribute_registry
-        if (!registryKeys.has(rule.action.target_attribute)) {
-            console.error(`Smart Rule "${rule.id}": target_attribute "${rule.action.target_attribute}" not found in attribute_registry — skipping.`);
-            continue;
-        }
         // Evaluate all conditions
         const conditionResults = rule.conditions.map((c) => {
             const fieldValue = productData[c.source_field] ?? null;

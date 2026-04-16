@@ -8,9 +8,8 @@ const cors_1 = __importDefault(require("cors"));
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const importFullProduct_1 = __importDefault(require("./routes/importFullProduct"));
 // ── Firebase Admin Init ──
-const projectId = process.env.FIREBASE_PROJECT_ID || "ropi-aoss-dev";
 firebase_admin_1.default.initializeApp({
-    storageBucket: `${projectId}-imports`,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
 });
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: true }));

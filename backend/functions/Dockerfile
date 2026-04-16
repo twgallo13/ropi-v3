@@ -10,6 +10,7 @@ COPY lib/ ./lib/
 ENV PORT=8080
 ENV NODE_ENV=development
 ENV FIREBASE_PROJECT_ID=ropi-aoss-dev
+ENV FIREBASE_STORAGE_BUCKET=ropi-aoss-dev-imports
 
 EXPOSE 8080
 

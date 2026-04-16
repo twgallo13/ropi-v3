@@ -4,9 +4,8 @@ import admin from "firebase-admin";
 import importFullProductRouter from "./routes/importFullProduct";
 
 // ── Firebase Admin Init ──
-const projectId = process.env.FIREBASE_PROJECT_ID || "ropi-aoss-dev";
 admin.initializeApp({
-  storageBucket: `${projectId}-imports`,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
 });
 
 const app = express();

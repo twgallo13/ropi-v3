@@ -116,10 +116,6 @@ const ATTRIBUTES = [
   // ── Analytics / AI (65–66) ──
   attr("ai_confidence_score", "AI Confidence Score", "number", "analytics", { ai: true, sort: 65 }),
   attr("last_ai_enrichment", "Last AI Enrichment", "timestamp", "analytics", { ai: true, sort: 66 }),
-
-  // ── Smart-Rule targets (67–68) ──
-  attr("name", "Product Name (Raw)", "string", "identity", { sort: 67 }),
-  attr("image_status", "Image Status", "string", "media", { sort: 68 }),
 ];
 
 async function main() {

@@ -16,7 +16,7 @@ async function redeploy() {
       spec: { containerConcurrency: 80, timeoutSeconds: 300, containers: [{
         image: `${r}-docker.pkg.dev/${p}/ropi-api/${s}:${tag}`,
         ports: [{ containerPort: 8080 }],
-        env: [{ name: "NODE_ENV", value: "development" }, { name: "FIREBASE_PROJECT_ID", value: p }],
+        env: [{ name: "NODE_ENV", value: "development" }, { name: "FIREBASE_PROJECT_ID", value: p }, { name: "FIREBASE_STORAGE_BUCKET", value: p + "-imports" }],
         resources: { limits: { cpu: "1", memory: "512Mi" } }
       }] }
     }}
