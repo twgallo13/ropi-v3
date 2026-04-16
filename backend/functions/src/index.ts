@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 import importFullProductRouter from "./routes/importFullProduct";
+import productsRouter from "./routes/products";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -24,6 +25,9 @@ app.get("/api/v1/health", (_req, res) => {
 
 // ── Import Routes ──
 app.use("/api/v1/imports/full-product", importFullProductRouter);
+
+// ── Product Routes ──
+app.use("/api/v1/products", productsRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

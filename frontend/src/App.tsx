@@ -1,0 +1,26 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import RequireAuth from "./components/RequireAuth";
+import Layout from "./components/Layout";
+import LoginPage from "./pages/LoginPage";
+import CompletionQueuePage from "./pages/CompletionQueuePage";
+import ProductDetailPage from "./pages/ProductDetailPage";
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<Layout />}>
+              <Route path="/queue/completion" element={<CompletionQueuePage />} />
+              <Route path="/products/:mpn" element={<ProductDetailPage />} />
+              <Route path="/" element={<Navigate to="/queue/completion" replace />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
