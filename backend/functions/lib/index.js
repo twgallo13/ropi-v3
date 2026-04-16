@@ -15,8 +15,8 @@ app.use(express_1.default.json());
 app.get("/health", (_req, res) => {
     res.status(200).json({
         status: "ok",
-        environment: process.env.ENVIRONMENT || "dev",
-        project: process.env.GCP_PROJECT || "ropi-aoss-dev",
+        environment: process.env.NODE_ENV || "development",
+        project: process.env.FIREBASE_PROJECT_ID || "ropi-aoss-dev",
         timestamp: new Date().toISOString(),
     });
 });
