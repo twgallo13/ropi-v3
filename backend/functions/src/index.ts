@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 import importFullProductRouter from "./routes/importFullProduct";
+import importWeeklyOperationsRouter from "./routes/importWeeklyOperations";
 import productsRouter from "./routes/products";
 import attributeRegistryRouter from "./routes/attributeRegistry";
 
@@ -26,6 +27,7 @@ app.get("/api/v1/health", (_req, res) => {
 
 // ── Import Routes ──
 app.use("/api/v1/imports/full-product", importFullProductRouter);
+app.use("/api/v1/imports/weekly-operations", importWeeklyOperationsRouter);
 
 // ── Product Routes ──
 app.use("/api/v1/products", productsRouter);
