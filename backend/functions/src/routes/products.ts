@@ -56,7 +56,11 @@ async function computeCompletionProgress(
   for (const rf of requiredFields) {
     const attr = attrMap.get(rf.field_key);
     if (attr && attr.value !== undefined && attr.value !== null && attr.value !== "") {
-      completed++;
+      if (attr.verification_state === "Human-Verified") {
+        completed++;
+      } else {
+        blockers.push(`${rf.display_label} must be Human-Verified`);
+      }
     } else {
       blockers.push(`${rf.display_label} is required`);
     }
@@ -480,16 +484,11 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
   try {
     const firestore = admin.firestore();
     const { mpn, field_key: fieldKey } = req.params;
-    const { value } = req.body;
+    const { value, action } = req.body;
     const userId = req.user?.uid;
 
     if (!userId) {
       res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-
-    if (value === undefined) {
-      res.status(400).json({ error: "value is required in request body" });
       return;
     }
 
@@ -510,13 +509,30 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
       return;
     }
 
+    // Determine the final value to write
+    let finalValue = value;
+    if (action === "verify") {
+      // Verify action: keep existing value, just stamp Human-Verified
+      const existingDoc = await productRef.collection("attribute_values").doc(fieldKey).get();
+      if (!existingDoc.exists || existingDoc.data()!.value === undefined) {
+        res.status(400).json({ error: `Cannot verify field "${fieldKey}" — no existing value` });
+        return;
+      }
+      finalValue = value !== undefined ? value : existingDoc.data()!.value;
+    } else {
+      if (value === undefined) {
+        res.status(400).json({ error: "value is required in request body" });
+        return;
+      }
+    }
+
     // 3. Write to attribute_values with full provenance stamp (TALLY-044)
     await productRef
       .collection("attribute_values")
       .doc(fieldKey)
       .set(
         {
-          value: value,
+          value: finalValue,
           origin_type: "Human",
           origin_detail: `User: ${userId}`,
           verification_state: "Human-Verified",
@@ -529,7 +545,7 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
     if (fieldKey === "name" || fieldKey === "product_name") {
       await productRef.set(
         {
-          name: value,
+          name: finalValue,
           updated_at: db.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -539,9 +555,9 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
     // 5. Write audit_log entry
     await firestore.collection("audit_log").add({
       product_mpn: mpn,
-      event_type: "field_edited",
+      event_type: action === "verify" ? "field_verified" : "field_edited",
       field_key: fieldKey,
-      new_value: value,
+      new_value: finalValue,
       acting_user_id: userId,
       origin_type: "Human",
       created_at: db.FieldValue.serverTimestamp(),
@@ -555,7 +571,7 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
 
     res.status(200).json({
       field_key: fieldKey,
-      value: value,
+      value: finalValue,
       verification_state: "Human-Verified",
       completion_progress,
     });

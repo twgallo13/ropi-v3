@@ -126,13 +126,15 @@ export interface SaveFieldResponse {
   };
 }
 
-export async function saveField(mpn: string, fieldKey: string, value: unknown): Promise<SaveFieldResponse> {
+export async function saveField(mpn: string, fieldKey: string, value: unknown, action?: "verify"): Promise<SaveFieldResponse> {
+  const body: Record<string, unknown> = { value };
+  if (action) body.action = action;
   const res = await fetch(
     `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/attributes/${encodeURIComponent(fieldKey)}`,
     {
       method: "POST",
       headers: await headers(),
-      body: JSON.stringify({ value }),
+      body: JSON.stringify(body),
     }
   );
   const data = await res.json();

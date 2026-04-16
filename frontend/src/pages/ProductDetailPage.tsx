@@ -37,6 +37,7 @@ function EditableAttrRow({
   onSaved: (fieldKey: string, value: unknown, completion_progress: { total_required: number; completed: number; pct: number; blockers: string[] }) => void;
 }) {
   const originType = attr?.origin_type ?? null;
+  const verificationState = attr?.verification_state ?? null;
   const currentValue = attr?.value;
   const displayValue = currentValue !== null && currentValue !== undefined ? String(currentValue) : "";
 
@@ -44,6 +45,7 @@ function EditableAttrRow({
   const [draft, setDraft] = useState(displayValue);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   // Sync draft when attr changes externally
   useEffect(() => {
@@ -51,6 +53,9 @@ function EditableAttrRow({
   }, [displayValue, editing]);
 
   const hasChanged = draft !== displayValue;
+
+  // Does this field need verification? Has a value but not Human-Verified
+  const needsVerify = displayValue !== "" && verificationState !== "Human-Verified";
 
   function startEdit() {
     setDraft(displayValue);
@@ -82,21 +87,37 @@ function EditableAttrRow({
     }
   }
 
+  async function handleVerify(mpn: string) {
+    setVerifying(true);
+    setSaveError("");
+    try {
+      const resp = await saveField(mpn, fieldKey, currentValue, "verify");
+      onSaved(fieldKey, resp.value, resp.completion_progress);
+    } catch (err: any) {
+      setSaveError(err?.error || "Verify failed");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
   // Border style based on provenance
   let borderClass = "";
-  if (originType === "Smart Rule") borderClass = "border-l-4 border-blue-400";
-  else if (originType === "Human") borderClass = "border-l-4 border-gray-400";
+  if (verificationState === "Human-Verified") borderClass = "border-l-4 border-gray-400";
+  else if (originType === "Smart Rule") borderClass = "border-l-4 border-blue-400";
+  else if (originType === "RO-Import") borderClass = "border-l-4 border-blue-400";
 
   // Badge
   let badge = null;
-  if (originType === "Smart Rule" && !editing)
-    badge = <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0">Smart Rule</span>;
-  else if (originType === "Human" && !editing)
+  if (verificationState === "Human-Verified" && !editing)
     badge = <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 shrink-0">🔒</span>;
+  else if ((originType === "Smart Rule" || originType === "RO-Import") && !editing)
+    badge = <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0">{originType}</span>;
 
   // Read-only display
   if (!editing) {
     return (
+      <MpnContext.Consumer>
+        {(mpn) => (
       <div
         className={`flex items-center gap-3 px-3 py-2 bg-white rounded cursor-pointer hover:bg-gray-50 ${borderClass}`}
         onClick={startEdit}
@@ -107,8 +128,20 @@ function EditableAttrRow({
             ? (fieldType === "toggle" ? (displayValue === "true" || displayValue === "YES" ? "Yes" : "No") : displayValue)
             : <span className="text-gray-300 italic">—</span>}
         </span>
+        {needsVerify && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleVerify(mpn); }}
+            disabled={verifying}
+            className="px-2 py-0.5 text-xs font-medium rounded bg-green-50 text-green-700 border border-green-300 hover:bg-green-100 disabled:opacity-50 shrink-0"
+          >
+            {verifying ? "…" : "✓ Verify"}
+          </button>
+        )}
         {badge}
+        {saveError && <span className="text-xs text-red-600 shrink-0">{saveError}</span>}
       </div>
+        )}
+      </MpnContext.Consumer>
     );
   }
 
