@@ -164,7 +164,7 @@ export default function ExportCenterPage() {
               rel="noopener noreferrer"
               className="inline-block mt-2 text-sm text-blue-600 hover:underline"
             >
-              Download Export JSON →
+              Download Export CSV →
             </a>
           )}
         </div>
@@ -332,7 +332,7 @@ export default function ExportCenterPage() {
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:underline"
                           >
-                            JSON ↓
+                            CSV ↓
                           </a>
                         ) : (
                           "—"

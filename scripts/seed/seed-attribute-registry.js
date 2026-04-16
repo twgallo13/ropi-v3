@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Seed: attribute_registry — 70 docs
+ * Seed: attribute_registry — 72 docs
  * SPEC-compliant schema: field_key, display_label, field_type, destination_tab,
  * required_for_completion, include_in_ai_prompt, include_in_cadence_targeting,
  * active, export_enabled, dropdown_options, created_at.
@@ -34,7 +34,7 @@ function attr(field_key, display_label, field_type, destination_tab, opts = {}) 
 }
 
 // ────────────────────────────────────────────────
-//  Core Information tab (16 docs) — TALLY-083
+//  Core Information tab (18 docs) — TALLY-083
 //  Visible on every product; operators see these first.
 // ────────────────────────────────────────────────
 const CORE_INFORMATION = [
@@ -78,7 +78,9 @@ const CORE_INFORMATION = [
     options: ["black", "white", "red", "blue", "green", "brown", "grey", "pink", "yellow", "orange", "purple", "multi"],
   }),
   attr("size",             "Size / Size Type",     "text",     "core_information"),
-  attr("style_code",       "Style ID",             "text",     "core_information", { required: true }),
+  attr("style_code",       "Style ID",             "text",     "core_information", { required: false }),
+  attr("style_id",         "Style ID",             "text",     "core_information", { required: false }),
+  attr("website",          "Website",              "text",     "core_information", { required: true }),
   attr("site_ids",         "Site Owner",           "text",     "core_information"),
   attr("is_in_stock",      "Product Is Active",    "toggle",   "core_information", { required: true }),
   attr("image_status",     "Image Status",         "text",     "core_information"),
@@ -205,12 +207,12 @@ const SYSTEM = [
 ];
 
 const ATTRIBUTES = [
-  ...CORE_INFORMATION,      // 16
+  ...CORE_INFORMATION,      // 18
   ...PRODUCT_ATTRIBUTES,    // 31
   ...DESCRIPTIONS_SEO,      // 11
   ...LAUNCH_MEDIA,          //  7
   ...SYSTEM,                //  2
-  // Total: 70
+  // Total: 72
 ];
 
 async function main() {
@@ -220,8 +222,8 @@ async function main() {
   console.log(`\n🌱  Seeding "${COLLECTION}" (${ATTRIBUTES.length} docs) …`);
 
   // Verify count matches spec before writing anything
-  if (ATTRIBUTES.length !== 70) {
-    console.error(`❌  Expected 70 attributes, got ${ATTRIBUTES.length}. Aborting.`);
+  if (ATTRIBUTES.length !== 72) {
+    console.error(`❌  Expected 72 attributes, got ${ATTRIBUTES.length}. Aborting.`);
     process.exit(1);
   }
 

@@ -18,6 +18,7 @@ const SETTINGS = [
   { key: "master_veto_window", value: 2, type: "number" },
   { key: "export_price_rounding_enabled", value: true, type: "boolean" },
   { key: "export_price_rounding_mode", value: "floor_minus_one_cent", type: "string" },
+  { key: "export_site_separator", value: "|", type: "string" },
   { key: "slow_moving_str_threshold", value: 15, type: "number" },
   { key: "slow_moving_wos_threshold", value: 12, type: "number" },
   { key: "str_calculation_window_days", value: 30, type: "number" },

@@ -12,7 +12,7 @@ import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import {
   getExportEligibleProducts,
 } from "../services/exportEligibility";
-import { serializeProduct, ExportRow } from "../services/exportSerializer";
+import { serializeProduct, ExportRow, buildExportCsv } from "../services/exportSerializer";
 import { promoteScheduledItems } from "../services/scheduledPromotion";
 
 const router = Router();
@@ -106,14 +106,15 @@ router.post("/daily/trigger", requireAuth, async (req: AuthenticatedRequest, res
       }
     }
 
-    // 4. Write export payload to Firebase Storage
+    // 4. Convert rows to CSV and write export file to Firebase Storage
     const dateStr = new Date().toISOString().split("T")[0];
     const timestamp = Date.now();
-    const filename = `exports/daily/${dateStr}_${timestamp}_export.json`;
+    const { csv } = await buildExportCsv(rows);
+    const filename = `exports/daily/${dateStr}_${timestamp}_export.csv`;
     const bucket = admin.storage().bucket();
     const file = bucket.file(filename);
-    await file.save(JSON.stringify(rows, null, 2), {
-      contentType: "application/json",
+    await file.save(csv, {
+      contentType: "text/csv",
     });
 
     // Make file publicly readable and build download URL

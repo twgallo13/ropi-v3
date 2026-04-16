@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildExportCsv = buildExportCsv;
 exports.serializeProduct = serializeProduct;
 /**
  * Export Payload Serializer — Step 1.7 Part 2
@@ -10,9 +11,72 @@ exports.serializeProduct = serializeProduct;
  * Section 19.9 field definitions. All data type notes mandatory.
  */
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
+const json2csv_1 = require("json2csv");
 const mpnUtils_1 = require("./mpnUtils");
 const pricingUtils_1 = require("./pricingUtils");
 const db = () => firebase_admin_1.default.firestore();
+/**
+ * Build CSV content for export rows.
+ * Reads separator from admin_settings/export_site_separator at runtime.
+ */
+async function buildExportCsv(rows) {
+    const settingSnap = await db().collection("admin_settings").doc("export_site_separator").get();
+    const settingVal = settingSnap.exists ? settingSnap.data()?.value : undefined;
+    const separator = typeof settingVal === "string" && settingVal.length > 0
+        ? settingVal
+        : ",";
+    const csvRows = rows.map((r) => ({
+        mpn: r.mpn,
+        sku: r.sku,
+        brand: r.brand,
+        name: r.name,
+        department: r.hierarchy.department || "",
+        class: r.hierarchy.class || "",
+        category: r.hierarchy.category || "",
+        primary_color: r.colors.primary || "",
+        descriptive_color: r.colors.descriptive || "",
+        scom: r.pricing.scom,
+        scom_sale: r.pricing.scomSale ?? "",
+        export_rics_offer: r.pricing.export_rics_offer,
+        is_map_constrained: r.pricing.is_map_constrained ? "TRUE" : "FALSE",
+        is_loss_leader: r.pricing.is_loss_leader ? "TRUE" : "FALSE",
+        cost_is_estimated: r.pricing.cost_is_estimated ? "TRUE" : "FALSE",
+        product_is_active: r.product_is_active ? "TRUE" : "FALSE",
+        promo: r.promo_flags.promo ? "TRUE" : "FALSE",
+        web_discount_cap: r.promo_flags.web_discount_cap,
+        meta_name: r.seo.meta_name,
+        meta_description: r.seo.meta_description,
+        keywords: r.seo.keywords,
+        site_targets: r.site_targets.join(separator),
+        push_list_ids: r.push_list_ids.join(separator),
+    }));
+    const fields = [
+        "mpn",
+        "sku",
+        "brand",
+        "name",
+        "department",
+        "class",
+        "category",
+        "primary_color",
+        "descriptive_color",
+        "scom",
+        "scom_sale",
+        "export_rics_offer",
+        "is_map_constrained",
+        "is_loss_leader",
+        "cost_is_estimated",
+        "product_is_active",
+        "promo",
+        "web_discount_cap",
+        "meta_name",
+        "meta_description",
+        "keywords",
+        "site_targets",
+        "push_list_ids",
+    ];
+    return { csv: (0, json2csv_1.parse)(csvRows, { fields }), separator };
+}
 /**
  * Serialize a single product for export.
  * Reads the product doc, attribute_values subcollection, pricing_snapshots,

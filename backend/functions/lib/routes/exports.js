@@ -97,14 +97,15 @@ router.post("/daily/trigger", auth_1.requireAuth, async (req, res) => {
                 });
             }
         }
-        // 4. Write export payload to Firebase Storage
+        // 4. Convert rows to CSV and write export file to Firebase Storage
         const dateStr = new Date().toISOString().split("T")[0];
         const timestamp = Date.now();
-        const filename = `exports/daily/${dateStr}_${timestamp}_export.json`;
+        const { csv } = await (0, exportSerializer_1.buildExportCsv)(rows);
+        const filename = `exports/daily/${dateStr}_${timestamp}_export.csv`;
         const bucket = firebase_admin_1.default.storage().bucket();
         const file = bucket.file(filename);
-        await file.save(JSON.stringify(rows, null, 2), {
-            contentType: "application/json",
+        await file.save(csv, {
+            contentType: "text/csv",
         });
         // Make file publicly readable and build download URL
         await file.makePublic();
