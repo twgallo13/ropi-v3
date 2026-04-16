@@ -5,6 +5,8 @@ import importFullProductRouter from "./routes/importFullProduct";
 import importWeeklyOperationsRouter from "./routes/importWeeklyOperations";
 import productsRouter from "./routes/products";
 import attributeRegistryRouter from "./routes/attributeRegistry";
+import buyerReviewRouter from "./routes/buyerReview";
+import buyerActionsRouter from "./routes/buyerActions";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -34,6 +36,10 @@ app.use("/api/v1/products", productsRouter);
 
 // ── Attribute Registry ──
 app.use("/api/v1/attribute_registry", attributeRegistryRouter);
+
+// ── Buyer Review + Actions ──
+app.use("/api/v1/buyer-review", buyerReviewRouter);
+app.use("/api/v1/buyer-actions", buyerActionsRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

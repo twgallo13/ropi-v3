@@ -113,3 +113,114 @@ export async function completeProduct(mpn: string): Promise<{ completion_state: 
   if (!res.ok) throw data;
   return data;
 }
+
+// ── Buyer Review types ──
+
+export interface BuyerReviewRecommendation {
+  type: string;
+  pct: number;
+  new_rics_offer: number;
+  export_price: number;
+  rule_name: string;
+  rule_id: string | null;
+}
+
+export interface SiteTarget {
+  site_id: string;
+  domain: string;
+  verification_state: string;
+  product_link: string | null;
+  image_link: string | null;
+}
+
+export interface BuyerReviewItem {
+  mpn: string;
+  name: string;
+  brand: string;
+  department: string;
+  class: string;
+  site_owner: string;
+  rics_retail: number;
+  rics_offer: number;
+  scom: number;
+  scom_sale: number;
+  is_map_protected: boolean;
+  map_floor: number | null;
+  str_pct: number;
+  wos: number | null;
+  store_gm_pct: number | null;
+  web_gm_pct: number | null;
+  inventory_total: number;
+  is_slow_moving: boolean;
+  recommendation: BuyerReviewRecommendation;
+  site_targets: SiteTarget[];
+  is_loss_leader: boolean;
+  days_in_queue: number;
+  pricing_domain_state: string;
+}
+
+export interface BuyerReviewResponse {
+  items: BuyerReviewItem[];
+  total: number;
+  next_cursor: string | null;
+}
+
+export async function fetchBuyerReview(params?: Record<string, string>): Promise<BuyerReviewResponse> {
+  const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+  const res = await fetch(`${BASE}/api/v1/buyer-review${qs}`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export interface PriceProjectionStep {
+  step: number;
+  label: string;
+  rics_offer: number;
+  export_price: number;
+  gm_pct: number;
+  is_below_cost: boolean;
+}
+
+export interface PriceProjection {
+  mpn: string;
+  cost: number;
+  cost_is_estimated: boolean;
+  current_gm_pct: number;
+  steps: PriceProjectionStep[];
+  below_cost_threshold: number;
+  map_floor: number | null;
+}
+
+export async function fetchPriceProjection(mpn: string): Promise<PriceProjection> {
+  const res = await fetch(`${BASE}/api/v1/buyer-review/price-projection/${encodeURIComponent(mpn)}`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function postBuyerAction(body: {
+  mpn: string;
+  action_type: "approve" | "deny" | "adjust";
+  adjustment?: { type: string; value: number; effective_date?: string };
+}): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/buyer-actions/markdown`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function postLossLeaderAcknowledge(body: { mpn: string; reason: string }): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/buyer-actions/loss-leader-acknowledge`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}

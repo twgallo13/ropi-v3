@@ -86,6 +86,55 @@
         { "fieldPath": "isActive",  "order": "ASCENDING"  },
         { "fieldPath": "expiresAt", "order": "ASCENDING"  }
       ]
+    },
+    {
+      "__comment__": "Index 10 — Buyer review: Pricing Current + complete, by pricing_resolved_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pricing_domain_state", "order": "ASCENDING" },
+        { "fieldPath": "completion_state",     "order": "ASCENDING" },
+        { "fieldPath": "pricing_resolved_at",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 11 — Buyer review: sort by str_pct",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pricing_domain_state", "order": "ASCENDING" },
+        { "fieldPath": "completion_state",     "order": "ASCENDING" },
+        { "fieldPath": "str_pct",              "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 12 — Buyer review: sort by wos desc",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pricing_domain_state", "order": "ASCENDING" },
+        { "fieldPath": "completion_state",     "order": "ASCENDING" },
+        { "fieldPath": "wos",                  "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 13 — Buyer review: sort by store_gm_pct asc",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pricing_domain_state", "order": "ASCENDING" },
+        { "fieldPath": "completion_state",     "order": "ASCENDING" },
+        { "fieldPath": "store_gm_pct",         "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 14 — Buyer actions by buyer_user_id + created_at",
+      "collectionGroup": "buyer_actions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "buyer_user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at",    "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

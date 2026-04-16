@@ -26,6 +26,12 @@ export default function Layout() {
             >
               Completion Queue
             </Link>
+            <Link
+              to="/buyer-review"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Buyer Review
+            </Link>
           </nav>
         </div>
         {user && (
