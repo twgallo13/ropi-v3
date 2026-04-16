@@ -135,6 +135,16 @@
         { "fieldPath": "buyer_user_id", "order": "ASCENDING" },
         { "fieldPath": "created_at",    "order": "DESCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 15 — Buyer actions by mpn + action_type + created_at (export serializer)",
+      "collectionGroup": "buyer_actions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mpn",          "order": "ASCENDING" },
+        { "fieldPath": "action_type",  "order": "ASCENDING" },
+        { "fieldPath": "created_at",   "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import CompletionQueuePage from "./pages/CompletionQueuePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import BuyerReviewPage from "./pages/BuyerReviewPage";
+import ExportCenterPage from "./pages/ExportCenterPage";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route path="/queue/completion" element={<CompletionQueuePage />} />
               <Route path="/buyer-review" element={<BuyerReviewPage />} />
+              <Route path="/export-center" element={<ExportCenterPage />} />
               <Route path="/products/:mpn" element={<ProductDetailPage />} />
               <Route path="/" element={<Navigate to="/queue/completion" replace />} />
             </Route>

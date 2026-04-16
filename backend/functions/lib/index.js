@@ -12,6 +12,7 @@ const products_1 = __importDefault(require("./routes/products"));
 const attributeRegistry_1 = __importDefault(require("./routes/attributeRegistry"));
 const buyerReview_1 = __importDefault(require("./routes/buyerReview"));
 const buyerActions_1 = __importDefault(require("./routes/buyerActions"));
+const exports_1 = __importDefault(require("./routes/exports"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -38,6 +39,8 @@ app.use("/api/v1/attribute_registry", attributeRegistry_1.default);
 // ── Buyer Review + Actions ──
 app.use("/api/v1/buyer-review", buyerReview_1.default);
 app.use("/api/v1/buyer-actions", buyerActions_1.default);
+// ── Export Routes ──
+app.use("/api/v1/exports", exports_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({

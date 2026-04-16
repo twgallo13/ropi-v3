@@ -7,6 +7,7 @@ import productsRouter from "./routes/products";
 import attributeRegistryRouter from "./routes/attributeRegistry";
 import buyerReviewRouter from "./routes/buyerReview";
 import buyerActionsRouter from "./routes/buyerActions";
+import exportsRouter from "./routes/exports";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -40,6 +41,9 @@ app.use("/api/v1/attribute_registry", attributeRegistryRouter);
 // ── Buyer Review + Actions ──
 app.use("/api/v1/buyer-review", buyerReviewRouter);
 app.use("/api/v1/buyer-actions", buyerActionsRouter);
+
+// ── Export Routes ──
+app.use("/api/v1/exports", exportsRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

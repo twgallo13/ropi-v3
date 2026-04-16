@@ -224,3 +224,92 @@ export async function postLossLeaderAcknowledge(body: { mpn: string; reason: str
   if (!res.ok) throw data;
   return data;
 }
+
+// ── Export Center types + API ──
+
+export interface ExportPendingProduct {
+  mpn: string;
+  name: string;
+  brand: string;
+  pricing_domain_state: string;
+  rics_offer: number;
+  scom: number;
+}
+
+export interface ExportBlockedProduct {
+  mpn: string;
+  reasons: string[];
+}
+
+export interface ExportPendingResponse {
+  pending: ExportPendingProduct[];
+  blocked: ExportBlockedProduct[];
+  pending_count: number;
+  blocked_count: number;
+}
+
+export interface ExportTriggerResponse {
+  job_id: string;
+  status: string;
+  serialized: number;
+  blocked: number;
+  blocked_products: ExportBlockedProduct[];
+  errors: Array<{ mpn: string; error: string }>;
+  output_file: string;
+  download_url: string;
+}
+
+export interface ExportJob {
+  id: string;
+  status: string;
+  triggered_by: string;
+  triggered_at: string | null;
+  completed_at: string | null;
+  serialized_count: number;
+  blocked_count: number;
+  failed_count: number;
+  output_file: string | null;
+  download_url: string | null;
+}
+
+export async function fetchExportPending(): Promise<ExportPendingResponse> {
+  const res = await fetch(`${BASE}/api/v1/exports/pending`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function triggerExport(): Promise<ExportTriggerResponse> {
+  const res = await fetch(`${BASE}/api/v1/exports/daily/trigger`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function notifyBuyer(mpn: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/exports/notify-buyer`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ mpn }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function fetchExportJobs(): Promise<{ jobs: ExportJob[] }> {
+  const res = await fetch(`${BASE}/api/v1/exports/jobs`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function promoteScheduled(): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/exports/promote-scheduled`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}

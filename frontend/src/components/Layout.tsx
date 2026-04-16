@@ -32,6 +32,12 @@ export default function Layout() {
             >
               Buyer Review
             </Link>
+            <Link
+              to="/export-center"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Export Center
+            </Link>
           </nav>
         </div>
         {user && (
