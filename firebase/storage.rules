@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // Lock storage until per-path rules are defined
+      allow read, write: if false;
+    }
+  }
+}
