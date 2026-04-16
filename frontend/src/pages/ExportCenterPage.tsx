@@ -5,15 +5,22 @@ import {
   notifyBuyer,
   fetchExportJobs,
   promoteScheduled,
+  fetchPricingExportQueue,
+  triggerPricingExport,
+  fetchPricingExportJobs,
   ExportPendingProduct,
   ExportBlockedProduct,
   ExportTriggerResponse,
   ExportJob,
+  type PricingExportQueueItem,
+  type PricingExportJob,
 } from "../lib/api";
 
 type Tab = "pending" | "completed";
+type Channel = "web" | "pricing";
 
 export default function ExportCenterPage() {
+  const [channel, setChannel] = useState<Channel>("web");
   const [tab, setTab] = useState<Tab>("pending");
   const [pending, setPending] = useState<ExportPendingProduct[]>([]);
   const [blocked, setBlocked] = useState<ExportBlockedProduct[]>([]);
@@ -106,35 +113,64 @@ export default function ExportCenterPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">Export Center</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={handlePromoteScheduled}
-            disabled={promoting}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-          >
-            {promoting ? "Promoting…" : "Promote Scheduled"}
-          </button>
-          <button
-            onClick={handleTriggerExport}
-            disabled={exporting}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-          >
-            {exporting ? (
-              <>
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Exporting…
-              </>
-            ) : (
-              "Trigger Export"
-            )}
-          </button>
-        </div>
+        {channel === "web" && (
+          <div className="flex gap-2">
+            <button
+              onClick={handlePromoteScheduled}
+              disabled={promoting}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              {promoting ? "Promoting…" : "Promote Scheduled"}
+            </button>
+            <button
+              onClick={handleTriggerExport}
+              disabled={exporting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {exporting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Exporting…
+                </>
+              ) : (
+                "Trigger Export"
+              )}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Channel tabs */}
+      <div className="flex gap-1 mb-6 border-b">
+        <button
+          onClick={() => setChannel("web")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+            channel === "web"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Web Export
+        </button>
+        <button
+          onClick={() => setChannel("pricing")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+            channel === "pricing"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Pricing Export
+        </button>
+      </div>
+
+      {channel === "pricing" && <PricingExportTab />}
+      {channel === "web" && (<>
 
       {/* Error */}
       {error && (
@@ -344,6 +380,202 @@ export default function ExportCenterPage() {
               </table>
             </div>
           )}
+        </div>
+      )}
+      </>)}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Pricing Export Tab (TALLY-112)
+// ─────────────────────────────────────────────────────────────
+function PricingExportTab() {
+  const [queue, setQueue] = useState<PricingExportQueueItem[]>([]);
+  const [jobs, setJobs] = useState<PricingExportJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [triggering, setTriggering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<any>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [q, j] = await Promise.all([
+        fetchPricingExportQueue(),
+        fetchPricingExportJobs(),
+      ]);
+      setQueue(q.items);
+      setJobs(j.jobs);
+    } catch (err: any) {
+      setError(err?.error || err?.message || "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function handleTrigger() {
+    setTriggering(true);
+    setError(null);
+    setLastResult(null);
+    try {
+      const r = await triggerPricingExport();
+      setLastResult(r);
+      await load();
+    } catch (err: any) {
+      setError(err?.error || err?.message || "Trigger failed");
+    } finally {
+      setTriggering(false);
+    }
+  }
+
+  function fmt(n: number | null | undefined): string {
+    if (n == null) return "—";
+    return `$${n.toFixed(2)}`;
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          Pricing Export Queue ({queue.length})
+        </h2>
+        <button
+          onClick={handleTrigger}
+          disabled={triggering || queue.length === 0}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          {triggering ? "Exporting…" : "Trigger Pricing Export →"}
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
+      {lastResult && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <h3 className="font-semibold text-green-800 mb-1">
+            Pricing Export Complete
+          </h3>
+          <p className="text-sm text-green-700">
+            Items: <strong>{lastResult.item_count}</strong>
+            {lastResult.download_url && (
+              <>
+                {" "}&middot;{" "}
+                <a
+                  href={lastResult.download_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Download CSV ↓
+                </a>
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-gray-400 text-sm">Loading…</p>
+      ) : queue.length === 0 ? (
+        <p className="text-gray-400 text-sm mb-8">
+          Queue is empty. Items appear here when SCOM prices are edited, buyer
+          markdowns are approved, MAP imports commit, or MAP removals are approved.
+        </p>
+      ) : (
+        <div className="bg-white border rounded-lg overflow-hidden mb-8">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left">
+              <tr>
+                <th className="px-4 py-2 font-medium text-gray-500">MPN</th>
+                <th className="px-4 py-2 font-medium text-gray-500">Reason</th>
+                <th className="px-4 py-2 font-medium text-gray-500">Effective</th>
+                <th className="px-4 py-2 font-medium text-gray-500">RICS Offer</th>
+                <th className="px-4 py-2 font-medium text-gray-500">SCOM</th>
+                <th className="px-4 py-2 font-medium text-gray-500">Queued</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {queue.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-2 font-mono text-gray-700">{item.mpn}</td>
+                  <td className="px-4 py-2">
+                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                      {item.queued_reason || "—"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-gray-700">
+                    {item.effective_date || "—"}
+                  </td>
+                  <td className="px-4 py-2 text-gray-700">{fmt(item.rics_offer)}</td>
+                  <td className="px-4 py-2 text-gray-700">{fmt(item.scom_sale ?? item.scom)}</td>
+                  <td className="px-4 py-2 text-gray-400 text-xs">
+                    {item.queued_at ? new Date(item.queued_at).toLocaleString() : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        Past Pricing Export Jobs
+      </h2>
+      {jobs.length === 0 ? (
+        <p className="text-gray-400 text-sm">No pricing export jobs yet.</p>
+      ) : (
+        <div className="bg-white border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left">
+              <tr>
+                <th className="px-4 py-2 font-medium text-gray-500">Date</th>
+                <th className="px-4 py-2 font-medium text-gray-500">Status</th>
+                <th className="px-4 py-2 font-medium text-gray-500">Items</th>
+                <th className="px-4 py-2 font-medium text-gray-500">Download</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {jobs.map((job) => (
+                <tr key={job.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-2 text-gray-700">
+                    {job.triggered_at
+                      ? new Date(job.triggered_at).toLocaleString()
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded">
+                      {job.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-gray-700">{job.item_count}</td>
+                  <td className="px-4 py-2">
+                    {job.download_url ? (
+                      <a
+                        href={job.download_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        CSV ↓
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

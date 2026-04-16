@@ -16,8 +16,8 @@ import {
   resolvePricing,
   writePricingSnapshot,
   type PricingInputs,
-  type MapState,
 } from "../services/pricingResolution";
+import { getMapState } from "../services/mapState";
 import { runPostImportCalculations } from "../services/postImportCalculation";
 
 const router = Router();
@@ -40,14 +40,8 @@ const REQUIRED_COLUMNS_WEEKLY = [
   "WHS inv",           // → inventory_whs
 ];
 
-// Phase 1: MAP imports are Phase 2 — default map_state for all products
-const defaultMapState: MapState = {
-  is_active: false,
-  map_price: 0,
-  promo_price: null,
-  promo_start: null,
-  promo_end: null,
-};
+// Step 2.1 — MAP state is now read from each product via getMapState(mpn)
+// (populated by the MAP Policy Import). The Phase 1 default has been removed.
 
 // ────────────────────────────────────────────────
 //  POST /upload
@@ -296,7 +290,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         const pricingResult = await resolvePricing(
           mpn,
           pricingInputs,
-          defaultMapState,
+          await getMapState(mpn),
           adminSettings
         );
 

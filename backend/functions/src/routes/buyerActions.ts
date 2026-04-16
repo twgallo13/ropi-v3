@@ -4,6 +4,7 @@ import { apply99Rounding } from "../services/pricingUtils";
 import { getAdminSettings } from "../services/adminSettings";
 import { mpnToDocId } from "../services/mpnUtils";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
+import { queueForPricingExport } from "../services/pricingExportQueue";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -34,6 +35,14 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
     }
 
     const product = doc.data()!;
+
+    // Step 2.1 Part 3 — buyer cannot approve a markdown on a MAP-conflicted product
+    if (product.map_conflict_active === true) {
+      res.status(400).json({
+        error: "MAP conflict must be resolved before markdown",
+      });
+      return;
+    }
 
     // Validate product is in buyer-review-eligible state
     const eligibleStates = ["Pricing Current", "Loss-Leader Review Pending"];
@@ -152,6 +161,13 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
       acting_user_id: buyerUserId,
       created_at: ts(),
     });
+
+    // Step 2.1 / TALLY-112 — buyer markdown feeds the RICS Pricing Export queue
+    try {
+      await queueForPricingExport(mpn, "buyer_markdown", buyerUserId, effectiveDate);
+    } catch (qerr: any) {
+      console.error("queueForPricingExport (buyer_markdown) failed:", qerr);
+    }
 
     res.json({
       status: "success",

@@ -39,6 +39,18 @@ export default function Layout() {
               Buyer Review
             </Link>
             <Link
+              to="/map-conflict-review"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              MAP Conflict
+            </Link>
+            <Link
+              to="/map-removal-review"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              MAP Removal
+            </Link>
+            <Link
               to="/export-center"
               className="text-gray-600 hover:text-gray-900"
             >

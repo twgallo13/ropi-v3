@@ -284,6 +284,18 @@ async function writePricingSnapshot(mpn, batchId, result) {
         discrepancy_reasons: result.discrepancy_reasons || [],
     });
     // Update top-level product document with current state
+    const productSnap = await productRef.get();
+    const productData = productSnap.data() || {};
+    const mapPrice = Number(productData.map_price) || 0;
+    const effectiveWebSale = result.effective_web_sale;
+    const conflictActive = !!productData.is_map_protected &&
+        result.is_map_constrained &&
+        mapPrice > 0 &&
+        effectiveWebSale > 0 &&
+        effectiveWebSale < mapPrice;
+    const conflictReason = conflictActive
+        ? `Web sale ($${effectiveWebSale.toFixed(2)}) is below MAP floor ($${mapPrice.toFixed(2)})`
+        : null;
     await productRef.set({
         pricing_domain_state: result.status,
         is_loss_leader: result.is_loss_leader,
@@ -291,6 +303,11 @@ async function writePricingSnapshot(mpn, batchId, result) {
         store_gm_pct: result.store_gm_pct,
         web_gm_pct: result.web_gm_pct,
         pricing_resolved_at: db.FieldValue.serverTimestamp(),
+        map_conflict_active: conflictActive,
+        map_conflict_reason: conflictReason,
+        map_conflict_flagged_at: conflictActive
+            ? db.FieldValue.serverTimestamp()
+            : null,
     }, { merge: true });
 }
 //# sourceMappingURL=pricingResolution.js.map

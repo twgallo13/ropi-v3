@@ -8,6 +8,8 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import BuyerReviewPage from "./pages/BuyerReviewPage";
 import ExportCenterPage from "./pages/ExportCenterPage";
 import ImportHubPage from "./pages/ImportHubPage";
+import MapConflictReviewPage from "./pages/MapConflictReviewPage";
+import MapRemovalReviewPage from "./pages/MapRemovalReviewPage";
 
 export default function App() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
               <Route path="/queue/completion" element={<CompletionQueuePage />} />
               <Route path="/import-hub" element={<ImportHubPage />} />
               <Route path="/buyer-review" element={<BuyerReviewPage />} />
+              <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
+              <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
               <Route path="/export-center" element={<ExportCenterPage />} />
               <Route path="/products/:mpn" element={<ProductDetailPage />} />
               <Route path="/" element={<Navigate to="/queue/completion" replace />} />

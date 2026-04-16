@@ -369,6 +369,14 @@ function ProductCard({
         </div>
       )}
 
+      {/* MAP conflict blocker */}
+      {item.map_conflict_active && (
+        <div className="mt-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1.5">
+          ⚠️ MAP conflict must be resolved before markdown
+          {item.map_conflict_reason ? ` — ${item.map_conflict_reason}` : ""}
+        </div>
+      )}
+
       {/* Actions */}
       <div className={`flex items-center gap-2 ${isCompact ? "mt-2" : "mt-4"}`}>
         {isLossLeader ? (
@@ -382,10 +390,11 @@ function ProductCard({
           <>
             <button
               onClick={() => onApprove(item.mpn)}
-              className={`px-3 py-1.5 rounded text-white bg-green-600 hover:bg-green-700 ${
+              disabled={item.map_conflict_active}
+              className={`px-3 py-1.5 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed ${
                 isCompact ? "text-xs" : "text-sm"
               }`}
-              title="Approve (A)"
+              title={item.map_conflict_active ? "MAP conflict must be resolved before markdown" : "Approve (A)"}
             >
               {isCompact ? "✓" : "✓ Approve"}
             </button>

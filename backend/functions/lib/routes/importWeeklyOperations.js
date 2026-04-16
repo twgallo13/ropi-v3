@@ -18,6 +18,7 @@ const sync_1 = require("csv-parse/sync");
 const mpnUtils_1 = require("../services/mpnUtils");
 const adminSettings_1 = require("../services/adminSettings");
 const pricingResolution_1 = require("../services/pricingResolution");
+const mapState_1 = require("../services/mapState");
 const postImportCalculation_1 = require("../services/postImportCalculation");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
@@ -37,14 +38,8 @@ const REQUIRED_COLUMNS_WEEKLY = [
     "Warehouse Inv", // → inventory_warehouse
     "WHS inv", // → inventory_whs
 ];
-// Phase 1: MAP imports are Phase 2 — default map_state for all products
-const defaultMapState = {
-    is_active: false,
-    map_price: 0,
-    promo_price: null,
-    promo_start: null,
-    promo_end: null,
-};
+// Step 2.1 — MAP state is now read from each product via getMapState(mpn)
+// (populated by the MAP Policy Import). The Phase 1 default has been removed.
 // ────────────────────────────────────────────────
 //  POST /upload
 // ────────────────────────────────────────────────
@@ -250,7 +245,7 @@ router.post("/:batch_id/commit", async (req, res) => {
                     scom_sale: scomSale,
                     actual_cost: existingProduct.actual_cost || null,
                 };
-                const pricingResult = await (0, pricingResolution_1.resolvePricing)(mpn, pricingInputs, defaultMapState, adminSettings);
+                const pricingResult = await (0, pricingResolution_1.resolvePricing)(mpn, pricingInputs, await (0, mapState_1.getMapState)(mpn), adminSettings);
                 // Write pricing snapshot
                 await (0, pricingResolution_1.writePricingSnapshot)(mpn, batch_id, pricingResult);
                 // Track routing outcomes

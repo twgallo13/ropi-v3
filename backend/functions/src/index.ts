@@ -8,6 +8,9 @@ import attributeRegistryRouter from "./routes/attributeRegistry";
 import buyerReviewRouter from "./routes/buyerReview";
 import buyerActionsRouter from "./routes/buyerActions";
 import exportsRouter from "./routes/exports";
+import mapImportRouter from "./routes/mapImport";
+import mapReviewRouter from "./routes/mapReview";
+import pricingExportRouter from "./routes/pricingExport";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -44,6 +47,11 @@ app.use("/api/v1/buyer-actions", buyerActionsRouter);
 
 // ── Export Routes ──
 app.use("/api/v1/exports", exportsRouter);
+app.use("/api/v1/exports/pricing", pricingExportRouter);
+
+// ── MAP Policy Import + Review (Step 2.1) ──
+app.use("/api/v1/imports/map-policy", mapImportRouter);
+app.use("/api/v1/map-review", mapReviewRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

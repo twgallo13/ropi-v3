@@ -93,7 +93,10 @@ router.get("/", async (req: Request, res: Response) => {
         (d.inventory_warehouse || 0) +
         (d.inventory_whs || 0);
 
-      const isMapProtected = d.map_state?.is_active === true && (d.map_state?.map_price || 0) > 0;
+      const isMapProtected =
+        d.is_map_protected === true ||
+        (d.map_state?.is_active === true && (d.map_state?.map_price || 0) > 0);
+      const mapFloor = d.map_price ?? d.map_state?.map_price ?? null;
 
       // Phase 1 filter: map_status
       if (map_status === "protected" && !isMapProtected) return null;
@@ -112,7 +115,9 @@ router.get("/", async (req: Request, res: Response) => {
         scom: d.scom || 0,
         scom_sale: d.scom_sale || 0,
         is_map_protected: isMapProtected,
-        map_floor: isMapProtected ? d.map_state.map_price : null,
+        map_floor: isMapProtected ? mapFloor : null,
+        map_conflict_active: d.map_conflict_active === true,
+        map_conflict_reason: d.map_conflict_reason || null,
 
         str_pct: d.str_pct ?? 0,
         wos: d.wos ?? null,
@@ -192,7 +197,10 @@ router.get("/price-projection/:mpn", async (req: Request, res: Response) => {
       };
     });
 
-    const isMapProtected = d.map_state?.is_active === true && (d.map_state?.map_price || 0) > 0;
+    const isMapProtected =
+      d.is_map_protected === true ||
+      (d.map_state?.is_active === true && (d.map_state?.map_price || 0) > 0);
+    const mapFloor = d.map_price ?? d.map_state?.map_price ?? null;
 
     res.json({
       mpn,
@@ -201,7 +209,7 @@ router.get("/price-projection/:mpn", async (req: Request, res: Response) => {
       current_gm_pct: Math.round(currentGm * 100) / 100,
       steps,
       below_cost_threshold: Math.round(cost * 1000) / 1000,
-      map_floor: isMapProtected ? d.map_state.map_price : null,
+      map_floor: isMapProtected ? mapFloor : null,
     });
   } catch (err: any) {
     console.error("GET /buyer-review/price-projection error:", err);

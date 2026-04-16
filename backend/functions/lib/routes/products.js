@@ -7,6 +7,7 @@ const express_1 = require("express");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const auth_1 = require("../middleware/auth");
 const mpnUtils_1 = require("../services/mpnUtils");
+const pricingExportQueue_1 = require("../services/pricingExportQueue");
 const router = (0, express_1.Router)();
 const db = firebase_admin_1.default.firestore;
 /** Cache required field keys from attribute_registry (refreshed per request group). */
@@ -188,6 +189,8 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
                 completion_state: data.completion_state || "incomplete",
                 image_status: imageStatusVal,
                 pricing_domain_state: data.pricing_domain_state || "pending",
+                map_conflict_active: !!data.map_conflict_active,
+                is_map_protected: !!data.is_map_protected,
                 first_received_at: data.first_received_at?.toDate?.()?.toISOString() || null,
                 updated_at: data.updated_at?.toDate?.()?.toISOString() || null,
                 is_high_priority,
@@ -323,6 +326,16 @@ router.get("/:mpn", auth_1.requireAuth, async (req, res) => {
             product_is_active: data.product_is_active ?? true,
             site_owner: site_targets.length > 0 ? site_targets[0].site_id : "",
             import_batch_id: data.import_batch_id || null,
+            is_map_protected: !!data.is_map_protected,
+            map_price: data.map_price ?? null,
+            map_promo_price: data.map_promo_price ?? null,
+            map_start_date: data.map_start_date ?? null,
+            map_end_date: data.map_end_date ?? null,
+            map_is_always_on: data.map_is_always_on ?? null,
+            map_conflict_active: !!data.map_conflict_active,
+            map_conflict_reason: data.map_conflict_reason ?? null,
+            map_conflict_held: !!data.map_conflict_held,
+            map_removal_proposed: !!data.map_removal_proposed,
             first_received_at: serializeTs(data.first_received_at),
             updated_at: serializeTs(data.updated_at),
             is_high_priority,
@@ -505,6 +518,13 @@ router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) 
                 [fieldKey]: numericValue,
                 updated_at: db.FieldValue.serverTimestamp(),
             }, { merge: true });
+            // Step 2.1 / TALLY-112 — any SCOM edit feeds the Pricing Export queue
+            try {
+                await (0, pricingExportQueue_1.queueForPricingExport)(mpn, "scom_edit", userId, null);
+            }
+            catch (qerr) {
+                console.error("queueForPricingExport (scom_edit) failed:", qerr);
+            }
         }
         // 4c. TALLY-107 — MAP auto-populate:
         //     When `map` is set to a MAP-active value, auto-populate scom / scom_sale

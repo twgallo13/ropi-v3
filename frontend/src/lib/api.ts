@@ -26,6 +26,8 @@ export interface ProductListItem {
   updated_at: string | null;
   is_high_priority: boolean;
   launch_days_remaining: number | null;
+  map_conflict_active?: boolean;
+  is_map_protected?: boolean;
   completion_progress: {
     total_required: number;
     completed: number;
@@ -53,6 +55,16 @@ export interface ProductDetail extends ProductListItem {
   pricing_domain_state: string;
   product_is_active: boolean;
   import_batch_id: string | null;
+  is_map_protected: boolean;
+  map_price: number | null;
+  map_promo_price: number | null;
+  map_start_date: string | null;
+  map_end_date: string | null;
+  map_is_always_on: boolean | null;
+  map_conflict_active: boolean;
+  map_conflict_reason: string | null;
+  map_conflict_held: boolean;
+  map_removal_proposed: boolean;
   attribute_values: Record<
     string,
     {
@@ -177,6 +189,8 @@ export interface BuyerReviewItem {
   scom_sale: number;
   is_map_protected: boolean;
   map_floor: number | null;
+  map_conflict_active?: boolean;
+  map_conflict_reason?: string | null;
   str_pct: number;
   wos: number | null;
   store_gm_pct: number | null;
@@ -395,4 +409,229 @@ export async function commitImport(family: "full-product" | "weekly-operations",
   const data = await res.json();
   if (!res.ok) throw data;
   return data;
+}
+
+// ── MAP Policy Import (Step 2.1 Part 1) ──
+export interface MapUploadResponse {
+  batch_id: string;
+  raw_headers: string[];
+  row_count: number;
+}
+
+export interface MapColumnMapping {
+  mpn: string;
+  brand: string;
+  map_price: string;
+  start_date: string | null;
+  end_date: string | null;
+  promo_price: string | null;
+}
+
+export interface MapTemplate {
+  id: string;
+  template_name: string;
+  brand: string | null;
+  column_mapping: MapColumnMapping;
+}
+
+export async function mapPolicyUpload(file: File): Promise<MapUploadResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/api/v1/imports/map-policy/upload`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function mapPolicyMapColumns(
+  batchId: string,
+  column_mapping: MapColumnMapping,
+  save_template: boolean,
+  template_name: string
+): Promise<{ status: string; template_id: string | null }> {
+  const res = await fetch(
+    `${BASE}/api/v1/imports/map-policy/${encodeURIComponent(batchId)}/map-columns`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ column_mapping, save_template, template_name }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function mapPolicyCommit(batchId: string): Promise<{
+  batch_id: string;
+  status: string;
+  total_rows: number;
+  committed_rows: number;
+  failed_rows: number;
+  removal_proposed: number;
+  errors: Array<{ row: number; mpn: string; error: string }>;
+}> {
+  const res = await fetch(
+    `${BASE}/api/v1/imports/map-policy/${encodeURIComponent(batchId)}/commit`,
+    {
+      method: "POST",
+      headers: await headers(),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function fetchMapTemplates(): Promise<{ templates: MapTemplate[] }> {
+  const res = await fetch(`${BASE}/api/v1/imports/map-policy/templates`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── MAP Conflict / Removal Review (Step 2.1 Parts 4 & 5) ──
+export interface MapConflictItem {
+  mpn: string;
+  name: string;
+  brand: string;
+  map_price: number;
+  map_promo_price: number | null;
+  scom: number;
+  scom_sale: number;
+  rics_offer: number;
+  map_conflict_reason: string | null;
+  map_conflict_flagged_at: string | null;
+  map_conflict_held: boolean;
+}
+
+export async function fetchMapConflicts(): Promise<{ items: MapConflictItem[]; total: number }> {
+  const res = await fetch(`${BASE}/api/v1/map-review/conflicts`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function resolveMapConflict(
+  mpn: string,
+  body: {
+    action: "accept_map" | "request_buyer_map" | "flag_for_contact";
+    note?: string;
+    web_discount_cap?: string;
+  }
+): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/map-review/conflict/${encodeURIComponent(mpn)}/resolve`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export interface MapRemovalItem {
+  mpn: string;
+  name: string;
+  brand: string;
+  map_price: number;
+  map_removal_proposed_at: string | null;
+  map_removal_source_batch: string | null;
+  map_removal_review_after: string | null;
+}
+
+export async function fetchMapRemovals(): Promise<{ items: MapRemovalItem[]; total: number }> {
+  const res = await fetch(`${BASE}/api/v1/map-review/removals`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function resolveMapRemoval(
+  mpn: string,
+  body: {
+    action: "approve_removal" | "keep_map" | "defer";
+    note?: string;
+    defer_days?: number;
+  }
+): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/map-review/removal/${encodeURIComponent(mpn)}/resolve`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Pricing Export (Step 2.1 Part 6 / TALLY-112) ──
+export interface PricingExportQueueItem {
+  id: string;
+  mpn: string;
+  sku: string | null;
+  rics_retail: number;
+  rics_offer: number;
+  scom: number;
+  scom_sale: number | null;
+  effective_date: string | null;
+  queued_reason: string | null;
+  queued_at: string | null;
+}
+
+export async function fetchPricingExportQueue(): Promise<{
+  items: PricingExportQueueItem[];
+  total: number;
+}> {
+  const res = await fetch(`${BASE}/api/v1/exports/pricing/queue`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function triggerPricingExport(): Promise<{
+  job_id: string;
+  status: string;
+  item_count: number;
+  output_file: string;
+  download_url: string;
+}> {
+  const res = await fetch(`${BASE}/api/v1/exports/pricing/trigger`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export interface PricingExportJob {
+  id: string;
+  status: string;
+  triggered_at: string | null;
+  completed_at: string | null;
+  item_count: number;
+  output_file: string | null;
+  download_url: string | null;
+}
+
+export async function fetchPricingExportJobs(): Promise<{ jobs: PricingExportJob[] }> {
+  const res = await fetch(`${BASE}/api/v1/exports/pricing/jobs`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
 }

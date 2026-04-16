@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
+import { queueForPricingExport } from "../services/pricingExportQueue";
 
 const router = Router();
 const db = admin.firestore;
@@ -244,6 +245,8 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
         completion_state: data.completion_state || "incomplete",
         image_status: imageStatusVal,
         pricing_domain_state: data.pricing_domain_state || "pending",
+        map_conflict_active: !!data.map_conflict_active,
+        is_map_protected: !!data.is_map_protected,
         first_received_at: data.first_received_at?.toDate?.()?.toISOString() || null,
         updated_at: data.updated_at?.toDate?.()?.toISOString() || null,
         is_high_priority,
@@ -390,6 +393,16 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
       product_is_active: data.product_is_active ?? true,
       site_owner: site_targets.length > 0 ? site_targets[0].site_id : "",
       import_batch_id: data.import_batch_id || null,
+      is_map_protected: !!data.is_map_protected,
+      map_price: data.map_price ?? null,
+      map_promo_price: data.map_promo_price ?? null,
+      map_start_date: data.map_start_date ?? null,
+      map_end_date: data.map_end_date ?? null,
+      map_is_always_on: data.map_is_always_on ?? null,
+      map_conflict_active: !!data.map_conflict_active,
+      map_conflict_reason: data.map_conflict_reason ?? null,
+      map_conflict_held: !!data.map_conflict_held,
+      map_removal_proposed: !!data.map_removal_proposed,
       first_received_at: serializeTs(data.first_received_at),
       updated_at: serializeTs(data.updated_at),
       is_high_priority,
@@ -608,6 +621,12 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
         },
         { merge: true }
       );
+      // Step 2.1 / TALLY-112 — any SCOM edit feeds the Pricing Export queue
+      try {
+        await queueForPricingExport(mpn, "scom_edit", userId, null);
+      } catch (qerr: any) {
+        console.error("queueForPricingExport (scom_edit) failed:", qerr);
+      }
     }
 
     // 4c. TALLY-107 — MAP auto-populate:

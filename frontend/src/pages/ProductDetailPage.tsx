@@ -235,10 +235,18 @@ function StatusBar({
   completionState,
   completionProgress,
   pricingDomainState,
+  isMapProtected,
+  mapConflictActive,
+  mapConflictReason,
+  mapPrice,
 }: {
   completionState: string;
   completionProgress: CompletionProgress;
   pricingDomainState: string;
+  isMapProtected?: boolean;
+  mapConflictActive?: boolean;
+  mapConflictReason?: string | null;
+  mapPrice?: number | null;
 }) {
   const isComplete = completionState === "complete";
   const cp = completionProgress;
@@ -305,7 +313,7 @@ function StatusBar({
 
   return (
     <div className="mt-4 bg-white rounded-lg border p-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Completion signal */}
         <div>
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Completion</p>
@@ -349,6 +357,32 @@ function StatusBar({
               {exportLabel}
             </span>
           </div>
+        </div>
+
+        {/* MAP signal */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">MAP Status</p>
+          <div className="mt-1">
+            {mapConflictActive ? (
+              <span
+                className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-red-600 text-white"
+                title={mapConflictReason || ""}
+              >
+                ⚠️ MAP Conflict
+              </span>
+            ) : isMapProtected ? (
+              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                MAP Protected {mapPrice != null ? `($${mapPrice.toFixed(2)})` : ""}
+              </span>
+            ) : (
+              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                Not Protected
+              </span>
+            )}
+          </div>
+          {mapConflictActive && mapConflictReason && (
+            <p className="mt-1 text-xs text-red-600">{mapConflictReason}</p>
+          )}
         </div>
       </div>
 
@@ -530,6 +564,10 @@ export default function ProductDetailPage() {
         completionState={p.completion_state}
         completionProgress={cp}
         pricingDomainState={p.pricing_domain_state || "pending"}
+        isMapProtected={p.is_map_protected}
+        mapConflictActive={p.map_conflict_active}
+        mapConflictReason={p.map_conflict_reason}
+        mapPrice={p.map_price}
       />
 
       {/* MAP auto-populate toast */}
