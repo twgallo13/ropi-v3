@@ -202,7 +202,7 @@ audit_log:      acting_user_id + created_at
 - Log final summary count
 - Exit code 1 on any write failure — never swallow errors
 
-### Seed 1 — `attribute_registry` (66 documents) — TALLY-083
+### Seed 1 — `attribute_registry` (67 documents) — TALLY-083
 
 Document ID = `field_key` value (snake_case, immutable after creation).
 

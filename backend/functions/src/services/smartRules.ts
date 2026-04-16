@@ -163,7 +163,7 @@ export async function executeSmartRules(
 
     // UUID Name Cleanup special handling: preserve raw GUID before blanking
     if (rule.id === "rule_uuid_name_cleanup") {
-      const rawName = productData.name ?? productData.product_name ?? "";
+      const rawName = productData.name ?? "";
       if (rawName) {
         await productRef
           .collection("attribute_values")
@@ -173,8 +173,8 @@ export async function executeSmartRules(
             { merge: true }
           );
       }
-      // Blank the name on the product document
-      await productRef.set({ name: "", product_name: "" }, { merge: true });
+      // Blank the top-level name field on the product document
+      await productRef.set({ name: "" }, { merge: true });
       result.uuid_names_cleaned = true;
     }
 
