@@ -1,0 +1,381 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const firebase_admin_1 = __importDefault(require("firebase-admin"));
+const multer_1 = __importDefault(require("multer"));
+const uuid_1 = require("uuid");
+const sync_1 = require("csv-parse/sync");
+const smartRules_1 = require("../services/smartRules");
+const router = (0, express_1.Router)();
+const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+const db = firebase_admin_1.default.firestore;
+// TALLY-078 — Required columns for Full Product Import
+const REQUIRED_COLUMNS = [
+    "MPN", "SKU", "Brand", "Name", "Status",
+    "Web Regular Price", "Web Sale Price", "Retail Price", "Retail Sale Price",
+    "Store Inv", "Warehouse Inv", "WHS inv",
+    "Website", "Media Status",
+];
+// ────────────────────────────────────────────────
+//  POST /api/v1/imports/full-product/upload
+// ────────────────────────────────────────────────
+router.post("/upload", upload.single("file"), async (req, res) => {
+    try {
+        const file = req.file;
+        if (!file) {
+            res.status(400).json({ error: "No file uploaded. Please attach a CSV file." });
+            return;
+        }
+        // Parse the CSV to get headers and rows
+        const csvContent = file.buffer.toString("utf-8");
+        const lines = csvContent.split(/\r?\n/).filter((l) => l.trim() !== "");
+        if (lines.length < 2) {
+            res.status(400).json({ error: "CSV file is empty or has no data rows." });
+            return;
+        }
+        // Parse full CSV to get accurate row count and detect duplicate columns
+        const records = (0, sync_1.parse)(csvContent, {
+            columns: false,
+            skip_empty_lines: true,
+            relax_column_count: true,
+        });
+        const headerRow = records[0];
+        const warnings = [];
+        // TALLY-080 Rule 2 — Duplicate column detection
+        const columnMap = {};
+        headerRow.forEach((col, idx) => {
+            const trimmed = col.trim();
+            if (trimmed in columnMap) {
+                warnings.push(`Column '${trimmed}' appears twice (columns ${columnMap[trimmed] + 1} and ${idx + 1}). Column ${idx + 1} was used. Please verify.`);
+            }
+            columnMap[trimmed] = idx;
+        });
+        // Validate required columns
+        const presentColumns = new Set(Object.keys(columnMap));
+        const missingColumns = REQUIRED_COLUMNS.filter((c) => !presentColumns.has(c));
+        if (missingColumns.length > 0) {
+            res.status(400).json({
+                error: "CSV is missing required columns.",
+                missing_columns: missingColumns,
+                message: `The following required columns are missing: ${missingColumns.join(", ")}. Please ensure your CSV includes all required columns and try again.`,
+            });
+            return;
+        }
+        const rowCount = records.length - 1; // exclude header
+        const batchId = (0, uuid_1.v4)();
+        const filename = file.originalname || "upload.csv";
+        const filePath = `imports/full-product/${batchId}/${filename}`;
+        // Store file in Firebase Storage
+        const bucket = firebase_admin_1.default.storage().bucket();
+        const storageFile = bucket.file(filePath);
+        await storageFile.save(file.buffer, {
+            contentType: "text/csv",
+            metadata: { batch_id: batchId },
+        });
+        // Create import_batches document
+        const firestore = firebase_admin_1.default.firestore();
+        await firestore.collection("import_batches").doc(batchId).set({
+            batch_id: batchId,
+            family: "full_product",
+            status: "pending",
+            file_path: filePath,
+            row_count: rowCount,
+            committed_rows: 0,
+            failed_rows: 0,
+            warnings,
+            errors: [],
+            created_by: req.user?.uid || "system",
+            created_at: db.FieldValue.serverTimestamp(),
+            completed_at: null,
+        });
+        res.status(200).json({
+            batch_id: batchId,
+            column_map: columnMap,
+            row_count: rowCount,
+            warnings,
+        });
+    }
+    catch (err) {
+        console.error("Upload error:", err);
+        res.status(500).json({ error: "An unexpected error occurred during file upload. Please try again." });
+    }
+});
+// ────────────────────────────────────────────────
+//  POST /api/v1/imports/full-product/:batch_id/commit
+// ────────────────────────────────────────────────
+router.post("/:batch_id/commit", async (req, res) => {
+    const { batch_id } = req.params;
+    const firestore = firebase_admin_1.default.firestore();
+    try {
+        // Step 1 — Fetch batch record and validate status
+        const batchRef = firestore.collection("import_batches").doc(batch_id);
+        const batchSnap = await batchRef.get();
+        if (!batchSnap.exists) {
+            res.status(404).json({ error: `Batch ${batch_id} not found.` });
+            return;
+        }
+        const batchData = batchSnap.data();
+        if (batchData.status === "processing") {
+            res.status(409).json({ error: `Batch ${batch_id} is already being processed.` });
+            return;
+        }
+        if (batchData.status === "complete") {
+            res.status(409).json({ error: `Batch ${batch_id} has already been committed.` });
+            return;
+        }
+        if (batchData.status !== "pending") {
+            res.status(409).json({ error: `Batch ${batch_id} has status "${batchData.status}" and cannot be committed.` });
+            return;
+        }
+        // Step 2 — Set status to processing
+        await batchRef.update({ status: "processing" });
+        // Step 3 — Retrieve the file from Firebase Storage
+        const bucket = firebase_admin_1.default.storage().bucket();
+        const [fileBuffer] = await bucket.file(batchData.file_path).download();
+        const csvContent = fileBuffer.toString("utf-8");
+        // Step 4 — Parse all data rows
+        const records = (0, sync_1.parse)(csvContent, {
+            columns: true,
+            skip_empty_lines: true,
+            relax_column_count: true,
+            trim: true,
+        });
+        // Load site_registry for Website field validation (TALLY-079)
+        const sitesSnap = await firestore.collection("site_registry").get();
+        const validSites = new Set(sitesSnap.docs.map((d) => d.id));
+        // Counters
+        let committedRows = 0;
+        let failedRows = 0;
+        let pricingIncomplete = 0;
+        let pricingDiscrepancy = 0;
+        let uuidNamesCleaned = 0;
+        let noImageProducts = 0;
+        let totalRulesFired = 0;
+        const errors = [];
+        const batchWarnings = [...(batchData.warnings || [])];
+        // Step 5 — Process each row
+        for (let i = 0; i < records.length; i++) {
+            const row = records[i];
+            const rowNum = i + 2; // 1-indexed, +1 for header
+            const mpn = (row.MPN || "").trim();
+            // ── Step A — Row Validation ──
+            if (!mpn) {
+                failedRows++;
+                errors.push({
+                    row: rowNum,
+                    mpn: "",
+                    error: "MPN is required — this row has no product identifier",
+                });
+                continue;
+            }
+            // Validate numeric price fields
+            const priceFields = [
+                "Web Regular Price",
+                "Web Sale Price",
+                "Retail Price",
+                "Retail Sale Price",
+            ];
+            let rowValid = true;
+            for (const pf of priceFields) {
+                const val = (row[pf] || "").trim();
+                if (val !== "" && isNaN(Number(val))) {
+                    failedRows++;
+                    errors.push({
+                        row: rowNum,
+                        mpn,
+                        error: `Field [${pf}] contains non-numeric value [${val}] — expected a number`,
+                    });
+                    rowValid = false;
+                    break;
+                }
+            }
+            if (!rowValid)
+                continue;
+            try {
+                // ── Step B — Field Routing ──
+                // Identity → canonical product document
+                const identity = {
+                    mpn,
+                    sku: (row.SKU || "").trim(),
+                    brand: (row.Brand || "").trim(),
+                    name: (row.Name || "").trim(),
+                    status: (row.Status || "").trim(),
+                    last_received_at: db.FieldValue.serverTimestamp(),
+                    updated_at: db.FieldValue.serverTimestamp(),
+                };
+                // Source inputs → source_inputs subcollection
+                const sourceInputs = {
+                    rics_color: (row["RICS Color"] || "").trim(),
+                    rics_short_description: (row["RICS Short Description"] || "").trim(),
+                    rics_long_description: (row["RICS Long Desc"] || "").trim(),
+                    rics_category: (row["RICS Category"] || "").trim(),
+                    rics_brand: (row["RICS Brand"] || "").trim(),
+                };
+                // Pricing inputs
+                const scom = parseFloat(row["Web Regular Price"]) || 0;
+                const scomSale = parseFloat(row["Web Sale Price"]) || 0;
+                const ricsRetail = parseFloat(row["Retail Price"]) || 0;
+                const ricsOffer = parseFloat(row["Retail Sale Price"]) || 0;
+                const pricing = {
+                    scom,
+                    scom_sale: scomSale,
+                    rics_retail: ricsRetail,
+                    rics_offer: ricsOffer,
+                };
+                // Inventory inputs
+                const inventory = {
+                    inventory_store: parseInt(row["Store Inv"]) || 0,
+                    inventory_warehouse: parseInt(row["Warehouse Inv"]) || 0,
+                    inventory_whs: parseInt(row["WHS inv"]) || 0,
+                };
+                // Media Status
+                const mediaStatus = (row["Media Status"] || "").trim();
+                // Website field parsing (TALLY-079)
+                const websiteRaw = (row.Website || "").trim();
+                const siteList = websiteRaw
+                    .split(",")
+                    .map((s) => s.trim().toLowerCase())
+                    .filter((s) => s !== "");
+                // ── Step C — Write Product to Firestore ──
+                const productRef = firestore.collection("products").doc(mpn);
+                // Check if product exists for first_received_at logic
+                const existingSnap = await productRef.get();
+                const firstReceivedAt = existingSnap.exists
+                    ? existingSnap.data().first_received_at
+                    : db.FieldValue.serverTimestamp();
+                await productRef.set({
+                    ...identity,
+                    ...pricing,
+                    ...inventory,
+                    media_status: mediaStatus,
+                    first_received_at: firstReceivedAt,
+                    completion_state: "incomplete",
+                    product_is_active: true,
+                    import_batch_id: batch_id,
+                }, { merge: true });
+                // Write source inputs to subcollection
+                await productRef
+                    .collection("attribute_values")
+                    .doc("source_inputs")
+                    .set(sourceInputs, { merge: true });
+                // Write site_targets
+                for (const site of siteList) {
+                    if (validSites.has(site)) {
+                        await productRef
+                            .collection("site_targets")
+                            .doc(site)
+                            .set({
+                            site_id: site,
+                            active: true,
+                            updated_at: db.FieldValue.serverTimestamp(),
+                        }, { merge: true });
+                    }
+                    else {
+                        batchWarnings.push(`Row ${rowNum} (MPN: ${mpn}): Site "${site}" not found in Site Registry. Field imported but not linked to an active site target.`);
+                    }
+                }
+                // Write attribute values with provenance for import fields (TALLY-044)
+                const importAttributes = {
+                    mpn,
+                    sku: identity.sku,
+                    brand: identity.brand,
+                    name: identity.name,
+                    status: identity.status,
+                };
+                for (const [key, value] of Object.entries(importAttributes)) {
+                    if (value !== undefined && value !== "") {
+                        await productRef
+                            .collection("attribute_values")
+                            .doc(key)
+                            .set({
+                            value,
+                            origin_type: "RO-Import",
+                            origin_detail: `Batch ${batch_id}`,
+                            verification_state: "System-Applied",
+                            written_at: db.FieldValue.serverTimestamp(),
+                        }, { merge: true });
+                    }
+                }
+                // ── Step D — Fire Smart Rules (Section 19.10) ──
+                const ruleResult = await (0, smartRules_1.executeSmartRules)(mpn, batch_id);
+                totalRulesFired += ruleResult.rules_fired;
+                if (ruleResult.uuid_names_cleaned)
+                    uuidNamesCleaned++;
+                if (ruleResult.image_status_set === "NO")
+                    noImageProducts++;
+                // ── Step E — Pricing State Flags (TALLY-080) ──
+                const allZero = scom === 0 && scomSale === 0 && ricsRetail === 0 && ricsOffer === 0;
+                const saleWithoutRegular = scomSale > 0 && scom === 0;
+                if (saleWithoutRegular) {
+                    await productRef.set({ pricing_domain_state: "discrepancy" }, { merge: true });
+                    pricingDiscrepancy++;
+                }
+                else if (allZero) {
+                    await productRef.set({ pricing_domain_state: "pricing_incomplete" }, { merge: true });
+                    pricingIncomplete++;
+                }
+                committedRows++;
+            }
+            catch (rowErr) {
+                failedRows++;
+                errors.push({
+                    row: rowNum,
+                    mpn,
+                    error: "An unexpected error occurred while processing this row. Please verify the data and try again.",
+                });
+                console.error(`Row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
+            }
+        }
+        // Step 6 — Update batch record with final counts
+        const finalStatus = failedRows === records.length ? "failed" : "complete";
+        await batchRef.update({
+            status: finalStatus,
+            committed_rows: committedRows,
+            failed_rows: failedRows,
+            smart_rules_fired: totalRulesFired,
+            warnings: batchWarnings,
+            errors,
+            completed_at: db.FieldValue.serverTimestamp(),
+            summary: {
+                uuid_names_cleaned: uuidNamesCleaned,
+                no_image_products: noImageProducts,
+                pricing_incomplete: pricingIncomplete,
+                pricing_discrepancy: pricingDiscrepancy,
+            },
+        });
+        // Part 4 — Import Results Response
+        res.status(200).json({
+            batch_id,
+            status: finalStatus,
+            total_rows: records.length,
+            committed_rows: committedRows,
+            failed_rows: failedRows,
+            pricing_incomplete: pricingIncomplete,
+            pricing_discrepancy: pricingDiscrepancy,
+            uuid_names_cleaned: uuidNamesCleaned,
+            no_image_products: noImageProducts,
+            errors,
+            warnings: batchWarnings,
+        });
+    }
+    catch (err) {
+        console.error("Commit error:", err);
+        // Attempt to mark batch as failed
+        try {
+            await firestore.collection("import_batches").doc(batch_id).update({
+                status: "failed",
+                errors: [{ error: "An unexpected error occurred during commit processing." }],
+                completed_at: db.FieldValue.serverTimestamp(),
+            });
+        }
+        catch (_) {
+            // swallow — best effort
+        }
+        res.status(500).json({ error: "An unexpected error occurred during batch commit. Please try again." });
+    }
+});
+exports.default = router;
+//# sourceMappingURL=importFullProduct.js.map

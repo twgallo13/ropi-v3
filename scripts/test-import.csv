@@ -1,0 +1,8 @@
+MPN,SKU,Brand,Name,Status,Web Regular Price,Web Sale Price,Retail Price,Retail Sale Price,Store Inv,Warehouse Inv,WHS inv,Website,Media Status,RICS Color,RICS Short Description,RICS Long Desc,RICS Category,RICS Brand
+TEST-001,SKU-001,Nike,Air Max 90,Active,120.00,99.99,130.00,109.99,25,100,50,"shiekh,karmaloop",Has Media,Black/White,Nike Air Max 90 - Classic sneaker,Nike Air Max 90 Men's shoe featuring visible Air cushioning,Footwear > Sneakers,NIKE
+TEST-002,SKU-002,Adidas,Ultra Boost 22,Active,180.00,0,190.00,0,10,50,30,shiekh,Has Media,Cloud White,Adidas Ultra Boost 22,Adidas Ultra Boost 22 running shoe with Boost midsole,Footwear > Running,ADIDAS
+TEST-003,SKU-003,Jordan,ae6d2f4a-8b3c-4e5d-9f1a-7c8b0d2e3f4a,Active,0,0,0,0,5,20,10,"mltd,plndr",,Red,Jordan Retro 4,Jordan Retro 4 in Fire Red colorway,Footwear > Basketball,JORDAN
+TEST-004,SKU-004,Puma,RS-X Toys,Active,110.00,0,120.00,0,0,0,0,shiekh,Has Media,Blue/Red,Puma RS-X Toys,Puma RS-X Toys with bold color blocking,Footwear > Lifestyle,PUMA
+TEST-005,SKU-005,Timberland,6-Inch Premium Boot,Active,0,49.99,0,0,15,40,20,"shiekh,unknown_store",Has Media,Wheat,Timberland 6-Inch Boot,Timberland 6-Inch Premium Waterproof Boot,Footwear > Boots,TIMBERLAND
+,SKU-006,Converse,Chuck Taylor All Star,Active,65.00,0,70.00,0,30,80,40,karmaloop,Has Media,Black,Converse Chuck Taylor,Converse Chuck Taylor All Star Low Top,Footwear > Sneakers,CONVERSE
+TEST-007,SKU-007,New Balance,550,Active,abc,0,120.00,0,20,60,30,shiekh,Has Media,White/Green,New Balance 550,New Balance 550 retro basketball shoe,Footwear > Sneakers,NEW BALANCE
