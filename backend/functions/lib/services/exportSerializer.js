@@ -45,8 +45,12 @@ async function serializeProduct(mpn) {
     // promo: map "Allowed"/"Disallowed" string to Boolean (AC7)
     const promoRaw = attrs["promo"];
     const promo = promoRaw === "Allowed" ? true : false;
-    // web_discount_cap: default to "NO" if not set (TALLY-084)
-    const webDiscountCap = attrs["web_discount_cap"] || "NO";
+    // web_discount_cap: validate against allowed enum, default to "NO" (TALLY-084)
+    const WEB_DISCOUNT_CAP_ENUM = ["NO", "5", "10", "15", "20", "25", "30"];
+    const rawCap = attrs["web_discount_cap"];
+    const webDiscountCap = rawCap && WEB_DISCOUNT_CAP_ENUM.includes(String(rawCap))
+        ? String(rawCap)
+        : "NO";
     // site_targets: domains where product is export-eligible
     const siteSnap = await productRef.collection("site_targets").get();
     const siteTargets = siteSnap.docs

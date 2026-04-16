@@ -44,14 +44,15 @@ router.get("/pending", auth_1.requireAuth, async (_req, res) => {
 });
 // ── POST /api/v1/exports/daily/trigger — Full export ──
 router.post("/daily/trigger", auth_1.requireAuth, async (req, res) => {
+    const userId = req.user?.uid;
+    if (!userId) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+    }
+    // 1. Create export_jobs document
+    let jobRef;
     try {
-        const userId = req.user?.uid;
-        if (!userId) {
-            res.status(401).json({ error: "Authentication required" });
-            return;
-        }
-        // 1. Create export_jobs document
-        const jobRef = await db().collection("export_jobs").add({
+        jobRef = await db().collection("export_jobs").add({
             status: "processing",
             triggered_by: userId,
             triggered_at: ts(),
@@ -62,6 +63,13 @@ router.post("/daily/trigger", auth_1.requireAuth, async (req, res) => {
             blocked_products: [],
             errors: [],
         });
+    }
+    catch (err) {
+        console.error("POST /exports/daily/trigger — failed to create job:", err);
+        res.status(500).json({ error: err.message });
+        return;
+    }
+    try {
         // 2. Run eligibility gate
         const { eligible, blocked } = await (0, exportEligibility_1.getExportEligibleProducts)();
         // 3. Serialize each eligible product
@@ -138,7 +146,18 @@ router.post("/daily/trigger", auth_1.requireAuth, async (req, res) => {
     }
     catch (err) {
         console.error("POST /exports/daily/trigger error:", err);
-        res.status(500).json({ error: err.message });
+        // Mark job as failed so the Export Center shows the failure
+        try {
+            await jobRef.update({
+                status: "failed",
+                completed_at: ts(),
+                error_message: err.message,
+            });
+        }
+        catch (updateErr) {
+            console.error("Failed to update job status to failed:", updateErr);
+        }
+        res.status(500).json({ error: err.message, job_id: jobRef.id, status: "failed" });
     }
 });
 // ── POST /api/v1/exports/notify-buyer ──
