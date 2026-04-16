@@ -487,5 +487,78 @@ router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) 
         res.status(500).json({ error: "Failed to save field." });
     }
 });
+// ────────────────────────────────────────────────
+//  POST /api/v1/products/:mpn/confirm-pricing
+//  TALLY-105 — Product Ops confirms pricing before export
+// ────────────────────────────────────────────────
+router.post("/:mpn/confirm-pricing", auth_1.requireAuth, async (req, res) => {
+    try {
+        const firestore = firebase_admin_1.default.firestore();
+        const { mpn } = req.params;
+        const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+        const userId = req.user?.uid;
+        // Role check — product_ops or admin only. Reject explicit buyer role.
+        // Role comes from custom claims on the Firebase ID token.
+        const role = req.user?.role || req.user?.claims?.role || null;
+        if (role === "buyer") {
+            res.status(403).json({
+                error: "Forbidden: buyer role cannot confirm pricing. Product Ops or admin only.",
+            });
+            return;
+        }
+        // Fetch product
+        const productRef = firestore.collection("products").doc(docId);
+        const productSnap = await productRef.get();
+        if (!productSnap.exists) {
+            res.status(404).json({ error: `Product with MPN "${mpn}" not found.` });
+            return;
+        }
+        const product = productSnap.data();
+        const currentState = product.pricing_domain_state;
+        // Validation 1: must be Pricing Current
+        if (currentState !== "Pricing Current") {
+            res.status(409).json({
+                error: `Cannot confirm pricing: product is in state "${currentState}", must be "Pricing Current".`,
+            });
+            return;
+        }
+        // Validation 2: not in discrepancy
+        if (currentState === "discrepancy" || currentState === "Pricing Discrepancy") {
+            res.status(409).json({
+                error: "Cannot confirm pricing: product is in discrepancy state.",
+            });
+            return;
+        }
+        // Validation 3: not in loss_leader_review pending veto
+        if (currentState === "loss_leader_review" ||
+            currentState === "Loss-Leader Review Pending") {
+            res.status(409).json({
+                error: "Cannot confirm pricing: product is awaiting loss-leader veto decision.",
+            });
+            return;
+        }
+        // All good — flip state to export_ready
+        await productRef.set({
+            pricing_domain_state: "export_ready",
+            pricing_confirmed_by: userId,
+            pricing_confirmed_at: db.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        // Audit log entry
+        await firestore.collection("audit_log").add({
+            product_mpn: mpn,
+            event_type: "pricing_confirmed_by_ops",
+            acting_user_id: userId,
+            created_at: db.FieldValue.serverTimestamp(),
+        });
+        res.status(200).json({
+            pricing_domain_state: "export_ready",
+            message: "Pricing confirmed. Product is now queued for export.",
+        });
+    }
+    catch (err) {
+        console.error("POST /products/:mpn/confirm-pricing error:", err);
+        res.status(500).json({ error: "Failed to confirm pricing." });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=products.js.map

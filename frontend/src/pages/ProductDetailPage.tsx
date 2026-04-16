@@ -5,9 +5,11 @@ import {
   fetchAttributeRegistry,
   completeProduct,
   saveField,
+  confirmPricing,
   type ProductDetail,
   type AttributeRegistryEntry,
 } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
 
 // ── Provenance helpers — used only for info cards ──────────────
 // (EditableAttrRow handles its own provenance display)
@@ -227,9 +229,169 @@ function EditableAttrRow({
 import { createContext } from "react";
 const MpnContext = createContext<string>("");
 
+// ── Status Bar ──────────────────────────────────────────────────
+type CompletionProgress = { total_required: number; completed: number; pct: number; blockers: string[] };
+
+function StatusBar({
+  completionState,
+  completionProgress,
+  pricingDomainState,
+  role,
+  confirming,
+  confirmMsg,
+  onConfirmPricing,
+}: {
+  completionState: string;
+  completionProgress: CompletionProgress;
+  pricingDomainState: string;
+  role: string | null;
+  confirming: boolean;
+  confirmMsg: string;
+  onConfirmPricing: () => void;
+}) {
+  const isComplete = completionState === "complete";
+  const cp = completionProgress;
+
+  // Derive export signal based on pricing_domain_state
+  const isExportReady = pricingDomainState === "export_ready";
+  const isPricingCurrent = pricingDomainState === "Pricing Current";
+  const canConfirm = isPricingCurrent && (role === "product_ops" || role === "admin");
+
+  let exportLabel = "Not Ready";
+  let exportClass = "bg-gray-100 text-gray-600";
+  if (isExportReady) {
+    exportLabel = "Export Ready ✅";
+    exportClass = "bg-green-100 text-green-700";
+  } else if (isPricingCurrent) {
+    exportLabel = "Pending Pricing Confirmation";
+    exportClass = "bg-blue-50 text-blue-700";
+  } else if (pricingDomainState === "scheduled") {
+    exportLabel = "Scheduled";
+    exportClass = "bg-purple-50 text-purple-700";
+  } else if (
+    pricingDomainState === "discrepancy" ||
+    pricingDomainState === "Pricing Discrepancy"
+  ) {
+    exportLabel = "Blocked — Discrepancy";
+    exportClass = "bg-red-50 text-red-700";
+  } else if (
+    pricingDomainState === "loss_leader_review" ||
+    pricingDomainState === "Loss-Leader Review Pending"
+  ) {
+    exportLabel = "Blocked — Loss-Leader Review";
+    exportClass = "bg-red-50 text-red-700";
+  }
+
+  // Pricing signal label/color
+  const pricingLabel = pricingDomainState || "pending";
+  let pricingClass = "bg-gray-100 text-gray-600";
+  if (pricingDomainState === "Pricing Current" || pricingDomainState === "export_ready") {
+    pricingClass = "bg-green-50 text-green-700";
+  } else if (
+    pricingDomainState === "discrepancy" ||
+    pricingDomainState === "Pricing Discrepancy" ||
+    pricingDomainState === "loss_leader_review" ||
+    pricingDomainState === "Loss-Leader Review Pending" ||
+    pricingDomainState === "buyer_denied" ||
+    pricingDomainState === "loss_leader_vetoed"
+  ) {
+    pricingClass = "bg-red-50 text-red-700";
+  } else if (pricingDomainState === "scheduled") {
+    pricingClass = "bg-purple-50 text-purple-700";
+  } else if (pricingDomainState === "Pricing Pending" || pricingDomainState === "pending") {
+    pricingClass = "bg-yellow-50 text-yellow-700";
+  }
+
+  return (
+    <div className="mt-4 bg-white rounded-lg border p-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Completion signal */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Completion</p>
+          <div className="mt-1 flex items-center gap-2">
+            <span
+              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                isComplete ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
+              {completionState}
+            </span>
+            <span className="text-xs text-gray-500">
+              {cp.completed}/{cp.total_required} ({cp.pct}%)
+            </span>
+          </div>
+          <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                cp.pct === 100 ? "bg-green-500" : cp.pct >= 50 ? "bg-yellow-500" : "bg-red-500"
+              }`}
+              style={{ width: `${cp.pct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Pricing signal */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Pricing</p>
+          <div className="mt-1">
+            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${pricingClass}`}>
+              {pricingLabel}
+            </span>
+          </div>
+        </div>
+
+        {/* Export signal */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Export Status</p>
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
+            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${exportClass}`}>
+              {exportLabel}
+            </span>
+            {canConfirm && (
+              <button
+                onClick={onConfirmPricing}
+                disabled={confirming}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {confirming ? "Confirming…" : "Confirm Pricing"}
+              </button>
+            )}
+          </div>
+          {confirmMsg && (
+            <p
+              className={`mt-1 text-xs ${
+                confirmMsg.toLowerCase().startsWith("failed") || confirmMsg.toLowerCase().startsWith("cannot")
+                  ? "text-red-600"
+                  : "text-green-600"
+              }`}
+            >
+              {confirmMsg}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Completion blockers (kept under the bar) */}
+      {cp.blockers.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-xs text-gray-500">Completion blockers:</p>
+          <ul className="text-xs text-red-600 list-disc ml-4">
+            {cp.blockers.map((b, i) => (
+              <li key={i}>{b}</li>
+            ))}
+          </ul>
+        </div>
+      ) : cp.pct === 100 && !isComplete ? (
+        <p className="mt-3 text-sm text-green-600 font-medium">Ready to Complete ✓</p>
+      ) : null}
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────
 export default function ProductDetailPage() {
   const { mpn } = useParams<{ mpn: string }>();
+  const { role } = useAuth();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [registry, setRegistry] = useState<AttributeRegistryEntry[]>([]);
   const [activeTab, setActiveTab] = useState("core_information");
@@ -237,6 +399,8 @@ export default function ProductDetailPage() {
   const [error, setError] = useState("");
   const [completing, setCompleting] = useState(false);
   const [completeMsg, setCompleteMsg] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [confirmMsg, setConfirmMsg] = useState("");
 
   useEffect(() => {
     if (!mpn) return;
@@ -300,6 +464,25 @@ export default function ProductDetailPage() {
     }
   }
 
+  async function handleConfirmPricing() {
+    if (!mpn) return;
+    setConfirming(true);
+    setConfirmMsg("");
+    try {
+      const resp = await confirmPricing(mpn);
+      setConfirmMsg(resp.message || "Pricing confirmed.");
+      // Optimistically update pricing_domain_state so Status Bar reflects export_ready without reload
+      setProduct((prev) =>
+        prev ? { ...prev, pricing_domain_state: resp.pricing_domain_state } : prev
+      );
+    } catch (err: unknown) {
+      const e = err as { error?: string };
+      setConfirmMsg(e.error || "Failed to confirm pricing");
+    } finally {
+      setConfirming(false);
+    }
+  }
+
   if (loading) return <div className="p-8 text-center text-gray-400">Loading…</div>;
   if (error || !product) {
     return (
@@ -345,50 +528,24 @@ export default function ProductDetailPage() {
           </p>
         </div>
         <div className="text-right">
-          <span
-            className={`inline-block px-3 py-1 rounded text-sm font-medium ${
-              p.completion_state === "complete"
-                ? "bg-green-100 text-green-700"
-                : "bg-yellow-100 text-yellow-700"
-            }`}
-          >
-            {p.completion_state}
-          </span>
           {p.is_high_priority && (
-            <span className="ml-2 bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded">
+            <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded">
               High Priority — {p.launch_days_remaining}d
             </span>
           )}
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="mt-4 bg-white rounded-lg border p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium">Completion Progress</span>
-          <span className="text-sm text-gray-500">
-            {cp.completed}/{cp.total_required} ({cp.pct}%)
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div
-            className={`h-3 rounded-full transition-all ${
-              cp.pct === 100 ? "bg-green-500" : cp.pct >= 50 ? "bg-yellow-500" : "bg-red-500"
-            }`}
-            style={{ width: `${cp.pct}%` }}
-          />
-        </div>
-        {cp.blockers.length > 0 ? (
-          <div className="mt-2">
-            <p className="text-xs text-gray-500">Blockers:</p>
-            <ul className="text-xs text-red-600 list-disc ml-4">
-              {cp.blockers.map((b, i) => <li key={i}>{b}</li>)}
-            </ul>
-          </div>
-        ) : cp.pct === 100 ? (
-          <p className="mt-2 text-sm text-green-600 font-medium">Ready to Complete ✓</p>
-        ) : null}
-      </div>
+      {/* Status Bar (Completion / Pricing / Export) */}
+      <StatusBar
+        completionState={p.completion_state}
+        completionProgress={cp}
+        pricingDomainState={p.pricing_domain_state || "pending"}
+        role={role}
+        confirming={confirming}
+        confirmMsg={confirmMsg}
+        onConfirmPricing={handleConfirmPricing}
+      />
 
       {/* Complete button */}
       <div className="mt-4 flex items-center gap-3">
