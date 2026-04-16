@@ -80,8 +80,16 @@ async function executeSmartRules(mpn, batchId) {
     if (!productSnap.exists)
         return result;
     const productData = productSnap.data();
+    // AC9 — Load attribute_registry keys for target_attribute validation
+    const registrySnap = await firestore.collection("attribute_registry").get();
+    const registryKeys = new Set(registrySnap.docs.map((d) => d.id));
     for (const ruleDoc of sortedDocs) {
         const rule = { id: ruleDoc.id, ...ruleDoc.data() };
+        // AC9 — If target_attribute not in attribute_registry, skip with named error log
+        if (!registryKeys.has(rule.action.target_attribute)) {
+            console.error(`Smart Rule "${rule.id}": target_attribute "${rule.action.target_attribute}" not found in attribute_registry — skipping.`);
+            continue;
+        }
         // Evaluate all conditions
         const conditionResults = rule.conditions.map((c) => {
             const fieldValue = productData[c.source_field] ?? null;
@@ -116,7 +124,7 @@ async function executeSmartRules(mpn, batchId) {
         }
         // UUID Name Cleanup special handling: preserve raw GUID before blanking
         if (rule.id === "rule_uuid_name_cleanup") {
-            const rawName = productData.name ?? "";
+            const rawName = productData.name ?? productData.product_name ?? "";
             if (rawName) {
                 await productRef
                     .collection("attribute_values")
@@ -124,7 +132,7 @@ async function executeSmartRules(mpn, batchId) {
                     .set({ raw_name_original: rawName }, { merge: true });
             }
             // Blank the name on the product document
-            await productRef.set({ name: "" }, { merge: true });
+            await productRef.set({ name: "", product_name: "" }, { merge: true });
             result.uuid_names_cleaned = true;
         }
         // Write the attribute value with full provenance stamp (TALLY-044)

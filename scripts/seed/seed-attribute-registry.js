@@ -116,6 +116,9 @@ const ATTRIBUTES = [
   // ── Analytics / AI (65–66) ──
   attr("ai_confidence_score", "AI Confidence Score", "number", "analytics", { ai: true, sort: 65 }),
   attr("last_ai_enrichment", "Last AI Enrichment", "timestamp", "analytics", { ai: true, sort: 66 }),
+
+  // ── System (67) ── derived signals, not operator-facing
+  attr("image_status", "Image Status", "string", "system", { sort: 67 }),
 ];
 
 async function main() {

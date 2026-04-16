@@ -16,7 +16,7 @@ const RULES = [
     rule_name: "UUID Name Cleanup",
     conditions: [{ source_field: "name", operator: "matches", target_value: "UUID_PATTERN" }],
     condition_logic: "AND",
-    action: { target_attribute: "name", output_value: "" },
+    action: { target_attribute: "product_name", output_value: "" },
     always_overwrite: true,
     priority: 1,
     is_active: true,

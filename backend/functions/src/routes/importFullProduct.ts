@@ -324,7 +324,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           mpn,
           sku: identity.sku,
           brand: identity.brand,
-          name: identity.name,
+          product_name: identity.name,
           status: identity.status,
         };
         for (const [key, value] of Object.entries(importAttributes)) {
