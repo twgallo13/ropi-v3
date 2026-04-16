@@ -24,6 +24,11 @@ function hasValidValue(val) {
  * Applied at export payload build time, NOT at buyer approval time.
  */
 function apply99Rounding(calculatedPrice) {
+    // Guard: non-positive or sub-dollar prices cannot be safely rounded
+    if (calculatedPrice <= 0)
+        return calculatedPrice;
+    if (calculatedPrice < 1)
+        return calculatedPrice;
     // Already ends in .99 — no change
     if (Math.round((calculatedPrice % 1) * 100) === 99) {
         return calculatedPrice;

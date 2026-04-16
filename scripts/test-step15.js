@@ -27,8 +27,10 @@ if (keyJson) {
 }
 const db = admin.firestore(app);
 
-// ── apply99Rounding test ──
+// ── apply99Rounding test (with edge-case guard) ──
 function apply99Rounding(calculatedPrice) {
+  if (calculatedPrice <= 0) return calculatedPrice;
+  if (calculatedPrice < 1) return calculatedPrice;
   if (Math.round((calculatedPrice % 1) * 100) === 99) return calculatedPrice;
   return Math.floor(calculatedPrice) - 0.01;
 }
@@ -45,6 +47,11 @@ async function main() {
     { input: 67.50, expected: 66.99 },
     { input: 84.99, expected: 84.99 },
     { input: 100.00, expected: 99.99 },
+    // Edge cases
+    { input: 0.50, expected: 0.50 },   // sub-dollar → pass-through
+    { input: 0, expected: 0 },          // zero → pass-through
+    { input: -5, expected: -5 },        // negative → pass-through
+    { input: 1.00, expected: 0.99 },    // boundary → rounds correctly
   ];
   for (const t of roundingTests) {
     const result = apply99Rounding(t.input);
