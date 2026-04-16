@@ -145,6 +145,25 @@
         { "fieldPath": "action_type",  "order": "ASCENDING" },
         { "fieldPath": "created_at",   "order": "DESCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 16 — Audit log by product_mpn + created_at desc",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "product_mpn", "order": "ASCENDING" },
+        { "fieldPath": "created_at",  "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 17 — Audit log by event_type + product_mpn + created_at desc",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "event_type",  "order": "ASCENDING" },
+        { "fieldPath": "product_mpn", "order": "ASCENDING" },
+        { "fieldPath": "created_at",  "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -394,5 +394,80 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
         res.status(500).json({ error: "Failed to complete product." });
     }
 });
+// ────────────────────────────────────────────────
+//  POST /api/v1/products/:mpn/attributes/:field_key
+//  Save a single attribute with full provenance (TALLY-044)
+// ────────────────────────────────────────────────
+router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) => {
+    try {
+        const firestore = firebase_admin_1.default.firestore();
+        const { mpn, field_key: fieldKey } = req.params;
+        const { value } = req.body;
+        const userId = req.user?.uid;
+        if (!userId) {
+            res.status(401).json({ error: "Authentication required" });
+            return;
+        }
+        if (value === undefined) {
+            res.status(400).json({ error: "value is required in request body" });
+            return;
+        }
+        // 1. Validate field_key exists in attribute_registry and is active
+        const regDoc = await firestore.collection("attribute_registry").doc(fieldKey).get();
+        if (!regDoc.exists || !regDoc.data().active) {
+            res.status(400).json({ error: `Field "${fieldKey}" not found in attribute registry` });
+            return;
+        }
+        const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+        // Verify product exists
+        const productRef = firestore.collection("products").doc(docId);
+        const productSnap = await productRef.get();
+        if (!productSnap.exists) {
+            res.status(404).json({ error: `Product with MPN "${mpn}" not found.` });
+            return;
+        }
+        // 3. Write to attribute_values with full provenance stamp (TALLY-044)
+        await productRef
+            .collection("attribute_values")
+            .doc(fieldKey)
+            .set({
+            value: value,
+            origin_type: "Human",
+            origin_detail: `User: ${userId}`,
+            verification_state: "Human-Verified",
+            written_at: db.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        // 4. If field_key is the name field — also update the top-level product document
+        if (fieldKey === "name" || fieldKey === "product_name") {
+            await productRef.set({
+                name: value,
+                updated_at: db.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        }
+        // 5. Write audit_log entry
+        await firestore.collection("audit_log").add({
+            product_mpn: mpn,
+            event_type: "field_edited",
+            field_key: fieldKey,
+            new_value: value,
+            acting_user_id: userId,
+            origin_type: "Human",
+            created_at: db.FieldValue.serverTimestamp(),
+        });
+        // 6. Return updated completion_progress
+        const requiredFields = await getRequiredFieldKeys(firestore);
+        const completion_progress = await computeCompletionProgress(firestore, docId, requiredFields);
+        res.status(200).json({
+            field_key: fieldKey,
+            value: value,
+            verification_state: "Human-Verified",
+            completion_progress,
+        });
+    }
+    catch (err) {
+        console.error("POST /products/:mpn/attributes/:field_key error:", err);
+        res.status(500).json({ error: "Failed to save field." });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=products.js.map

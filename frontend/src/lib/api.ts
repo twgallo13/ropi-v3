@@ -114,6 +114,32 @@ export async function completeProduct(mpn: string): Promise<{ completion_state: 
   return data;
 }
 
+export interface SaveFieldResponse {
+  field_key: string;
+  value: unknown;
+  verification_state: string;
+  completion_progress: {
+    total_required: number;
+    completed: number;
+    pct: number;
+    blockers: string[];
+  };
+}
+
+export async function saveField(mpn: string, fieldKey: string, value: unknown): Promise<SaveFieldResponse> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/attributes/${encodeURIComponent(fieldKey)}`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ value }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
 // ── Buyer Review types ──
 
 export interface BuyerReviewRecommendation {
