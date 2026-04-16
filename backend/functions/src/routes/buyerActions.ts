@@ -1,15 +1,16 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { apply99Rounding } from "../services/pricingUtils";
 import { getAdminSettings } from "../services/adminSettings";
 import { mpnToDocId } from "../services/mpnUtils";
+import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 
 const router = Router();
 const db = () => admin.firestore();
 const ts = () => admin.firestore.FieldValue.serverTimestamp();
 
 // ── POST /api/v1/buyer-actions/markdown ──
-router.post("/markdown", async (req: Request, res: Response) => {
+router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { mpn, action_type, adjustment } = req.body;
 
@@ -45,7 +46,11 @@ router.post("/markdown", async (req: Request, res: Response) => {
 
     const ricsRetail = product.rics_retail || 0;
     const currentOffer = product.rics_offer || 0;
-    const buyerUserId = (req as any).user?.uid || "anonymous";
+    const buyerUserId = req.user?.uid;
+    if (!buyerUserId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
 
     if (action_type === "deny") {
       // Deny — no price calculation needed
@@ -164,7 +169,7 @@ router.post("/markdown", async (req: Request, res: Response) => {
 });
 
 // ── POST /api/v1/buyer-actions/loss-leader-acknowledge ──
-router.post("/loss-leader-acknowledge", async (req: Request, res: Response) => {
+router.post("/loss-leader-acknowledge", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { mpn, reason } = req.body;
     if (!mpn || !reason) {
@@ -197,7 +202,11 @@ router.post("/loss-leader-acknowledge", async (req: Request, res: Response) => {
       return;
     }
 
-    const buyerUserId = (req as any).user?.uid || "anonymous";
+    const buyerUserId = req.user?.uid;
+    if (!buyerUserId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
     const vetoWindowHours = settings.master_veto_window * 24;
     const vetoExpiresAt = new Date(Date.now() + vetoWindowHours * 60 * 60 * 1000);
 
@@ -235,7 +244,7 @@ router.post("/loss-leader-acknowledge", async (req: Request, res: Response) => {
 });
 
 // ── POST /api/v1/buyer-actions/loss-leader-veto ──
-router.post("/loss-leader-veto", async (req: Request, res: Response) => {
+router.post("/loss-leader-veto", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { mpn, veto_reason } = req.body;
     if (!mpn || !veto_reason) {
@@ -252,7 +261,11 @@ router.post("/loss-leader-veto", async (req: Request, res: Response) => {
       return;
     }
 
-    const buyerUserId = (req as any).user?.uid || "anonymous";
+    const buyerUserId = req.user?.uid;
+    if (!buyerUserId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
 
     await productRef.set(
       {
