@@ -27,6 +27,12 @@ export default function Layout() {
               Completion Queue
             </Link>
             <Link
+              to="/import-hub"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Import Hub
+            </Link>
+            <Link
               to="/buyer-review"
               className="text-gray-600 hover:text-gray-900"
             >

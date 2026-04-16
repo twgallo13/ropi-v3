@@ -341,3 +341,55 @@ export async function promoteScheduled(): Promise<any> {
   if (!res.ok) throw data;
   return data;
 }
+
+// ── Import Hub ──
+
+export interface ImportUploadResponse {
+  batch_id: string;
+  row_count: number;
+  warnings: string[];
+  column_map?: Record<string, number>;
+  error?: string;
+  missing_columns?: string[];
+  message?: string;
+}
+
+export interface ImportCommitResponse {
+  batch_id: string;
+  committed_rows: number;
+  failed_rows: number;
+  uuid_names_cleaned?: number;
+  smart_rules_applied?: number;
+  errors?: string[];
+  [key: string]: unknown;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken();
+  return { Authorization: `Bearer ${token}` };
+}
+
+export async function uploadImport(family: "full-product" | "weekly-operations", file: File): Promise<ImportUploadResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/api/v1/imports/${family}/upload`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function commitImport(family: "full-product" | "weekly-operations", batchId: string): Promise<ImportCommitResponse> {
+  const res = await fetch(`${BASE}/api/v1/imports/${family}/${encodeURIComponent(batchId)}/commit`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
