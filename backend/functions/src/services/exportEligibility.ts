@@ -41,6 +41,11 @@ export async function getExportEligibleProducts(): Promise<EligibilityResult> {
       reasons.push("Product is inactive");
     }
 
+    // Condition 2b — SKU is required for export
+    if (!p.sku || String(p.sku).trim() === "") {
+      reasons.push("SKU is required for export");
+    }
+
     // Condition 3 — name must not be blank
     if (!p.name || p.name.trim() === "") {
       reasons.push("Product name is blank — operator must enter name before export");

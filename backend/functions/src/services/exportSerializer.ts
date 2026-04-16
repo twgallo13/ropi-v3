@@ -119,6 +119,12 @@ export async function serializeProduct(mpn: string): Promise<ExportRow> {
     exportRicsOffer = apply99Rounding(p.rics_offer || 0);
   }
 
+  // Price cap: export price must never exceed scom (regular selling price)
+  const scom = p.scom || 0;
+  if (scom > 0 && exportRicsOffer > scom) {
+    exportRicsOffer = apply99Rounding(scom);
+  }
+
   return {
     mpn: p.mpn || mpn,
     sku: p.sku || null,

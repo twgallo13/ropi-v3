@@ -77,6 +77,11 @@ async function serializeProduct(mpn) {
         // Fallback if composite index not yet built
         exportRicsOffer = (0, pricingUtils_1.apply99Rounding)(p.rics_offer || 0);
     }
+    // Price cap: export price must never exceed scom (regular selling price)
+    const scom = p.scom || 0;
+    if (scom > 0 && exportRicsOffer > scom) {
+        exportRicsOffer = (0, pricingUtils_1.apply99Rounding)(scom);
+    }
     return {
         mpn: p.mpn || mpn,
         sku: p.sku || null,
