@@ -175,7 +175,9 @@ function ImportCard({
               <p className="text-xs font-medium text-red-700">Errors:</p>
               <ul className="text-xs text-red-600 list-disc ml-4 max-h-40 overflow-y-auto">
                 {state.commitResult.errors.map((e, i) => (
-                  <li key={i}>{e}</li>
+                  <li key={i}>
+                    {typeof e === "string" ? e : `Row ${e.row}${e.mpn ? ` (${e.mpn})` : ""}: ${e.error}`}
+                  </li>
                 ))}
               </ul>
             </div>

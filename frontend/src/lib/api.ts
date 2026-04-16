@@ -360,7 +360,7 @@ export interface ImportCommitResponse {
   failed_rows: number;
   uuid_names_cleaned?: number;
   smart_rules_applied?: number;
-  errors?: string[];
+  errors?: Array<{ row: number; mpn: string; error: string }>;
   [key: string]: unknown;
 }
 

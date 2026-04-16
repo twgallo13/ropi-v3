@@ -80,10 +80,10 @@ router.post(
       const headerRow = records[0];
       const warnings: string[] = [];
 
-      // Duplicate column detection
+      // Duplicate column detection (case-insensitive, BOM-safe)
       const columnMap: Record<string, number> = {};
       headerRow.forEach((col, idx) => {
-        const trimmed = col.trim();
+        const trimmed = col.trim().replace(/^\uFEFF/, "");
         if (trimmed in columnMap) {
           warnings.push(
             `Column '${trimmed}' appears twice (columns ${columnMap[trimmed] + 1} and ${idx + 1}). Column ${idx + 1} was used. Please verify.`
@@ -92,10 +92,10 @@ router.post(
         columnMap[trimmed] = idx;
       });
 
-      // Validate required columns
-      const presentColumns = new Set(Object.keys(columnMap));
+      // Validate required columns (case-insensitive)
+      const presentLower = new Set(Object.keys(columnMap).map((k) => k.toLowerCase()));
       const missingColumns = REQUIRED_COLUMNS_WEEKLY.filter(
-        (c) => !presentColumns.has(c)
+        (c) => !presentLower.has(c.toLowerCase())
       );
 
       if (missingColumns.length > 0) {
@@ -199,9 +199,16 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     const [fileBuffer] = await bucket.file(batchData.file_path).download();
     const csvContent = fileBuffer.toString("utf-8");
 
-    // Step 4 — Parse all data rows
+    // Step 4 — Parse all data rows (case-insensitive, BOM-safe headers)
+    const CANONICAL_WEEKLY: Record<string, string> = {};
+    REQUIRED_COLUMNS_WEEKLY.forEach((c) => { CANONICAL_WEEKLY[c.toLowerCase()] = c; });
+
     const records = parse(csvContent, {
-      columns: true,
+      columns: (header: string[]) =>
+        header.map((h: string) => {
+          const clean = h.trim().replace(/^\uFEFF/, "");
+          return CANONICAL_WEEKLY[clean.toLowerCase()] || clean;
+        }),
       skip_empty_lines: true,
       relax_column_count: true,
       trim: true,

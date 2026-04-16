@@ -45,18 +45,18 @@ router.post("/upload", upload.single("file"), async (req, res) => {
         });
         const headerRow = records[0];
         const warnings = [];
-        // TALLY-080 Rule 2 — Duplicate column detection
+        // TALLY-080 Rule 2 — Duplicate column detection (case-insensitive, BOM-safe)
         const columnMap = {};
         headerRow.forEach((col, idx) => {
-            const trimmed = col.trim();
+            const trimmed = col.trim().replace(/^\uFEFF/, "");
             if (trimmed in columnMap) {
                 warnings.push(`Column '${trimmed}' appears twice (columns ${columnMap[trimmed] + 1} and ${idx + 1}). Column ${idx + 1} was used. Please verify.`);
             }
             columnMap[trimmed] = idx;
         });
-        // Validate required columns
-        const presentColumns = new Set(Object.keys(columnMap));
-        const missingColumns = REQUIRED_COLUMNS.filter((c) => !presentColumns.has(c));
+        // Validate required columns (case-insensitive)
+        const presentLower = new Set(Object.keys(columnMap).map((k) => k.toLowerCase()));
+        const missingColumns = REQUIRED_COLUMNS.filter((c) => !presentLower.has(c.toLowerCase()));
         if (missingColumns.length > 0) {
             res.status(400).json({
                 error: "CSV is missing required columns.",
@@ -137,9 +137,16 @@ router.post("/:batch_id/commit", async (req, res) => {
         const bucket = firebase_admin_1.default.storage().bucket();
         const [fileBuffer] = await bucket.file(batchData.file_path).download();
         const csvContent = fileBuffer.toString("utf-8");
-        // Step 4 — Parse all data rows
+        // Step 4 — Parse all data rows (case-insensitive, BOM-safe headers)
+        const CANONICAL_FP = {};
+        REQUIRED_COLUMNS.forEach((c) => { CANONICAL_FP[c.toLowerCase()] = c; });
+        // Also include optional columns accessed by the commit handler
+        ["RICS Color", "RICS Short Description", "RICS Long Desc", "RICS Category", "RICS Brand"].forEach((c) => { CANONICAL_FP[c.toLowerCase()] = c; });
         const records = (0, sync_1.parse)(csvContent, {
-            columns: true,
+            columns: (header) => header.map((h) => {
+                const clean = h.trim().replace(/^\uFEFF/, "");
+                return CANONICAL_FP[clean.toLowerCase()] || clean;
+            }),
             skip_empty_lines: true,
             relax_column_count: true,
             trim: true,
