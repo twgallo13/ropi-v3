@@ -4,6 +4,7 @@ import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import { parse } from "csv-parse/sync";
 import { executeSmartRules } from "../services/smartRules";
+import { mpnToDocId } from "../services/mpnUtils";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -275,8 +276,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           .filter((s) => s !== "");
 
         // ── Step C — Write Product to Firestore ──
-        // Sanitize MPN for Firestore doc ID (forward slashes are not allowed)
-        const docId = mpn.replace(/\//g, "__");
+        const docId = mpnToDocId(mpn);
         const productRef = firestore.collection("products").doc(docId);
 
         // Check if product exists for first_received_at logic

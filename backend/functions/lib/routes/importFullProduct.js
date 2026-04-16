@@ -9,6 +9,7 @@ const multer_1 = __importDefault(require("multer"));
 const uuid_1 = require("uuid");
 const sync_1 = require("csv-parse/sync");
 const smartRules_1 = require("../services/smartRules");
+const mpnUtils_1 = require("../services/mpnUtils");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 const db = firebase_admin_1.default.firestore;
@@ -246,8 +247,7 @@ router.post("/:batch_id/commit", async (req, res) => {
                     .map((s) => s.trim().toLowerCase())
                     .filter((s) => s !== "");
                 // ── Step C — Write Product to Firestore ──
-                // Sanitize MPN for Firestore doc ID (forward slashes are not allowed)
-                const docId = mpn.replace(/\//g, "__");
+                const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
                 const productRef = firestore.collection("products").doc(docId);
                 // Check if product exists for first_received_at logic
                 const existingSnap = await productRef.get();

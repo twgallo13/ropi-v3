@@ -159,6 +159,8 @@ Do not create any collection not on this list without Lisa's explicit approval.
 
 Every `products/{mpn}` document has these subcollections:
 
+**MPN sanitization:** Forward slashes in MPN values are replaced with `__` for Firestore document ID storage. The original MPN is preserved in `products/{docId}.mpn`. Use `mpnToDocId()` and `docIdToMpn()` from `services/mpnUtils.ts` everywhere an MPN touches a Firestore document ID.
+
 ```
 products/{mpn}/attribute_values      ← EAV: one doc per attribute
 products/{mpn}/pricing_snapshots     ← latest + history

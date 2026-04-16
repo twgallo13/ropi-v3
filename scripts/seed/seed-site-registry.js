@@ -139,8 +139,8 @@ const SITES = [
   },
   {
     id: "fbrk",
-    name: "FBRK",
-    domain: "fbrk.com",
+    name: "FBRK Clothing",
+    domain: "fbrkclothing.com",
     platform: "shopify",
     status: "active",
     ai_content_strategy: "use_fbrk_default",
