@@ -3,6 +3,7 @@ import cors from "cors";
 import admin from "firebase-admin";
 import importFullProductRouter from "./routes/importFullProduct";
 import productsRouter from "./routes/products";
+import attributeRegistryRouter from "./routes/attributeRegistry";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -28,6 +29,9 @@ app.use("/api/v1/imports/full-product", importFullProductRouter);
 
 // ── Product Routes ──
 app.use("/api/v1/products", productsRouter);
+
+// ── Attribute Registry ──
+app.use("/api/v1/attribute_registry", attributeRegistryRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

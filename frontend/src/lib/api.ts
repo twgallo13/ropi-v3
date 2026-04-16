@@ -86,6 +86,24 @@ export async function fetchProduct(mpn: string): Promise<ProductDetail> {
   return res.json();
 }
 
+export interface AttributeRegistryEntry {
+  field_key: string;
+  display_label: string;
+  field_type: string;
+  destination_tab: string;
+  required_for_completion: boolean;
+  active: boolean;
+  export_enabled: boolean;
+  dropdown_options: string[];
+}
+
+export async function fetchAttributeRegistry(): Promise<AttributeRegistryEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/attribute_registry`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = await res.json();
+  return data.attributes as AttributeRegistryEntry[];
+}
+
 export async function completeProduct(mpn: string): Promise<{ completion_state: string; blockers?: string[] }> {
   const res = await fetch(`${BASE}/api/v1/products/${encodeURIComponent(mpn)}/complete`, {
     method: "POST",

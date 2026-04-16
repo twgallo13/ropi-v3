@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /**
- * Seed: attribute_registry — 66 docs
- * Product attribute definitions for the ROPI AOSS V3 platform.
- * Idempotent (set-with-merge).
+ * Seed: attribute_registry — 67 docs
+ * SPEC-compliant schema: field_key, display_label, field_type, destination_tab,
+ * required_for_completion, include_in_ai_prompt, include_in_cadence_targeting,
+ * active, export_enabled, dropdown_options, created_at.
+ * Idempotent (set-with-merge). Existing created_at is preserved.
  */
 "use strict";
 const admin = require("firebase-admin");
@@ -10,137 +12,230 @@ const { initApp } = require("./utils");
 
 const COLLECTION = "attribute_registry";
 
-// Helper to build attribute doc
-function attr(id, label, type, group, opts = {}) {
+/**
+ * Build an attribute_registry document.
+ *
+ * field_type: "text" | "dropdown" | "toggle" | "number" | "date"
+ * destination_tab: "core_information" | "product_attributes" | "descriptions_seo" | "launch_media" | "system"
+ */
+function attr(field_key, display_label, field_type, destination_tab, opts = {}) {
   return {
-    id,
-    label,
-    data_type: type,
-    group,
-    is_required: opts.required || false,
-    is_searchable: opts.searchable || false,
-    is_filterable: opts.filterable || false,
-    is_ai_generated: opts.ai || false,
-    allowed_values: opts.values || null,
-    default_value: opts.default_value ?? null,
-    sort_order: opts.sort || 0,
-    status: "active",
-    created_at: admin.firestore.FieldValue.serverTimestamp(),
-    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    field_key,
+    display_label,
+    field_type,
+    destination_tab,
+    required_for_completion: opts.required || false,
+    include_in_ai_prompt: opts.ai_prompt || false,
+    include_in_cadence_targeting: opts.cadence || false,
+    active: true,
+    export_enabled: opts.export_disabled ? false : true,
+    dropdown_options: opts.options || [],
   };
 }
 
+// ────────────────────────────────────────────────
+//  Core Information tab (16 docs) — TALLY-083
+//  Visible on every product; operators see these first.
+// ────────────────────────────────────────────────
+const CORE_INFORMATION = [
+  attr("product_name",     "Name",                 "text",     "core_information", { required: true,  ai_prompt: true, cadence: false }),
+  attr("sku",              "SKU",                  "text",     "core_information", { required: true }),
+  attr("upc",              "UPC / Barcode",        "text",     "core_information"),
+  attr("brand",            "Brand",                "text",     "core_information", { required: true,  ai_prompt: true, cadence: true }),
+  attr("category",         "Category",             "text",     "core_information", { required: true,  ai_prompt: true, cadence: true }),
+  attr("subcategory",      "Subcategory (Class)",  "text",     "core_information", { required: true,  ai_prompt: true }),
+  attr("product_type",     "Department",           "text",     "core_information", { required: true }),
+  attr("gender",           "Gender",               "dropdown", "core_information", {
+    required: true, cadence: true,
+    options: ["men", "women", "unisex", "kids", "toddler", "infant"],
+  }),
+  attr("age_group",        "Age Group",            "dropdown", "core_information", {
+    required: true, cadence: true,
+    options: ["adult", "youth", "toddler", "infant"],
+  }),
+  attr("color",            "Primary Color",        "text",     "core_information", { ai_prompt: true }),
+  attr("color_family",     "Color Family",         "dropdown", "core_information", {
+    options: ["black", "white", "red", "blue", "green", "brown", "grey", "pink", "yellow", "orange", "purple", "multi"],
+  }),
+  attr("size",             "Size / Size Type",     "text",     "core_information"),
+  attr("style_code",       "Style ID",             "text",     "core_information", { required: true }),
+  attr("site_ids",         "Site Owner",           "text",     "core_information"),
+  attr("is_in_stock",      "Product Is Active",    "toggle",   "core_information", { required: true }),
+  attr("image_status",     "Image Status",         "text",     "core_information"),
+];
+
+// ────────────────────────────────────────────────
+//  Product Attributes tab (31 docs)
+//  Physical, variant, pricing, inventory, compliance.
+// ────────────────────────────────────────────────
+const PRODUCT_ATTRIBUTES = [
+  // Physical / variant
+  attr("material",          "Material / Fabric",   "text",     "product_attributes", { ai_prompt: true }),
+  attr("colorway",          "Colorway",            "text",     "product_attributes", { ai_prompt: true }),
+  attr("size_system",       "Size System",         "dropdown", "product_attributes", {
+    options: ["us", "uk", "eu", "cm"],
+  }),
+  attr("width",             "Width",               "dropdown", "product_attributes", {
+    ai_prompt: true,
+    options: ["narrow", "standard", "wide", "extra_wide"],
+  }),
+  attr("silhouette",        "Silhouette",          "text",     "product_attributes", { ai_prompt: true }),
+  attr("closure_type",      "Closure Type",        "dropdown", "product_attributes", {
+    ai_prompt: true,
+    options: ["lace_up", "slip_on", "velcro", "zipper", "buckle"],
+  }),
+  attr("heel_height",       "Heel Height",         "dropdown", "product_attributes", {
+    ai_prompt: true,
+    options: ["flat", "low", "mid", "high"],
+  }),
+  attr("toe_shape",         "Toe Shape",           "dropdown", "product_attributes", {
+    ai_prompt: true,
+    options: ["round", "pointed", "square", "open"],
+  }),
+  attr("technology",        "Technology",          "text",     "product_attributes", { ai_prompt: true }),
+  attr("collaboration",     "Collaboration",       "text",     "product_attributes", { ai_prompt: true }),
+  // Sneaker / release
+  attr("release_date",      "Release Date",        "date",     "product_attributes", { cadence: true }),
+  attr("release_type",      "Release Type",        "dropdown", "product_attributes", {
+    cadence: true,
+    options: ["general", "limited", "exclusive", "quickstrike", "hyperstrike"],
+  }),
+  // Pricing
+  attr("retail_price",      "Retail Price",        "number",   "product_attributes"),
+  attr("sale_price",        "Sale Price",          "number",   "product_attributes", { cadence: true }),
+  attr("cost_price",        "Cost Price",          "number",   "product_attributes"),
+  attr("msrp",              "MSRP",                "number",   "product_attributes"),
+  attr("currency",          "Currency",            "dropdown", "product_attributes", {
+    options: ["USD", "CAD", "GBP", "EUR"],
+  }),
+  attr("price_tier",        "Price Tier",          "dropdown", "product_attributes", {
+    cadence: true,
+    options: ["budget", "mid", "premium", "luxury"],
+  }),
+  // Inventory
+  attr("stock_quantity",    "Stock Quantity",      "number",   "product_attributes"),
+  attr("warehouse_location","Warehouse Location",  "text",     "product_attributes"),
+  attr("reorder_point",     "Reorder Point",       "number",   "product_attributes"),
+  attr("weight_oz",         "Weight (oz)",         "number",   "product_attributes"),
+  attr("inventory_status",  "Inventory Status",    "dropdown", "product_attributes", {
+    cadence: true,
+    options: ["available", "low_stock", "out_of_stock", "discontinued"],
+  }),
+  // Compliance / logistics
+  attr("country_of_origin", "Country of Origin",  "text",     "product_attributes"),
+  attr("hs_code",           "HS / Tariff Code",   "text",     "product_attributes"),
+  attr("is_hazmat",         "Hazardous Material",  "toggle",   "product_attributes"),
+  attr("shipping_class",    "Shipping Class",      "dropdown", "product_attributes", {
+    options: ["standard", "oversize", "freight", "ltl"],
+  }),
+  attr("return_policy",     "Return Policy",       "dropdown", "product_attributes", {
+    options: ["standard", "final_sale", "exchange_only"],
+  }),
+  attr("warranty_months",   "Warranty (months)",   "number",   "product_attributes"),
+  // Visibility flags
+  attr("is_on_sale",        "On Sale",             "toggle",   "product_attributes", { cadence: true }),
+  attr("is_new_arrival",    "New Arrival",         "toggle",   "product_attributes", { cadence: true }),
+];
+
+// ────────────────────────────────────────────────
+//  Descriptions & SEO tab (11 docs)
+// ────────────────────────────────────────────────
+const DESCRIPTIONS_SEO = [
+  attr("product_slug",          "Product Slug",             "text", "descriptions_seo"),
+  attr("short_description",     "Short Description",        "text", "descriptions_seo", { ai_prompt: true }),
+  attr("long_description",      "Long Description",         "text", "descriptions_seo", { ai_prompt: true }),
+  attr("ai_generated_description","AI Generated Description","text","descriptions_seo", { ai_prompt: false }),
+  attr("ai_generated_bullets",  "AI Generated Bullets",     "text", "descriptions_seo", { ai_prompt: false }),
+  attr("ai_seo_title",          "Meta Name",                "text", "descriptions_seo", { required: true, ai_prompt: false }),
+  attr("ai_seo_meta",           "Meta Description",         "text", "descriptions_seo", { required: true, ai_prompt: false }),
+  attr("keywords",              "Keywords",                 "text", "descriptions_seo", { ai_prompt: true }),
+  attr("tags",                  "Tags",                     "text", "descriptions_seo", { ai_prompt: true }),
+  attr("alt_text",              "Image Alt Text",           "text", "descriptions_seo", { ai_prompt: true }),
+  attr("canonical_url",         "Canonical URL",            "text", "descriptions_seo"),
+];
+
+// ────────────────────────────────────────────────
+//  Launch & Media tab (7 docs)
+// ────────────────────────────────────────────────
+const LAUNCH_MEDIA = [
+  attr("primary_image_url", "Primary Image URL",  "text",   "launch_media"),
+  attr("image_urls",        "Image URLs",          "text",   "launch_media"),
+  attr("video_url",         "Video URL",           "text",   "launch_media"),
+  attr("thumbnail_url",     "Thumbnail URL",       "text",   "launch_media"),
+  attr("media_count",       "Media Count",         "number", "launch_media"),
+  attr("is_visible",        "Visible on Storefront","toggle","launch_media"),
+  attr("is_featured",       "Featured",            "toggle", "launch_media"),
+];
+
+// ────────────────────────────────────────────────
+//  System tab (2 docs)
+//  AI-derived signals — hidden from operators,
+//  never in AI prompt, never exported.
+// ────────────────────────────────────────────────
+const SYSTEM = [
+  attr("ai_confidence_score", "AI Confidence Score", "number", "system", { export_disabled: true }),
+  attr("last_ai_enrichment",  "Last AI Enrichment",  "date",   "system", { export_disabled: true }),
+];
+
 const ATTRIBUTES = [
-  // ── Core Product (1–10) ──
-  attr("product_name", "Product Name", "string", "core", { required: true, searchable: true, sort: 1 }),
-  attr("product_slug", "Product Slug", "string", "core", { required: true, sort: 2 }),
-  attr("sku", "SKU", "string", "core", { required: true, searchable: true, sort: 3 }),
-  attr("upc", "UPC / Barcode", "string", "core", { searchable: true, sort: 4 }),
-  attr("brand", "Brand", "string", "core", { required: true, searchable: true, filterable: true, sort: 5 }),
-  attr("category", "Category", "string", "core", { required: true, filterable: true, sort: 6 }),
-  attr("subcategory", "Subcategory", "string", "core", { filterable: true, sort: 7 }),
-  attr("product_type", "Product Type", "enum", "core", { filterable: true, values: ["footwear", "apparel", "accessory", "equipment"], sort: 8 }),
-  attr("gender", "Gender", "enum", "core", { filterable: true, values: ["men", "women", "unisex", "kids", "toddler", "infant"], sort: 9 }),
-  attr("age_group", "Age Group", "enum", "core", { filterable: true, values: ["adult", "youth", "toddler", "infant"], sort: 10 }),
-
-  // ── Pricing (11–16) ──
-  attr("retail_price", "Retail Price", "number", "pricing", { required: true, sort: 11 }),
-  attr("sale_price", "Sale Price", "number", "pricing", { sort: 12 }),
-  attr("cost_price", "Cost Price", "number", "pricing", { sort: 13 }),
-  attr("msrp", "MSRP", "number", "pricing", { sort: 14 }),
-  attr("currency", "Currency", "enum", "pricing", { values: ["USD", "CAD", "GBP", "EUR"], default_value: "USD", sort: 15 }),
-  attr("price_tier", "Price Tier", "enum", "pricing", { values: ["budget", "mid", "premium", "luxury"], filterable: true, sort: 16 }),
-
-  // ── Inventory (17–22) ──
-  attr("stock_quantity", "Stock Quantity", "number", "inventory", { sort: 17 }),
-  attr("warehouse_location", "Warehouse Location", "string", "inventory", { sort: 18 }),
-  attr("reorder_point", "Reorder Point", "number", "inventory", { sort: 19 }),
-  attr("weight_oz", "Weight (oz)", "number", "inventory", { sort: 20 }),
-  attr("is_in_stock", "In Stock", "boolean", "inventory", { filterable: true, default_value: true, sort: 21 }),
-  attr("inventory_status", "Inventory Status", "enum", "inventory", { values: ["available", "low_stock", "out_of_stock", "discontinued"], filterable: true, sort: 22 }),
-
-  // ── Descriptions / Content (23–30) ──
-  attr("short_description", "Short Description", "string", "content", { searchable: true, sort: 23 }),
-  attr("long_description", "Long Description", "text", "content", { searchable: true, sort: 24 }),
-  attr("ai_generated_description", "AI Generated Description", "text", "content", { ai: true, sort: 25 }),
-  attr("ai_generated_bullets", "AI Generated Bullets", "array", "content", { ai: true, sort: 26 }),
-  attr("ai_seo_title", "AI SEO Title", "string", "content", { ai: true, sort: 27 }),
-  attr("ai_seo_meta", "AI SEO Meta Description", "string", "content", { ai: true, sort: 28 }),
-  attr("keywords", "Keywords", "array", "content", { searchable: true, sort: 29 }),
-  attr("tags", "Tags", "array", "content", { searchable: true, filterable: true, sort: 30 }),
-
-  // ── Media (31–36) ──
-  attr("primary_image_url", "Primary Image URL", "string", "media", { required: true, sort: 31 }),
-  attr("image_urls", "Image URLs", "array", "media", { sort: 32 }),
-  attr("video_url", "Video URL", "string", "media", { sort: 33 }),
-  attr("thumbnail_url", "Thumbnail URL", "string", "media", { sort: 34 }),
-  attr("alt_text", "Image Alt Text", "string", "media", { ai: true, sort: 35 }),
-  attr("media_count", "Media Count", "number", "media", { sort: 36 }),
-
-  // ── Sizing / Variants (37–44) ──
-  attr("size", "Size", "string", "variant", { filterable: true, sort: 37 }),
-  attr("size_system", "Size System", "enum", "variant", { values: ["us", "uk", "eu", "cm"], default_value: "us", sort: 38 }),
-  attr("color", "Color", "string", "variant", { filterable: true, sort: 39 }),
-  attr("color_family", "Color Family", "enum", "variant", { filterable: true, values: ["black", "white", "red", "blue", "green", "brown", "grey", "pink", "yellow", "orange", "purple", "multi"], sort: 40 }),
-  attr("material", "Material", "string", "variant", { filterable: true, sort: 41 }),
-  attr("width", "Width", "enum", "variant", { filterable: true, values: ["narrow", "standard", "wide", "extra_wide"], sort: 42 }),
-  attr("style_code", "Style Code", "string", "variant", { searchable: true, sort: 43 }),
-  attr("colorway", "Colorway", "string", "variant", { searchable: true, sort: 44 }),
-
-  // ── Sneaker-Specific (45–52) ──
-  attr("silhouette", "Silhouette", "string", "sneaker", { filterable: true, searchable: true, sort: 45 }),
-  attr("release_date", "Release Date", "timestamp", "sneaker", { filterable: true, sort: 46 }),
-  attr("release_type", "Release Type", "enum", "sneaker", { filterable: true, values: ["general", "limited", "exclusive", "quickstrike", "hyperstrike"], sort: 47 }),
-  attr("collaboration", "Collaboration", "string", "sneaker", { searchable: true, filterable: true, sort: 48 }),
-  attr("technology", "Technology", "array", "sneaker", { filterable: true, sort: 49 }),
-  attr("closure_type", "Closure Type", "enum", "sneaker", { filterable: true, values: ["lace_up", "slip_on", "velcro", "zipper", "buckle"], sort: 50 }),
-  attr("heel_height", "Heel Height", "enum", "sneaker", { values: ["flat", "low", "mid", "high"], filterable: true, sort: 51 }),
-  attr("toe_shape", "Toe Shape", "enum", "sneaker", { values: ["round", "pointed", "square", "open"], sort: 52 }),
-
-  // ── SEO / Visibility (53–58) ──
-  attr("is_visible", "Visible on Storefront", "boolean", "visibility", { default_value: true, sort: 53 }),
-  attr("is_featured", "Featured", "boolean", "visibility", { filterable: true, sort: 54 }),
-  attr("is_on_sale", "On Sale", "boolean", "visibility", { filterable: true, sort: 55 }),
-  attr("is_new_arrival", "New Arrival", "boolean", "visibility", { filterable: true, sort: 56 }),
-  attr("canonical_url", "Canonical URL", "string", "visibility", { sort: 57 }),
-  attr("site_ids", "Assigned Sites", "array", "visibility", { sort: 58 }),
-
-  // ── Compliance / Logistics (59–64) ──
-  attr("country_of_origin", "Country of Origin", "string", "compliance", { sort: 59 }),
-  attr("hs_code", "HS / Tariff Code", "string", "compliance", { sort: 60 }),
-  attr("is_hazmat", "Hazardous Material", "boolean", "compliance", { default_value: false, sort: 61 }),
-  attr("shipping_class", "Shipping Class", "enum", "compliance", { values: ["standard", "oversize", "freight", "ltl"], default_value: "standard", sort: 62 }),
-  attr("return_policy", "Return Policy", "enum", "compliance", { values: ["standard", "final_sale", "exchange_only"], default_value: "standard", sort: 63 }),
-  attr("warranty_months", "Warranty (months)", "number", "compliance", { default_value: 0, sort: 64 }),
-
-  // ── Analytics / AI (65–66) ──
-  attr("ai_confidence_score", "AI Confidence Score", "number", "analytics", { ai: true, sort: 65 }),
-  attr("last_ai_enrichment", "Last AI Enrichment", "timestamp", "analytics", { ai: true, sort: 66 }),
-
-  // ── System (67) ── derived signals, not operator-facing
-  attr("image_status", "Image Status", "string", "system", { sort: 67 }),
+  ...CORE_INFORMATION,      // 16
+  ...PRODUCT_ATTRIBUTES,    // 31
+  ...DESCRIPTIONS_SEO,      // 11
+  ...LAUNCH_MEDIA,          //  7
+  ...SYSTEM,                //  2
+  // Total: 67
 ];
 
 async function main() {
   const app = initApp();
   const db = admin.firestore(app);
+
   console.log(`\n🌱  Seeding "${COLLECTION}" (${ATTRIBUTES.length} docs) …`);
 
+  // Verify count matches spec before writing anything
+  if (ATTRIBUTES.length !== 67) {
+    console.error(`❌  Expected 67 attributes, got ${ATTRIBUTES.length}. Aborting.`);
+    process.exit(1);
+  }
+
   let created = 0, updated = 0;
+
   for (const item of ATTRIBUTES) {
-    const { id, ...data } = item;
-    const ref = db.collection(COLLECTION).doc(id);
+    const { field_key, ...data } = item;
+    const ref = db.collection(COLLECTION).doc(field_key);
     const snap = await ref.get();
+
     if (snap.exists) {
-      const { created_at, ...upd } = data;
-      await ref.set({ ...upd, updated_at: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      // Preserve created_at; update everything else (including new SPEC fields)
+      await ref.set(
+        { ...data, updated_at: admin.firestore.FieldValue.serverTimestamp() },
+        { merge: true }
+      );
       updated++;
     } else {
-      await ref.set(data);
+      await ref.set({
+        ...data,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
       created++;
     }
+
+    console.log(`   ✓  [${item.destination_tab}] ${field_key}`);
   }
-  console.log(`   Summary → created: ${created}, updated: ${updated}, total: ${ATTRIBUTES.length}`);
+
+  // Validate destination_tab distribution
+  const tabCounts = {};
+  for (const a of ATTRIBUTES) {
+    tabCounts[a.destination_tab] = (tabCounts[a.destination_tab] || 0) + 1;
+  }
+
+  console.log(`\n   Tab distribution:`);
+  for (const [tab, count] of Object.entries(tabCounts)) {
+    console.log(`      ${tab}: ${count}`);
+  }
+
+  console.log(`\n   Summary → created: ${created}, updated: ${updated}, total: ${ATTRIBUTES.length}`);
   console.log(`   ✔  "${COLLECTION}" seed complete.\n`);
 }
 

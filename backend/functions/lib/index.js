@@ -8,6 +8,7 @@ const cors_1 = __importDefault(require("cors"));
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const importFullProduct_1 = __importDefault(require("./routes/importFullProduct"));
 const products_1 = __importDefault(require("./routes/products"));
+const attributeRegistry_1 = __importDefault(require("./routes/attributeRegistry"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -28,6 +29,8 @@ app.get("/api/v1/health", (_req, res) => {
 app.use("/api/v1/imports/full-product", importFullProduct_1.default);
 // ── Product Routes ──
 app.use("/api/v1/products", products_1.default);
+// ── Attribute Registry ──
+app.use("/api/v1/attribute_registry", attributeRegistry_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({
