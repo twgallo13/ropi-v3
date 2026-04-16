@@ -305,7 +305,7 @@ export default function ExportCenterPage() {
                     <tr key={job.id} className="hover:bg-gray-50">
                       <td className="px-4 py-2 text-gray-700">
                         {job.triggered_at
-                          ? new Date(job.triggered_at).toLocaleString()
+                          ? `Export: ${new Date(job.triggered_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} — ${new Date(job.triggered_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
                           : "—"}
                       </td>
                       <td className="px-4 py-2">

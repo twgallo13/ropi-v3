@@ -295,6 +295,7 @@ router.post("/:batch_id/commit", async (req, res) => {
                     }
                 }
                 // Write attribute values with provenance for import fields (TALLY-044)
+                // TALLY-103: MPN and SKU arrive pre-verified (Human-Verified)
                 const importAttributes = {
                     mpn,
                     sku: identity.sku,
@@ -302,6 +303,7 @@ router.post("/:batch_id/commit", async (req, res) => {
                     product_name: identity.name,
                     status: identity.status,
                 };
+                const autoVerifiedKeys = new Set(["mpn", "sku"]);
                 for (const [key, value] of Object.entries(importAttributes)) {
                     if (value !== undefined && value !== "") {
                         await productRef
@@ -310,8 +312,10 @@ router.post("/:batch_id/commit", async (req, res) => {
                             .set({
                             value,
                             origin_type: "RO-Import",
-                            origin_detail: `Batch ${batch_id}`,
-                            verification_state: "System-Applied",
+                            origin_detail: `Import Batch ${batch_id}`,
+                            verification_state: autoVerifiedKeys.has(key)
+                                ? "Human-Verified"
+                                : "System-Applied",
                             written_at: db.FieldValue.serverTimestamp(),
                         }, { merge: true });
                     }
