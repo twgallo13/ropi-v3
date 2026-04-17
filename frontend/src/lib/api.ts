@@ -65,6 +65,8 @@ export interface ProductDetail extends ProductListItem {
   map_conflict_reason: string | null;
   map_conflict_held: boolean;
   map_removal_proposed: boolean;
+  needs_ai_review?: boolean;
+  ai_review_reason?: string;
   attribute_values: Record<
     string,
     {
@@ -892,6 +894,209 @@ export async function buyerPostponeReview(mpn: string, snooze_days: number): Pro
     headers: await headers(),
     body: JSON.stringify({ mpn, snooze_days }),
   });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── AI Content Pipeline (Step 2.3) ──
+
+export interface PromptTemplate {
+  template_id: string;
+  template_name: string;
+  is_active: boolean;
+  priority: number;
+  match_site_owner: string | null;
+  match_department: string | null;
+  match_class: string | null;
+  match_brand: string | null;
+  match_category: string | null;
+  tone_profile: string;
+  tone_description: string;
+  output_components: string[];
+  prompt_instructions: string;
+  banned_words: string[];
+  required_attribute_inclusions: string[];
+  created_by: string;
+  created_at: any;
+  updated_at: any;
+}
+
+export interface ContentVersion {
+  version_id: string;
+  site_owner: string;
+  template_id: string;
+  template_name: string;
+  tone_profile: string;
+  generated_at: any;
+  generated_by: string;
+  inputs_used: Record<string, string>;
+  raw_output: string;
+  parsed_output: Record<string, string>;
+  banned_words_found: string[];
+  approval_state: "pending" | "approved" | "rejected" | "review_pending";
+  approved_by: string | null;
+  approved_at: any;
+  rejected_by?: string;
+  rejected_at?: any;
+  rejection_reason?: string;
+  operator_edited?: boolean;
+  edited_by?: string;
+  edited_at?: any;
+  version_number: number;
+  restored_from_version?: string;
+}
+
+export interface AIGenerationResult {
+  version_id: string;
+  site_owner: string;
+  template_name: string;
+  tone_profile: string;
+  parsed_output: Record<string, string>;
+  banned_words_found: string[];
+  version_number: number;
+}
+
+// Prompt Templates CRUD
+export async function fetchPromptTemplates(): Promise<PromptTemplate[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/prompt-templates`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.templates;
+}
+
+export async function fetchPromptTemplate(templateId: string): Promise<PromptTemplate> {
+  const res = await fetch(`${BASE}/api/v1/admin/prompt-templates/${templateId}`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function createPromptTemplate(template: Partial<PromptTemplate>): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/admin/prompt-templates`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(template),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function updatePromptTemplate(templateId: string, updates: Partial<PromptTemplate>): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/admin/prompt-templates/${templateId}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(updates),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function deletePromptTemplate(templateId: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/admin/prompt-templates/${templateId}`, {
+    method: "DELETE",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// AI Describe — Correction 2: accepts site_owners array
+export async function aiDescribe(
+  mpn: string,
+  siteOwners: string[],
+  observationsNote?: string
+): Promise<{ results: AIGenerationResult[] }> {
+  const res = await fetch(`${BASE}/api/v1/products/${encodeURIComponent(mpn)}/ai-describe`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ site_owners: siteOwners, observations_note: observationsNote }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// Content Versions
+export async function fetchContentVersions(
+  mpn: string,
+  siteOwner?: string
+): Promise<ContentVersion[]> {
+  const params = siteOwner ? `?site_owner=${encodeURIComponent(siteOwner)}` : "";
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/content-versions${params}`,
+    { headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.versions;
+}
+
+export async function approveContentVersion(mpn: string, versionId: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/content-versions/${versionId}/approve`,
+    { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function rejectContentVersion(mpn: string, versionId: string, reason?: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/content-versions/${versionId}/reject`,
+    { method: "POST", headers: await headers(), body: JSON.stringify({ reason }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function editContentVersion(
+  mpn: string,
+  versionId: string,
+  edits: { description?: string; meta_name?: string; meta_description?: string; keywords?: string }
+): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/content-versions/${versionId}/edit`,
+    { method: "POST", headers: await headers(), body: JSON.stringify(edits) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function restoreContentVersion(mpn: string, versionId: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/content-versions/${versionId}/restore`,
+    { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// AI Assistant
+export async function aiAssistant(
+  mpn: string,
+  message: string,
+  imageData?: string
+): Promise<{ response: string }> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/ai-assistant`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ message, image_data: imageData }),
+    }
+  );
   const data = await res.json();
   if (!res.ok) throw data;
   return data;

@@ -18,6 +18,8 @@ const mapReview_1 = __importDefault(require("./routes/mapReview"));
 const pricingExport_1 = __importDefault(require("./routes/pricingExport"));
 const cadenceRules_1 = __importDefault(require("./routes/cadenceRules"));
 const cadenceReview_1 = __importDefault(require("./routes/cadenceReview"));
+const promptTemplates_1 = __importDefault(require("./routes/promptTemplates"));
+const aiContent_1 = __importDefault(require("./routes/aiContent"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -53,6 +55,9 @@ app.use("/api/v1/map-review", mapReview_1.default);
 // ── Cadence (Step 2.2) ──
 app.use("/api/v1/cadence-rules", cadenceRules_1.default);
 app.use("/api/v1", cadenceReview_1.default);
+// ── AI Content Pipeline (Step 2.3) ──
+app.use("/api/v1/admin/prompt-templates", promptTemplates_1.default);
+app.use("/api/v1/products", aiContent_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({

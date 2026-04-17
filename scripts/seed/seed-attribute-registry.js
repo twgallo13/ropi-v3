@@ -56,15 +56,15 @@ const CORE_INFORMATION = [
       "Socks & Underwear", "Sweatshirts", "T-shirts", "Vests"],
   }),
   attr("department",        "Department",           "dropdown", "core_information", {
-    required: true,
+    required: true, ai_prompt: true,
     options: ["Footwear", "Clothing", "Accessories", "Hats", "Socks", "Underwear", "Other"],
   }),
   attr("gender",           "Gender",               "dropdown", "core_information", {
-    required: true, cadence: true,
+    required: true, ai_prompt: true, cadence: true,
     options: ["men", "women", "unisex", "kids", "toddler", "infant"],
   }),
   attr("age_group",        "Age Group",            "dropdown", "core_information", {
-    required: true, cadence: true,
+    required: true, ai_prompt: true, cadence: true,
     options: ["adult", "youth", "toddler", "infant"],
   }),
   attr("primary_color",    "Primary Color",        "dropdown", "core_information", {
@@ -92,6 +92,11 @@ const CORE_INFORMATION = [
 // ────────────────────────────────────────────────
 const PRODUCT_ATTRIBUTES = [
   // Physical / variant
+  attr("descriptive_color", "Descriptive Color",   "text",     "product_attributes", { ai_prompt: true }),
+  attr("fit",               "Fit",                 "dropdown", "product_attributes", {
+    ai_prompt: true,
+    options: ["slim", "regular", "relaxed", "oversized", "athletic", "loose"],
+  }),
   attr("material",          "Material / Fabric",   "text",     "product_attributes", { ai_prompt: true }),
   attr("colorway",          "Colorway",            "text",     "product_attributes", { ai_prompt: true }),
   attr("size_system",       "Size System",         "dropdown", "product_attributes", {
@@ -208,11 +213,11 @@ const SYSTEM = [
 
 const ATTRIBUTES = [
   ...CORE_INFORMATION,      // 18
-  ...PRODUCT_ATTRIBUTES,    // 31
+  ...PRODUCT_ATTRIBUTES,    // 33
   ...DESCRIPTIONS_SEO,      // 11
   ...LAUNCH_MEDIA,          //  7
   ...SYSTEM,                //  2
-  // Total: 72
+  // Total: 74
 ];
 
 async function main() {
@@ -222,8 +227,8 @@ async function main() {
   console.log(`\n🌱  Seeding "${COLLECTION}" (${ATTRIBUTES.length} docs) …`);
 
   // Verify count matches spec before writing anything
-  if (ATTRIBUTES.length !== 72) {
-    console.error(`❌  Expected 72 attributes, got ${ATTRIBUTES.length}. Aborting.`);
+  if (ATTRIBUTES.length !== 74) {
+    console.error(`❌  Expected 74 attributes, got ${ATTRIBUTES.length}. Aborting.`);
     process.exit(1);
   }
 

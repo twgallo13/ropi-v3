@@ -13,6 +13,8 @@ import MapRemovalReviewPage from "./pages/MapRemovalReviewPage";
 import CadenceReviewPage from "./pages/CadenceReviewPage";
 import CadenceUnassignedPage from "./pages/CadenceUnassignedPage";
 import CadenceRulesAdminPage from "./pages/CadenceRulesAdminPage";
+import PromptTemplatesAdminPage from "./pages/PromptTemplatesAdminPage";
+import AIContentReviewPage from "./pages/AIContentReviewPage";
 
 export default function App() {
   return (
@@ -28,10 +30,12 @@ export default function App() {
               <Route path="/cadence-review" element={<CadenceReviewPage />} />
               <Route path="/cadence-unassigned" element={<CadenceUnassignedPage />} />
               <Route path="/admin/cadence-rules" element={<CadenceRulesAdminPage />} />
+              <Route path="/admin/prompt-templates" element={<PromptTemplatesAdminPage />} />
               <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
               <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
               <Route path="/export-center" element={<ExportCenterPage />} />
               <Route path="/products/:mpn" element={<ProductDetailPage />} />
+              <Route path="/products/:mpn/review" element={<AIContentReviewPage />} />
               <Route path="/" element={<Navigate to="/queue/completion" replace />} />
             </Route>
           </Route>

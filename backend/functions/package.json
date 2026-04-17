@@ -14,6 +14,7 @@
     "lint": "eslint --ext .ts src/"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "cors": "^2.8.5",
     "csv-parse": "^6.2.1",
     "express": "^4.21.0",

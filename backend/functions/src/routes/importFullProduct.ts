@@ -349,6 +349,15 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         const autoVerifiedKeys = new Set(["mpn", "sku"]);
         for (const [key, value] of Object.entries(importAttributes)) {
           if (value !== undefined && value !== "") {
+            // Check if existing attribute was AI-Generated + Human-Verified (Step 2.3 — needs_ai_review)
+            const existingAttrDoc = await productRef
+              .collection("attribute_values")
+              .doc(key)
+              .get();
+            const existingAttr = existingAttrDoc.exists
+              ? existingAttrDoc.data()
+              : null;
+
             await productRef
               .collection("attribute_values")
               .doc(key)
@@ -364,6 +373,42 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
                 },
                 { merge: true }
               );
+
+            // If the field being overwritten was AI-Generated + Human-Verified, flag for re-review
+            if (
+              existingAttr?.origin_type === "AI-Generated" &&
+              existingAttr?.verification_state === "Human-Verified"
+            ) {
+              await productRef.set(
+                {
+                  needs_ai_review: true,
+                  ai_review_reason: `${key} was overwritten by import — please re-review AI content`,
+                },
+                { merge: true }
+              );
+            }
+
+            // Also check include_in_ai_prompt — if true and product has approved content, flag
+            const registryDoc = await firestore
+              .collection("attribute_registry")
+              .doc(key)
+              .get();
+            if (registryDoc.exists && registryDoc.data()?.include_in_ai_prompt) {
+              const approvedSnap = await productRef
+                .collection("content_versions")
+                .where("approval_state", "==", "approved")
+                .limit(1)
+                .get();
+              if (!approvedSnap.empty) {
+                await productRef.set(
+                  {
+                    needs_ai_review: true,
+                    ai_review_reason: `${key} (AI prompt input) was updated by import — please re-review AI content`,
+                  },
+                  { merge: true }
+                );
+              }
+            }
           }
         }
 

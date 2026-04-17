@@ -13,6 +13,8 @@ import mapReviewRouter from "./routes/mapReview";
 import pricingExportRouter from "./routes/pricingExport";
 import cadenceRulesRouter from "./routes/cadenceRules";
 import cadenceReviewRouter from "./routes/cadenceReview";
+import promptTemplatesRouter from "./routes/promptTemplates";
+import aiContentRouter from "./routes/aiContent";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -58,6 +60,10 @@ app.use("/api/v1/map-review", mapReviewRouter);
 // ── Cadence (Step 2.2) ──
 app.use("/api/v1/cadence-rules", cadenceRulesRouter);
 app.use("/api/v1", cadenceReviewRouter);
+
+// ── AI Content Pipeline (Step 2.3) ──
+app.use("/api/v1/admin/prompt-templates", promptTemplatesRouter);
+app.use("/api/v1/products", aiContentRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

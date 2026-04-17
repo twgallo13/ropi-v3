@@ -5,6 +5,7 @@ import {
   fetchAttributeRegistry,
   completeProduct,
   saveField,
+  aiAssistant,
   type ProductDetail,
   type AttributeRegistryEntry,
   type SaveFieldResponse,
@@ -239,6 +240,8 @@ function StatusBar({
   mapConflictActive,
   mapConflictReason,
   mapPrice,
+  needsAiReview,
+  aiReviewReason,
 }: {
   completionState: string;
   completionProgress: CompletionProgress;
@@ -247,6 +250,8 @@ function StatusBar({
   mapConflictActive?: boolean;
   mapConflictReason?: string | null;
   mapPrice?: number | null;
+  needsAiReview?: boolean;
+  aiReviewReason?: string | null;
 }) {
   const isComplete = completionState === "complete";
   const cp = completionProgress;
@@ -384,6 +389,21 @@ function StatusBar({
             <p className="mt-1 text-xs text-red-600">{mapConflictReason}</p>
           )}
         </div>
+
+        {/* AI Review signal */}
+        {needsAiReview && (
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">AI Content</p>
+            <div className="mt-1">
+              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                ⚠️ AI Content Needs Review
+              </span>
+            </div>
+            {aiReviewReason && (
+              <p className="mt-1 text-xs text-orange-600">{aiReviewReason}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Completion blockers (kept under the bar) */}
@@ -568,6 +588,8 @@ export default function ProductDetailPage() {
         mapConflictActive={p.map_conflict_active}
         mapConflictReason={p.map_conflict_reason}
         mapPrice={p.map_price}
+        needsAiReview={p.needs_ai_review}
+        aiReviewReason={p.ai_review_reason}
       />
 
       {/* MAP auto-populate toast */}
@@ -706,8 +728,145 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* AI Content Review Link */}
+      <div className="mt-6">
+        <Link
+          to={`/products/${encodeURIComponent(mpn || "")}/review`}
+          className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700"
+        >
+          🤖 AI Content Review
+        </Link>
+      </div>
+
+      {/* AI Assistant Panel */}
+      <AIAssistantPanel mpn={mpn || ""} productName={p.name} />
     </div>
     </MpnContext.Provider>
+  );
+}
+
+// ── AI Assistant Panel ─────────────────────────────────────────
+function AIAssistantPanel({ mpn, productName }: { mpn: string; productName: string }) {
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<{ role: string; text: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip data:image/...;base64, prefix
+      const base64 = result.split(",")[1] || result;
+      setImageData(base64);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSend() {
+    if (!message.trim() && !imageData) return;
+    const userMsg = message.trim();
+    setChatHistory((prev) => [
+      ...prev,
+      { role: "user", text: userMsg + (imageData ? " [📷 image attached]" : "") },
+    ]);
+    setMessage("");
+    setLoading(true);
+    try {
+      const result = await aiAssistant(mpn, userMsg, imageData || undefined);
+      setChatHistory((prev) => [...prev, { role: "assistant", text: result.response }]);
+      setImageData(null);
+    } catch (err: any) {
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", text: `Error: ${err.error || "AI Assistant unavailable"}` },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 border rounded bg-white">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        <span>🤖 AI Assistant</span>
+        <span className="text-gray-400">{open ? "▲ Close" : "▼ Open"}</span>
+      </button>
+
+      {open && (
+        <div className="border-t px-4 py-4 space-y-3">
+          {/* Image upload */}
+          <div className="flex gap-2">
+            <label className="cursor-pointer bg-gray-100 text-gray-600 px-3 py-1.5 rounded text-xs hover:bg-gray-200">
+              📎 Upload Image
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </label>
+            {imageData && (
+              <span className="text-xs text-green-600 flex items-center gap-1">
+                ✓ Image attached
+                <button onClick={() => setImageData(null)} className="text-red-500 hover:underline">
+                  ×
+                </button>
+              </span>
+            )}
+          </div>
+
+          {/* Chat history */}
+          {chatHistory.length > 0 && (
+            <div className="max-h-64 overflow-y-auto space-y-2 border rounded p-3 bg-gray-50">
+              {chatHistory.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`text-sm ${msg.role === "user" ? "text-blue-700" : "text-gray-700"}`}
+                >
+                  <span className="font-medium">
+                    {msg.role === "user" ? "You: " : "AI: "}
+                  </span>
+                  {msg.text}
+                </div>
+              ))}
+              {loading && (
+                <div className="text-sm text-gray-400 italic">AI is thinking…</div>
+              )}
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="flex gap-2">
+            <input
+              className="flex-1 border rounded px-3 py-2 text-sm"
+              placeholder={`Ask me about ${productName || "this product"}…`}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading || (!message.trim() && !imageData)}
+              className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-400">
+            ⚠️ Suggestions only — apply manually to fields
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 

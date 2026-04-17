@@ -74,6 +74,12 @@ export default function Layout() {
             >
               ⚙ Rules
             </Link>
+            <Link
+              to="/admin/prompt-templates"
+              className="text-gray-500 hover:text-gray-900"
+            >
+              ⚙ Templates
+            </Link>
           </nav>
         </div>
         {user && (

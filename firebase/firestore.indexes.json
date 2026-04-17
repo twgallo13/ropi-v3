@@ -164,6 +164,24 @@
         { "fieldPath": "product_mpn", "order": "ASCENDING" },
         { "fieldPath": "created_at",  "order": "DESCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 18 — Prompt templates: active, sorted by priority desc (Step 2.3)",
+      "collectionGroup": "prompt_templates",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "priority",  "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 19 — Content versions by site_owner + generated_at desc (Step 2.3)",
+      "collectionGroup": "content_versions",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "site_owner",    "order": "ASCENDING" },
+        { "fieldPath": "generated_at",  "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
