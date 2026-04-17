@@ -224,7 +224,6 @@ router.get(
       const mapPromoQ = db()
         .collection("products")
         .where("is_map_protected", "==", true)
-        .where("web_discount_cap", "!=", null)
         .select(
           "mpn",
           "name",
@@ -248,7 +247,12 @@ router.get(
 
       let storeSaleWebFull = toItems(a);
       let webSaleStoreFull = toItems(b);
-      let mapPromoEligible = toItems(c);
+      // Filter map_promo_eligible in-memory — web_discount_cap is a sparse field;
+      // a Firestore != null inequality query requires its own composite index
+      // and behaves unexpectedly when the field is missing on most documents.
+      let mapPromoEligible = toItems(c).filter(
+        (x) => x.web_discount_cap !== null && x.web_discount_cap !== undefined
+      );
 
       // Buyer own-scope filter
       if (role === "buyer" && uid) {

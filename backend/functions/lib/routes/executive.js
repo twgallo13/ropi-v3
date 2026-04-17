@@ -167,7 +167,6 @@ router.get("/channel-disparity", auth_1.requireAuth, (0, roles_1.requireRole)(["
         const mapPromoQ = db()
             .collection("products")
             .where("is_map_protected", "==", true)
-            .where("web_discount_cap", "!=", null)
             .select("mpn", "name", "brand", "department", "buyer_id", "map_price", "scom", "web_discount_cap", "web_gm_pct");
         const [a, b, c] = await Promise.all([
             storeSaleQ.get(),
@@ -177,7 +176,10 @@ router.get("/channel-disparity", auth_1.requireAuth, (0, roles_1.requireRole)(["
         const toItems = (snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         let storeSaleWebFull = toItems(a);
         let webSaleStoreFull = toItems(b);
-        let mapPromoEligible = toItems(c);
+        // Filter map_promo_eligible in-memory — web_discount_cap is a sparse field;
+        // a Firestore != null inequality query requires its own composite index
+        // and behaves unexpectedly when the field is missing on most documents.
+        let mapPromoEligible = toItems(c).filter((x) => x.web_discount_cap !== null && x.web_discount_cap !== undefined);
         // Buyer own-scope filter
         if (role === "buyer" && uid) {
             storeSaleWebFull = storeSaleWebFull.filter((x) => x.buyer_id === uid);
