@@ -60,9 +60,12 @@ export async function selectTemplate(
     .where("is_active", "==", true)
     .get();
 
-  const templates = snap.docs.map(
-    (d) => ({ id: d.id, ...d.data() } as PromptTemplate)
-  );
+  const templates = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as PromptTemplate & { template_type?: string }))
+    // Exclude advisory templates from product description selection.
+    // Templates without an explicit template_type are treated as
+    // 'product_description' (legacy product templates pre-date the field).
+    .filter((t) => (t as any).template_type !== "advisory");
 
   const scored = templates
     .filter((t) => templateMatches(t, product, siteOwner))
