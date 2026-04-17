@@ -182,6 +182,11 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
     // For 63 products this is fine; for scale we'd need composite indexes
     const fetchLimit = limitNum * 3 + 50;
     const snap = await query.limit(fetchLimit).get();
+    // Cursor MUST be tied to the Firestore ordering (first_received_at), not
+    // the in-memory sorted page — otherwise startAfter() skips/repeats rows.
+    const lastFirestoreDocId =
+      snap.docs.length > 0 ? snap.docs[snap.docs.length - 1].id : null;
+    const moreFirestoreRowsLikely = snap.docs.length === fetchLimit;
 
     // Load required fields, launch window, and site targets in parallel
     const [requiredFields, launchWindowDays] = await Promise.all([
@@ -316,12 +321,27 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       items.sort((a, b) => a.completion_progress.pct - b.completion_progress.pct);
     }
 
-    // Apply limit and build next_cursor
-    const page = items.slice(0, limitNum);
-    const next_cursor = items.length > limitNum ? page[page.length - 1]?.doc_id : null;
+    // Apply limit and build next_cursor.
+    //
+    // The cursor is the id of the LAST FIRESTORE DOCUMENT we read in this
+    // batch (ordered by first_received_at). The next request passes it
+    // back and we resume with `startAfter(cursorDoc)` — that is the only
+    // way pagination can keep walking the full collection without
+    // skipping or repeating rows.
+    //
+    // We deliberately do NOT slice the in-memory results down to limitNum:
+    // any items already filtered through the in-memory predicates would be
+    // permanently lost (the next batch starts AFTER the last Firestore
+    // doc, so any in-memory-rejected leftovers cannot be recovered later).
+    // Page size therefore equals the number of items in the current
+    // Firestore batch that pass the in-memory filters — typically close to
+    // limitNum * 3 + 50 in low-filter cases, smaller in heavily filtered
+    // cases. The client just renders what comes back and shows the
+    // "Load More" button while next_cursor is non-null.
+    const next_cursor = moreFirestoreRowsLikely ? lastFirestoreDocId : null;
 
     res.status(200).json({
-      items: page,
+      items,
       total: items.length,
       next_cursor,
     });

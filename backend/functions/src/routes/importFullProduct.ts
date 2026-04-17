@@ -526,6 +526,72 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
 
           // Rename "product_name" that the earlier block wrote — it duplicates "name".
           // No-op: we leave the existing product_name attribute untouched.
+
+          // ── Step C.6 — Mirror Required Identity Fields into attribute_values ──
+          // Ensures every newly-imported product has the canonical identity
+          // attributes materialized in attribute_values so the completion-%
+          // calculation can see them. Per spec we never overwrite a value
+          // that has already been Human-Verified.
+          //
+          // Field mapping aligned to attribute_registry required keys:
+          //   product_name  ← identity.name
+          //   brand         ← identity.brand
+          //   sku           ← identity.sku
+          //   department / gender / age_group / class / category /
+          //   primary_color / descriptive_color / material_fabric /
+          //   tax_class     ← mapped.attributes (taxonomy + colors)
+          //   website       ← first parsed site from the Website column
+          //   is_in_stock   ← top-level product_is_active flag
+          const ageGroupValue =
+            mapped.attributes.age_group ||
+            mapped.attributes.age_group_detail ||
+            "";
+          const websiteValue = siteList[0] || websiteRaw || "";
+          const fieldsToWriteAsAttributes: Record<string, any> = {
+            product_name: identity.name,
+            brand: identity.brand,
+            sku: identity.sku,
+            department: mapped.attributes.department,
+            gender: mapped.attributes.gender,
+            age_group: ageGroupValue,
+            class: mapped.attributes.class,
+            category: mapped.attributes.category,
+            primary_color: mapped.attributes.primary_color,
+            descriptive_color: mapped.attributes.descriptive_color,
+            material_fabric: mapped.attributes.material_fabric,
+            tax_class: mapped.attributes.tax_class,
+            website: websiteValue,
+            is_in_stock: true, // imports default to active
+          };
+
+          for (const [fieldKey, value] of Object.entries(
+            fieldsToWriteAsAttributes
+          )) {
+            if (value === undefined || value === null || value === "") continue;
+
+            const attrRef = productRef.collection("attribute_values").doc(fieldKey);
+            const existingDoc = await attrRef.get();
+            if (
+              existingDoc.exists &&
+              existingDoc.data()?.verification_state === "Human-Verified"
+            ) {
+              continue; // never overwrite Human-Verified
+            }
+
+            await attrRef.set(
+              {
+                field_name: fieldKey,
+                value: typeof value === "boolean" ? value : String(value),
+                origin_type: "Import",
+                origin_rule: "Full Product Import",
+                origin_detail: `Import Batch ${batch_id}`,
+                verification_state: "System-Applied",
+                updated_at: db.FieldValue.serverTimestamp(),
+                written_at: db.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
         } catch (mapErr: any) {
           console.error(
             `Row ${rowNum} (MPN: ${mpn}) mapping error:`,
