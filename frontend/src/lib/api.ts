@@ -2146,3 +2146,26 @@ export async function updateAdvisoryPreferences(
   if (!res.ok) throw data;
   return data;
 }
+
+// ── Step 3.5 — Guided Tours ──
+export interface TourStepDoc {
+  target_selector: string;
+  title: string;
+  content: string;
+  position?: "top" | "bottom" | "left" | "right";
+}
+export interface TourDoc {
+  tour_id: string;
+  hub: string;
+  title: string;
+  steps: TourStepDoc[];
+  is_active: boolean;
+}
+export async function fetchTourForHub(hub: string): Promise<TourDoc | null> {
+  const res = await fetch(`${BASE}/api/v1/tours/${encodeURIComponent(hub)}`, {
+    headers: await headers(),
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.tour || null;
+}

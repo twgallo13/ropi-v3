@@ -25,6 +25,7 @@ import notificationsRouter from "./routes/notifications";
 import dashboardRouter from "./routes/dashboard";
 import executiveRouter from "./routes/executive";
 import advisoryRouter from "./routes/advisory";
+import toursRouter from "./routes/tours";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -94,6 +95,9 @@ app.use("/api/v1/executive", executiveRouter);
 
 // ── Step 3.4 — AI Weekly Advisory ──
 app.use("/api/v1/advisory", advisoryRouter);
+
+// ── Step 3.5 — Guided Tours ──
+app.use("/api/v1/tours", toursRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

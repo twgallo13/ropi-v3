@@ -1,16 +1,32 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { auth } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme, type Theme } from "../contexts/ThemeContext";
 import NotificationBell from "./NotificationBell";
+import TourLoader from "./TourLoader";
 import { fetchAdvisoryLatest } from "../lib/api";
+
+// Maps pathnames to hub keys that have guided tours.
+const HUB_MAP: Record<string, string> = {
+  "/queue/completion": "completion_queue",
+  "/import-hub": "import_hub",
+  "/cadence-review": "cadence_review",
+  "/launch-admin": "launch_admin",
+  "/export-center": "export_center",
+};
 
 export default function Layout() {
   const { user, role } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const isExec = role === "admin" || role === "owner" || role === "head_buyer";
   const [advisoryUnread, setAdvisoryUnread] = useState(false);
+  const [replayKey, setReplayKey] = useState(0);
+
+  const currentHub = HUB_MAP[location.pathname] || null;
 
   useEffect(() => {
     if (!user) return;
@@ -38,13 +54,13 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link to="/" className="text-lg font-bold text-gray-900">
+          <Link to="/" className="text-lg font-bold text-gray-900 dark:text-gray-100">
             ROPI
           </Link>
-          <nav className="flex gap-4 text-sm">
+          <nav className="flex gap-4 text-sm flex-wrap">
             <Link
               to="/dashboard"
               className="text-gray-600 hover:text-gray-900"
@@ -180,8 +196,54 @@ export default function Layout() {
         </div>
         {user && (
           <div className="flex items-center gap-3 text-sm">
+            {/* Command bar hint */}
+            <button
+              onClick={() =>
+                window.dispatchEvent(
+                  new KeyboardEvent("keydown", { key: "k", ctrlKey: true })
+                )
+              }
+              title="Open command bar (Ctrl+K)"
+              className="hidden md:flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              🔍 <span>Search</span>
+              <kbd className="ml-1 text-[10px] text-gray-400 border border-gray-200 dark:border-gray-700 rounded px-1">
+                Ctrl+K
+              </kbd>
+            </button>
+
+            {/* Theme toggle */}
+            <div className="flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
+              {(["light", "auto", "dark"] as Theme[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTheme(t)}
+                  title={`Theme: ${t}`}
+                  className={
+                    "px-2 py-0.5 text-xs rounded " +
+                    (theme === t
+                      ? "bg-gray-200 dark:bg-gray-700 font-medium text-gray-900 dark:text-gray-100"
+                      : "text-gray-500 dark:text-gray-400")
+                  }
+                >
+                  {t === "light" ? "☀️" : t === "dark" ? "🌙" : "⚡"}
+                </button>
+              ))}
+            </div>
+
+            {/* Help / replay tour */}
+            {currentHub && (
+              <button
+                onClick={() => setReplayKey((k) => k + 1)}
+                title="Replay tour for this page"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-full w-7 h-7 flex items-center justify-center"
+              >
+                ?
+              </button>
+            )}
+
             <NotificationBell />
-            <span className="text-gray-500">{user.email}</span>
+            <span className="text-gray-500 dark:text-gray-400">{user.email}</span>
             <button
               onClick={handleLogout}
               className="text-red-600 hover:underline"
@@ -192,6 +254,9 @@ export default function Layout() {
         )}
       </header>
       <main className="flex-1">
+        {currentHub && (
+          <TourLoader hub={currentHub} forceReplayKey={replayKey} />
+        )}
         <Outlet />
       </main>
     </div>

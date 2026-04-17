@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { fetchProducts, type ProductListItem } from "../lib/api";
+import { useGridDensity } from "../hooks/useGridDensity";
 
 const SITE_COLORS: Record<string, string> = {
   shiekh: "bg-blue-100 text-blue-800",
@@ -40,6 +41,10 @@ export default function CompletionQueuePage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const { density, toggle: toggleDensity, isCompact } = useGridDensity(
+    "completion-queue"
+  );
+  void density;
 
   const buildParams = useCallback(
     (pageCursor?: string | null): Record<string, string> => {
@@ -190,10 +195,25 @@ export default function CompletionQueuePage() {
 
       {error && <p className="text-red-600 mb-3">{error}</p>}
 
+      {/* Density toggle */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={toggleDensity}
+          data-tour="density-toggle"
+          className="text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+          title={`Switch to ${isCompact ? "comfortable" : "compact"} density`}
+        >
+          {isCompact ? "⊞ Comfortable" : "⊟ Compact"}
+        </button>
+      </div>
+
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border">
+      <div
+        data-tour="completion-table"
+        className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
+      >
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left">
+          <thead className="bg-gray-50 dark:bg-gray-800 text-left">
             <tr>
               <th className="px-3 py-2 font-medium">MPN</th>
               <th className="px-3 py-2 font-medium">Name</th>
@@ -206,7 +226,13 @@ export default function CompletionQueuePage() {
           </thead>
           <tbody className="divide-y">
             {items.map((p) => (
-              <tr key={p.doc_id} className="hover:bg-gray-50">
+              <tr
+                key={p.doc_id}
+                className={
+                  "hover:bg-gray-50 dark:hover:bg-gray-800 " +
+                  (isCompact ? "[&>td]:py-1" : "")
+                }
+              >
                 <td className="px-3 py-2">
                   <Link
                     to={`/products/${encodeURIComponent(p.mpn)}`}

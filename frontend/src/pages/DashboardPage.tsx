@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { fetchDashboard, type DashboardResponse } from "../lib/api";
+import { getWorkState, clearWorkState } from "../hooks/useWorkState";
 
 const KPI_DEFS: Record<
   string,
@@ -26,6 +27,8 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [workState, setWorkState] = useState(() => getWorkState());
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -64,6 +67,38 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Resume banner */}
+      {workState && workState.lastPath !== "/dashboard" && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-blue-700 dark:text-blue-300">
+            Resume where you left off:{" "}
+            <strong className="font-mono">{workState.lastPath}</strong>
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                const path = workState.lastPath;
+                clearWorkState();
+                setWorkState(null);
+                navigate(path);
+              }}
+              className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+            >
+              Resume →
+            </button>
+            <button
+              onClick={() => {
+                clearWorkState();
+                setWorkState(null);
+              }}
+              className="text-xs text-gray-500 hover:text-gray-700"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Greeting */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">

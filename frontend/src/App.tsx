@@ -1,7 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import RequireAuth from "./components/RequireAuth";
 import Layout from "./components/Layout";
+import CommandBar from "./components/CommandBar";
 import LoginPage from "./pages/LoginPage";
 import CompletionQueuePage from "./pages/CompletionQueuePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -33,45 +36,82 @@ import AdvisoryPage from "./pages/AdvisoryPage";
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          {/* Public Launch Calendar — NO auth required */}
-          <Route path="/launches" element={<PublicLaunchCalendarPage />} />
-          <Route element={<RequireAuth />}>
-            <Route element={<Layout />}>
-              <Route path="/queue/completion" element={<CompletionQueuePage />} />
-              <Route path="/import-hub" element={<ImportHubPage />} />
-              <Route path="/buyer-review" element={<BuyerReviewPage />} />
-              <Route path="/cadence-review" element={<CadenceReviewPage />} />
-              <Route path="/cadence-unassigned" element={<CadenceUnassignedPage />} />
-              <Route path="/admin/cadence-rules" element={<CadenceRulesAdminPage />} />
-              <Route path="/admin/prompt-templates" element={<PromptTemplatesAdminPage />} />
-              <Route path="/admin/smart-rules" element={<SmartRulesAdminPage />} />
-              <Route path="/admin/smart-rules/new" element={<SmartRuleBuilderPage />} />
-              <Route path="/admin/smart-rules/:ruleId" element={<SmartRuleBuilderPage />} />
-              <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
-              <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
-              <Route path="/export-center" element={<ExportCenterPage />} />
-              <Route path="/launch-admin" element={<LaunchAdminListPage />} />
-              <Route path="/launch-admin/:launchId" element={<LaunchAdminDetailPage />} />
-              <Route path="/products/:mpn" element={<ProductDetailPage />} />
-              <Route path="/products/:mpn/review" element={<AIContentReviewPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/pricing-discrepancy" element={<PricingDiscrepancyPage />} />
-              <Route path="/site-verification" element={<SiteVerificationReviewPage />} />
-              <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
-              <Route path="/executive" element={<ExecutiveDashboardPage />} />
-              <Route path="/neglected-inventory" element={<NeglectedInventoryPage />} />
-              <Route path="/channel-disparity" element={<ChannelDisparityPage />} />
-              <Route path="/buyer-performance" element={<BuyerPerformancePage />} />
-              <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
-              <Route path="/advisory" element={<AdvisoryPage />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AppInner />
+        </BrowserRouter>
+      </ThemeProvider>
     </AuthProvider>
+  );
+}
+
+function AppInner() {
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const location = useLocation();
+
+  // Ctrl+K / Cmd+K global shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // Save work state on every navigation (pathname + search)
+  useEffect(() => {
+    const skip = ["/dashboard", "/login", "/"];
+    if (!skip.includes(location.pathname)) {
+      // lazy require to avoid circular init
+      import("./hooks/useWorkState").then((m) =>
+        m.saveWorkState(location.pathname, location.search)
+      );
+    }
+  }, [location.pathname, location.search]);
+
+  return (
+    <>
+      <CommandBar open={cmdOpen} onClose={() => setCmdOpen(false)} />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        {/* Public Launch Calendar — NO auth required */}
+        <Route path="/launches" element={<PublicLaunchCalendarPage />} />
+        <Route element={<RequireAuth />}>
+          <Route element={<Layout />}>
+            <Route path="/queue/completion" element={<CompletionQueuePage />} />
+            <Route path="/import-hub" element={<ImportHubPage />} />
+            <Route path="/buyer-review" element={<BuyerReviewPage />} />
+            <Route path="/cadence-review" element={<CadenceReviewPage />} />
+            <Route path="/cadence-unassigned" element={<CadenceUnassignedPage />} />
+            <Route path="/admin/cadence-rules" element={<CadenceRulesAdminPage />} />
+            <Route path="/admin/prompt-templates" element={<PromptTemplatesAdminPage />} />
+            <Route path="/admin/smart-rules" element={<SmartRulesAdminPage />} />
+            <Route path="/admin/smart-rules/new" element={<SmartRuleBuilderPage />} />
+            <Route path="/admin/smart-rules/:ruleId" element={<SmartRuleBuilderPage />} />
+            <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
+            <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
+            <Route path="/export-center" element={<ExportCenterPage />} />
+            <Route path="/launch-admin" element={<LaunchAdminListPage />} />
+            <Route path="/launch-admin/:launchId" element={<LaunchAdminDetailPage />} />
+            <Route path="/products/:mpn" element={<ProductDetailPage />} />
+            <Route path="/products/:mpn/review" element={<AIContentReviewPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/pricing-discrepancy" element={<PricingDiscrepancyPage />} />
+            <Route path="/site-verification" element={<SiteVerificationReviewPage />} />
+            <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
+            <Route path="/executive" element={<ExecutiveDashboardPage />} />
+            <Route path="/neglected-inventory" element={<NeglectedInventoryPage />} />
+            <Route path="/channel-disparity" element={<ChannelDisparityPage />} />
+            <Route path="/buyer-performance" element={<BuyerPerformancePage />} />
+            <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
+            <Route path="/advisory" element={<AdvisoryPage />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+        </Route>
+      </Routes>
+    </>
   );
 }

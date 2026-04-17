@@ -30,6 +30,7 @@ const notifications_1 = __importDefault(require("./routes/notifications"));
 const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const executive_1 = __importDefault(require("./routes/executive"));
 const advisory_1 = __importDefault(require("./routes/advisory"));
+const tours_1 = __importDefault(require("./routes/tours"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -84,6 +85,8 @@ app.use("/api/v1/dashboard", dashboard_1.default);
 app.use("/api/v1/executive", executive_1.default);
 // ── Step 3.4 — AI Weekly Advisory ──
 app.use("/api/v1/advisory", advisory_1.default);
+// ── Step 3.5 — Guided Tours ──
+app.use("/api/v1/tours", tours_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({

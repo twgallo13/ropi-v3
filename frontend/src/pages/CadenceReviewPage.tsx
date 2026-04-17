@@ -7,6 +7,7 @@ import {
   buyerPostponeReview,
   type CadenceReviewItem,
 } from "../lib/api";
+import { useGridDensity } from "../hooks/useGridDensity";
 
 function fmt(n: number | null | undefined): string {
   if (n == null) return "—";
@@ -286,6 +287,7 @@ export default function CadenceReviewPage() {
   const [items, setItems] = useState<CadenceReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { toggle: toggleDensity, isCompact } = useGridDensity("cadence-review");
 
   async function load() {
     setLoading(true);
@@ -321,6 +323,16 @@ export default function CadenceReviewPage() {
         </button>
       </div>
 
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={toggleDensity}
+          className="text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+          title={`Switch to ${isCompact ? "comfortable" : "compact"} density`}
+        >
+          {isCompact ? "⊞ Comfortable" : "⊟ Compact"}
+        </button>
+      </div>
+
       {loading && <div className="text-center text-gray-400 py-12">Loading…</div>}
       {error && <div className="text-center text-red-600 py-8">{error}</div>}
       {!loading && items.length === 0 && (
@@ -329,7 +341,7 @@ export default function CadenceReviewPage() {
         </div>
       )}
 
-      <div className="grid gap-4">
+      <div className={isCompact ? "grid gap-2" : "grid gap-4"} data-tour="cadence-list">
         {items.map((i) => (
           <ReviewCard key={i.mpn} item={i} onAction={load} />
         ))}

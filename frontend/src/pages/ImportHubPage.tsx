@@ -210,10 +210,18 @@ export default function ImportHubPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Import Hub</h1>
       <div className="space-y-6">
-        <ImportCard title="Full Product Import" family="full-product" />
-        <ImportCard title="Weekly Operations Import" family="weekly-operations" />
-        <MapPolicyImportCard />
-        <SiteVerificationImportCard />
+        <div data-tour="full-product-import">
+          <ImportCard title="Full Product Import" family="full-product" />
+        </div>
+        <div data-tour="weekly-ops-import">
+          <ImportCard title="Weekly Operations Import" family="weekly-operations" />
+        </div>
+        <div data-tour="map-policy-import">
+          <MapPolicyImportCard />
+        </div>
+        <div data-tour="site-verification-import">
+          <SiteVerificationImportCard />
+        </div>
       </div>
     </div>
   );
