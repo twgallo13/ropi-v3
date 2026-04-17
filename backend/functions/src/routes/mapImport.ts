@@ -15,6 +15,7 @@ import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
+import { extractHeaders } from "../services/csvUtils";
 
 const router = Router();
 const upload = multer({
@@ -49,7 +50,7 @@ router.post(
         return;
       }
 
-      const rawHeaders = records[0].map((h) => h.trim().replace(/^\uFEFF/, ""));
+      const rawHeaders = extractHeaders(records).map((h) => h.trim().replace(/^\uFEFF/, ""));
       const rowCount = Math.max(records.length - 1, 0);
 
       const batchId = uuidv4();

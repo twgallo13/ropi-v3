@@ -8,9 +8,11 @@
     "seed:site-registry": "node seed-site-registry.js",
     "seed:smart-rules": "node seed-smart-rules.js",
     "seed:admin-settings": "node seed-admin-settings.js",
+    "backfill:rics-taxonomy": "node backfill-rics-taxonomy.js",
     "seed:all": "node seed-attribute-registry.js && node seed-site-registry.js && node seed-smart-rules.js && node seed-admin-settings.js"
   },
   "dependencies": {
+    "csv-parse": "^6.2.1",
     "firebase-admin": "^12.0.0"
   }
 }

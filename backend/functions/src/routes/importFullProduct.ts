@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { parse } from "csv-parse/sync";
 import { executeSmartRules } from "../services/smartRules";
 import { mpnToDocId } from "../services/mpnUtils";
+import { mapFullProductRow, FULL_PRODUCT_ROW_MAP } from "../services/ricsParser";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -159,6 +160,8 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     REQUIRED_COLUMNS.forEach((c) => { CANONICAL_FP[c.toLowerCase()] = c; });
     // Also include optional columns accessed by the commit handler
     ["RICS Color", "RICS Short Description", "RICS Long Desc", "RICS Category", "RICS Brand"].forEach((c) => { CANONICAL_FP[c.toLowerCase()] = c; });
+    // Import Intelligence Layer — accept every column in the full row map
+    Object.keys(FULL_PRODUCT_ROW_MAP).forEach((c) => { CANONICAL_FP[c.toLowerCase()] = c; });
 
     const records = parse(csvContent, {
       columns: (header: string[]) =>
@@ -445,6 +448,92 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
               }
             }
           }
+        }
+
+        // ── Step C.5 — Full Column Mapping + RICS Intelligence ──
+        // Applies the complete 50-column mapping from the RO export, runs
+        // the rules-based RICS Category parser, normalizes color / name,
+        // and stamps top-level taxonomy fields for query performance.
+        // Human-Verified attributes are never overwritten.
+        try {
+          const mapped = mapFullProductRow(row);
+
+          // Stamp top-level fields on the product document (query perf)
+          if (Object.keys(mapped.top_level).length > 0) {
+            await productRef.set(mapped.top_level, { merge: true });
+          }
+
+          // Flag products whose name was derived from RICS Short Desc so
+          // the post-import AI enrichment pass can find them.
+          if (mapped.name_source === "rics_short_desc") {
+            await productRef.set(
+              { name_source: "rics_short_desc", needs_ai_name: true },
+              { merge: true }
+            );
+          } else if (mapped.name_source === "csv_name") {
+            await productRef.set({ name_source: "csv_name" }, { merge: true });
+          }
+
+          // Flag products whose descriptive_color is still blank after
+          // normalization so the AI enrichment pass can fill it.
+          if (!mapped.attributes.descriptive_color || mapped.attributes.descriptive_color === "") {
+            await productRef.set({ needs_ai_color: true }, { merge: true });
+          }
+
+          // Write each attribute into attribute_values, skipping those
+          // already Human-Verified.
+          const skipCanonical = new Set([
+            "mpn", // already written above with its own provenance
+            "sku",
+            "brand",
+            "name",
+            "status",
+            "ro_status",
+            // These are in source_inputs already
+            "rics_color",
+            "rics_short_desc",
+            "rics_long_desc",
+            "rics_category",
+            // Receiving timestamps handled on top-level doc
+            "last_received_at",
+            "first_received_at",
+          ]);
+
+          for (const [attrKey, attrValue] of Object.entries(mapped.attributes)) {
+            if (skipCanonical.has(attrKey)) continue;
+            if (attrValue === undefined || attrValue === null || attrValue === "") continue;
+
+            const attrRef = productRef.collection("attribute_values").doc(attrKey);
+            const existing = await attrRef.get();
+            if (
+              existing.exists &&
+              existing.data()?.verification_state === "Human-Verified"
+            ) {
+              continue; // never overwrite Human-Verified
+            }
+
+            await attrRef.set(
+              {
+                value: attrValue,
+                origin_type: "Import",
+                origin_detail: `Import Batch ${batch_id}`,
+                verification_state: "System-Applied",
+                written_at: db.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
+
+          // Rename "product_name" that the earlier block wrote — it duplicates "name".
+          // No-op: we leave the existing product_name attribute untouched.
+        } catch (mapErr: any) {
+          console.error(
+            `Row ${rowNum} (MPN: ${mpn}) mapping error:`,
+            mapErr?.message || mapErr
+          );
+          batchWarnings.push(
+            `Row ${rowNum} (MPN: ${mpn}): Full-column mapping failed — ${mapErr?.message || "unknown error"}`
+          );
         }
 
         // ── Step D — Fire Smart Rules (Section 19.10) ──

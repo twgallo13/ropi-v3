@@ -47,6 +47,42 @@ const RULES = [
     tally_ref: "TALLY-081",
     created_at: admin.firestore.FieldValue.serverTimestamp(),
   },
+  {
+    id: "rule_ai_name_enrichment",
+    rule_name: "AI Name Enrichment",
+    rule_type: "ai_enrichment",
+    conditions: [{ source_field: "name_source", operator: "equals", target_value: "rics_short_desc" }],
+    condition_logic: "AND",
+    action: { target_attribute: "name", output_value: "__ai_generate__" },
+    ai_prompt: `You are a product naming specialist for Shiekh Shoes.
+Given this product information, generate a clean, SEO-friendly product name
+following brand and industry standards.
+
+MPN: {mpn}
+Brand: {brand}
+RICS Short Description: {rics_short_desc}
+Department: {department}
+Gender: {gender}
+Class: {class}
+Category: {category}
+
+Rules:
+- Use Title Case
+- Include brand name first if not already present
+- Include key identifying details (colorway, edition, model number where relevant)
+- Keep under 80 characters
+- Do not include "Men's", "Women's" etc. — those are handled by product attributes
+- For Nike: the MPN uses a space where industry standard uses a dash
+  (e.g. store MPN "HV5060 800" corresponds to industry "HV5060-800").
+  Use the dashed version when searching for product information.
+
+Respond with ONLY the product name, nothing else.`,
+    always_overwrite: false,
+    priority: 10,
+    is_active: true,
+    tally_ref: "IMPORT-INTELLIGENCE",
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+  },
 ];
 
 async function main() {

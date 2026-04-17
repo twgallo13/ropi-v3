@@ -109,6 +109,9 @@ export interface AttributeRegistryEntry {
   active: boolean;
   export_enabled: boolean;
   dropdown_options: string[];
+  display_group?: string;
+  display_order?: number;
+  full_width?: boolean;
 }
 
 export async function fetchAttributeRegistry(): Promise<AttributeRegistryEntry[]> {

@@ -20,6 +20,7 @@ const auth_1 = require("../middleware/auth");
 const roles_1 = require("../middleware/roles");
 const mpnUtils_1 = require("../services/mpnUtils");
 const pricingExportQueue_1 = require("../services/pricingExportQueue");
+const csvUtils_1 = require("../services/csvUtils");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -44,7 +45,7 @@ router.post("/upload", auth_1.requireAuth, (0, roles_1.requireRole)(["map_analys
             res.status(400).json({ error: "CSV file is empty." });
             return;
         }
-        const rawHeaders = records[0].map((h) => h.trim().replace(/^\uFEFF/, ""));
+        const rawHeaders = (0, csvUtils_1.extractHeaders)(records).map((h) => h.trim().replace(/^\uFEFF/, ""));
         const rowCount = Math.max(records.length - 1, 0);
         const batchId = (0, uuid_1.v4)();
         const filename = file.originalname || "map-policy.csv";

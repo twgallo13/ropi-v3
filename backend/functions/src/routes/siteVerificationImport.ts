@@ -14,6 +14,7 @@ import { parse } from "csv-parse/sync";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
+import { extractHeaders } from "../services/csvUtils";
 
 const router = Router();
 const upload = multer({
@@ -71,7 +72,7 @@ router.post(
         res.status(400).json({ error: "CSV file is empty." });
         return;
       }
-      const rawHeaders = records[0].map((h) => h.trim().replace(/^\uFEFF/, ""));
+      const rawHeaders = extractHeaders(records).map((h) => h.trim().replace(/^\uFEFF/, ""));
       const dataRows = records.slice(1);
 
       const batchId = uuidv4();
@@ -84,7 +85,7 @@ router.post(
         status: "pending_mapping",
         raw_headers: rawHeaders,
         row_count: dataRows.length,
-        raw_rows: dataRows.slice(0, 5000), // cap defensively
+        raw_rows: dataRows.slice(0, 5000).map((r) => JSON.stringify(r)), // serialise to avoid Firestore nested-array ban
         committed_rows: 0,
         failed_rows: 0,
         errors: [],
@@ -148,7 +149,9 @@ router.post(
       }
 
       const rawHeaders: string[] = batch.raw_headers || [];
-      const rawRows: string[][] = batch.raw_rows || [];
+      const rawRows: string[][] = (batch.raw_rows || []).map(
+        (r: unknown) => (typeof r === "string" ? JSON.parse(r) : r) as string[]
+      );
       const headerIndex: Record<string, number> = {};
       rawHeaders.forEach((h, i) => (headerIndex[h] = i));
 

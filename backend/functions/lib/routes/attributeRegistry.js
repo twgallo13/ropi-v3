@@ -18,6 +18,8 @@ router.get("/", auth_1.requireAuth, async (_req, res) => {
             display_label: d.data().display_label || d.id,
             field_type: d.data().field_type || "text",
             destination_tab: d.data().destination_tab || "product_attributes",
+            display_group: d.data().display_group || "",
+            display_order: d.data().display_order ?? 99,
             required_for_completion: d.data().required_for_completion ?? false,
             include_in_ai_prompt: d.data().include_in_ai_prompt ?? false,
             active: d.data().active ?? true,

@@ -19,6 +19,7 @@ const sync_1 = require("csv-parse/sync");
 const auth_1 = require("../middleware/auth");
 const roles_1 = require("../middleware/roles");
 const mpnUtils_1 = require("../services/mpnUtils");
+const csvUtils_1 = require("../services/csvUtils");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -64,7 +65,7 @@ router.post("/upload", auth_1.requireAuth, (0, roles_1.requireRole)(operatorRole
             res.status(400).json({ error: "CSV file is empty." });
             return;
         }
-        const rawHeaders = records[0].map((h) => h.trim().replace(/^\uFEFF/, ""));
+        const rawHeaders = (0, csvUtils_1.extractHeaders)(records).map((h) => h.trim().replace(/^\uFEFF/, ""));
         const dataRows = records.slice(1);
         const batchId = (0, uuid_1.v4)();
         const firestore = firebase_admin_1.default.firestore();
@@ -75,7 +76,7 @@ router.post("/upload", auth_1.requireAuth, (0, roles_1.requireRole)(operatorRole
             status: "pending_mapping",
             raw_headers: rawHeaders,
             row_count: dataRows.length,
-            raw_rows: dataRows.slice(0, 5000), // cap defensively
+            raw_rows: dataRows.slice(0, 5000).map((r) => JSON.stringify(r)), // serialise to avoid Firestore nested-array ban
             committed_rows: 0,
             failed_rows: 0,
             errors: [],
@@ -123,7 +124,7 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(op
             return;
         }
         const rawHeaders = batch.raw_headers || [];
-        const rawRows = batch.raw_rows || [];
+        const rawRows = (batch.raw_rows || []).map((r) => (typeof r === "string" ? JSON.parse(r) : r));
         const headerIndex = {};
         rawHeaders.forEach((h, i) => (headerIndex[h] = i));
         function cell(row, header) {

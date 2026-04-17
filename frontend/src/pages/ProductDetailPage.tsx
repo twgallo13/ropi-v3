@@ -4,7 +4,6 @@ import {
   fetchProduct,
   fetchAttributeRegistry,
   completeProduct,
-  saveField,
   aiAssistant,
   type ProductDetail,
   type AttributeRegistryEntry,
@@ -13,6 +12,7 @@ import {
 import ProductHistoryTab from "../components/ProductHistoryTab";
 import ProductCommentThread from "../components/ProductCommentThread";
 import DeleteProductButton from "../components/DeleteProductButton";
+import { AttributeField } from "../components/AttributeField";
 import { useAuth } from "../contexts/AuthContext";
 
 // ── Provenance helpers — used only for info cards ──────────────
@@ -26,233 +26,7 @@ const TABS: { key: string; label: string }[] = [
   { key: "launch_media",      label: "Launch & Media" },
 ];
 
-// ── Editable Attribute Row ─────────────────────────────────────
-function EditableAttrRow({
-  fieldKey,
-  displayLabel,
-  fieldType,
-  dropdownOptions,
-  attr,
-  onSaved,
-}: {
-  fieldKey: string;
-  displayLabel: string;
-  fieldType: string;
-  dropdownOptions: string[];
-  attr: { value: unknown; origin_type: string | null; verification_state: string | null } | undefined;
-  onSaved: (fieldKey: string, resp: SaveFieldResponse) => void;
-}) {
-  const originType = attr?.origin_type ?? null;
-  const verificationState = attr?.verification_state ?? null;
-  const currentValue = attr?.value;
-  const displayValue = currentValue !== null && currentValue !== undefined ? String(currentValue) : "";
-
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(displayValue);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [verifying, setVerifying] = useState(false);
-
-  // Sync draft when attr changes externally
-  useEffect(() => {
-    if (!editing) setDraft(displayValue);
-  }, [displayValue, editing]);
-
-  const hasChanged = draft !== displayValue;
-
-  // Does this field need verification? Has a value but not Human-Verified
-  const needsVerify = displayValue !== "" && verificationState !== "Human-Verified";
-
-  function startEdit() {
-    setDraft(displayValue);
-    setEditing(true);
-    setSaveError("");
-  }
-
-  function cancelEdit() {
-    setDraft(displayValue);
-    setEditing(false);
-    setSaveError("");
-  }
-
-  async function handleSave(mpn: string) {
-    setSaving(true);
-    setSaveError("");
-    try {
-      let finalValue: unknown = draft;
-      if (fieldType === "number") finalValue = draft === "" ? "" : Number(draft);
-      else if (fieldType === "toggle") finalValue = draft === "true" || draft === "YES";
-      const resp = await saveField(mpn, fieldKey, finalValue);
-      onSaved(fieldKey, resp);
-      setEditing(false);
-    } catch (err: any) {
-      setSaveError(err?.error || "Save failed");
-      setDraft(displayValue);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleVerify(mpn: string) {
-    setVerifying(true);
-    setSaveError("");
-    try {
-      const resp = await saveField(mpn, fieldKey, currentValue, "verify");
-      onSaved(fieldKey, resp);
-    } catch (err: any) {
-      setSaveError(err?.error || "Verify failed");
-    } finally {
-      setVerifying(false);
-    }
-  }
-
-  // Border style based on provenance
-  let borderClass = "";
-  if (verificationState === "Human-Verified") borderClass = "border-l-4 border-gray-400";
-  else if (originType === "Smart Rule") borderClass = "border-l-4 border-blue-400";
-  else if (originType === "RO-Import") borderClass = "border-l-4 border-blue-400";
-
-  // Badge
-  let badge = null;
-  if (verificationState === "Human-Verified" && !editing)
-    badge = <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 shrink-0">🔒</span>;
-  else if ((originType === "Smart Rule" || originType === "RO-Import") && !editing)
-    badge = <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0">{originType}</span>;
-
-  // Read-only display
-  if (!editing) {
-    return (
-      <MpnContext.Consumer>
-        {(mpn) => (
-      <div
-        className={`flex items-center gap-3 px-3 py-2 bg-white rounded cursor-pointer hover:bg-gray-50 ${borderClass}`}
-        onClick={startEdit}
-      >
-        <span className="w-52 text-sm font-medium text-gray-600 shrink-0">{displayLabel}</span>
-        <span className={`flex-1 text-sm font-mono truncate ${originType === "RO-Import" ? "text-gray-400" : "text-gray-800"}`}>
-          {displayValue !== ""
-            ? (fieldType === "toggle" ? (displayValue === "true" || displayValue === "YES" ? "Yes" : "No") : displayValue)
-            : <span className="text-gray-300 italic">—</span>}
-        </span>
-        {needsVerify && (
-          <button
-            onClick={(e) => { e.stopPropagation(); handleVerify(mpn); }}
-            disabled={verifying}
-            className="px-2 py-0.5 text-xs font-medium rounded bg-green-50 text-green-700 border border-green-300 hover:bg-green-100 disabled:opacity-50 shrink-0"
-          >
-            {verifying ? "…" : "✓ Verify"}
-          </button>
-        )}
-        {badge}
-        {saveError && <span className="text-xs text-red-600 shrink-0">{saveError}</span>}
-      </div>
-        )}
-      </MpnContext.Consumer>
-    );
-  }
-
-  // Editing mode — render input based on field_type
-  return (
-    <MpnContext.Consumer>
-      {(mpn) => (
-        <div className={`flex items-center gap-3 px-3 py-2 bg-white rounded ring-2 ring-blue-400 ${borderClass}`}>
-          <span className="w-52 text-sm font-medium text-gray-600 shrink-0">{displayLabel}</span>
-          <div className="flex-1 flex items-center gap-2">
-            {fieldType === "dropdown" ? (
-              <select
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                className="flex-1 border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                autoFocus
-              >
-                <option value="">— Select —</option>
-                {dropdownOptions.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            ) : fieldType === "multi_select" ? (
-              <div className="flex-1 flex flex-wrap gap-2">
-                {dropdownOptions.map((opt) => {
-                  const selected = draft.split(",").map(s => s.trim()).filter(Boolean);
-                  const isChecked = selected.includes(opt);
-                  return (
-                    <label key={opt} className="flex items-center gap-1 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          const next = isChecked
-                            ? selected.filter(s => s !== opt)
-                            : [...selected, opt];
-                          setDraft(next.join(", "));
-                        }}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      {opt}
-                    </label>
-                  );
-                })}
-              </div>
-            ) : fieldType === "toggle" ? (
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={draft === "true" || draft === "YES"}
-                  onChange={(e) => setDraft(e.target.checked ? "true" : "false")}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                {draft === "true" || draft === "YES" ? "Yes" : "No"}
-              </label>
-            ) : fieldType === "number" ? (
-              <input
-                type="number"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                className="flex-1 border rounded px-2 py-1 text-sm font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                autoFocus
-              />
-            ) : fieldType === "date" ? (
-              <input
-                type="date"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                className="flex-1 border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                autoFocus
-              />
-            ) : (
-              <input
-                type="text"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                className="flex-1 border rounded px-2 py-1 text-sm font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter" && hasChanged) handleSave(mpn); if (e.key === "Escape") cancelEdit(); }}
-              />
-            )}
-            {hasChanged && (
-              <button
-                onClick={() => handleSave(mpn)}
-                disabled={saving}
-                className="px-3 py-1 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {saving ? "…" : "Save"}
-              </button>
-            )}
-            <button
-              onClick={cancelEdit}
-              className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
-            >
-              Cancel
-            </button>
-          </div>
-          {saveError && <span className="text-xs text-red-600 shrink-0">{saveError}</span>}
-        </div>
-      )}
-    </MpnContext.Consumer>
-  );
-}
-
-// Context to pass mpn down to EditableAttrRow without prop drilling through map
+// Context to pass mpn down through the tree without prop drilling
 import { createContext } from "react";
 const MpnContext = createContext<string>("");
 
@@ -576,12 +350,32 @@ export default function ProductDetailPage() {
     }
   }
 
-  // Sort each tab's entries alphabetically by display_label
+  // Sort each tab's entries: by display_group first, then display_order,
+  // finally alphabetical by display_label as a stable fallback.
   for (const tab of TABS) {
-    byTab[tab.key].sort((a, b) => a.display_label.localeCompare(b.display_label));
+    byTab[tab.key].sort((a, b) => {
+      const ga = a.display_group || "zzz_Other";
+      const gb = b.display_group || "zzz_Other";
+      if (ga !== gb) return ga.localeCompare(gb);
+      const oa = a.display_order ?? 99;
+      const ob = b.display_order ?? 99;
+      if (oa !== ob) return oa - ob;
+      return a.display_label.localeCompare(b.display_label);
+    });
   }
 
   const tabEntries = byTab[activeTab] || [];
+
+  // Bucket tab entries by display_group for sub-headered rendering
+  const groupedTabEntries = tabEntries.reduce<Record<string, AttributeRegistryEntry[]>>(
+    (acc, entry) => {
+      const g = entry.display_group || "Other";
+      if (!acc[g]) acc[g] = [];
+      acc[g].push(entry);
+      return acc;
+    },
+    {}
+  );
 
   return (
     <MpnContext.Provider value={mpn || ""}>
@@ -757,20 +551,49 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Tab content */}
-        <div className="space-y-1">
+        <div className="space-y-6">
           {tabEntries.length === 0 ? (
             <p className="text-sm text-gray-400 italic py-4">No attributes in this tab.</p>
           ) : (
-            tabEntries.map((entry) => (
-              <EditableAttrRow
-                key={entry.field_key}
-                fieldKey={entry.field_key}
-                displayLabel={entry.display_label}
-                fieldType={entry.field_type}
-                dropdownOptions={entry.dropdown_options || []}
-                attr={p.attribute_values[entry.field_key]}
-                onSaved={handleFieldSaved}
-              />
+            Object.entries(groupedTabEntries).map(([groupName, groupFields]) => (
+              <div key={groupName}>
+                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 pb-1 border-b border-gray-200 dark:border-gray-700">
+                  {groupName}
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {groupFields.map((entry, idx) => {
+                    const attr = p.attribute_values[entry.field_key];
+                    const rawValue = attr?.value;
+                    const initial =
+                      rawValue !== undefined && rawValue !== null ? String(rawValue) : "";
+                    const verified = attr?.verification_state === "Human-Verified";
+                    const ft = entry.field_type as
+                      | "text"
+                      | "textarea"
+                      | "select"
+                      | "dropdown"
+                      | "multi_select"
+                      | "number"
+                      | "toggle"
+                      | "date";
+                    return (
+                      <AttributeField
+                        key={entry.field_key}
+                        mpn={p.mpn}
+                        fieldKey={entry.field_key}
+                        label={entry.display_label}
+                        initialValue={initial}
+                        isVerified={verified}
+                        fieldType={ft}
+                        options={entry.dropdown_options || []}
+                        fullWidth={entry.full_width === true}
+                        tabIndex={idx + 1}
+                        onSaved={handleFieldSaved}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             ))
           )}
         </div>
