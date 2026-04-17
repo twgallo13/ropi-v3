@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
+import { requireRole } from "../middleware/roles";
 import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
 import { checkHighPriorityFlag } from "../services/launchHighPriority";
@@ -1031,6 +1032,82 @@ router.delete(
     } catch (err: any) {
       console.error("DELETE /products/:mpn/comments/:comment_id error:", err);
       res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ────────────────────────────────────────────────
+//  DELETE /:mpn — Step 4.2 Amendment B
+//  Cascade-delete a product and all its subcollections.
+//  admin / owner only.
+// ────────────────────────────────────────────────
+const PRODUCT_SUBCOLLECTIONS = [
+  "attribute_values",
+  "pricing_snapshots",
+  "site_targets",
+  "comments",
+  "site_verification",
+  "content_versions",
+  "audit_log",
+];
+
+router.delete(
+  "/:mpn",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mpn } = req.params;
+      const docId = mpnToDocId(mpn);
+      const productRef = admin.firestore().collection("products").doc(docId);
+      const snap = await productRef.get();
+      if (!snap.exists) {
+        res.status(404).json({ error: "Product not found" });
+        return;
+      }
+
+      for (const subcol of PRODUCT_SUBCOLLECTIONS) {
+        const subSnap = await productRef.collection(subcol).get();
+        if (!subSnap.empty) {
+          // Firestore batch limit is 500 writes
+          const chunks: FirebaseFirestore.QueryDocumentSnapshot[][] = [];
+          for (let i = 0; i < subSnap.docs.length; i += 400) {
+            chunks.push(subSnap.docs.slice(i, i + 400));
+          }
+          for (const chunk of chunks) {
+            const batch = admin.firestore().batch();
+            chunk.forEach((d) => batch.delete(d.ref));
+            await batch.commit();
+          }
+          console.log(
+            `[product-delete] purged ${subSnap.size} from ${docId}/${subcol}`
+          );
+        }
+      }
+
+      await productRef.delete();
+
+      await admin
+        .firestore()
+        .collection("audit_log")
+        .add({
+          event_type: "product_deleted",
+          product_mpn: mpn,
+          product_doc_id: docId,
+          acting_user: req.user?.uid || null,
+          acting_role: (req.user as any)?.role || null,
+          created_at: admin.firestore.FieldValue.serverTimestamp(),
+          note: "Hard delete — all subcollections purged",
+        });
+
+      res.json({
+        ok: true,
+        mpn,
+        deleted_subcollections: PRODUCT_SUBCOLLECTIONS,
+      });
+    } catch (err: any) {
+      console.error("DELETE /products/:mpn error:", err);
+      res.status(500).json({ error: err.message || "Failed to delete product" });
     }
   }
 );

@@ -2169,3 +2169,146 @@ export async function fetchTourForHub(hub: string): Promise<TourDoc | null> {
   const json = await res.json();
   return json.tour || null;
 }
+
+// ── Step 4.2 — Admin Control Center ──
+export interface AdminUser {
+  uid: string;
+  email: string | null;
+  display_name: string | null;
+  role: string | null;
+  departments?: string[] | null;
+  site_scope?: string[] | null;
+  disabled?: boolean;
+  created_at?: string | null;
+}
+
+export async function fetchAdminUsers(): Promise<AdminUser[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/users`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.users || [];
+}
+
+export async function createAdminUser(body: {
+  email: string;
+  display_name: string;
+  role: string;
+  departments?: string[];
+  site_scope?: string[];
+}): Promise<{ uid: string; temp_password: string }> {
+  const res = await fetch(`${BASE}/api/v1/admin/users`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function updateAdminUser(
+  uid: string,
+  body: Partial<{
+    display_name: string;
+    role: string;
+    departments: string[];
+    site_scope: string[];
+  }>
+): Promise<{ ok: boolean }> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/users/${encodeURIComponent(uid)}`,
+    {
+      method: "PUT",
+      headers: await headers(),
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function disableAdminUser(uid: string): Promise<{ ok: boolean }> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/users/${encodeURIComponent(uid)}`,
+    { method: "DELETE", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export interface AdminSetting {
+  key: string;
+  value: any;
+  type: string;
+  category: string;
+  label: string;
+  description?: string | null;
+  updated_at?: string | null;
+}
+
+export async function fetchAdminSettings(): Promise<AdminSetting[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/settings`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.settings || [];
+}
+
+export async function updateAdminSetting(
+  key: string,
+  value: any,
+  opts?: { type?: string; category?: string; label?: string }
+): Promise<{ ok: boolean }> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/settings/${encodeURIComponent(key)}`,
+    {
+      method: "PUT",
+      headers: await headers(),
+      body: JSON.stringify({ value, ...opts }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function testSmtp(): Promise<{
+  ok: boolean;
+  message?: string;
+  error?: string;
+}> {
+  const res = await fetch(`${BASE}/api/v1/admin/smtp/test`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  return res.json();
+}
+
+export async function testAI(): Promise<{
+  ok: boolean;
+  provider?: string;
+  model?: string;
+  error?: string;
+}> {
+  const res = await fetch(`${BASE}/api/v1/admin/ai/test`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  return res.json();
+}
+
+// ── Step 4.2 Amendment B — Delete product ──
+export async function deleteProduct(mpn: string): Promise<{ ok: boolean }> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}`,
+    { method: "DELETE", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}

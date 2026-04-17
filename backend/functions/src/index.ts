@@ -26,6 +26,8 @@ import dashboardRouter from "./routes/dashboard";
 import executiveRouter from "./routes/executive";
 import advisoryRouter from "./routes/advisory";
 import toursRouter from "./routes/tours";
+import adminUsersRouter from "./routes/adminUsers";
+import adminSettingsRouter from "./routes/adminSettings";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -98,6 +100,10 @@ app.use("/api/v1/advisory", advisoryRouter);
 
 // ── Step 3.5 — Guided Tours ──
 app.use("/api/v1/tours", toursRouter);
+
+// ── Step 4.2 — Admin Control Center ──
+app.use("/api/v1/admin/users", adminUsersRouter);
+app.use("/api/v1/admin", adminSettingsRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

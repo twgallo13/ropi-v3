@@ -12,6 +12,8 @@ import {
 } from "../lib/api";
 import ProductHistoryTab from "../components/ProductHistoryTab";
 import ProductCommentThread from "../components/ProductCommentThread";
+import DeleteProductButton from "../components/DeleteProductButton";
+import { useAuth } from "../contexts/AuthContext";
 
 // ── Provenance helpers — used only for info cards ──────────────
 // (EditableAttrRow handles its own provenance display)
@@ -451,6 +453,7 @@ function StatusBar({
 // ── Main page ──────────────────────────────────────────────────
 export default function ProductDetailPage() {
   const { mpn } = useParams<{ mpn: string }>();
+  const { role } = useAuth();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [registry, setRegistry] = useState<AttributeRegistryEntry[]>([]);
   const [activeTab, setActiveTab] = useState("core_information");
@@ -601,6 +604,11 @@ export default function ProductDetailPage() {
             <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded">
               High Priority — {p.launch_days_remaining}d
             </span>
+          )}
+          {(role === "admin" || role === "owner") && (
+            <div className="mt-2">
+              <DeleteProductButton mpn={p.mpn} productName={p.name} />
+            </div>
           )}
         </div>
       </div>

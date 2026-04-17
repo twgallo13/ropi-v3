@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const auth_1 = require("../middleware/auth");
+const roles_1 = require("../middleware/roles");
 const mpnUtils_1 = require("../services/mpnUtils");
 const pricingExportQueue_1 = require("../services/pricingExportQueue");
 const launchHighPriority_1 = require("../services/launchHighPriority");
@@ -877,6 +878,70 @@ router.delete("/:mpn/comments/:comment_id", auth_1.requireAuth, async (req, res)
     catch (err) {
         console.error("DELETE /products/:mpn/comments/:comment_id error:", err);
         res.status(500).json({ error: err.message });
+    }
+});
+// ────────────────────────────────────────────────
+//  DELETE /:mpn — Step 4.2 Amendment B
+//  Cascade-delete a product and all its subcollections.
+//  admin / owner only.
+// ────────────────────────────────────────────────
+const PRODUCT_SUBCOLLECTIONS = [
+    "attribute_values",
+    "pricing_snapshots",
+    "site_targets",
+    "comments",
+    "site_verification",
+    "content_versions",
+    "audit_log",
+];
+router.delete("/:mpn", auth_1.requireAuth, (0, roles_1.requireRole)(["admin", "owner"]), async (req, res) => {
+    try {
+        const { mpn } = req.params;
+        const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+        const productRef = firebase_admin_1.default.firestore().collection("products").doc(docId);
+        const snap = await productRef.get();
+        if (!snap.exists) {
+            res.status(404).json({ error: "Product not found" });
+            return;
+        }
+        for (const subcol of PRODUCT_SUBCOLLECTIONS) {
+            const subSnap = await productRef.collection(subcol).get();
+            if (!subSnap.empty) {
+                // Firestore batch limit is 500 writes
+                const chunks = [];
+                for (let i = 0; i < subSnap.docs.length; i += 400) {
+                    chunks.push(subSnap.docs.slice(i, i + 400));
+                }
+                for (const chunk of chunks) {
+                    const batch = firebase_admin_1.default.firestore().batch();
+                    chunk.forEach((d) => batch.delete(d.ref));
+                    await batch.commit();
+                }
+                console.log(`[product-delete] purged ${subSnap.size} from ${docId}/${subcol}`);
+            }
+        }
+        await productRef.delete();
+        await firebase_admin_1.default
+            .firestore()
+            .collection("audit_log")
+            .add({
+            event_type: "product_deleted",
+            product_mpn: mpn,
+            product_doc_id: docId,
+            acting_user: req.user?.uid || null,
+            acting_role: req.user?.role || null,
+            created_at: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            note: "Hard delete — all subcollections purged",
+        });
+        res.json({
+            ok: true,
+            mpn,
+            deleted_subcollections: PRODUCT_SUBCOLLECTIONS,
+        });
+    }
+    catch (err) {
+        console.error("DELETE /products/:mpn error:", err);
+        res.status(500).json({ error: err.message || "Failed to delete product" });
     }
 });
 exports.default = router;

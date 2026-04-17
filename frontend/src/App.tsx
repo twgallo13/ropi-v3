@@ -32,6 +32,7 @@ import NeglectedInventoryPage from "./pages/NeglectedInventoryPage";
 import ChannelDisparityPage from "./pages/ChannelDisparityPage";
 import BuyerPerformancePage from "./pages/BuyerPerformancePage";
 import AdvisoryPage from "./pages/AdvisoryPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage";
 
 export default function App() {
   return (
@@ -108,6 +109,7 @@ function AppInner() {
             <Route path="/buyer-performance" element={<BuyerPerformancePage />} />
             <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
             <Route path="/advisory" element={<AdvisoryPage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Route>
