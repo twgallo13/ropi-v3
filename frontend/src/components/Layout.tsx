@@ -86,6 +86,12 @@ export default function Layout() {
             >
               ⚙ Templates
             </Link>
+            <Link
+              to="/admin/smart-rules"
+              className="text-gray-500 hover:text-gray-900"
+            >
+              ⚙ Smart Rules
+            </Link>
           </nav>
         </div>
         {user && (

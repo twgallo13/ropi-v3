@@ -16,6 +16,7 @@ import cadenceReviewRouter from "./routes/cadenceReview";
 import promptTemplatesRouter from "./routes/promptTemplates";
 import aiContentRouter from "./routes/aiContent";
 import launchesRouter from "./routes/launches";
+import adminSmartRulesRouter from "./routes/adminSmartRules";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -69,6 +70,9 @@ app.use("/api/v1/products", aiContentRouter);
 
 // ── Launch Calendar (Step 2.4) ──
 app.use("/api/v1/launches", launchesRouter);
+
+// ── Smart Rules Admin (Step 3.1) ──
+app.use("/api/v1/admin/smart-rules", adminSmartRulesRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

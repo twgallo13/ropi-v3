@@ -18,6 +18,8 @@ import AIContentReviewPage from "./pages/AIContentReviewPage";
 import LaunchAdminListPage from "./pages/LaunchAdminListPage";
 import LaunchAdminDetailPage from "./pages/LaunchAdminDetailPage";
 import PublicLaunchCalendarPage from "./pages/PublicLaunchCalendarPage";
+import SmartRulesAdminPage from "./pages/SmartRulesAdminPage";
+import SmartRuleBuilderPage from "./pages/SmartRuleBuilderPage";
 
 export default function App() {
   return (
@@ -36,6 +38,9 @@ export default function App() {
               <Route path="/cadence-unassigned" element={<CadenceUnassignedPage />} />
               <Route path="/admin/cadence-rules" element={<CadenceRulesAdminPage />} />
               <Route path="/admin/prompt-templates" element={<PromptTemplatesAdminPage />} />
+              <Route path="/admin/smart-rules" element={<SmartRulesAdminPage />} />
+              <Route path="/admin/smart-rules/new" element={<SmartRuleBuilderPage />} />
+              <Route path="/admin/smart-rules/:ruleId" element={<SmartRuleBuilderPage />} />
               <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
               <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
               <Route path="/export-center" element={<ExportCenterPage />} />

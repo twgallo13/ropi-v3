@@ -1399,3 +1399,124 @@ export async function subscribeLaunchEmail(
   return data;
 }
 
+
+// ───────────────────────────────────────────────────────────────────────────
+// Step 3.1 — Smart Rules Admin
+// ───────────────────────────────────────────────────────────────────────────
+
+export interface SmartRuleCondition {
+  field: string;
+  operator: string;
+  value: string | number | boolean;
+  logic?: "AND" | "OR";
+  case_sensitive?: boolean;
+}
+
+export interface SmartRuleAction {
+  target_field: string;
+  value: string | number | boolean;
+}
+
+export interface SmartRule {
+  rule_id: string;
+  rule_name: string;
+  rule_type?: string;
+  is_active: boolean;
+  priority: number;
+  always_overwrite: boolean;
+  conditions: SmartRuleCondition[];
+  actions: SmartRuleAction[];
+  // Legacy-schema rules may also appear:
+  source_field?: string;
+  action?: { target_attribute: string; output_value: string };
+  condition_logic?: "AND" | "OR";
+  version?: number;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export async function fetchSmartRules(): Promise<SmartRule[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/smart-rules`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = await res.json();
+  return data.rules as SmartRule[];
+}
+
+export async function fetchSmartRule(ruleId: string): Promise<SmartRule> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/smart-rules/${encodeURIComponent(ruleId)}`,
+    { headers: await headers() }
+  );
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function createSmartRule(body: Partial<SmartRule>): Promise<SmartRule> {
+  const res = await fetch(`${BASE}/api/v1/admin/smart-rules`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function updateSmartRule(
+  ruleId: string,
+  body: Partial<SmartRule>
+): Promise<SmartRule> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/smart-rules/${encodeURIComponent(ruleId)}`,
+    {
+      method: "PUT",
+      headers: await headers(),
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function deactivateSmartRule(
+  ruleId: string
+): Promise<{ ok: boolean; rule_id: string; is_active: boolean }> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/smart-rules/${encodeURIComponent(ruleId)}`,
+    { method: "DELETE", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export interface SmartRuleDryRunResult {
+  rule_id: string;
+  mpn: string;
+  would_match: boolean;
+  would_write: Array<{
+    target_field: string;
+    value: unknown;
+    blocked_reason: string | null;
+  }>;
+}
+
+export async function testSmartRule(
+  ruleId: string,
+  mpn: string
+): Promise<SmartRuleDryRunResult> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/smart-rules/${encodeURIComponent(ruleId)}/test`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ mpn }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}

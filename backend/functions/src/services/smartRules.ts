@@ -1,80 +1,296 @@
+/**
+ * Smart Rules Engine — Step 3.1 upgrade.
+ *
+ * Supports TWO schemas:
+ *   LEGACY (Phase 1):
+ *     { conditions:[{source_field, operator, target_value}],
+ *       condition_logic: "AND" | "OR",
+ *       action: { target_attribute, output_value } }
+ *     operators: matches | is empty | is not empty
+ *
+ *   CANONICAL (Step 3.1 forward):
+ *     { conditions:[{field, operator, value, logic, case_sensitive}],
+ *       actions:[{target_field, value}] }
+ *     operators: equals | not_equals | contains | starts_with
+ *                | is_empty | is_not_empty | matches
+ *
+ * Invariants (Section 19.10):
+ *   - Rules evaluated priority ASC, id ASC
+ *   - Human-Verified is the absolute ceiling — NEVER overwritten
+ *   - always_overwrite overrides System-Applied but not Human-Verified
+ *   - Fill-if-empty is default
+ *   - Every write carries provenance stamp (TALLY-044)
+ *   - target_field must exist in attribute_registry (AC9) — else skip + log
+ *   - Condition field lookup order: product doc → attribute_values → source_inputs
+ */
 import admin from "firebase-admin";
 
 const db = admin.firestore;
 
-// TALLY-082 — UUID / GUID detection patterns
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const GUID_LIKE_PATTERN = /^[0-9a-f-]{20,}$/i;
 
-interface SmartRule {
-  id: string;
-  rule_name: string;
-  conditions: Array<{
-    source_field: string;
-    operator: string;
-    target_value: string;
-  }>;
-  condition_logic: string;
-  action: {
-    target_attribute: string;
-    output_value: string;
-  };
-  always_overwrite: boolean;
-  priority: number;
-  is_active: boolean;
-  tally_ref: string;
+// ── Types ──────────────────────────────────────────────────────────────────
+
+export interface SmartRuleConditionV2 {
+  field: string;
+  operator: string;
+  value: string | number | boolean;
+  logic?: "AND" | "OR";
+  case_sensitive?: boolean;
+}
+
+export interface SmartRuleActionV2 {
+  target_field: string;
+  value: string | number | boolean;
 }
 
 interface RuleExecutionResult {
   rules_fired: number;
   uuid_names_cleaned: boolean;
   image_status_set: string | null;
+  actions_written: Array<{
+    rule_id: string;
+    rule_name: string;
+    target_field: string;
+    value: unknown;
+    overwrite: boolean;
+  }>;
 }
 
-/**
- * Evaluate a single condition against a product's field values.
- * is_empty contract (Section 19.10): null or whitespace-only = empty.
- * "0" and false are NOT empty.
- */
-function evaluateCondition(
+// ── Primitive helpers ──────────────────────────────────────────────────────
+
+function normalize(v: unknown, caseSensitive: boolean): string {
+  const s = v === null || v === undefined ? "" : String(v);
+  return caseSensitive ? s : s.toLowerCase();
+}
+
+function isEmptyValue(v: unknown): boolean {
+  if (v === null || v === undefined) return true;
+  if (typeof v === "string" && v.trim() === "") return true;
+  return false;
+}
+
+// ── Canonical condition evaluator ──────────────────────────────────────────
+
+function evalCanonicalCondition(
+  fieldValue: unknown,
+  c: SmartRuleConditionV2
+): boolean {
+  const caseSensitive = c.case_sensitive !== false; // default TRUE (TALLY-104)
+  const op = (c.operator || "").toLowerCase();
+
+  if (op === "is_empty" || op === "is empty") return isEmptyValue(fieldValue);
+  if (op === "is_not_empty" || op === "is not empty") return !isEmptyValue(fieldValue);
+
+  if (op === "equals") {
+    if (typeof c.value === "boolean" || typeof fieldValue === "boolean") {
+      return String(fieldValue) === String(c.value);
+    }
+    return normalize(fieldValue, caseSensitive) === normalize(c.value, caseSensitive);
+  }
+  if (op === "not_equals") {
+    return normalize(fieldValue, caseSensitive) !== normalize(c.value, caseSensitive);
+  }
+  if (op === "contains") {
+    return normalize(fieldValue, caseSensitive).includes(
+      normalize(c.value, caseSensitive)
+    );
+  }
+  if (op === "starts_with") {
+    return normalize(fieldValue, caseSensitive).startsWith(
+      normalize(c.value, caseSensitive)
+    );
+  }
+  if (op === "matches") {
+    const target = String(c.value ?? "");
+    const raw = String(fieldValue ?? "");
+    if (target === "UUID_PATTERN") {
+      return UUID_PATTERN.test(raw) || GUID_LIKE_PATTERN.test(raw);
+    }
+    try {
+      const re = caseSensitive ? new RegExp(target) : new RegExp(target, "i");
+      return re.test(raw);
+    } catch {
+      return raw === target;
+    }
+  }
+  return false;
+}
+
+function evaluateConditions(
+  conditions: SmartRuleConditionV2[],
+  resolve: (name: string) => unknown
+): boolean {
+  if (!conditions || conditions.length === 0) return false;
+  const andGroup = conditions.filter((c) => !c.logic || c.logic === "AND");
+  const orGroup = conditions.filter((c) => c.logic === "OR");
+  const andPass = andGroup.every((c) => evalCanonicalCondition(resolve(c.field), c));
+  const orPass =
+    orGroup.length === 0 ||
+    orGroup.some((c) => evalCanonicalCondition(resolve(c.field), c));
+  return andPass && orPass;
+}
+
+// ── Legacy evaluator (Phase 1 schema) ──────────────────────────────────────
+
+function evalLegacyOperator(
   fieldValue: unknown,
   operator: string,
   targetValue: string
 ): boolean {
   switch (operator) {
-    case "matches": {
+    case "matches":
       if (targetValue === "UUID_PATTERN") {
         const strVal = String(fieldValue ?? "");
         return UUID_PATTERN.test(strVal) || GUID_LIKE_PATTERN.test(strVal);
       }
       return String(fieldValue ?? "") === targetValue;
-    }
-    case "is empty": {
-      if (fieldValue === null || fieldValue === undefined) return true;
-      if (typeof fieldValue === "string" && fieldValue.trim() === "") return true;
-      return false;
-    }
-    case "is not empty": {
-      if (fieldValue === null || fieldValue === undefined) return false;
-      if (typeof fieldValue === "string" && fieldValue.trim() === "") return false;
-      return true;
-    }
+    case "is empty":
+      return isEmptyValue(fieldValue);
+    case "is not empty":
+      return !isEmptyValue(fieldValue);
     default:
       return false;
   }
 }
 
-/**
- * Execute all active Smart Rules against a single product.
- * Called synchronously after every product write during import commit.
- *
- * Section 19.10 requirements:
- * - Fetch active rules ordered by priority ASC, id ASC
- * - Check Human-Verified ceiling FIRST before any write
- * - Write provenance stamp on every value written (TALLY-044)
- * - UUID Name Cleanup: preserve raw GUID in source_inputs.raw_name_original
- * - If target_attribute not in attribute_registry → log error, skip, continue
- */
+function evaluateLegacy(rule: any, resolve: (n: string) => unknown): boolean {
+  if (!Array.isArray(rule.conditions) || rule.conditions.length === 0) return false;
+  const results = rule.conditions.map((c: any) =>
+    evalLegacyOperator(resolve(c.source_field), c.operator, c.target_value)
+  );
+  if (rule.condition_logic === "OR") return results.some((r: boolean) => r);
+  return results.every((r: boolean) => r);
+}
+
+// ── Product context + field resolution ─────────────────────────────────────
+
+interface ProductContext {
+  productData: Record<string, unknown>;
+  attributeValues: Record<string, { value: unknown; verification_state?: string }>;
+  sourceInputs: Record<string, unknown>;
+}
+
+function resolveField(ctx: ProductContext, field: string): unknown {
+  if (!field) return undefined;
+  if (field in ctx.productData && ctx.productData[field] !== undefined) {
+    return ctx.productData[field];
+  }
+  if (field in ctx.attributeValues) {
+    return ctx.attributeValues[field]?.value;
+  }
+  if (field in ctx.sourceInputs) {
+    return ctx.sourceInputs[field];
+  }
+  return undefined;
+}
+
+async function loadProductContext(
+  firestore: FirebaseFirestore.Firestore,
+  mpn: string
+): Promise<ProductContext | null> {
+  const productRef = firestore.collection("products").doc(mpn);
+  const productSnap = await productRef.get();
+  if (!productSnap.exists) return null;
+
+  const attrSnap = await productRef.collection("attribute_values").get();
+  const attributeValues: Record<string, { value: unknown; verification_state?: string }> = {};
+  let sourceInputs: Record<string, unknown> = {};
+  for (const d of attrSnap.docs) {
+    const data = d.data() as any;
+    if (d.id === "source_inputs") {
+      sourceInputs = data;
+    } else {
+      attributeValues[d.id] = {
+        value: data.value,
+        verification_state: data.verification_state,
+      };
+    }
+  }
+  return {
+    productData: productSnap.data() as Record<string, unknown>,
+    attributeValues,
+    sourceInputs,
+  };
+}
+
+// ── Schema detection ───────────────────────────────────────────────────────
+
+function isLegacyRule(rule: any): boolean {
+  if (Array.isArray(rule.actions) && rule.actions.length > 0) return false;
+  if (rule.action && typeof rule.action === "object") return true;
+  if (Array.isArray(rule.conditions) && rule.conditions[0]) {
+    if ("source_field" in rule.conditions[0]) return true;
+    if ("field" in rule.conditions[0]) return false;
+  }
+  return false;
+}
+
+// ── Write path (enforces ceilings + provenance + audit) ────────────────────
+
+async function writeRuleAction(
+  firestore: FirebaseFirestore.Firestore,
+  mpn: string,
+  batchId: string,
+  ruleId: string,
+  ruleName: string,
+  targetField: string,
+  value: unknown,
+  alwaysOverwrite: boolean,
+  registryKeys: Set<string>
+): Promise<{ wrote: boolean; skippedReason?: string }> {
+  if (!targetField) return { wrote: false, skippedReason: "missing target_field" };
+  if (!registryKeys.has(targetField)) {
+    console.error(
+      `Smart Rule "${ruleId}": target_field "${targetField}" not found in attribute_registry — skipping.`
+    );
+    return { wrote: false, skippedReason: "target_field not in registry" };
+  }
+
+  const productRef = firestore.collection("products").doc(mpn);
+  const attrRef = productRef.collection("attribute_values").doc(targetField);
+  const attrSnap = await attrRef.get();
+
+  if (attrSnap.exists && attrSnap.data()?.verification_state === "Human-Verified") {
+    return { wrote: false, skippedReason: "Human-Verified ceiling" };
+  }
+
+  if (!alwaysOverwrite && attrSnap.exists) {
+    const existingVal = attrSnap.data()?.value;
+    if (existingVal !== null && existingVal !== undefined && existingVal !== "") {
+      return { wrote: false, skippedReason: "fill-if-empty: already has value" };
+    }
+  }
+
+  await attrRef.set(
+    {
+      value,
+      origin_type: "Smart Rule",
+      origin_detail: `Rule #${ruleId} — ${ruleName}`,
+      verification_state: "System-Applied",
+      written_at: db.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  await firestore.collection("audit_log").add({
+    event_type: "smart_rule_execution",
+    rule_id: ruleId,
+    rule_name: ruleName,
+    mpn,
+    target_field: targetField,
+    value,
+    overwrite: !!alwaysOverwrite,
+    batch_id: batchId || null,
+    timestamp: db.FieldValue.serverTimestamp(),
+  });
+
+  return { wrote: true };
+}
+
+// ── Public: executeSmartRules ──────────────────────────────────────────────
+
 export async function executeSmartRules(
   mpn: string,
   batchId: string
@@ -84,17 +300,15 @@ export async function executeSmartRules(
     rules_fired: 0,
     uuid_names_cleaned: false,
     image_status_set: null,
+    actions_written: [],
   };
 
-  // Fetch all active rules, ordered by priority ASC, id ASC
   const rulesSnap = await firestore
     .collection("smart_rules")
     .where("is_active", "==", true)
     .get();
-
   if (rulesSnap.empty) return result;
 
-  // Sort in memory: priority ASC, then document ID ASC
   const sortedDocs = rulesSnap.docs.sort((a, b) => {
     const pA = a.data().priority ?? 999;
     const pB = b.data().priority ?? 999;
@@ -102,101 +316,167 @@ export async function executeSmartRules(
     return a.id.localeCompare(b.id);
   });
 
-  // Fetch the product document
-  const productRef = firestore.collection("products").doc(mpn);
-  const productSnap = await productRef.get();
-  if (!productSnap.exists) return result;
+  const ctx = await loadProductContext(firestore, mpn);
+  if (!ctx) return result;
 
-  const productData = productSnap.data()!;
-
-  // AC9 — Load attribute_registry keys for target_attribute validation
   const registrySnap = await firestore.collection("attribute_registry").get();
   const registryKeys = new Set(registrySnap.docs.map((d) => d.id));
 
   for (const ruleDoc of sortedDocs) {
-    const rule = { id: ruleDoc.id, ...ruleDoc.data() } as SmartRule;
+    const raw = ruleDoc.data();
+    const ruleId = ruleDoc.id;
+    const ruleName = raw.rule_name || ruleId;
+    const alwaysOverwrite = !!raw.always_overwrite;
+    const legacy = isLegacyRule(raw);
 
-    // AC9 — If target_attribute not in attribute_registry, skip with named error log
-    if (!registryKeys.has(rule.action.target_attribute)) {
-      console.error(
-        `Smart Rule "${rule.id}": target_attribute "${rule.action.target_attribute}" not found in attribute_registry — skipping.`
-      );
-      continue;
-    }
+    const matched = legacy
+      ? evaluateLegacy(raw, (f) => resolveField(ctx, f))
+      : evaluateConditions(raw.conditions || [], (f) => resolveField(ctx, f));
 
-    // Evaluate all conditions
-    const conditionResults = rule.conditions.map((c) => {
-      const fieldValue = productData[c.source_field] ?? null;
-      return evaluateCondition(fieldValue, c.operator, c.target_value);
-    });
+    if (!matched) continue;
 
-    // Apply condition_logic
-    let conditionsMet = false;
-    if (rule.condition_logic === "AND") {
-      conditionsMet = conditionResults.every((r) => r);
-    } else if (rule.condition_logic === "OR") {
-      conditionsMet = conditionResults.some((r) => r);
-    }
-
-    if (!conditionsMet) continue;
-
-    // Check Human-Verified ceiling FIRST — before any write path (TALLY-044)
-    const attrRef = productRef
-      .collection("attribute_values")
-      .doc(rule.action.target_attribute);
-    const attrSnap = await attrRef.get();
-    if (
-      attrSnap.exists &&
-      attrSnap.data()?.verification_state === "Human-Verified"
-    ) {
-      // Human-Verified is the absolute ceiling — no automated rule exceeds it
-      continue;
-    }
-
-    // For fill-if-empty: skip if value already exists and always_overwrite is false
-    if (!rule.always_overwrite && attrSnap.exists) {
-      const existingVal = attrSnap.data()?.value;
-      if (existingVal !== null && existingVal !== undefined && existingVal !== "") {
-        continue;
-      }
-    }
-
-    // UUID Name Cleanup special handling: preserve raw GUID before blanking
-    if (rule.id === "rule_uuid_name_cleanup") {
-      const rawName = productData.name ?? "";
+    // Legacy UUID Name Cleanup preserves raw before blanking
+    if (legacy && ruleId === "rule_uuid_name_cleanup") {
+      const rawName = ctx.productData.name ?? "";
       if (rawName) {
-        await productRef
+        await firestore
+          .collection("products")
+          .doc(mpn)
           .collection("attribute_values")
           .doc("source_inputs")
-          .set(
-            { raw_name_original: rawName },
-            { merge: true }
-          );
+          .set({ raw_name_original: rawName }, { merge: true });
       }
-      // Blank the top-level name field on the product document
-      await productRef.set({ name: "" }, { merge: true });
+      await firestore
+        .collection("products")
+        .doc(mpn)
+        .set({ name: "" }, { merge: true });
       result.uuid_names_cleaned = true;
     }
 
-    // Write the attribute value with full provenance stamp (TALLY-044)
-    await attrRef.set(
-      {
-        value: rule.action.output_value,
-        origin_type: "Smart Rule",
-        origin_detail: `Rule #${rule.id}`,
-        verification_state: "System-Applied",
-        written_at: db.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+    const actions: SmartRuleActionV2[] = legacy
+      ? [
+          {
+            target_field: raw.action?.target_attribute,
+            value: raw.action?.output_value,
+          },
+        ]
+      : Array.isArray(raw.actions)
+      ? raw.actions
+      : [];
 
-    // Track image status results
-    if (rule.action.target_attribute === "image_status") {
-      result.image_status_set = rule.action.output_value;
+    let firedAny = false;
+    for (const a of actions) {
+      const r = await writeRuleAction(
+        firestore,
+        mpn,
+        batchId,
+        ruleId,
+        ruleName,
+        a.target_field,
+        a.value,
+        alwaysOverwrite,
+        registryKeys
+      );
+      if (r.wrote) {
+        firedAny = true;
+        result.actions_written.push({
+          rule_id: ruleId,
+          rule_name: ruleName,
+          target_field: a.target_field,
+          value: a.value,
+          overwrite: alwaysOverwrite,
+        });
+        // Refresh cache so subsequent higher-priority rules see fresh values
+        ctx.attributeValues[a.target_field] = {
+          value: a.value,
+          verification_state: "System-Applied",
+        };
+        if (a.target_field === "image_status") {
+          result.image_status_set = String(a.value);
+        }
+      }
     }
-
-    result.rules_fired++;
+    if (firedAny) result.rules_fired++;
   }
 
   return result;
+}
+
+// ── Public: dryRunSmartRule ────────────────────────────────────────────────
+
+export interface DryRunResult {
+  would_match: boolean;
+  would_write: Array<{
+    target_field: string;
+    value: unknown;
+    blocked_reason: string | null;
+  }>;
+}
+
+export async function dryRunSmartRule(rule: any, mpn: string): Promise<DryRunResult> {
+  const firestore = admin.firestore();
+  const ctx = await loadProductContext(firestore, mpn);
+  if (!ctx) return { would_match: false, would_write: [] };
+
+  const legacy = isLegacyRule(rule);
+  const matched = legacy
+    ? evaluateLegacy(rule, (f) => resolveField(ctx, f))
+    : evaluateConditions(rule.conditions || [], (f) => resolveField(ctx, f));
+  if (!matched) return { would_match: false, would_write: [] };
+
+  const registrySnap = await firestore.collection("attribute_registry").get();
+  const registryKeys = new Set(registrySnap.docs.map((d) => d.id));
+
+  const actions: SmartRuleActionV2[] = legacy
+    ? [
+        {
+          target_field: rule.action?.target_attribute,
+          value: rule.action?.output_value,
+        },
+      ]
+    : Array.isArray(rule.actions)
+    ? rule.actions
+    : [];
+
+  const productRef = firestore.collection("products").doc(mpn);
+  const alwaysOverwrite = !!rule.always_overwrite;
+  const would_write: DryRunResult["would_write"] = [];
+
+  for (const a of actions) {
+    if (!a.target_field) {
+      would_write.push({ target_field: "", value: a.value, blocked_reason: "missing target_field" });
+      continue;
+    }
+    if (!registryKeys.has(a.target_field)) {
+      would_write.push({
+        target_field: a.target_field,
+        value: a.value,
+        blocked_reason: "target_field not in attribute_registry",
+      });
+      continue;
+    }
+    const attrSnap = await productRef.collection("attribute_values").doc(a.target_field).get();
+    if (attrSnap.exists && attrSnap.data()?.verification_state === "Human-Verified") {
+      would_write.push({
+        target_field: a.target_field,
+        value: a.value,
+        blocked_reason: "Human-Verified ceiling",
+      });
+      continue;
+    }
+    if (!alwaysOverwrite && attrSnap.exists) {
+      const existing = attrSnap.data()?.value;
+      if (existing !== null && existing !== undefined && existing !== "") {
+        would_write.push({
+          target_field: a.target_field,
+          value: a.value,
+          blocked_reason: "fill-if-empty: field already has value",
+        });
+        continue;
+      }
+    }
+    would_write.push({ target_field: a.target_field, value: a.value, blocked_reason: null });
+  }
+
+  return { would_match: true, would_write };
 }
