@@ -33,12 +33,42 @@ const upload = (0, multer_1.default)({
 });
 const dbNS = firebase_admin_1.default.firestore;
 function detectImportType(headers) {
-    const h = headers.map((s) => (s || "").toLowerCase());
+    const h = headers.map((s) => (s || "").toLowerCase().trim());
     if (h.some((x) => x.includes("web sales")))
         return "web";
     if (h.some((x) => x.includes("store sales")))
         return "store";
     return "unknown";
+}
+/**
+ * Map header columns for either web or store sales files.
+ *  - web   uses SKU.Mpn (or Mpn) + "Web Sales 7/30 Days"
+ *  - store uses Mpn      (no SKU. prefix) + "Store Sales 7/30 Days"
+ *  - last-sold column may be "Last sold date" or "Last date sold"
+ */
+function mapSalesColumns(headers, importType) {
+    const h = headers.map((s) => (s || "").toLowerCase().trim());
+    if (importType === "web") {
+        return {
+            mpn: h.findIndex((x) => x === "sku.mpn" || x === "mpn"),
+            sales_7d: h.findIndex((x) => x.includes("web sales 7")),
+            sales_30d: h.findIndex((x) => x.includes("web sales 30")),
+            last_sale: h.findIndex((x) => x.includes("last sold date") || x.includes("last date sold")),
+        };
+    }
+    return {
+        mpn: h.findIndex((x) => x === "mpn"),
+        sales_7d: h.findIndex((x) => x.includes("store sales 7")),
+        sales_30d: h.findIndex((x) => x.includes("store sales 30")),
+        last_sale: h.findIndex((x) => x.includes("last date sold") || x.includes("last sold date")),
+    };
+}
+/** Parse a sales count, treating blank/NaN as 0 and clamping negatives to 0. */
+function parseSalesInt(raw) {
+    const n = parseInt((raw || "").trim(), 10);
+    if (isNaN(n))
+        return 0;
+    return Math.max(0, n);
 }
 function parseReportDate(metadataRow) {
     // "Report made 4/17/2026,,," or "Report made 4/17/2026"
@@ -77,10 +107,11 @@ function parseLastSoldDate(raw) {
     }
     return { date: null, past: false };
 }
-function findColLoose(headers, needle) {
-    const n = needle.toLowerCase();
-    return headers.findIndex((h) => (h || "").toLowerCase().includes(n));
+function findColLoose(_headers, _needle) {
+    // legacy helper, retained for potential reuse; replaced by mapSalesColumns
+    return -1;
 }
+void findColLoose;
 // ─────────────────────────────────────────────────────────────
 //  POST /upload  — parse, detect type, save file, create batch
 // ─────────────────────────────────────────────────────────────
@@ -123,19 +154,19 @@ router.post("/upload", upload.single("file"), async (req, res) => {
             });
             return;
         }
-        const mpnIdx = findColLoose(headerRow, "sku.mpn");
-        const sales7Idx = findColLoose(headerRow, importType === "web" ? "web sales 7" : "store sales 7");
-        const sales30Idx = findColLoose(headerRow, importType === "web" ? "web sales 30" : "store sales 30");
-        const lastSoldIdx = findColLoose(headerRow, "last sold date");
+        const cols = mapSalesColumns(headerRow, importType);
+        const sales7Idx = cols.sales_7d;
+        const sales30Idx = cols.sales_30d;
+        const lastSoldIdx = cols.last_sale;
         const missing = [];
-        if (mpnIdx < 0)
-            missing.push("SKU.Mpn");
+        if (cols.mpn < 0)
+            missing.push(importType === "web" ? "SKU.Mpn / Mpn" : "Mpn");
         if (sales7Idx < 0)
             missing.push(importType === "web" ? "Web Sales 7 Days" : "Store Sales 7 Days");
         if (sales30Idx < 0)
             missing.push(importType === "web" ? "Web Sales 30 Days" : "Store Sales 30 Days");
         if (lastSoldIdx < 0)
-            missing.push("Last sold date");
+            missing.push("Last sold date / Last date sold");
         if (missing.length > 0) {
             res.status(400).json({
                 error: "Missing required columns.",
@@ -172,7 +203,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
             created_at: dbNS.FieldValue.serverTimestamp(),
             completed_at: null,
             column_indexes: {
-                mpn: mpnIdx,
+                mpn: cols.mpn,
                 sales_7d: sales7Idx,
                 sales_30d: sales30Idx,
                 last_sold_date: lastSoldIdx,
@@ -257,8 +288,8 @@ router.post("/:batch_id/commit", async (req, res) => {
                 continue;
             }
             try {
-                const sales7 = parseInt(r[colIdx.sales_7d], 10) || 0;
-                const sales30 = parseInt(r[colIdx.sales_30d], 10) || 0;
+                const sales7 = parseSalesInt(r[colIdx.sales_7d]);
+                const sales30 = parseSalesInt(r[colIdx.sales_30d]);
                 const lastSoldRaw = r[colIdx.last_sold_date] || "";
                 const { date: lastSaleDate, past: lastSalePast } = parseLastSoldDate(lastSoldRaw);
                 const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
