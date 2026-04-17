@@ -88,17 +88,22 @@ async function getLaunchWindowDays(firestore) {
         .get();
     return doc.exists ? doc.data().value : 7;
 }
-/** Build the site_owner value — first site_target's site_id. */
-async function getSiteOwner(firestore, docId) {
+/** Build the site_owner value — first site_target's site_id, or top-level data.site_owner. */
+async function getSiteOwner(firestore, docId, data) {
     const snap = await firestore
         .collection("products")
         .doc(docId)
         .collection("site_targets")
         .limit(1)
         .get();
-    if (snap.empty)
-        return null;
-    return snap.docs[0].data().site_id || snap.docs[0].id;
+    if (!snap.empty) {
+        return snap.docs[0].data().site_id || snap.docs[0].id;
+    }
+    // Fallback: top-level site_owner (normalized to lowercase for filter comparison)
+    if (data && typeof data.site_owner === "string" && data.site_owner.trim()) {
+        return data.site_owner.trim();
+    }
+    return null;
 }
 // ────────────────────────────────────────────────
 //  GET /api/v1/products
@@ -106,7 +111,7 @@ async function getSiteOwner(firestore, docId) {
 router.get("/", auth_1.requireAuth, async (req, res) => {
     try {
         const firestore = firebase_admin_1.default.firestore();
-        const { completion_state, site_owner, brand, department, image_status, sort = "priority", limit: limitStr = "50", cursor, } = req.query;
+        const { completion_state, site_owner, brand, department, image_status, search, sort = "priority", limit: limitStr = "50", cursor, } = req.query;
         const limitNum = Math.min(Math.max(parseInt(limitStr || "50", 10) || 50, 1), 100);
         // Start with base query
         let query = firestore.collection("products");
@@ -138,19 +143,36 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
             const data = doc.data();
             const docId = doc.id;
             // Get site_owner for this product
-            const productSiteOwner = await getSiteOwner(firestore, docId);
-            // In-memory filters
-            if (site_owner && productSiteOwner !== site_owner)
-                continue;
+            const productSiteOwner = await getSiteOwner(firestore, docId, data);
+            // In-memory filters (case-insensitive)
+            if (site_owner) {
+                const want = site_owner.toLowerCase();
+                const have = (productSiteOwner || "").toLowerCase();
+                if (have !== want)
+                    continue;
+            }
             if (brand && (data.brand || "").toLowerCase() !== brand.toLowerCase())
                 continue;
             if (department) {
-                // Check department from attribute_values
-                const deptAttr = await firestore
-                    .collection("products").doc(docId)
-                    .collection("attribute_values").doc("department").get();
-                const deptVal = deptAttr.exists ? deptAttr.data()?.value : null;
+                // Check both top-level data.department and attribute_values/department
+                let deptVal = typeof data.department === "string" ? data.department : null;
+                if (!deptVal) {
+                    const deptAttr = await firestore
+                        .collection("products").doc(docId)
+                        .collection("attribute_values").doc("department").get();
+                    deptVal = deptAttr.exists ? (deptAttr.data()?.value ?? null) : null;
+                }
                 if (!deptVal || deptVal.toLowerCase() !== department.toLowerCase())
+                    continue;
+            }
+            if (search) {
+                const needle = search.toLowerCase();
+                const hay = [
+                    data.mpn || docId,
+                    data.name || "",
+                    data.brand || "",
+                ].join(" ").toLowerCase();
+                if (!hay.includes(needle))
                     continue;
             }
             if (image_status) {
@@ -170,11 +192,14 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
                 .collection("products").doc(docId)
                 .collection("attribute_values").doc("image_status").get();
             const imageStatusVal = imgSnap.exists ? imgSnap.data()?.value || "NO" : "NO";
-            // Get department from attribute_values
-            const deptSnap = await firestore
-                .collection("products").doc(docId)
-                .collection("attribute_values").doc("department").get();
-            const deptVal = deptSnap.exists ? deptSnap.data()?.value || "" : "";
+            // Get department: prefer top-level data.department, fall back to attribute_values
+            let deptVal = typeof data.department === "string" && data.department ? data.department : "";
+            if (!deptVal) {
+                const deptSnap = await firestore
+                    .collection("products").doc(docId)
+                    .collection("attribute_values").doc("department").get();
+                deptVal = deptSnap.exists ? deptSnap.data()?.value || "" : "";
+            }
             // Get class from attribute_values
             const classSnap = await firestore
                 .collection("products").doc(docId)

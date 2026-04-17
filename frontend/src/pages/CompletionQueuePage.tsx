@@ -26,16 +26,24 @@ export default function CompletionQueuePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sort, setSort] = useState<SortKey>("priority");
-  const [completionState, setCompletionState] = useState("");
-  const [siteOwner, setSiteOwner] = useState("");
+  const [filters, setFilters] = useState({
+    completion_state: "",
+    site_owner: "",
+    brand: "",
+    department: "",
+    search: "",
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const params: Record<string, string> = { sort, limit: "50" };
-      if (completionState) params.completion_state = completionState;
-      if (siteOwner) params.site_owner = siteOwner;
+      if (filters.completion_state) params.completion_state = filters.completion_state;
+      if (filters.site_owner) params.site_owner = filters.site_owner;
+      if (filters.brand) params.brand = filters.brand;
+      if (filters.department) params.department = filters.department;
+      if (filters.search) params.search = filters.search;
       const data = await fetchProducts(params);
       setItems(data.items);
       setTotal(data.total);
@@ -44,7 +52,7 @@ export default function CompletionQueuePage() {
     } finally {
       setLoading(false);
     }
-  }, [sort, completionState, siteOwner]);
+  }, [sort, filters]);
 
   useEffect(() => {
     load();
@@ -57,8 +65,8 @@ export default function CompletionQueuePage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <select
-          value={completionState}
-          onChange={(e) => setCompletionState(e.target.value)}
+          value={filters.completion_state}
+          onChange={(e) => setFilters((p) => ({ ...p, completion_state: e.target.value }))}
           className="border rounded px-3 py-1.5 text-sm"
         >
           <option value="">All States</option>
@@ -67,15 +75,40 @@ export default function CompletionQueuePage() {
         </select>
 
         <select
-          value={siteOwner}
-          onChange={(e) => setSiteOwner(e.target.value)}
+          value={filters.site_owner}
+          onChange={(e) => setFilters((p) => ({ ...p, site_owner: e.target.value }))}
           className="border rounded px-3 py-1.5 text-sm"
         >
           <option value="">All Sites</option>
           <option value="shiekh">Shiekh</option>
           <option value="karmaloop">Karmaloop</option>
           <option value="mltd">MLTD</option>
+          <option value="SHOES.COM">SHOES.COM</option>
         </select>
+
+        <input
+          type="text"
+          placeholder="Brand…"
+          value={filters.brand}
+          onChange={(e) => setFilters((p) => ({ ...p, brand: e.target.value }))}
+          className="border rounded px-3 py-1.5 text-sm w-36"
+        />
+
+        <input
+          type="text"
+          placeholder="Department…"
+          value={filters.department}
+          onChange={(e) => setFilters((p) => ({ ...p, department: e.target.value }))}
+          className="border rounded px-3 py-1.5 text-sm w-40"
+        />
+
+        <input
+          type="text"
+          placeholder="Search MPN / name…"
+          value={filters.search}
+          onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+          className="border rounded px-3 py-1.5 text-sm w-56"
+        />
 
         <select
           value={sort}
