@@ -296,6 +296,18 @@ async function writePricingSnapshot(mpn, batchId, result) {
     const conflictReason = conflictActive
         ? `Web sale ($${effectiveWebSale.toFixed(2)}) is below MAP floor ($${mapPrice.toFixed(2)})`
         : null;
+    // Step 3.2 Correction 1 — Channel disparity flags stamped on product doc.
+    // Readers must filter by these booleans, not recompute from raw fields.
+    const esr = result.effective_store_regular;
+    const ess = result.effective_store_sale;
+    const ewr = result.effective_web_regular;
+    const ews = result.effective_web_sale;
+    const storeOnSale = ess > 0 && esr > 0 && ess < esr;
+    const webOnSale = ews > 0 && ewr > 0 && ews < ewr;
+    const webAtFull = !ews || ews <= 0 || (ewr > 0 && ews >= ewr);
+    const storeAtFull = !ess || ess <= 0 || (esr > 0 && ess >= esr);
+    const isStoreSaleWebFull = storeOnSale && webAtFull;
+    const isWebSaleStoreFull = webOnSale && storeAtFull;
     await productRef.set({
         pricing_domain_state: result.status,
         is_loss_leader: result.is_loss_leader,
@@ -308,6 +320,8 @@ async function writePricingSnapshot(mpn, batchId, result) {
         map_conflict_flagged_at: conflictActive
             ? db.FieldValue.serverTimestamp()
             : null,
+        is_store_sale_web_full: isStoreSaleWebFull,
+        is_web_sale_store_full: isWebSaleStoreFull,
     }, { merge: true });
 }
 //# sourceMappingURL=pricingResolution.js.map

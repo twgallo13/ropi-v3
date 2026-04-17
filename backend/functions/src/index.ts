@@ -23,7 +23,7 @@ import siteVerificationImportRouter from "./routes/siteVerificationImport";
 import siteVerificationReviewRouter from "./routes/siteVerificationReview";
 import notificationsRouter from "./routes/notifications";
 import dashboardRouter from "./routes/dashboard";
-
+import executiveRouter from "./routes/executive";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -87,6 +87,9 @@ app.use("/api/v1/imports/site-verification", siteVerificationImportRouter);
 app.use("/api/v1/site-verification", siteVerificationReviewRouter);
 app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
+
+// ── Step 3.2 — Executive ──
+app.use("/api/v1/executive", executiveRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

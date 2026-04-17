@@ -9,6 +9,7 @@ const auth_1 = require("../middleware/auth");
 const mpnUtils_1 = require("../services/mpnUtils");
 const pricingExportQueue_1 = require("../services/pricingExportQueue");
 const launchHighPriority_1 = require("../services/launchHighPriority");
+const executiveProjections_1 = require("../services/executiveProjections");
 const router = (0, express_1.Router)();
 const db = firebase_admin_1.default.firestore;
 /** Cache required field keys from attribute_registry (refreshed per request group). */
@@ -419,6 +420,22 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
             catch (hpErr) {
                 console.error("checkHighPriorityFlag (discrepancy) failed:", hpErr.message);
             }
+            // Step 3.2 — operator throughput event (fire-and-forget)
+            try {
+                await firestore.collection("operator_throughput").add({
+                    operator_uid: req.user?.uid || "unknown",
+                    operator_name: req.user?.display_name || req.user?.email || "unknown",
+                    mpn,
+                    department: product.department || "Unknown",
+                    category: product.category || null,
+                    outcome: "discrepancy",
+                    completed_at: db.FieldValue.serverTimestamp(),
+                    week_key: (0, executiveProjections_1.getWeekKey)(new Date()),
+                });
+            }
+            catch (tErr) {
+                console.error("operator_throughput write (discrepancy) failed:", tErr.message);
+            }
             res.status(200).json({
                 mpn,
                 doc_id: docId,
@@ -444,6 +461,22 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
         }
         catch (hpErr) {
             console.error("checkHighPriorityFlag (complete) failed:", hpErr.message);
+        }
+        // Step 3.2 — operator throughput event (fire-and-forget)
+        try {
+            await firestore.collection("operator_throughput").add({
+                operator_uid: req.user?.uid || "unknown",
+                operator_name: req.user?.display_name || req.user?.email || "unknown",
+                mpn,
+                department: product.department || "Unknown",
+                category: product.category || null,
+                outcome: "export_ready",
+                completed_at: db.FieldValue.serverTimestamp(),
+                week_key: (0, executiveProjections_1.getWeekKey)(new Date()),
+            });
+        }
+        catch (tErr) {
+            console.error("operator_throughput write (export_ready) failed:", tErr.message);
         }
         res.status(200).json({
             mpn,

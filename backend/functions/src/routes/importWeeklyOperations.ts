@@ -21,6 +21,7 @@ import { getMapState } from "../services/mapState";
 import { runPostImportCalculations } from "../services/postImportCalculation";
 import { runCadenceEvaluation } from "../services/cadenceEngine";
 import { checkHighPriorityFlag } from "../services/launchHighPriority";
+import { writeWeeklySnapshots } from "../services/executiveProjections";
 
 const router = Router();
 const upload = multer({
@@ -347,6 +348,13 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       } catch (ce: any) {
         console.error("runCadenceEvaluation failed:", ce.message);
       }
+    }
+
+    // Step 6b.1 — Step 3.2 — Weekly metric snapshots for executive dashboard
+    try {
+      await writeWeeklySnapshots();
+    } catch (snapErr: any) {
+      console.error("writeWeeklySnapshots failed:", snapErr.message);
     }
 
     // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs

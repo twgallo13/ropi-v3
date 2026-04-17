@@ -1843,3 +1843,112 @@ export async function fetchDashboard(): Promise<DashboardResponse> {
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
+
+// ────────────────────────────────────────────────
+// Step 3.2 — Executive endpoints
+// ────────────────────────────────────────────────
+export interface ExecutiveHealth {
+  products_added_this_month: number;
+  products_added_last_month: number;
+  gm_trend: { date: string; value: number }[];
+  gm_target_pct: number;
+  str_heatmap: { department: string; str_pct: number }[];
+  markdown_forecast: Array<{
+    mpn: string;
+    name: string | null;
+    brand: string | null;
+    effective_date: string;
+    current_rics_offer: number | null;
+    scheduled_rics_offer: number | null;
+    gm_pct_current: number | null;
+    gm_pct_projected: number | null;
+  }>;
+  snapshot_freshness: string | null;
+}
+
+export async function fetchExecutiveHealth(): Promise<ExecutiveHealth> {
+  const res = await fetch(`${BASE}/api/v1/executive/health`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export interface NeglectedItem {
+  mpn: string;
+  name: string | null;
+  brand: string | null;
+  department: string;
+  days_old: number;
+  days_since_touch: number;
+  inventory_total: number;
+  str_pct: number | null;
+  wos: number | null;
+  store_gm_pct: number | null;
+  neglect_score: number;
+  buyer_id?: string | null;
+}
+
+export interface NeglectedResponse {
+  computed_at: any;
+  thresholds: { age_days: number; attention_days: number } | null;
+  items: NeglectedItem[];
+  total_count: number;
+  scoped: boolean;
+}
+
+export async function fetchNeglectedInventory(scope?: string): Promise<NeglectedResponse> {
+  const qs = scope ? `?scope=${encodeURIComponent(scope)}` : "";
+  const res = await fetch(`${BASE}/api/v1/executive/neglected${qs}`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export interface ThroughputResponse {
+  week_key: string;
+  total_completions: number;
+  operators: Array<{
+    uid: string;
+    name: string;
+    count: number;
+    departments: Record<string, number>;
+  }>;
+}
+
+export async function fetchOperatorThroughput(weekKey?: string): Promise<ThroughputResponse> {
+  const qs = weekKey ? `?week_key=${encodeURIComponent(weekKey)}` : "";
+  const res = await fetch(`${BASE}/api/v1/executive/throughput${qs}`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export interface DisparityItem {
+  id: string;
+  mpn: string;
+  name?: string;
+  brand?: string;
+  department?: string;
+  rics_retail?: number;
+  rics_offer?: number;
+  scom?: number;
+  scom_sale?: number;
+  map_price?: number;
+  web_discount_cap?: number;
+  web_gm_pct?: number;
+}
+
+export interface ChannelDisparityResponse {
+  store_sale_web_full: DisparityItem[];
+  web_sale_store_full: DisparityItem[];
+  map_promo_eligible: DisparityItem[];
+  counts: {
+    store_sale_web_full: number;
+    web_sale_store_full: number;
+    map_promo_eligible: number;
+  };
+  scoped: boolean;
+}
+
+export async function fetchChannelDisparity(): Promise<ChannelDisparityResponse> {
+  const res = await fetch(`${BASE}/api/v1/executive/channel-disparity`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}

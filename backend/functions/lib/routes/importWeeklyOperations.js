@@ -22,6 +22,7 @@ const mapState_1 = require("../services/mapState");
 const postImportCalculation_1 = require("../services/postImportCalculation");
 const cadenceEngine_1 = require("../services/cadenceEngine");
 const launchHighPriority_1 = require("../services/launchHighPriority");
+const executiveProjections_1 = require("../services/executiveProjections");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -292,6 +293,13 @@ router.post("/:batch_id/commit", async (req, res) => {
             catch (ce) {
                 console.error("runCadenceEvaluation failed:", ce.message);
             }
+        }
+        // Step 6b.1 — Step 3.2 — Weekly metric snapshots for executive dashboard
+        try {
+            await (0, executiveProjections_1.writeWeeklySnapshots)();
+        }
+        catch (snapErr) {
+            console.error("writeWeeklySnapshots failed:", snapErr.message);
         }
         // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs
         if (committedMpns.length > 0) {

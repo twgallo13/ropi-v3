@@ -24,6 +24,9 @@ import DashboardPage from "./pages/DashboardPage";
 import PricingDiscrepancyPage from "./pages/PricingDiscrepancyPage";
 import SiteVerificationReviewPage from "./pages/SiteVerificationReviewPage";
 import NotificationSettingsPage from "./pages/NotificationSettingsPage";
+import ExecutiveDashboardPage from "./pages/ExecutiveDashboardPage";
+import NeglectedInventoryPage from "./pages/NeglectedInventoryPage";
+import ChannelDisparityPage from "./pages/ChannelDisparityPage";
 
 export default function App() {
   return (
@@ -56,6 +59,9 @@ export default function App() {
               <Route path="/pricing-discrepancy" element={<PricingDiscrepancyPage />} />
               <Route path="/site-verification" element={<SiteVerificationReviewPage />} />
               <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
+              <Route path="/executive" element={<ExecutiveDashboardPage />} />
+              <Route path="/neglected-inventory" element={<NeglectedInventoryPage />} />
+              <Route path="/channel-disparity" element={<ChannelDisparityPage />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>

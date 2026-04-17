@@ -4,6 +4,7 @@ import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
 import { checkHighPriorityFlag } from "../services/launchHighPriority";
+import { getWeekKey } from "../services/executiveProjections";
 
 const router = Router();
 const db = admin.firestore;
@@ -499,6 +500,22 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
         console.error("checkHighPriorityFlag (discrepancy) failed:", hpErr.message);
       }
 
+      // Step 3.2 — operator throughput event (fire-and-forget)
+      try {
+        await firestore.collection("operator_throughput").add({
+          operator_uid: req.user?.uid || "unknown",
+          operator_name: (req.user as any)?.display_name || req.user?.email || "unknown",
+          mpn,
+          department: product.department || "Unknown",
+          category: product.category || null,
+          outcome: "discrepancy",
+          completed_at: db.FieldValue.serverTimestamp(),
+          week_key: getWeekKey(new Date()),
+        });
+      } catch (tErr: any) {
+        console.error("operator_throughput write (discrepancy) failed:", tErr.message);
+      }
+
       res.status(200).json({
         mpn,
         doc_id: docId,
@@ -529,6 +546,22 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
       await checkHighPriorityFlag(mpn);
     } catch (hpErr: any) {
       console.error("checkHighPriorityFlag (complete) failed:", hpErr.message);
+    }
+
+    // Step 3.2 — operator throughput event (fire-and-forget)
+    try {
+      await firestore.collection("operator_throughput").add({
+        operator_uid: req.user?.uid || "unknown",
+        operator_name: (req.user as any)?.display_name || req.user?.email || "unknown",
+        mpn,
+        department: product.department || "Unknown",
+        category: product.category || null,
+        outcome: "export_ready",
+        completed_at: db.FieldValue.serverTimestamp(),
+        week_key: getWeekKey(new Date()),
+      });
+    } catch (tErr: any) {
+      console.error("operator_throughput write (export_ready) failed:", tErr.message);
     }
 
     res.status(200).json({

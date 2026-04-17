@@ -238,6 +238,71 @@
         { "fieldPath": "launch_id",  "order": "ASCENDING" },
         { "fieldPath": "created_at", "order": "ASCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 24 — Step 3.2: channel disparity — store on sale / web at full",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_store_sale_web_full", "order": "ASCENDING" },
+        { "fieldPath": "completion_state",       "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 25 — Step 3.2: channel disparity — web on sale / store at full",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_web_sale_store_full", "order": "ASCENDING" },
+        { "fieldPath": "completion_state",       "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 26 — Step 3.2: metric_snapshots catalog GM trend",
+      "collectionGroup": "metric_snapshots",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "metric_key",    "order": "ASCENDING"  },
+        { "fieldPath": "dimension",     "order": "ASCENDING"  },
+        { "fieldPath": "snapshot_date", "order": "ASCENDING"  }
+      ]
+    },
+    {
+      "__comment__": "Index 27 — Step 3.2: metric_snapshots dept STR%, latest-first",
+      "collectionGroup": "metric_snapshots",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "metric_key",     "order": "ASCENDING"  },
+        { "fieldPath": "dimension_type", "order": "ASCENDING"  },
+        { "fieldPath": "snapshot_date",  "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 28 — Step 3.2: operator_throughput by week",
+      "collectionGroup": "operator_throughput",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "week_key",     "order": "ASCENDING"  },
+        { "fieldPath": "completed_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 29 — Step 3.2: markdown forecast scheduled in window",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pricing_domain_state",     "order": "ASCENDING" },
+        { "fieldPath": "scheduled_effective_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 30 — Step 3.2: neglected inventory source scan (age cutoff)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "completion_state",   "order": "ASCENDING" },
+        { "fieldPath": "first_received_at",  "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

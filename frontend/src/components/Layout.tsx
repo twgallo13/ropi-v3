@@ -5,8 +5,9 @@ import { useAuth } from "../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
 
 export default function Layout() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
+  const isExec = role === "admin" || role === "head_buyer";
 
   async function handleLogout() {
     await signOut(auth);
@@ -27,6 +28,14 @@ export default function Layout() {
             >
               Dashboard
             </Link>
+            {isExec && (
+              <Link
+                to="/executive"
+                className="text-gray-600 hover:text-gray-900"
+              >
+                Executive
+              </Link>
+            )}
             <Link
               to="/queue/completion"
               className="text-gray-600 hover:text-gray-900"
@@ -87,6 +96,20 @@ export default function Layout() {
             >
               Site Verification
             </Link>
+            <Link
+              to="/channel-disparity"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Channel Disparity
+            </Link>
+            {isExec && (
+              <Link
+                to="/neglected-inventory"
+                className="text-gray-600 hover:text-gray-900"
+              >
+                Neglected Inventory
+              </Link>
+            )}
             <Link
               to="/export-center"
               className="text-gray-600 hover:text-gray-900"

@@ -301,6 +301,35 @@ const SETTINGS = [
     description:
       "Past published launches remain visible on the Public Launch Calendar for this many days.",
   },
+
+  // ── Executive (Step 3.2) ──
+  {
+    id: "neglected_age_threshold_days",
+    category: "executive",
+    label: "Neglected Inventory: Product Age Threshold (days)",
+    value: 60,
+    type: "number",
+    description:
+      "Products older than this (since first_received_at) are candidates for the Neglected Inventory view.",
+  },
+  {
+    id: "neglected_attention_threshold_days",
+    category: "executive",
+    label: "Neglected Inventory: Days Without Attention Threshold",
+    value: 14,
+    type: "number",
+    description:
+      "If last_modified_at is older than this, the aged product is flagged as neglected.",
+  },
+  {
+    id: "gm_target_pct",
+    category: "executive",
+    label: "Catalog GM% Target",
+    value: 40,
+    type: "number",
+    description:
+      "Reference line rendered on the Executive Dashboard GM% trend chart.",
+  },
 ];
 
 // Attach timestamps to each
