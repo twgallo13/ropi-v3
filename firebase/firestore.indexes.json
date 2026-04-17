@@ -321,6 +321,82 @@
         { "fieldPath": "buyer_uid",    "order": "ASCENDING"  },
         { "fieldPath": "generated_at", "order": "DESCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 33 — Search Architecture: search_tokens + completion_state + first_received_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "search_tokens",     "arrayConfig": "CONTAINS" },
+        { "fieldPath": "completion_state",  "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 34 — Search Architecture: search_tokens + first_received_at (no state filter)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "search_tokens",     "arrayConfig": "CONTAINS" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 35 — Filter list: brand + first_received_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand",             "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 36 — Filter list: completion_state + brand + first_received_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "completion_state",  "order": "ASCENDING" },
+        { "fieldPath": "brand",             "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 37 — Filter list: department + first_received_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "department",        "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 38 — Filter list: completion_state + department + first_received_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "completion_state",  "order": "ASCENDING" },
+        { "fieldPath": "department",        "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 39 — Filter list: site_owner + first_received_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "site_owner",        "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 40 — Filter list: completion_state + site_owner + first_received_at",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "completion_state",  "order": "ASCENDING" },
+        { "fieldPath": "site_owner",        "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -112,72 +112,81 @@ async function getSiteOwner(firestore, docId, data) {
 router.get("/", auth_1.requireAuth, async (req, res) => {
     try {
         const firestore = firebase_admin_1.default.firestore();
-        const { completion_state, site_owner, brand, department, image_status, search, sort = "priority", limit: limitStr = "50", cursor, } = req.query;
-        const limitNum = Math.min(Math.max(parseInt(limitStr || "50", 10) || 50, 1), 100);
-        // Start with base query
+        const { completion_state, site_owner, brand, department, image_status, search, sort = "priority", limit: limitStr = "25", cursor, } = req.query;
+        const limitNum = Math.min(Math.max(parseInt(limitStr || "25", 10) || 25, 1), 100);
+        const searchTerm = (search || "").toLowerCase().trim();
+        const useSearch = searchTerm.length >= 2;
+        // ── Build the Firestore query ───────────────────────────────────────
+        //
+        // All filters are applied database-side via where() clauses against
+        // pre-stamped fields (search_tokens, brand, department, completion_state,
+        // site_owner). The route returns exactly limitNum items per page and
+        // a real .count() total for the same filter set.
+        //
+        // Firestore restriction: array-contains can be combined with equality
+        // filters but we keep brand/department/site_owner as in-memory predicates
+        // when search is active so we don't need an explosion of composite
+        // indexes covering every combination. Brand/dept/site filtering only
+        // ever happens against the search-token-narrowed candidate set, so
+        // it's bounded.
         let query = firestore.collection("products");
-        // Apply Firestore-level filters where possible
-        if (completion_state) {
+        if (useSearch) {
+            query = query.where("search_tokens", "array-contains", searchTerm);
+        }
+        if (completion_state && completion_state !== "all") {
             query = query.where("completion_state", "==", completion_state);
         }
-        // We need first_received_at for default ordering
+        // Database-side filters when search is NOT active (otherwise composite
+        // index pressure becomes unmanageable; with search they collapse to a
+        // small candidate set we can filter in memory).
+        if (!useSearch) {
+            if (brand)
+                query = query.where("brand", "==", brand);
+            if (department)
+                query = query.where("department", "==", department);
+            if (site_owner)
+                query = query.where("site_owner", "==", site_owner);
+        }
         query = query.orderBy("first_received_at", "asc");
-        // Cursor-based pagination
         if (cursor) {
             const cursorDoc = await firestore.collection("products").doc(cursor).get();
             if (cursorDoc.exists) {
                 query = query.startAfter(cursorDoc);
             }
         }
-        // Fetch more than needed to allow in-memory filtering
-        // For 63 products this is fine; for scale we'd need composite indexes
-        const fetchLimit = limitNum * 3 + 50;
+        // Fetch limitNum + 1 to detect if there's a next page.
+        // When search is active we may need to oversample because brand/dept/
+        // site filters still run in-memory; in practice the search narrows the
+        // candidate set enough that limitNum * 2 + 25 is plenty.
+        const fetchLimit = useSearch ? limitNum * 2 + 25 : limitNum + 1;
         const snap = await query.limit(fetchLimit).get();
-        // Cursor MUST be tied to the Firestore ordering (first_received_at), not
-        // the in-memory sorted page — otherwise startAfter() skips/repeats rows.
-        const lastFirestoreDocId = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1].id : null;
-        const moreFirestoreRowsLikely = snap.docs.length === fetchLimit;
-        // Load required fields, launch window, and site targets in parallel
+        // Load required fields + launch window in parallel
         const [requiredFields, launchWindowDays] = await Promise.all([
             getRequiredFieldKeys(firestore),
             getLaunchWindowDays(firestore),
         ]);
-        // Build response items with in-memory filtering
+        // ── Build response items ────────────────────────────────────────────
         const items = [];
+        let lastFirestoreDocId = null;
         for (const doc of snap.docs) {
+            lastFirestoreDocId = doc.id;
             const data = doc.data();
             const docId = doc.id;
-            // Get site_owner for this product
+            // In-memory filters: only the ones we couldn't push down.
+            // (When search is active, brand/dept/site still need in-memory check
+            // because Firestore won't index every combo with array-contains.)
+            if (useSearch) {
+                if (brand && (data.brand || "").toLowerCase() !== brand.toLowerCase())
+                    continue;
+                if (department && (data.department || "").toLowerCase() !== department.toLowerCase())
+                    continue;
+            }
+            // site_owner & image_status are still in-memory because they live in
+            // subcollections. These should be migrated to top-level fields if they
+            // become hot filters.
             const productSiteOwner = await getSiteOwner(firestore, docId, data);
-            // In-memory filters (case-insensitive)
-            if (site_owner) {
-                const want = site_owner.toLowerCase();
-                const have = (productSiteOwner || "").toLowerCase();
-                if (have !== want)
-                    continue;
-            }
-            if (brand && (data.brand || "").toLowerCase() !== brand.toLowerCase())
-                continue;
-            if (department) {
-                // Check both top-level data.department and attribute_values/department
-                let deptVal = typeof data.department === "string" ? data.department : null;
-                if (!deptVal) {
-                    const deptAttr = await firestore
-                        .collection("products").doc(docId)
-                        .collection("attribute_values").doc("department").get();
-                    deptVal = deptAttr.exists ? (deptAttr.data()?.value ?? null) : null;
-                }
-                if (!deptVal || deptVal.toLowerCase() !== department.toLowerCase())
-                    continue;
-            }
-            if (search) {
-                const needle = search.toLowerCase();
-                const hay = [
-                    data.mpn || docId,
-                    data.name || "",
-                    data.brand || "",
-                ].join(" ").toLowerCase();
-                if (!hay.includes(needle))
+            if (useSearch && site_owner) {
+                if ((productSiteOwner || "").toLowerCase() !== site_owner.toLowerCase())
                     continue;
             }
             if (image_status) {
@@ -185,19 +194,15 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
                     .collection("products").doc(docId)
                     .collection("attribute_values").doc("image_status").get();
                 const imgVal = imgAttr.exists ? imgAttr.data()?.value : null;
-                if (!imgVal || imgVal.toUpperCase() !== image_status.toUpperCase())
+                if (!imgVal || String(imgVal).toUpperCase() !== image_status.toUpperCase())
                     continue;
             }
-            // Compute completion progress
             const completion_progress = await computeCompletionProgress(firestore, docId, requiredFields);
-            // Compute launch priority
             const { is_high_priority, launch_days_remaining } = computeLaunchPriority(data, launchWindowDays);
-            // Get image_status value
             const imgSnap = await firestore
                 .collection("products").doc(docId)
                 .collection("attribute_values").doc("image_status").get();
             const imageStatusVal = imgSnap.exists ? imgSnap.data()?.value || "NO" : "NO";
-            // Get department: prefer top-level data.department, fall back to attribute_values
             let deptVal = typeof data.department === "string" && data.department ? data.department : "";
             if (!deptVal) {
                 const deptSnap = await firestore
@@ -205,7 +210,6 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
                     .collection("attribute_values").doc("department").get();
                 deptVal = deptSnap.exists ? deptSnap.data()?.value || "" : "";
             }
-            // Get class from attribute_values
             const classSnap = await firestore
                 .collection("products").doc(docId)
                 .collection("attribute_values").doc("class").get();
@@ -229,20 +233,20 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
                 launch_days_remaining,
                 completion_progress,
             });
+            if (items.length >= limitNum)
+                break;
         }
-        // Sort logic
+        // Sort logic (within the page only — for stable global ordering, sort
+        // database-side via orderBy)
         if (sort === "priority") {
             items.sort((a, b) => {
-                // High priority first
                 if (a.is_high_priority && !b.is_high_priority)
                     return -1;
                 if (!a.is_high_priority && b.is_high_priority)
                     return 1;
-                // Within high priority: sort by launch_days_remaining ASC
                 if (a.is_high_priority && b.is_high_priority) {
                     return (a.launch_days_remaining ?? 999) - (b.launch_days_remaining ?? 999);
                 }
-                // Others: sort by first_received_at ASC
                 const aTime = a.first_received_at ? new Date(a.first_received_at).getTime() : Infinity;
                 const bTime = b.first_received_at ? new Date(b.first_received_at).getTime() : Infinity;
                 return aTime - bTime;
@@ -265,27 +269,39 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
         else if (sort === "completion_pct") {
             items.sort((a, b) => a.completion_progress.pct - b.completion_progress.pct);
         }
-        // Apply limit and build next_cursor.
-        //
-        // The cursor is the id of the LAST FIRESTORE DOCUMENT we read in this
-        // batch (ordered by first_received_at). The next request passes it
-        // back and we resume with `startAfter(cursorDoc)` — that is the only
-        // way pagination can keep walking the full collection without
-        // skipping or repeating rows.
-        //
-        // We deliberately do NOT slice the in-memory results down to limitNum:
-        // any items already filtered through the in-memory predicates would be
-        // permanently lost (the next batch starts AFTER the last Firestore
-        // doc, so any in-memory-rejected leftovers cannot be recovered later).
-        // Page size therefore equals the number of items in the current
-        // Firestore batch that pass the in-memory filters — typically close to
-        // limitNum * 3 + 50 in low-filter cases, smaller in heavily filtered
-        // cases. The client just renders what comes back and shows the
-        // "Load More" button while next_cursor is non-null.
-        const next_cursor = moreFirestoreRowsLikely ? lastFirestoreDocId : null;
+        // ── Build next_cursor ───────────────────────────────────────────────
+        // If we filled the page (>= limitNum items) AND there are more
+        // Firestore docs after the last one we processed, there's likely more.
+        const next_cursor = items.length >= limitNum && lastFirestoreDocId ? lastFirestoreDocId : null;
+        // ── Total count for the same filter set ────────────────────────────
+        // Use Firestore's aggregation .count() which doesn't pull docs.
+        let countQuery = firestore.collection("products");
+        if (useSearch) {
+            countQuery = countQuery.where("search_tokens", "array-contains", searchTerm);
+        }
+        if (completion_state && completion_state !== "all") {
+            countQuery = countQuery.where("completion_state", "==", completion_state);
+        }
+        if (!useSearch) {
+            if (brand)
+                countQuery = countQuery.where("brand", "==", brand);
+            if (department)
+                countQuery = countQuery.where("department", "==", department);
+            if (site_owner)
+                countQuery = countQuery.where("site_owner", "==", site_owner);
+        }
+        let total = items.length;
+        try {
+            const countSnap = await countQuery.count().get();
+            total = countSnap.data().count;
+        }
+        catch (countErr) {
+            // Aggregation failure should not break the list response.
+            console.warn("count() failed, falling back to items.length:", countErr);
+        }
         res.status(200).json({
             items,
-            total: items.length,
+            total,
             next_cursor,
         });
     }

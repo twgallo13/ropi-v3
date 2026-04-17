@@ -6,6 +6,7 @@ import { parse } from "csv-parse/sync";
 import { executeSmartRules } from "../services/smartRules";
 import { mpnToDocId } from "../services/mpnUtils";
 import { mapFullProductRow, FULL_PRODUCT_ROW_MAP } from "../services/ricsParser";
+import { buildSearchTokens } from "../services/searchTokens";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -462,6 +463,23 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           if (Object.keys(mapped.top_level).length > 0) {
             await productRef.set(mapped.top_level, { merge: true });
           }
+
+          // Stamp search_tokens for database-side text search.
+          // This is what makes search work with pagination — Firestore has
+          // no LIKE/CONTAINS, so we precompute the token set instead of
+          // filtering in Node.
+          await productRef.set(
+            {
+              search_tokens: buildSearchTokens({
+                mpn: identity.mpn,
+                name: mapped.attributes.name || identity.name,
+                brand: identity.brand,
+                sku: identity.sku,
+                department: mapped.attributes.department,
+              }),
+            },
+            { merge: true }
+          );
 
           // Flag products whose name was derived from RICS Short Desc so
           // the post-import AI enrichment pass can find them.
