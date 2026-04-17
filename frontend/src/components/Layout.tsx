@@ -110,6 +110,14 @@ export default function Layout() {
                 Neglected Inventory
               </Link>
             )}
+            {(isExec || role === "buyer") && (
+              <Link
+                to="/buyer-performance"
+                className="text-gray-600 hover:text-gray-900"
+              >
+                {isExec ? "Buyer Performance" : "My Performance"}
+              </Link>
+            )}
             <Link
               to="/export-center"
               className="text-gray-600 hover:text-gray-900"

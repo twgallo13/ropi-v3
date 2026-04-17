@@ -5,10 +5,18 @@ import { getAdminSettings } from "../services/adminSettings";
 import { mpnToDocId } from "../services/mpnUtils";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { queueForPricingExport } from "../services/pricingExportQueue";
+import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
 
 const router = Router();
 const db = () => admin.firestore();
 const ts = () => admin.firestore.FieldValue.serverTimestamp();
+
+// Step 3.3 — async fire-and-forget refresh after significant buyer actions.
+function refreshBuyerPerformanceMatrix(): void {
+  computeBuyerPerformanceMatrix().catch((err: any) => {
+    console.error("computeBuyerPerformanceMatrix (fire-and-forget) failed:", err?.message || err);
+  });
+}
 
 // ── POST /api/v1/buyer-actions/markdown ──
 router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
@@ -98,6 +106,7 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
         action_type: "deny",
         pricing_domain_state: "buyer_denied",
       });
+      refreshBuyerPerformanceMatrix();
       return;
     }
 
@@ -181,6 +190,7 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
       pricing_domain_state: stateAfter,
       buyer_action_id: actionRef.id,
     });
+    refreshBuyerPerformanceMatrix();
   } catch (err: any) {
     console.error("POST /buyer-actions/markdown error:", err);
     res.status(500).json({ error: err.message });
@@ -256,6 +266,7 @@ router.post("/loss-leader-acknowledge", requireAuth, async (req: AuthenticatedRe
       veto_window_hours: vetoWindowHours,
       veto_expires_at: vetoExpiresAt.toISOString(),
     });
+    refreshBuyerPerformanceMatrix();
   } catch (err: any) {
     console.error("POST /buyer-actions/loss-leader-acknowledge error:", err);
     res.status(500).json({ error: err.message });
@@ -309,6 +320,7 @@ router.post("/loss-leader-veto", requireAuth, async (req: AuthenticatedRequest, 
       mpn,
       pricing_domain_state: "loss_leader_vetoed",
     });
+    refreshBuyerPerformanceMatrix();
   } catch (err: any) {
     console.error("POST /buyer-actions/loss-leader-veto error:", err);
     res.status(500).json({ error: err.message });
@@ -357,6 +369,7 @@ router.post("/hold", requireAuth, async (req: AuthenticatedRequest, res: Respons
       created_at: ts(),
     });
     res.json({ status: "success", mpn, action: "hold" });
+    refreshBuyerPerformanceMatrix();
   } catch (err: any) {
     console.error("POST /buyer-actions/hold error:", err);
     res.status(500).json({ error: err.message });

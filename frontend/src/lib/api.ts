@@ -1971,3 +1971,55 @@ export async function fetchChannelDisparity(): Promise<ChannelDisparityResponse>
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
+
+// Step 3.3 — Buyer Performance Matrix
+export interface BuyerPerformanceCategory {
+  department: string;
+  product_count: number;
+  avg_gm_pct: number;
+  gm_target: number;
+  gm_vs_target: number;
+  avg_str_pct: number;
+  catalog_str_pct: number;
+  str_vs_catalog: number;
+  recent_action_count: number;
+  attention_score: number;
+}
+
+export interface BuyerPerformance {
+  buyer_uid: string;
+  buyer_name: string;
+  computed_at: string | { _seconds: number } | null;
+  review_window_days: number;
+  margin_health_score: number;
+  inventory_velocity_score: number;
+  attention_score: number;
+  composite_score: number;
+  composite_color: "green" | "amber" | "red";
+  products_assigned: number;
+  products_with_recent_action: number;
+  avg_gm_pct: number;
+  avg_str_pct: number;
+  catalog_avg_str_pct: number;
+  category_breakdown: BuyerPerformanceCategory[];
+}
+
+export interface BuyerPerformanceListResponse {
+  items: BuyerPerformance[];
+  total_count: number;
+  scoped: boolean;
+}
+
+export async function fetchBuyerPerformanceList(): Promise<BuyerPerformanceListResponse> {
+  const res = await fetch(`${BASE}/api/v1/executive/buyer-performance`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function fetchBuyerPerformance(buyerUid: string): Promise<BuyerPerformance> {
+  const res = await fetch(`${BASE}/api/v1/executive/buyer-performance/${encodeURIComponent(buyerUid)}`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}

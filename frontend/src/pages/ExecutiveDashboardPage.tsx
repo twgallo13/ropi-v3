@@ -103,8 +103,16 @@ export default function ExecutiveDashboardPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Executive Dashboard</h1>
-        <div className="text-sm text-gray-500">
-          Last snapshot: {health.snapshot_freshness || "—"}
+        <div className="flex items-center gap-4">
+          <Link
+            to="/buyer-performance"
+            className="text-sm text-blue-600 hover:underline"
+          >
+            View Buyer Performance →
+          </Link>
+          <div className="text-sm text-gray-500">
+            Last snapshot: {health.snapshot_freshness || "—"}
+          </div>
         </div>
       </div>
 

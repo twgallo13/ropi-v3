@@ -22,6 +22,7 @@ import { runPostImportCalculations } from "../services/postImportCalculation";
 import { runCadenceEvaluation } from "../services/cadenceEngine";
 import { checkHighPriorityFlag } from "../services/launchHighPriority";
 import { writeWeeklySnapshots } from "../services/executiveProjections";
+import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
 
 const router = Router();
 const upload = multer({
@@ -355,6 +356,13 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       await writeWeeklySnapshots();
     } catch (snapErr: any) {
       console.error("writeWeeklySnapshots failed:", snapErr.message);
+    }
+
+    // Step 6b.2 — Step 3.3 — Buyer performance matrix (depends on fresh snapshots)
+    try {
+      await computeBuyerPerformanceMatrix();
+    } catch (bpErr: any) {
+      console.error("computeBuyerPerformanceMatrix failed:", bpErr.message);
     }
 
     // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs

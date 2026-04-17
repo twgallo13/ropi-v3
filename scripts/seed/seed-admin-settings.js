@@ -330,6 +330,57 @@ const SETTINGS = [
     description:
       "Reference line rendered on the Executive Dashboard GM% trend chart.",
   },
+
+  // ── Buyer Performance Matrix (Step 3.3) ──
+  {
+    id: "buyer_performance_review_window_days",
+    category: "executive",
+    label: "Buyer Performance: Review Window (days)",
+    value: 30,
+    type: "number",
+    description:
+      "Look-back window for counting buyer actions when calculating the Attention Score.",
+  },
+  {
+    id: "buyer_kpi_weight_margin",
+    category: "executive",
+    label: "Buyer KPI Weight: Margin Health",
+    value: 33,
+    type: "number",
+    description:
+      "Weight (out of 100) for Margin Health in the composite buyer score. Margin + Velocity + Attention should total 100.",
+  },
+  {
+    id: "buyer_kpi_weight_velocity",
+    category: "executive",
+    label: "Buyer KPI Weight: Inventory Velocity",
+    value: 33,
+    type: "number",
+    description:
+      "Weight (out of 100) for Inventory Velocity in the composite buyer score.",
+  },
+  {
+    id: "buyer_kpi_weight_attention",
+    category: "executive",
+    label: "Buyer KPI Weight: Attention Score",
+    value: 34,
+    type: "number",
+    description:
+      "Weight (out of 100) for the Attention Score in the composite buyer score.",
+  },
+  {
+    id: "category_gm_targets",
+    category: "executive",
+    label: "Category GM% Targets",
+    value: {
+      Footwear: 40,
+      Clothing: 45,
+      Accessories: 50,
+      "Home & Tech": 45,
+    },
+    description:
+      "Per-department GM% targets used by the buyer performance matrix. Blended weighted-average target is compared to each buyer's GM%.",
+  },
 ];
 
 // Attach timestamps to each

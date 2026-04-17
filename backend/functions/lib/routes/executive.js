@@ -24,6 +24,7 @@ const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const auth_1 = require("../middleware/auth");
 const roles_1 = require("../middleware/roles");
 const executiveProjections_1 = require("../services/executiveProjections");
+const buyerPerformanceMatrix_1 = require("../services/buyerPerformanceMatrix");
 const router = (0, express_1.Router)();
 const db = () => firebase_admin_1.default.firestore();
 async function resolveRole(req) {
@@ -206,6 +207,68 @@ router.get("/channel-disparity", auth_1.requireAuth, (0, roles_1.requireRole)(["
     }
 });
 // ─────────────────────────────────────────────────────────────
+// GET /api/v1/executive/buyer-performance
+//   Exec (admin | head_buyer) — full leaderboard.
+//   Buyer — only own doc (returned inside same shape for client simplicity).
+// ─────────────────────────────────────────────────────────────
+router.get("/buyer-performance", auth_1.requireAuth, (0, roles_1.requireRole)(["buyer", "head_buyer"]), async (req, res) => {
+    try {
+        const role = await resolveRole(req);
+        const uid = req.user?.uid || null;
+        let docs = [];
+        if (role === "buyer" && uid) {
+            const own = await db().collection("buyer_performance").doc(uid).get();
+            if (own.exists)
+                docs = [own];
+        }
+        else {
+            const snap = await db().collection("buyer_performance").get();
+            docs = snap.docs;
+        }
+        const items = docs
+            .map((d) => d.data())
+            .sort((a, b) => (b.composite_score || 0) - (a.composite_score || 0));
+        res.status(200).json({
+            items,
+            total_count: items.length,
+            scoped: role === "buyer",
+        });
+    }
+    catch (err) {
+        console.error("executive/buyer-performance error:", err);
+        res
+            .status(500)
+            .json({ error: "Unable to load buyer performance. Please try again." });
+    }
+});
+// ─────────────────────────────────────────────────────────────
+// GET /api/v1/executive/buyer-performance/:buyer_uid
+//   Exec — any buyer. Buyer — only their own uid (403 on cross-access).
+// ─────────────────────────────────────────────────────────────
+router.get("/buyer-performance/:buyer_uid", auth_1.requireAuth, (0, roles_1.requireRole)(["buyer", "head_buyer"]), async (req, res) => {
+    try {
+        const role = await resolveRole(req);
+        const uid = req.user?.uid || null;
+        const target = req.params.buyer_uid;
+        if (role === "buyer" && target !== uid) {
+            res.status(403).json({ error: "Forbidden" });
+            return;
+        }
+        const snap = await db().collection("buyer_performance").doc(target).get();
+        if (!snap.exists) {
+            res.status(404).json({ error: "Buyer performance not found" });
+            return;
+        }
+        res.status(200).json(snap.data());
+    }
+    catch (err) {
+        console.error("executive/buyer-performance/:uid error:", err);
+        res
+            .status(500)
+            .json({ error: "Unable to load buyer performance. Please try again." });
+    }
+});
+// ─────────────────────────────────────────────────────────────
 // Job triggers — admin only
 // ─────────────────────────────────────────────────────────────
 router.post("/jobs/weekly-snapshots", auth_1.requireAuth, (0, roles_1.requireRole)(["admin"]), async (_req, res) => {
@@ -225,6 +288,16 @@ router.post("/jobs/neglected-inventory", auth_1.requireAuth, (0, roles_1.require
     }
     catch (err) {
         console.error("jobs/neglected-inventory error:", err);
+        res.status(500).json({ error: "Job failed." });
+    }
+});
+router.post("/jobs/buyer-performance", auth_1.requireAuth, (0, roles_1.requireRole)(["admin"]), async (_req, res) => {
+    try {
+        const result = await (0, buyerPerformanceMatrix_1.computeBuyerPerformanceMatrix)();
+        res.status(200).json({ ok: true, ...result });
+    }
+    catch (err) {
+        console.error("jobs/buyer-performance error:", err);
         res.status(500).json({ error: "Job failed." });
     }
 });

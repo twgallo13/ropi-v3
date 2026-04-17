@@ -24,6 +24,7 @@ import {
   computeNeglectedInventory,
   getWeekKey,
 } from "../services/executiveProjections";
+import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -282,6 +283,81 @@ router.get(
 );
 
 // ─────────────────────────────────────────────────────────────
+// GET /api/v1/executive/buyer-performance
+//   Exec (admin | head_buyer) — full leaderboard.
+//   Buyer — only own doc (returned inside same shape for client simplicity).
+// ─────────────────────────────────────────────────────────────
+router.get(
+  "/buyer-performance",
+  requireAuth,
+  requireRole(["buyer", "head_buyer"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const role = await resolveRole(req);
+      const uid = req.user?.uid || null;
+
+      let docs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+      if (role === "buyer" && uid) {
+        const own = await db().collection("buyer_performance").doc(uid).get();
+        if (own.exists) docs = [own as any];
+      } else {
+        const snap = await db().collection("buyer_performance").get();
+        docs = snap.docs;
+      }
+
+      const items = docs
+        .map((d) => d.data() as any)
+        .sort((a, b) => (b.composite_score || 0) - (a.composite_score || 0));
+
+      res.status(200).json({
+        items,
+        total_count: items.length,
+        scoped: role === "buyer",
+      });
+    } catch (err: any) {
+      console.error("executive/buyer-performance error:", err);
+      res
+        .status(500)
+        .json({ error: "Unable to load buyer performance. Please try again." });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/v1/executive/buyer-performance/:buyer_uid
+//   Exec — any buyer. Buyer — only their own uid (403 on cross-access).
+// ─────────────────────────────────────────────────────────────
+router.get(
+  "/buyer-performance/:buyer_uid",
+  requireAuth,
+  requireRole(["buyer", "head_buyer"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const role = await resolveRole(req);
+      const uid = req.user?.uid || null;
+      const target = req.params.buyer_uid;
+
+      if (role === "buyer" && target !== uid) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const snap = await db().collection("buyer_performance").doc(target).get();
+      if (!snap.exists) {
+        res.status(404).json({ error: "Buyer performance not found" });
+        return;
+      }
+      res.status(200).json(snap.data());
+    } catch (err: any) {
+      console.error("executive/buyer-performance/:uid error:", err);
+      res
+        .status(500)
+        .json({ error: "Unable to load buyer performance. Please try again." });
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────
 // Job triggers — admin only
 // ─────────────────────────────────────────────────────────────
 router.post(
@@ -309,6 +385,21 @@ router.post(
       res.status(200).json({ ok: true, ...result });
     } catch (err: any) {
       console.error("jobs/neglected-inventory error:", err);
+      res.status(500).json({ error: "Job failed." });
+    }
+  }
+);
+
+router.post(
+  "/jobs/buyer-performance",
+  requireAuth,
+  requireRole(["admin"]),
+  async (_req: AuthenticatedRequest, res: Response) => {
+    try {
+      const result = await computeBuyerPerformanceMatrix();
+      res.status(200).json({ ok: true, ...result });
+    } catch (err: any) {
+      console.error("jobs/buyer-performance error:", err);
       res.status(500).json({ error: "Job failed." });
     }
   }

@@ -23,6 +23,7 @@ const postImportCalculation_1 = require("../services/postImportCalculation");
 const cadenceEngine_1 = require("../services/cadenceEngine");
 const launchHighPriority_1 = require("../services/launchHighPriority");
 const executiveProjections_1 = require("../services/executiveProjections");
+const buyerPerformanceMatrix_1 = require("../services/buyerPerformanceMatrix");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -300,6 +301,13 @@ router.post("/:batch_id/commit", async (req, res) => {
         }
         catch (snapErr) {
             console.error("writeWeeklySnapshots failed:", snapErr.message);
+        }
+        // Step 6b.2 — Step 3.3 — Buyer performance matrix (depends on fresh snapshots)
+        try {
+            await (0, buyerPerformanceMatrix_1.computeBuyerPerformanceMatrix)();
+        }
+        catch (bpErr) {
+            console.error("computeBuyerPerformanceMatrix failed:", bpErr.message);
         }
         // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs
         if (committedMpns.length > 0) {

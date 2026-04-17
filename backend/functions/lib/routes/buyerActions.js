@@ -10,9 +10,16 @@ const adminSettings_1 = require("../services/adminSettings");
 const mpnUtils_1 = require("../services/mpnUtils");
 const auth_1 = require("../middleware/auth");
 const pricingExportQueue_1 = require("../services/pricingExportQueue");
+const buyerPerformanceMatrix_1 = require("../services/buyerPerformanceMatrix");
 const router = (0, express_1.Router)();
 const db = () => firebase_admin_1.default.firestore();
 const ts = () => firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
+// Step 3.3 — async fire-and-forget refresh after significant buyer actions.
+function refreshBuyerPerformanceMatrix() {
+    (0, buyerPerformanceMatrix_1.computeBuyerPerformanceMatrix)().catch((err) => {
+        console.error("computeBuyerPerformanceMatrix (fire-and-forget) failed:", err?.message || err);
+    });
+}
 // ── POST /api/v1/buyer-actions/markdown ──
 router.post("/markdown", auth_1.requireAuth, async (req, res) => {
     try {
@@ -86,6 +93,7 @@ router.post("/markdown", auth_1.requireAuth, async (req, res) => {
                 action_type: "deny",
                 pricing_domain_state: "buyer_denied",
             });
+            refreshBuyerPerformanceMatrix();
             return;
         }
         // Approve or Adjust — calculate prices
@@ -163,6 +171,7 @@ router.post("/markdown", auth_1.requireAuth, async (req, res) => {
             pricing_domain_state: stateAfter,
             buyer_action_id: actionRef.id,
         });
+        refreshBuyerPerformanceMatrix();
     }
     catch (err) {
         console.error("POST /buyer-actions/markdown error:", err);
@@ -227,6 +236,7 @@ router.post("/loss-leader-acknowledge", auth_1.requireAuth, async (req, res) => 
             veto_window_hours: vetoWindowHours,
             veto_expires_at: vetoExpiresAt.toISOString(),
         });
+        refreshBuyerPerformanceMatrix();
     }
     catch (err) {
         console.error("POST /buyer-actions/loss-leader-acknowledge error:", err);
@@ -271,6 +281,7 @@ router.post("/loss-leader-veto", auth_1.requireAuth, async (req, res) => {
             mpn,
             pricing_domain_state: "loss_leader_vetoed",
         });
+        refreshBuyerPerformanceMatrix();
     }
     catch (err) {
         console.error("POST /buyer-actions/loss-leader-veto error:", err);
@@ -315,6 +326,7 @@ router.post("/hold", auth_1.requireAuth, async (req, res) => {
             created_at: ts(),
         });
         res.json({ status: "success", mpn, action: "hold" });
+        refreshBuyerPerformanceMatrix();
     }
     catch (err) {
         console.error("POST /buyer-actions/hold error:", err);
