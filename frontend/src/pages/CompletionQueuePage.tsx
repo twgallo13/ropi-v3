@@ -20,43 +20,92 @@ function siteBadge(siteOwner: string) {
 
 type SortKey = "priority" | "first_received" | "last_modified" | "completion_pct";
 
+const DEFAULT_FILTERS = {
+  completion_state: "incomplete",
+  site_owner: "",
+  brand: "",
+  department: "",
+  search: "",
+};
+const DEFAULT_SORT: SortKey = "priority";
+const PAGE_SIZE = 25;
+
 export default function CompletionQueuePage() {
   const [items, setItems] = useState<ProductListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
-  const [sort, setSort] = useState<SortKey>("priority");
-  const [filters, setFilters] = useState({
-    completion_state: "",
-    site_owner: "",
-    brand: "",
-    department: "",
-    search: "",
-  });
+  const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const params: Record<string, string> = { sort, limit: "50" };
+  const buildParams = useCallback(
+    (pageCursor?: string | null): Record<string, string> => {
+      const params: Record<string, string> = { sort, limit: String(PAGE_SIZE) };
       if (filters.completion_state) params.completion_state = filters.completion_state;
       if (filters.site_owner) params.site_owner = filters.site_owner;
       if (filters.brand) params.brand = filters.brand;
       if (filters.department) params.department = filters.department;
       if (filters.search) params.search = filters.search;
-      const data = await fetchProducts(params);
-      setItems(data.items);
-      setTotal(data.total);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load");
-    } finally {
-      setLoading(false);
-    }
-  }, [sort, filters]);
+      if (pageCursor) params.cursor = pageCursor;
+      return params;
+    },
+    [sort, filters]
+  );
 
+  // Load first page whenever filters or sort change.
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    fetchProducts(buildParams())
+      .then((data) => {
+        if (cancelled) return;
+        setItems(data.items);
+        setTotal(data.total);
+        setCursor(data.next_cursor || null);
+        setHasMore(!!data.next_cursor);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [buildParams]);
+
+  async function loadMore() {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    setError("");
+    try {
+      const data = await fetchProducts(buildParams(cursor));
+      setItems((prev) => [...prev, ...data.items]);
+      setCursor(data.next_cursor || null);
+      setHasMore(!!data.next_cursor);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load more");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  const filtersDirty =
+    sort !== DEFAULT_SORT ||
+    (Object.keys(DEFAULT_FILTERS) as Array<keyof typeof DEFAULT_FILTERS>).some(
+      (k) => filters[k] !== DEFAULT_FILTERS[k]
+    );
+
+  function resetFilters() {
+    setSort(DEFAULT_SORT);
+    setFilters(DEFAULT_FILTERS);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -120,11 +169,23 @@ export default function CompletionQueuePage() {
           <option value="last_modified">Last Modified</option>
           <option value="completion_pct">Completion %</option>
         </select>
+
+        {filtersDirty && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="px-3 py-1.5 text-sm text-gray-600 border rounded hover:bg-gray-50"
+          >
+            Reset Filters
+          </button>
+        )}
       </div>
 
       {/* Summary */}
       <p className="text-sm text-gray-500 mb-3">
-        {loading ? "Loading…" : `${total} products`}
+        {loading
+          ? "Loading…"
+          : `Showing ${items.length} of ${total} product${total === 1 ? "" : "s"}`}
       </p>
 
       {error && <p className="text-red-600 mb-3">{error}</p>}
@@ -210,6 +271,18 @@ export default function CompletionQueuePage() {
           </tbody>
         </table>
       </div>
+
+      {/* Load more */}
+      {hasMore && (
+        <button
+          type="button"
+          onClick={loadMore}
+          disabled={loadingMore}
+          className="mt-4 w-full py-2 border rounded text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+        >
+          {loadingMore ? "Loading…" : "Load more products"}
+        </button>
+      )}
     </div>
   );
 }
