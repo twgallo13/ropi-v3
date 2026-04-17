@@ -30,16 +30,35 @@ async function redeploy() {
   const r = "us-central1", p = "ropi-aoss-dev", s = "ropi-aoss-api";
   const base = `https://${r}-run.googleapis.com/apis/serving.knative.dev/v1/namespaces/${p}/services`;
 
-  // Build env vars — secrets come from .env file or existing env, never from CLI args
-  const envVars = [
-    { name: "NODE_ENV", value: "development" },
-    { name: "FIREBASE_PROJECT_ID", value: p },
-    { name: "FIREBASE_STORAGE_BUCKET", value: p + "-imports" },
-  ];
-  if (process.env.ANTHROPIC_API_KEY) {
-    envVars.push({ name: "ANTHROPIC_API_KEY", value: process.env.ANTHROPIC_API_KEY });
-    console.log("🔑 ANTHROPIC_API_KEY included (from env/file)");
+  // GET existing service to preserve all current env vars (prevents credential wipe on deploy)
+  let existingEnvVars = [];
+  try {
+    const existing = await client.request({ url: `${base}/${s}`, method: "GET" });
+    existingEnvVars = existing.data?.spec?.template?.spec?.containers?.[0]?.env || [];
+    console.log(`📋 Preserved ${existingEnvVars.length} existing env vars from Cloud Run`);
+  } catch (e) {
+    console.log("⚠️  Could not fetch existing env vars (new service?), starting fresh");
   }
+
+  // Merge: start with existing vars, then apply overrides from this deploy
+  const overrides = {
+    NODE_ENV: "development",
+    FIREBASE_PROJECT_ID: p,
+    FIREBASE_STORAGE_BUCKET: p + "-imports",
+  };
+  if (process.env.ANTHROPIC_API_KEY) {
+    overrides.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+    console.log("🔑 ANTHROPIC_API_KEY updated (from .env file)");
+  } else {
+    console.log("ℹ️  ANTHROPIC_API_KEY not in .env — existing Cloud Run value preserved");
+  }
+
+  // Build merged env var list: existing vars overridden by any explicit values above
+  const envMap = new Map(existingEnvVars.map(e => [e.name, e.value]));
+  for (const [k, v] of Object.entries(overrides)) {
+    envMap.set(k, v);
+  }
+  const envVars = Array.from(envMap.entries()).map(([name, value]) => ({ name, value }));
 
   await client.request({ url: `${base}/${s}`, method: "PUT", data: {
     apiVersion: "serving.knative.dev/v1", kind: "Service",
