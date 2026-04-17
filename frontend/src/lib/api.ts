@@ -656,6 +656,7 @@ export interface CadenceTargetFilter {
   operator: "equals" | "not_equals" | "contains" | "starts_with";
   value: string;
   case_sensitive: boolean;
+  logic: "AND" | "OR";
 }
 
 export interface CadenceTriggerCondition {
@@ -674,7 +675,7 @@ export interface CadenceMarkdownStep {
   step_number: number;
   day_threshold: number;
   action_type: "markdown_pct" | "custom_price" | "off_sale" | "set_in_cart_promo";
-  markdown_scope: "store_and_web" | "store_only";
+  markdown_scope: "store_and_web" | "store_only" | "web_only";
   value: number;
   apply_99_rounding: boolean;
 }

@@ -42,7 +42,7 @@ const NUMERIC_OPS = [
 ];
 
 const ACTION_TYPES = ["markdown_pct", "custom_price", "off_sale", "set_in_cart_promo"];
-const SCOPES = ["store_and_web", "store_only"];
+const SCOPES = ["store_and_web", "store_only", "web_only"];
 
 type Draft = Omit<CadenceRule, "rule_id" | "version" | "created_at" | "updated_at"> & {
   rule_id?: string;
@@ -56,7 +56,7 @@ function emptyDraft(): Draft {
     owner_buyer_id: "",
     owner_site_owner: "",
     target_filters: [
-      { field: "department", operator: "equals", value: "", case_sensitive: true },
+      { field: "department", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
     ],
     trigger_conditions: [
       { field: "str_pct", operator: "less_than", value: 15, logic: "AND" },
@@ -99,7 +99,7 @@ function RuleEditor({
       ...draft,
       target_filters: [
         ...draft.target_filters,
-        { field: "brand", operator: "equals", value: "", case_sensitive: true },
+        { field: "brand", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
       ],
     });
   }
@@ -238,6 +238,16 @@ function RuleEditor({
               />
               case-sensitive
             </label>
+            <select
+              value={f.logic}
+              onChange={(e) =>
+                updateFilter(i, { logic: e.target.value as "AND" | "OR" })
+              }
+              className="border rounded px-2 py-1 text-sm"
+            >
+              <option value="AND">AND</option>
+              <option value="OR">OR</option>
+            </select>
             <button
               onClick={() => removeFilter(i)}
               className="text-xs text-red-600 hover:underline"
@@ -335,9 +345,12 @@ function RuleEditor({
             />
             <select
               value={s.action_type}
-              onChange={(e) =>
-                updateStep(i, { action_type: e.target.value as any })
-              }
+              onChange={(e) => {
+                const at = e.target.value as any;
+                const patch: Partial<CadenceMarkdownStep> = { action_type: at };
+                if (at === "set_in_cart_promo") patch.markdown_scope = "web_only";
+                updateStep(i, patch);
+              }}
               className="border rounded px-2 py-1 text-sm"
             >
               {ACTION_TYPES.map((o) => (
@@ -361,11 +374,12 @@ function RuleEditor({
               />
             )}
             <select
-              value={s.markdown_scope}
+              value={s.action_type === "set_in_cart_promo" ? "web_only" : s.markdown_scope}
+              disabled={s.action_type === "set_in_cart_promo"}
               onChange={(e) =>
                 updateStep(i, { markdown_scope: e.target.value as any })
               }
-              className="border rounded px-2 py-1 text-sm"
+              className="border rounded px-2 py-1 text-sm disabled:opacity-50"
             >
               {SCOPES.map((o) => (
                 <option key={o} value={o}>

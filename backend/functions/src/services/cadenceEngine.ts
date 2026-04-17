@@ -30,6 +30,7 @@ export interface TargetFilter {
   operator: StringOperator;
   value: string;
   case_sensitive?: boolean;
+  logic?: "AND" | "OR";
 }
 
 export interface TriggerCondition {
@@ -43,7 +44,7 @@ export interface MarkdownStep {
   step_number: number;
   day_threshold: number;
   action_type: "markdown_pct" | "custom_price" | "off_sale" | "set_in_cart_promo";
-  markdown_scope: "store_and_web" | "store_only";
+  markdown_scope: "store_and_web" | "store_only" | "web_only";
   value: number;
   apply_99_rounding?: boolean;
 }
@@ -75,27 +76,33 @@ function getProductField(product: any, field: string): any {
   return product[field];
 }
 
+function evaluateFilter(product: any, f: TargetFilter): boolean {
+  const fv = getProductField(product, f.field);
+  if (fv === null || fv === undefined) return false;
+  const caseSensitive = f.case_sensitive !== false; // default ON (TALLY-104)
+  const a = caseSensitive ? String(fv) : String(fv).toLowerCase();
+  const b = caseSensitive ? String(f.value) : String(f.value).toLowerCase();
+  switch (f.operator) {
+    case "equals":
+      return a === b;
+    case "not_equals":
+      return a !== b;
+    case "contains":
+      return a.includes(b);
+    case "starts_with":
+      return a.startsWith(b);
+    default:
+      return false;
+  }
+}
+
 export function matchesTargetFilters(product: any, filters: TargetFilter[]): boolean {
   if (!filters || filters.length === 0) return true;
-  return filters.every((f) => {
-    const fv = getProductField(product, f.field);
-    if (fv === null || fv === undefined) return false;
-    const caseSensitive = f.case_sensitive !== false; // default ON (TALLY-104)
-    const a = caseSensitive ? String(fv) : String(fv).toLowerCase();
-    const b = caseSensitive ? String(f.value) : String(f.value).toLowerCase();
-    switch (f.operator) {
-      case "equals":
-        return a === b;
-      case "not_equals":
-        return a !== b;
-      case "contains":
-        return a.includes(b);
-      case "starts_with":
-        return a.startsWith(b);
-      default:
-        return false;
-    }
-  });
+  const andFilters = filters.filter((f) => f.logic === "AND" || !f.logic);
+  const orFilters = filters.filter((f) => f.logic === "OR");
+  const andResult = andFilters.every((f) => evaluateFilter(product, f));
+  const orResult = orFilters.length === 0 || orFilters.some((f) => evaluateFilter(product, f));
+  return andResult && orResult;
 }
 
 function evaluateCondition(signals: any, c: TriggerCondition): boolean {
@@ -263,6 +270,26 @@ async function writeAssignment(
     exportRicsOffer = ricsRetail;
   } else if (currentStep.action_type === "set_in_cart_promo") {
     // Store price unchanged; we mirror offer as-is
+    newRicsOffer = currentRicsOffer;
+    exportRicsOffer = currentRicsOffer;
+  }
+
+  // web_only scope: calculate scom_sale only, leave rics_offer untouched
+  if (currentStep.markdown_scope === "web_only") {
+    const webBase = Number(product.scom) || 0;
+    let candidateWeb = webBase * (1 - currentStep.value / 100);
+    // MAP floor enforcement
+    let mapFloorApplied = false;
+    if (product.is_map_protected && product.map_price) {
+      if (candidateWeb < product.map_price) {
+        candidateWeb = product.map_price;
+        mapFloorApplied = true;
+      }
+    }
+    newScomSale = Math.round(candidateWeb * 100) / 100;
+    exportScomSale =
+      applyRounding && !mapFloorApplied ? apply99Rounding(newScomSale) : newScomSale;
+    // Do not touch newRicsOffer — leave as current value
     newRicsOffer = currentRicsOffer;
     exportRicsOffer = currentRicsOffer;
   }
