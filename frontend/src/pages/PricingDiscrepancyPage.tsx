@@ -7,18 +7,26 @@ import {
 } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
-const REASON_CODE_MAP: Record<string, { code: string; label: string }> = {
-  "A": { code: "A", label: "Price inversion — RICS Offer > RICS Retail" },
-  "B": { code: "B", label: "GM% below threshold (not below cost)" },
-  "C": { code: "C", label: "Source SCOM below active MAP" },
+const REASON_CODE_MAP: Record<string, { code: string; label: string; tone: "red" | "yellow" }> = {
+  A: { code: "A", label: "Price inversion — RICS Offer > RICS Retail", tone: "red" },
+  A2: { code: "A", label: "Price inversion — SCOM Sale > SCOM", tone: "red" },
+  B: { code: "B", label: "GM% below safe threshold", tone: "red" },
+  C: { code: "C", label: "Source SCOM below active MAP", tone: "red" },
+  Z: { code: "Z", label: "Zero pricing — sale set but regular is $0 or missing", tone: "yellow" },
 };
 
-// Reasons are stored as strings — extract letter code if present
-function reasonBadge(reason: string): { code: string; label: string } {
-  if (/rics ?offer\s*>\s*rics ?retail/i.test(reason) || /inver(t|sion)/i.test(reason)) return REASON_CODE_MAP.A;
-  if (/gm/i.test(reason) && /below/i.test(reason)) return REASON_CODE_MAP.B;
-  if (/map/i.test(reason) && /below/i.test(reason)) return REASON_CODE_MAP.C;
-  return { code: "?", label: reason };
+// Reasons are stored as human-readable strings — map to a letter code + tone for display.
+function reasonBadge(reason: string): { code: string; label: string; tone: "red" | "yellow" } {
+  const r = reason.toLowerCase();
+  if (/store sale price .* exceeds store regular price/.test(r)) return REASON_CODE_MAP.A;
+  if (/web sale price .* exceeds web regular price/.test(r)) return REASON_CODE_MAP.A2;
+  if (/rics ?offer\s*>\s*rics ?retail/.test(r) || /inver(t|sion)/.test(r)) return REASON_CODE_MAP.A;
+  if (/(store|web) gross margin.*below/.test(r) || (/gm/.test(r) && /below/.test(r))) return REASON_CODE_MAP.B;
+  if (/map/.test(r) && /below/.test(r)) return REASON_CODE_MAP.C;
+  if (/(web|store) sale price.*(is set but|but).*(regular price is \$0|regular price is 0|missing)/.test(r))
+    return REASON_CODE_MAP.Z;
+  if (/\$0|\bzero\b/.test(r)) return REASON_CODE_MAP.Z;
+  return { code: "?", label: reason, tone: "red" };
 }
 
 export default function PricingDiscrepancyPage() {
@@ -148,15 +156,26 @@ export default function PricingDiscrepancyPage() {
                     {item.effective_web_sale !== null ? `$${Number(item.effective_web_sale).toFixed(2)}` : "—"}
                   </div>
                   <div className="col-span-3 flex flex-wrap gap-1">
-                    {badges.map((b, i) => (
-                      <span
-                        key={i}
-                        title={b.label}
-                        className="bg-red-50 text-red-700 border border-red-200 text-xs px-2 py-0.5 rounded"
-                      >
-                        🔴 {b.code}
-                      </span>
-                    ))}
+                    {badges.length === 0 ? (
+                      <span className="text-gray-400 text-xs">—</span>
+                    ) : (
+                      badges.map((b, i) => {
+                        const tone =
+                          b.tone === "yellow"
+                            ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+                            : "bg-red-50 text-red-700 border-red-200";
+                        const icon = b.tone === "yellow" ? "🟡" : "🔴";
+                        return (
+                          <span
+                            key={i}
+                            title={b.label}
+                            className={`${tone} border text-xs px-2 py-0.5 rounded`}
+                          >
+                            {icon} {b.code} — {b.label}
+                          </span>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 

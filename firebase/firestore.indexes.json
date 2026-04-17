@@ -49,6 +49,25 @@
       ]
     },
     {
+      "__comment__": "Index 5b — Step 2.5 Part 5: notifications keyed by uid/created_at (unread filter)",
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid",        "order": "ASCENDING"  },
+        { "fieldPath": "read",       "order": "ASCENDING"  },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 5c — Step 2.5 Part 5: notifications keyed by uid/created_at (include read)",
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid",        "order": "ASCENDING"  },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
       "__comment__": "Index 6 — Audit log by actor and action type, newest first",
       "collectionGroup": "auditLogs",
       "queryScope": "COLLECTION",
