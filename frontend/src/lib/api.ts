@@ -1520,3 +1520,326 @@ export async function testSmartRule(
   if (!res.ok) throw data;
   return data;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Step 2.5 — Pricing Discrepancy, History, Site Verification,
+//            Comments, Notifications, Dashboard, Users
+// ═══════════════════════════════════════════════════════════════
+
+// ── Users roster (Correction 2) ──
+export interface UserRosterEntry {
+  uid: string;
+  display_name: string;
+  email: string | null;
+  role: string | null;
+  avatar_initials: string;
+  active: boolean;
+}
+export async function fetchUsers(): Promise<UserRosterEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/users`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = await res.json();
+  return data.users as UserRosterEntry[];
+}
+
+// ── Pricing Discrepancy ──
+export interface PricingDiscrepancyItem {
+  mpn: string;
+  name: string;
+  brand: string;
+  rics_retail: number;
+  rics_offer: number;
+  scom: number;
+  scom_sale: number;
+  effective_web_regular: number | null;
+  effective_web_sale: number | null;
+  web_gm_pct: number | null;
+  discrepancy_reasons: string[];
+  flagged_at: string | null;
+  flagged_by: string;
+  map_price: number | null;
+  is_map_protected: boolean;
+}
+export async function fetchPricingDiscrepancy(): Promise<{ items: PricingDiscrepancyItem[]; total: number }> {
+  const res = await fetch(`${BASE}/api/v1/pricing/discrepancy`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+export async function resolvePricingDiscrepancy(
+  mpn: string,
+  body: {
+    action: "correct_pricing" | "flag_for_review" | "override_to_export";
+    note: string;
+    corrected_rics_offer?: number;
+    corrected_scom?: number;
+    reviewer_uid?: string;
+  }
+): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/pricing/discrepancy/${encodeURIComponent(mpn)}/resolve`,
+    { method: "POST", headers: await headers(), body: JSON.stringify(body) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Product History ──
+export interface HistoryEntry {
+  id: string;
+  event_type: string;
+  field_key: string | null;
+  old_value: unknown;
+  old_verification_state: string | null;
+  new_value: unknown;
+  new_verification_state: string | null;
+  acting_user_id: string | null;
+  origin_type: string | null;
+  source_type: string | null;
+  rule_id: string | null;
+  rule_name: string | null;
+  batch_id: string | null;
+  note: string | null;
+  reasons: string[] | null;
+  pricing_status: string | null;
+  created_at: string | null;
+}
+export async function fetchProductHistory(
+  mpn: string,
+  params?: Record<string, string>
+): Promise<{ entries: HistoryEntry[]; total: number }> {
+  const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/history${qs}`,
+    { headers: await headers() }
+  );
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+// ── Site Verification Import ──
+export async function siteVerificationUpload(file: File): Promise<{
+  batch_id: string;
+  raw_headers: string[];
+  row_count: number;
+}> {
+  const form = new FormData();
+  form.append("file", file);
+  const h = await headers();
+  delete (h as any)["Content-Type"];
+  const res = await fetch(`${BASE}/api/v1/imports/site-verification/upload`, {
+    method: "POST",
+    headers: h,
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+export async function siteVerificationCommit(
+  batchId: string,
+  column_mapping: Record<string, string>
+): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/imports/site-verification/${encodeURIComponent(batchId)}/commit`,
+    { method: "POST", headers: await headers(), body: JSON.stringify({ column_mapping }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Site Verification Review ──
+export interface SiteVerificationItem {
+  mpn: string;
+  name: string;
+  brand: string;
+  site_key: string;
+  verification_state: string;
+  product_url: string | null;
+  image_url: string | null;
+  mismatch_reason: string | null;
+  last_verified_at: string | null;
+}
+export async function fetchSiteVerificationReview(): Promise<{ items: SiteVerificationItem[]; total: number }> {
+  const res = await fetch(`${BASE}/api/v1/site-verification/review`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+export async function siteVerificationMarkLive(mpn: string, site_key: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/site-verification/${encodeURIComponent(mpn)}/mark-live`,
+    { method: "POST", headers: await headers(), body: JSON.stringify({ site_key }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+export async function siteVerificationFlag(
+  mpn: string,
+  site_key: string,
+  reason: string
+): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/site-verification/${encodeURIComponent(mpn)}/flag`,
+    { method: "POST", headers: await headers(), body: JSON.stringify({ site_key, reason }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Comments ──
+export interface ProductComment {
+  comment_id: string;
+  text: string;
+  author_uid: string | null;
+  author_name: string;
+  mentions: string[];
+  created_at: string | null;
+  edited_at: string | null;
+}
+export async function fetchComments(mpn: string): Promise<{ comments: ProductComment[]; total: number }> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/comments`,
+    { headers: await headers() }
+  );
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+export async function postComment(
+  mpn: string,
+  text: string,
+  mentions: string[]
+): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/comments`,
+    { method: "POST", headers: await headers(), body: JSON.stringify({ text, mentions }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+export async function deleteComment(mpn: string, comment_id: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/comments/${encodeURIComponent(comment_id)}`,
+    { method: "DELETE", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Notifications ──
+export interface NotificationItem {
+  notification_id: string;
+  type: string;
+  product_mpn: string | null;
+  message: string;
+  read: boolean;
+  created_at: string | null;
+  source_comment_id: string | null;
+}
+export async function fetchNotifications(includeRead = false): Promise<{
+  items: NotificationItem[];
+  unread_count: number;
+  total: number;
+}> {
+  const qs = includeRead ? "?include_read=true" : "";
+  const res = await fetch(`${BASE}/api/v1/notifications${qs}`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+export async function markNotificationRead(id: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/notifications/${encodeURIComponent(id)}/read`,
+    { method: "PATCH", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+export async function markAllNotificationsRead(): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/notifications/read-all`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+export interface NotificationPreferences {
+  mention: boolean;
+  pricing_discrepancy: boolean;
+  high_priority_launch: boolean;
+  loss_leader: boolean;
+  map_conflict: boolean;
+  export_complete: boolean;
+}
+export async function fetchNotificationPreferences(): Promise<{
+  preferences: NotificationPreferences;
+  always_on: string[];
+}> {
+  const res = await fetch(`${BASE}/api/v1/notifications/me/preferences`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+export async function updateNotificationPreferences(
+  prefs: Partial<NotificationPreferences>
+): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/notifications/me/preferences`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(prefs),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Dashboard ──
+export interface DashboardResponse {
+  role: string;
+  greeting_name: string;
+  kpis: Partial<{
+    incomplete_count: number;
+    cadence_review_count: number;
+    map_conflict_count: number;
+    pricing_discrepancy_count: number;
+    site_verification_count: number;
+  }>;
+  recent_imports: Array<{
+    batch_id: string;
+    family: string | null;
+    status: string | null;
+    committed_rows: number;
+    created_at: string | null;
+  }>;
+  recent_exports: Array<{
+    job_id: string;
+    kind: string | null;
+    status: string | null;
+    product_count: number;
+    created_at: string | null;
+  }>;
+  high_priority_launches?: Array<{
+    launch_id: string;
+    launch_name: string;
+    launch_date: string | null;
+    mpn: string;
+    product_name: string;
+    days_remaining: number;
+  }>;
+  system_health: {
+    projections_stale: boolean;
+    failed_jobs: number;
+    last_projection_refresh: string | null;
+  };
+}
+export async function fetchDashboard(): Promise<DashboardResponse> {
+  const res = await fetch(`${BASE}/api/v1/dashboard`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}

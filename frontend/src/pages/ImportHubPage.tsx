@@ -6,6 +6,8 @@ import {
   mapPolicyMapColumns,
   mapPolicyCommit,
   fetchMapTemplates,
+  siteVerificationUpload,
+  siteVerificationCommit,
   type ImportUploadResponse,
   type ImportCommitResponse,
   type MapUploadResponse,
@@ -209,6 +211,7 @@ export default function ImportHubPage() {
         <ImportCard title="Full Product Import" family="full-product" />
         <ImportCard title="Weekly Operations Import" family="weekly-operations" />
         <MapPolicyImportCard />
+        <SiteVerificationImportCard />
       </div>
     </div>
   );
@@ -527,5 +530,198 @@ function MapRow({
         ))}
       </select>
     </label>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Site Verification Import — upload CSV + map columns + commit
+// ─────────────────────────────────────────────────────────────
+function SiteVerificationImportCard() {
+  const [stage, setStage] = useState<"upload" | "map" | "done">("upload");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [batchId, setBatchId] = useState("");
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [mapping, setMapping] = useState<{
+    mpn: string;
+    site: string;
+    product_url: string;
+    image_url: string;
+  }>({ mpn: "", site: "", product_url: "", image_url: "" });
+  const [result, setResult] = useState<{
+    total_rows: number;
+    committed_rows: number;
+    failed_rows: number;
+    mismatches: number;
+  } | null>(null);
+
+  async function handleUpload() {
+    if (!file) return;
+    setBusy(true);
+    setError("");
+    try {
+      const res = await siteVerificationUpload(file);
+      setBatchId(res.batch_id);
+      setHeaders(res.raw_headers || []);
+      // Best-effort auto-map
+      const h = (name: string) =>
+        res.raw_headers.find((x: string) => x.toLowerCase().replace(/\s|_/g, "") === name) || "";
+      setMapping({
+        mpn: h("mpn"),
+        site: h("site"),
+        product_url: h("producturl") || h("url"),
+        image_url: h("imageurl") || h("image"),
+      });
+      setStage("map");
+    } catch (e: any) {
+      setError(e?.error || e?.message || "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCommit() {
+    if (!mapping.mpn || !mapping.site || !mapping.product_url) {
+      setError("mpn, site, and product_url mappings are required");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const res = await siteVerificationCommit(batchId, {
+        mpn: mapping.mpn,
+        site: mapping.site,
+        product_url: mapping.product_url,
+        ...(mapping.image_url ? { image_url: mapping.image_url } : {}),
+      });
+      setResult({
+        total_rows: res.total_rows,
+        committed_rows: res.committed_rows,
+        failed_rows: res.failed_rows,
+        mismatches: res.mismatches || 0,
+      });
+      setStage("done");
+    } catch (e: any) {
+      setError(e?.error || e?.message || "Commit failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleReset() {
+    setStage("upload");
+    setFile(null);
+    setBatchId("");
+    setHeaders([]);
+    setMapping({ mpn: "", site: "", product_url: "", image_url: "" });
+    setResult(null);
+    setError("");
+  }
+
+  return (
+    <div className="bg-white rounded-lg border p-6">
+      <h2 className="text-lg font-semibold mb-4">Site Verification Import</h2>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-2 rounded text-sm mb-3">
+          {error}
+        </div>
+      )}
+
+      {stage === "upload" && (
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="text-sm"
+            />
+            <button
+              onClick={handleUpload}
+              disabled={!file || busy}
+              className="px-4 py-2 rounded text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {busy ? "Uploading…" : "Upload & Parse"}
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            CSV with columns for MPN, site key, product URL, and (optionally) image URL.
+          </p>
+        </div>
+      )}
+
+      {stage === "map" && (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-700">
+            Batch <span className="font-mono">{batchId}</span> parsed with{" "}
+            <span className="font-medium">{headers.length}</span> columns. Map them:
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {(["mpn", "site", "product_url", "image_url"] as const).map((key) => (
+              <label key={key} className="text-sm">
+                <span className="block font-medium mb-1">
+                  {key} {key !== "image_url" && <span className="text-red-600">*</span>}
+                </span>
+                <select
+                  value={mapping[key]}
+                  onChange={(e) => setMapping({ ...mapping, [key]: e.target.value })}
+                  className="w-full border rounded px-2 py-1"
+                >
+                  <option value="">— select —</option>
+                  {headers.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={handleCommit}
+              disabled={busy}
+              className="px-4 py-2 rounded text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {busy ? "Committing…" : "Commit"}
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 rounded text-sm font-medium border hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {stage === "done" && result && (
+        <div className="space-y-2">
+          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded text-sm">
+            Imported <strong>{result.committed_rows}</strong> of {result.total_rows} rows.
+            {result.mismatches > 0 && (
+              <>
+                {" "}
+                <strong>{result.mismatches}</strong> flagged as mismatch.
+              </>
+            )}
+            {result.failed_rows > 0 && (
+              <>
+                {" "}
+                {result.failed_rows} failed.
+              </>
+            )}
+          </div>
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 rounded text-sm font-medium border hover:bg-gray-50"
+          >
+            Upload Another
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

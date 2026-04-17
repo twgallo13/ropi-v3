@@ -263,6 +263,12 @@ async function writeRuleAction(
     }
   }
 
+  // Correction 1 (Step 2.5) — capture old value before write so history shows it.
+  const oldValue = attrSnap.exists ? attrSnap.data()?.value ?? null : null;
+  const oldVerificationState = attrSnap.exists
+    ? attrSnap.data()?.verification_state ?? null
+    : null;
+
   await attrRef.set(
     {
       value,
@@ -276,14 +282,23 @@ async function writeRuleAction(
 
   await firestore.collection("audit_log").add({
     event_type: "smart_rule_execution",
+    product_mpn: mpn,
     rule_id: ruleId,
     rule_name: ruleName,
     mpn,
+    field_key: targetField,
     target_field: targetField,
+    old_value: oldValue,
+    old_verification_state: oldVerificationState,
+    new_value: value,
+    new_verification_state: "System-Applied",
     value,
     overwrite: !!alwaysOverwrite,
     batch_id: batchId || null,
+    acting_user_id: `smart_rule:${ruleId}`,
+    source_type: "smart_rule",
     timestamp: db.FieldValue.serverTimestamp(),
+    created_at: db.FieldValue.serverTimestamp(),
   });
 
   return { wrote: true };

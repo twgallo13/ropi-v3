@@ -2,6 +2,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 export default function Layout() {
   const { user } = useAuth();
@@ -20,6 +21,12 @@ export default function Layout() {
             ROPI
           </Link>
           <nav className="flex gap-4 text-sm">
+            <Link
+              to="/dashboard"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Dashboard
+            </Link>
             <Link
               to="/queue/completion"
               className="text-gray-600 hover:text-gray-900"
@@ -69,6 +76,18 @@ export default function Layout() {
               MAP Removal
             </Link>
             <Link
+              to="/pricing-discrepancy"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Pricing Discrepancy
+            </Link>
+            <Link
+              to="/site-verification"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Site Verification
+            </Link>
+            <Link
               to="/export-center"
               className="text-gray-600 hover:text-gray-900"
             >
@@ -96,6 +115,7 @@ export default function Layout() {
         </div>
         {user && (
           <div className="flex items-center gap-3 text-sm">
+            <NotificationBell />
             <span className="text-gray-500">{user.email}</span>
             <button
               onClick={handleLogout}

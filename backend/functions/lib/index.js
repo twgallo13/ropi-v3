@@ -22,6 +22,12 @@ const promptTemplates_1 = __importDefault(require("./routes/promptTemplates"));
 const aiContent_1 = __importDefault(require("./routes/aiContent"));
 const launches_1 = __importDefault(require("./routes/launches"));
 const adminSmartRules_1 = __importDefault(require("./routes/adminSmartRules"));
+const users_1 = __importDefault(require("./routes/users"));
+const pricingDiscrepancy_1 = __importDefault(require("./routes/pricingDiscrepancy"));
+const siteVerificationImport_1 = __importDefault(require("./routes/siteVerificationImport"));
+const siteVerificationReview_1 = __importDefault(require("./routes/siteVerificationReview"));
+const notifications_1 = __importDefault(require("./routes/notifications"));
+const dashboard_1 = __importDefault(require("./routes/dashboard"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -65,6 +71,13 @@ app.use("/api/v1/products", aiContent_1.default);
 app.use("/api/v1/launches", launches_1.default);
 // ── Smart Rules Admin (Step 3.1) ──
 app.use("/api/v1/admin/smart-rules", adminSmartRules_1.default);
+// ── Step 2.5 ──
+app.use("/api/v1/users", users_1.default);
+app.use("/api/v1/pricing/discrepancy", pricingDiscrepancy_1.default);
+app.use("/api/v1/imports/site-verification", siteVerificationImport_1.default);
+app.use("/api/v1/site-verification", siteVerificationReview_1.default);
+app.use("/api/v1/notifications", notifications_1.default);
+app.use("/api/v1/dashboard", dashboard_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({

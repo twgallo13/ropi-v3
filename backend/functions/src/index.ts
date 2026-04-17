@@ -17,6 +17,12 @@ import promptTemplatesRouter from "./routes/promptTemplates";
 import aiContentRouter from "./routes/aiContent";
 import launchesRouter from "./routes/launches";
 import adminSmartRulesRouter from "./routes/adminSmartRules";
+import usersRouter from "./routes/users";
+import pricingDiscrepancyRouter from "./routes/pricingDiscrepancy";
+import siteVerificationImportRouter from "./routes/siteVerificationImport";
+import siteVerificationReviewRouter from "./routes/siteVerificationReview";
+import notificationsRouter from "./routes/notifications";
+import dashboardRouter from "./routes/dashboard";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -73,6 +79,14 @@ app.use("/api/v1/launches", launchesRouter);
 
 // ── Smart Rules Admin (Step 3.1) ──
 app.use("/api/v1/admin/smart-rules", adminSmartRulesRouter);
+
+// ── Step 2.5 ──
+app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/pricing/discrepancy", pricingDiscrepancyRouter);
+app.use("/api/v1/imports/site-verification", siteVerificationImportRouter);
+app.use("/api/v1/site-verification", siteVerificationReviewRouter);
+app.use("/api/v1/notifications", notificationsRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

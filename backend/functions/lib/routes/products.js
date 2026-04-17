@@ -488,16 +488,25 @@ router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) 
             res.status(404).json({ error: `Product with MPN "${mpn}" not found.` });
             return;
         }
+        // Correction 1 (Step 2.5) — capture existing value BEFORE writing.
+        // This is read once here and re-used so history shows old_value → new_value.
+        const preWriteSnap = await productRef
+            .collection("attribute_values")
+            .doc(fieldKey)
+            .get();
+        const oldValue = preWriteSnap.exists ? preWriteSnap.data()?.value ?? null : null;
+        const oldVerificationState = preWriteSnap.exists
+            ? preWriteSnap.data()?.verification_state ?? null
+            : null;
         // Determine the final value to write
         let finalValue = value;
         if (action === "verify") {
             // Verify action: keep existing value, just stamp Human-Verified
-            const existingDoc = await productRef.collection("attribute_values").doc(fieldKey).get();
-            if (!existingDoc.exists || existingDoc.data().value === undefined) {
+            if (!preWriteSnap.exists || preWriteSnap.data()?.value === undefined) {
                 res.status(400).json({ error: `Cannot verify field "${fieldKey}" — no existing value` });
                 return;
             }
-            finalValue = value !== undefined ? value : existingDoc.data().value;
+            finalValue = value !== undefined ? value : preWriteSnap.data().value;
         }
         else {
             if (value === undefined) {
@@ -585,9 +594,13 @@ router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) 
             product_mpn: mpn,
             event_type: action === "verify" ? "field_verified" : "field_edited",
             field_key: fieldKey,
+            old_value: oldValue,
+            old_verification_state: oldVerificationState,
             new_value: finalValue,
+            new_verification_state: "Human-Verified",
             acting_user_id: userId,
             origin_type: "Human",
+            source_type: "human_edit",
             created_at: db.FieldValue.serverTimestamp(),
         });
         // 6. Return updated completion_progress
@@ -604,6 +617,208 @@ router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) 
     catch (err) {
         console.error("POST /products/:mpn/attributes/:field_key error:", err);
         res.status(500).json({ error: "Failed to save field." });
+    }
+});
+// ────────────────────────────────────────────────
+//  GET /api/v1/products/:mpn/history — Step 2.5 Part 2
+//  Returns audit_log entries for this product, newest first.
+//  Query params: start_date, end_date, field, acting_user_id, source_type
+// ────────────────────────────────────────────────
+router.get("/:mpn/history", auth_1.requireAuth, async (req, res) => {
+    try {
+        const firestore = firebase_admin_1.default.firestore();
+        const { mpn } = req.params;
+        const { start_date, end_date, field, acting_user_id, source_type, } = req.query;
+        let q = firestore
+            .collection("audit_log")
+            .where("product_mpn", "==", mpn);
+        if (start_date) {
+            q = q.where("created_at", ">=", new Date(start_date));
+        }
+        if (end_date) {
+            q = q.where("created_at", "<=", new Date(end_date));
+        }
+        // Firestore can't compose arbitrary equality with ranges without indexes —
+        // do remaining filters client-side.
+        const snap = await q.orderBy("created_at", "desc").limit(500).get();
+        let entries = snap.docs.map((d) => {
+            const data = d.data();
+            return {
+                id: d.id,
+                event_type: data.event_type || "unknown",
+                field_key: data.field_key || data.target_field || null,
+                old_value: data.old_value ?? null,
+                old_verification_state: data.old_verification_state ?? null,
+                new_value: data.new_value ?? data.value ?? null,
+                new_verification_state: data.new_verification_state ?? null,
+                acting_user_id: data.acting_user_id || null,
+                origin_type: data.origin_type || null,
+                source_type: data.source_type || null,
+                rule_id: data.rule_id || null,
+                rule_name: data.rule_name || null,
+                batch_id: data.batch_id || null,
+                note: data.note || null,
+                reasons: data.reasons || null,
+                pricing_status: data.pricing_status || null,
+                created_at: data.created_at?.toDate?.()?.toISOString() || null,
+            };
+        });
+        if (field) {
+            entries = entries.filter((e) => e.field_key === field);
+        }
+        if (acting_user_id) {
+            entries = entries.filter((e) => e.acting_user_id === acting_user_id);
+        }
+        if (source_type) {
+            entries = entries.filter((e) => e.source_type === source_type);
+        }
+        res.json({ entries, total: entries.length });
+    }
+    catch (err) {
+        console.error("GET /products/:mpn/history error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+// ────────────────────────────────────────────────
+//  Comments subcollection — Step 2.5 Part 4
+//  GET    /:mpn/comments
+//  POST   /:mpn/comments           body: { text, mentions[] }
+//  DELETE /:mpn/comments/:comment_id   (author or admin only)
+// ────────────────────────────────────────────────
+router.get("/:mpn/comments", auth_1.requireAuth, async (req, res) => {
+    try {
+        const firestore = firebase_admin_1.default.firestore();
+        const { mpn } = req.params;
+        const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+        const snap = await firestore
+            .collection("products")
+            .doc(docId)
+            .collection("comments")
+            .orderBy("created_at", "desc")
+            .limit(200)
+            .get();
+        const comments = snap.docs.map((d) => {
+            const data = d.data();
+            return {
+                comment_id: d.id,
+                text: data.text || "",
+                author_uid: data.author_uid || null,
+                author_name: data.author_name || "User",
+                mentions: data.mentions || [],
+                created_at: data.created_at?.toDate?.()?.toISOString() || null,
+                edited_at: data.edited_at?.toDate?.()?.toISOString() || null,
+            };
+        });
+        res.json({ comments, total: comments.length });
+    }
+    catch (err) {
+        console.error("GET /products/:mpn/comments error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+router.post("/:mpn/comments", auth_1.requireAuth, async (req, res) => {
+    try {
+        const firestore = firebase_admin_1.default.firestore();
+        const { mpn } = req.params;
+        const { text, mentions } = req.body || {};
+        const userId = req.user?.uid;
+        if (!userId) {
+            res.status(401).json({ error: "Authentication required" });
+            return;
+        }
+        if (!text || String(text).trim() === "") {
+            res.status(400).json({ error: "text is required" });
+            return;
+        }
+        const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+        const productRef = firestore.collection("products").doc(docId);
+        if (!(await productRef.get()).exists) {
+            res.status(404).json({ error: "Product not found" });
+            return;
+        }
+        // Resolve author display name
+        let authorName = req.user?.name || req.user?.email || "User";
+        try {
+            const uDoc = await firestore.collection("users").doc(userId).get();
+            if (uDoc.exists) {
+                authorName = uDoc.data()?.display_name || authorName;
+            }
+        }
+        catch (_e) {
+            /* ignore */
+        }
+        const mentionUids = Array.isArray(mentions) ? mentions.filter(Boolean) : [];
+        const commentRef = await productRef.collection("comments").add({
+            text: String(text),
+            author_uid: userId,
+            author_name: authorName,
+            mentions: mentionUids,
+            created_at: db.FieldValue.serverTimestamp(),
+            edited_at: null,
+        });
+        // Step 2.5 Part 5 — write a notification for each mentioned user.
+        // @mention notifications are always-on (Section 15.2).
+        for (const uid of mentionUids) {
+            if (uid === userId)
+                continue;
+            await firestore.collection("notifications").add({
+                uid,
+                type: "mention",
+                product_mpn: mpn,
+                message: `${authorName} mentioned you on ${mpn}`,
+                source_comment_id: commentRef.id,
+                read: false,
+                created_at: db.FieldValue.serverTimestamp(),
+            });
+        }
+        res.status(201).json({
+            comment_id: commentRef.id,
+            mpn,
+            text,
+            mentions: mentionUids,
+        });
+    }
+    catch (err) {
+        console.error("POST /products/:mpn/comments error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+router.delete("/:mpn/comments/:comment_id", auth_1.requireAuth, async (req, res) => {
+    try {
+        const firestore = firebase_admin_1.default.firestore();
+        const { mpn, comment_id } = req.params;
+        const userId = req.user?.uid;
+        if (!userId) {
+            res.status(401).json({ error: "Authentication required" });
+            return;
+        }
+        const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+        const ref = firestore
+            .collection("products")
+            .doc(docId)
+            .collection("comments")
+            .doc(comment_id);
+        const snap = await ref.get();
+        if (!snap.exists) {
+            res.status(404).json({ error: "Comment not found" });
+            return;
+        }
+        const isAuthor = snap.data()?.author_uid === userId;
+        let isAdmin = req.user?.role === "admin";
+        if (!isAdmin) {
+            const uDoc = await firestore.collection("users").doc(userId).get();
+            isAdmin = uDoc.data()?.role === "admin";
+        }
+        if (!isAuthor && !isAdmin) {
+            res.status(403).json({ error: "Only the author or an admin may delete this comment" });
+            return;
+        }
+        await ref.delete();
+        res.json({ comment_id, deleted: true });
+    }
+    catch (err) {
+        console.error("DELETE /products/:mpn/comments/:comment_id error:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 exports.default = router;

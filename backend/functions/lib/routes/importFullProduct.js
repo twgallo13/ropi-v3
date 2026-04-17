@@ -258,6 +258,7 @@ router.post("/:batch_id/commit", async (req, res) => {
                 const productRef = firestore.collection("products").doc(docId);
                 // Check if product exists for first_received_at logic
                 const existingSnap = await productRef.get();
+                const isNewProduct = !existingSnap.exists;
                 const firstReceivedAt = existingSnap.exists
                     ? existingSnap.data().first_received_at
                     : db.FieldValue.serverTimestamp();
@@ -271,6 +272,18 @@ router.post("/:batch_id/commit", async (req, res) => {
                     product_is_active: true,
                     import_batch_id: batch_id,
                 }, { merge: true });
+                // Correction 1 (Step 2.5) — log product creation for history
+                if (isNewProduct) {
+                    await firestore.collection("audit_log").add({
+                        product_mpn: mpn,
+                        event_type: "product_created",
+                        acting_user_id: `import:${batch_id}`,
+                        origin_type: "RO-Import",
+                        source_type: "import",
+                        batch_id,
+                        created_at: db.FieldValue.serverTimestamp(),
+                    });
+                }
                 // Write source inputs to subcollection
                 await productRef
                     .collection("attribute_values")
@@ -314,6 +327,9 @@ router.post("/:batch_id/commit", async (req, res) => {
                         const existingAttr = existingAttrDoc.exists
                             ? existingAttrDoc.data()
                             : null;
+                        const newVerificationState = autoVerifiedKeys.has(key)
+                            ? "Human-Verified"
+                            : "System-Applied";
                         await productRef
                             .collection("attribute_values")
                             .doc(key)
@@ -321,11 +337,27 @@ router.post("/:batch_id/commit", async (req, res) => {
                             value,
                             origin_type: "RO-Import",
                             origin_detail: `Import Batch ${batch_id}`,
-                            verification_state: autoVerifiedKeys.has(key)
-                                ? "Human-Verified"
-                                : "System-Applied",
+                            verification_state: newVerificationState,
                             written_at: db.FieldValue.serverTimestamp(),
                         }, { merge: true });
+                        // Correction 1 (Step 2.5) — audit_log with old → new value for history tab
+                        const oldValue = existingAttr?.value ?? null;
+                        if (oldValue !== value) {
+                            await firestore.collection("audit_log").add({
+                                product_mpn: mpn,
+                                event_type: existingAttr ? "field_edited" : "field_created",
+                                field_key: key,
+                                old_value: oldValue,
+                                old_verification_state: existingAttr?.verification_state ?? null,
+                                new_value: value,
+                                new_verification_state: newVerificationState,
+                                acting_user_id: `import:${batch_id}`,
+                                origin_type: "RO-Import",
+                                source_type: "import",
+                                batch_id,
+                                created_at: db.FieldValue.serverTimestamp(),
+                            });
+                        }
                         // If the field being overwritten was AI-Generated + Human-Verified, flag for re-review
                         if (existingAttr?.origin_type === "AI-Generated" &&
                             existingAttr?.verification_state === "Human-Verified") {

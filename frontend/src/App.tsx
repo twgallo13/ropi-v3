@@ -20,6 +20,10 @@ import LaunchAdminDetailPage from "./pages/LaunchAdminDetailPage";
 import PublicLaunchCalendarPage from "./pages/PublicLaunchCalendarPage";
 import SmartRulesAdminPage from "./pages/SmartRulesAdminPage";
 import SmartRuleBuilderPage from "./pages/SmartRuleBuilderPage";
+import DashboardPage from "./pages/DashboardPage";
+import PricingDiscrepancyPage from "./pages/PricingDiscrepancyPage";
+import SiteVerificationReviewPage from "./pages/SiteVerificationReviewPage";
+import NotificationSettingsPage from "./pages/NotificationSettingsPage";
 
 export default function App() {
   return (
@@ -48,7 +52,11 @@ export default function App() {
               <Route path="/launch-admin/:launchId" element={<LaunchAdminDetailPage />} />
               <Route path="/products/:mpn" element={<ProductDetailPage />} />
               <Route path="/products/:mpn/review" element={<AIContentReviewPage />} />
-              <Route path="/" element={<Navigate to="/queue/completion" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/pricing-discrepancy" element={<PricingDiscrepancyPage />} />
+              <Route path="/site-verification" element={<SiteVerificationReviewPage />} />
+              <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>
         </Routes>
