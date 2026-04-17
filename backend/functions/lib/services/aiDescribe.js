@@ -260,17 +260,20 @@ async function generateContent(mpn, siteOwner, operatorUserId, observationsNote,
         .get();
     const versionNumber = existingVersions.size + 1;
     // Write content_versions document (append-only history)
+    // Firestore rejects undefined — coerce every optional template-sourced
+    // field to null so missing template properties never blow up the write.
     const versionRef = await productRef.collection("content_versions").add({
         site_owner: siteOwner,
-        template_id: template.id,
-        template_name: template.template_name,
-        tone_profile: template.tone_profile,
+        template_id: template.id ?? null,
+        template_name: template.template_name ?? null,
+        tone_profile: template.tone_profile ?? null,
+        match_gender: template.match_gender ?? null,
         generated_at: db.FieldValue.serverTimestamp(),
-        generated_by: operatorUserId,
-        inputs_used: attrs,
-        raw_output: rawText,
-        parsed_output: parsed,
-        banned_words_found: foundBanned,
+        generated_by: operatorUserId ?? null,
+        inputs_used: attrs ?? {},
+        raw_output: rawText ?? "",
+        parsed_output: parsed ?? {},
+        banned_words_found: foundBanned ?? [],
         approval_state: "pending",
         approved_by: null,
         approved_at: null,
@@ -281,10 +284,10 @@ async function generateContent(mpn, siteOwner, operatorUserId, observationsNote,
         product_mpn: mpn,
         event_type: "ai_describe_generated",
         site_owner: siteOwner,
-        template_id: template.id,
-        template_name: template.template_name,
+        template_id: template.id ?? null,
+        template_name: template.template_name ?? null,
         version_number: versionNumber,
-        generated_by: operatorUserId,
+        generated_by: operatorUserId ?? null,
         created_at: db.FieldValue.serverTimestamp(),
     });
     return {
