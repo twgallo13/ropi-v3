@@ -23,6 +23,80 @@ const upload = multer({
 });
 const ts = () => admin.firestore.FieldValue.serverTimestamp();
 
+// ── Available target fields the UI can map columns onto ──
+export const MAP_TARGET_FIELDS = [
+  { key: "mpn",         label: "MPN (required)" },
+  { key: "brand",       label: "Brand" },
+  { key: "map_price",   label: "MAP Price (required)" },
+  { key: "promo_price", label: "Promo Price (optional)" },
+  { key: "start_date",  label: "Start Date (optional)" },
+  { key: "end_date",    label: "End Date (optional)" },
+] as const;
+
+// Auto-mapping table — lower-cased CSV header → canonical target key.
+const AUTO_MAP: Record<string, string> = {
+  "mpn":          "mpn",
+  "sku":          "mpn",
+  "brand":        "brand",
+  "map price":    "map_price",
+  "map":          "map_price",
+  "promo pri":    "promo_price",
+  "promo price":  "promo_price",
+  "start date":   "start_date",
+  "end date":     "end_date",
+};
+
+function buildSuggestedMapping(rawHeaders: string[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const header of rawHeaders) {
+    const key = header.trim().toLowerCase();
+    const target = AUTO_MAP[key];
+    if (target && !out[target]) out[target] = header;
+  }
+  return out;
+}
+
+/**
+ * Parse a MAP-import date cell. Accepts:
+ *   - Excel serial date (e.g. "45992") — days since 1900-01-01 with the Excel leap-year quirk
+ *   - M/D/YYYY, MM/DD/YYYY, M/D/YY
+ *   - empty / null → null (not an error)
+ */
+function parseMapDate(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const v = String(raw).trim();
+  if (!v) return null;
+
+  // Excel serial — pure integer in the 40000-60000 range covers 2009-2064.
+  if (/^\d+$/.test(v)) {
+    const serial = parseInt(v, 10);
+    if (serial > 40000 && serial < 60000) {
+      const ms = (serial - 25569) * 86400000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
+    }
+  }
+
+  // M/D/YYYY or MM/DD/YYYY (two-digit year supported).
+  const parts = v.split("/");
+  if (parts.length === 3) {
+    const [mm, dd, yy] = parts;
+    const m = parseInt(mm, 10);
+    const d = parseInt(dd, 10);
+    let y = parseInt(yy, 10);
+    if (!isNaN(m) && !isNaN(d) && !isNaN(y)) {
+      if (y < 100) y += 2000;
+      const date = new Date(Date.UTC(y, m - 1, d));
+      if (!isNaN(date.getTime())) return date.toISOString().split("T")[0];
+    }
+  }
+
+  // ISO YYYY-MM-DD passes through.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+
+  return null;
+}
+
 // ── POST /upload ──
 router.post(
   "/upload",
@@ -83,6 +157,8 @@ router.post(
         batch_id: batchId,
         raw_headers: rawHeaders,
         row_count: rowCount,
+        suggested_mapping: buildSuggestedMapping(rawHeaders),
+        target_fields: MAP_TARGET_FIELDS,
       });
     } catch (err: any) {
       console.error("MAP upload error:", err);
@@ -105,12 +181,11 @@ router.post(
       if (
         !column_mapping ||
         !column_mapping.mpn ||
-        !column_mapping.brand ||
         !column_mapping.map_price
       ) {
         res.status(400).json({
           error:
-            "column_mapping.mpn, column_mapping.brand, and column_mapping.map_price are required",
+            "column_mapping.mpn and column_mapping.map_price are required (brand / promo / dates are optional)",
         });
         return;
       }
@@ -225,6 +300,7 @@ router.post(
       const errors: Array<{ row: number; mpn: string; error: string }> = [];
       let committedRows = 0;
       let failedRows = 0;
+      let skippedRows = 0;
       const committedMpns: string[] = [];
 
       // Pre-validate all rows and stage write payloads.
@@ -234,12 +310,12 @@ router.post(
         rowNum: number;
         mpn: string;
         docId: string;
-        brand: string;
+        brand: string | null;
         mapPrice: number;
         promoPrice: number | null;
-        normStart: string | null;
-        normEnd: string | null;
-        isAlwaysOn: boolean;
+        startDate: string | null;
+        endDate: string | null;
+        isPromoRow: boolean;
       };
       const staged: Staged[] = [];
 
@@ -249,33 +325,34 @@ router.post(
 
         const mpn = getField(row, mapping.mpn);
         if (!mpn) {
-          failedRows++;
-          errors.push({ row: rowNum, mpn: "", error: "MPN is required — this row has no product identifier" });
+          // No identifier — silent skip; promo-only rows commonly have empty MPN
+          skippedRows++;
           continue;
         }
 
-        const brand = getField(row, mapping.brand);
+        const brandRaw = mapping.brand ? getField(row, mapping.brand) : "";
+        const brand = brandRaw || null;
+
         const mapPriceRaw = getField(row, mapping.map_price);
         const mapPrice = parseFloat(mapPriceRaw);
         if (!mapPriceRaw || isNaN(mapPrice) || mapPrice <= 0) {
-          failedRows++;
-          errors.push({
-            row: rowNum,
-            mpn,
-            error: `MAP price must be a positive number (got "${mapPriceRaw}")`,
-          });
+          // No usable base MAP price — skip silently (often a promo-only follow-up row)
+          skippedRows++;
           continue;
         }
 
-        const startDate = mapping.start_date ? getField(row, mapping.start_date) : null;
-        const endDate = mapping.end_date ? getField(row, mapping.end_date) : null;
         const promoPriceRaw = mapping.promo_price ? getField(row, mapping.promo_price) : "";
-        const promoPrice =
-          promoPriceRaw && !isNaN(parseFloat(promoPriceRaw)) ? parseFloat(promoPriceRaw) : null;
+        const promoParsed = promoPriceRaw ? parseFloat(promoPriceRaw) : NaN;
+        const promoPrice = !isNaN(promoParsed) && promoParsed > 0 ? promoParsed : null;
 
-        const normStart = startDate && startDate !== "" ? startDate : null;
-        const normEnd = endDate && endDate !== "" ? endDate : null;
-        const isAlwaysOn = !normStart && !normEnd;
+        const startDate = parseMapDate(
+          mapping.start_date ? getField(row, mapping.start_date) : null
+        );
+        const endDate = parseMapDate(
+          mapping.end_date ? getField(row, mapping.end_date) : null
+        );
+
+        const isPromoRow = promoPrice !== null && (startDate !== null || endDate !== null);
 
         staged.push({
           rowNum,
@@ -284,9 +361,9 @@ router.post(
           brand,
           mapPrice,
           promoPrice,
-          normStart,
-          normEnd,
-          isAlwaysOn,
+          startDate,
+          endDate,
+          isPromoRow,
         });
       }
 
@@ -311,6 +388,53 @@ router.post(
         return false;
       });
 
+      // Aggregate per-MPN before product stamping so a base + promo row pair
+      // doesn't race on products/{docId}. The product doc reflects the most
+      // informative state: prefer the promo row (has promo_price + window) over
+      // the base row when both exist.
+      type ProductStamp = {
+        docId: string;
+        mpn: string;
+        brand: string | null;
+        mapPrice: number;
+        promoPrice: number | null;
+        promoStart: string | null;
+        promoEnd: string | null;
+      };
+      const productStamps = new Map<string, ProductStamp>();
+      for (const s of staged) {
+        const productInfo = productData.get(s.docId);
+        if (!productInfo) continue; // counted as MPN-not-found below
+        const existing = productStamps.get(s.docId);
+        if (!existing) {
+          productStamps.set(s.docId, {
+            docId: s.docId,
+            mpn: s.mpn,
+            brand: s.brand,
+            mapPrice: s.mapPrice,
+            promoPrice: s.isPromoRow ? s.promoPrice : null,
+            promoStart: s.isPromoRow ? s.startDate : null,
+            promoEnd: s.isPromoRow ? s.endDate : null,
+          });
+        } else {
+          // Always keep the latest non-null brand and the latest base map_price.
+          if (!existing.brand && s.brand) existing.brand = s.brand;
+          if (!s.isPromoRow) existing.mapPrice = s.mapPrice;
+          // Prefer the promo row's window/price if we don't already have one,
+          // or if this row's start_date is later (newest active promo wins).
+          if (s.isPromoRow) {
+            if (
+              existing.promoPrice === null ||
+              (s.startDate && existing.promoStart && s.startDate > existing.promoStart)
+            ) {
+              existing.promoPrice = s.promoPrice;
+              existing.promoStart = s.startDate;
+              existing.promoEnd = s.endDate;
+            }
+          }
+        }
+      }
+
       for (const s of staged) {
         const productInfo = productData.get(s.docId);
         if (!productInfo) {
@@ -323,35 +447,63 @@ router.post(
           continue;
         }
 
-        const productRef = firestore.collection("products").doc(s.docId);
-
-        // 1. map_policies/{docId_batchId_idx}
+        // 1. map_policies/{docId_base}  or  map_policies/{docId_promo_<startDate|open>}
+        //    Same MPN can have one base row + multiple promo windows.
+        const docSuffix = s.isPromoRow
+          ? `promo_${s.startDate || "open"}`
+          : "base";
+        const mapPolicyDocId = `${s.docId}_${docSuffix}`;
         writer.set(
-          firestore.collection("map_policies").doc(`${s.docId}_${batch_id}_${s.rowNum}`),
+          firestore.collection("map_policies").doc(mapPolicyDocId),
           {
             mpn: s.mpn,
             brand: s.brand,
             map_price: s.mapPrice,
             promo_price: s.promoPrice,
-            start_date: s.normStart,
-            end_date: s.normEnd,
-            is_always_on: s.isAlwaysOn,
+            start_date: s.startDate,
+            end_date: s.endDate,
+            is_promo_row: s.isPromoRow,
+            import_batch_id: batch_id,
+            // Back-compat fields used by existing readers:
             source_batch_id: batch_id,
+            is_always_on: !s.startDate && !s.endDate,
             created_at: ts(),
             updated_at: ts(),
-          }
+          },
+          { merge: true }
         );
 
-        // 2. products/{docId} — MAP fields
+        // 4. audit_log entry per row
+        writer.create(firestore.collection("audit_log").doc(), {
+          product_mpn: s.mpn,
+          event_type: "map_policy_imported",
+          map_price: s.mapPrice,
+          promo_price: s.promoPrice,
+          start_date: s.startDate,
+          end_date: s.endDate,
+          is_promo_row: s.isPromoRow,
+          source_batch_id: batch_id,
+          acting_user_id: userId,
+          created_at: ts(),
+        });
+
+        committedRows++;
+        committedMpns.push(s.mpn);
+      }
+
+      // 2 + 3. Product stamps + pricing_export_queue \u2014 one write per MPN, deterministic.
+      for (const stamp of productStamps.values()) {
+        const productInfo = productData.get(stamp.docId)!;
+        const productRef = firestore.collection("products").doc(stamp.docId);
         writer.set(
           productRef,
           {
             is_map_protected: true,
-            map_price: s.mapPrice,
-            map_promo_price: s.promoPrice,
-            map_start_date: s.normStart,
-            map_end_date: s.normEnd,
-            map_is_always_on: s.isAlwaysOn,
+            map_price: stamp.mapPrice,
+            map_promo_price: stamp.promoPrice,
+            map_promo_start: stamp.promoStart,
+            map_promo_end: stamp.promoEnd,
+            map_brand: stamp.brand,
             map_last_updated_at: ts(),
             map_source_batch_id: batch_id,
             map_removal_proposed: false,
@@ -360,18 +512,16 @@ router.post(
           },
           { merge: true }
         );
-
-        // 3. pricing_export_queue/{docId} — inline (we already have product data)
         writer.set(
-          firestore.collection("pricing_export_queue").doc(s.docId),
+          firestore.collection("pricing_export_queue").doc(stamp.docId),
           {
-            mpn: productInfo.mpn || s.mpn,
+            mpn: productInfo.mpn || stamp.mpn,
             sku: productInfo.sku || null,
             rics_retail: productInfo.rics_retail || 0,
             rics_offer: productInfo.rics_offer || 0,
             scom: productInfo.scom || 0,
             scom_sale: productInfo.scom_sale || null,
-            effective_date: s.normStart,
+            effective_date: stamp.promoStart,
             queued_at: ts(),
             queued_by: userId,
             queued_reason: "map_change",
@@ -380,23 +530,6 @@ router.post(
           },
           { merge: true }
         );
-
-        // 4. audit_log entry (auto-id)
-        writer.create(firestore.collection("audit_log").doc(), {
-          product_mpn: s.mpn,
-          event_type: "map_policy_imported",
-          map_price: s.mapPrice,
-          promo_price: s.promoPrice,
-          start_date: s.normStart,
-          end_date: s.normEnd,
-          is_always_on: s.isAlwaysOn,
-          source_batch_id: batch_id,
-          acting_user_id: userId,
-          created_at: ts(),
-        });
-
-        committedRows++;
-        committedMpns.push(s.mpn);
       }
 
       await writer.close();
@@ -444,11 +577,12 @@ router.post(
         await errorWriter.close();
       }
 
-      const finalStatus = failedRows === records.length ? "failed" : "complete";
+      const finalStatus = committedRows === 0 ? "failed" : "complete";
       await batchRef.update({
         status: finalStatus,
         committed_rows: committedRows,
         failed_rows: failedRows,
+        skipped_rows: skippedRows,
         errors: errorsForDoc,
         errors_total: totalErrors,
         errors_truncated: errorsTruncated,
@@ -462,6 +596,7 @@ router.post(
         total_rows: records.length,
         committed_rows: committedRows,
         failed_rows: failedRows,
+        skipped_rows: skippedRows,
         removal_proposed: removalProposed,
         errors: errorsForDoc,
         errors_total: totalErrors,
