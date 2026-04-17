@@ -19,7 +19,6 @@ const sync_1 = require("csv-parse/sync");
 const auth_1 = require("../middleware/auth");
 const roles_1 = require("../middleware/roles");
 const mpnUtils_1 = require("../services/mpnUtils");
-const pricingExportQueue_1 = require("../services/pricingExportQueue");
 const csvUtils_1 = require("../services/csvUtils");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
@@ -193,9 +192,10 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(["
         let committedRows = 0;
         let failedRows = 0;
         const committedMpns = [];
+        const staged = [];
         for (let i = 0; i < records.length; i++) {
             const row = records[i];
-            const rowNum = i + 2; // +1 header, +1 one-indexed
+            const rowNum = i + 2;
             const mpn = getField(row, mapping.mpn);
             if (!mpn) {
                 failedRows++;
@@ -216,96 +216,127 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(["
             }
             const startDate = mapping.start_date ? getField(row, mapping.start_date) : null;
             const endDate = mapping.end_date ? getField(row, mapping.end_date) : null;
-            const promoPriceRaw = mapping.promo_price
-                ? getField(row, mapping.promo_price)
-                : "";
-            const promoPrice = promoPriceRaw && !isNaN(parseFloat(promoPriceRaw))
-                ? parseFloat(promoPriceRaw)
-                : null;
+            const promoPriceRaw = mapping.promo_price ? getField(row, mapping.promo_price) : "";
+            const promoPrice = promoPriceRaw && !isNaN(parseFloat(promoPriceRaw)) ? parseFloat(promoPriceRaw) : null;
             const normStart = startDate && startDate !== "" ? startDate : null;
             const normEnd = endDate && endDate !== "" ? endDate : null;
             const isAlwaysOn = !normStart && !normEnd;
-            const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
-            const productRef = firestore.collection("products").doc(docId);
-            const productSnap = await productRef.get();
-            if (!productSnap.exists) {
+            staged.push({
+                rowNum,
+                mpn,
+                docId: (0, mpnUtils_1.mpnToDocId)(mpn),
+                brand,
+                mapPrice,
+                promoPrice,
+                normStart,
+                normEnd,
+                isAlwaysOn,
+            });
+        }
+        // Batched product existence check via getAll() in chunks of 300.
+        const productData = new Map();
+        const GET_CHUNK = 300;
+        for (let i = 0; i < staged.length; i += GET_CHUNK) {
+            const slice = staged.slice(i, i + GET_CHUNK);
+            const refs = slice.map((s) => firestore.collection("products").doc(s.docId));
+            const snaps = await firestore.getAll(...refs);
+            snaps.forEach((snap, idx) => {
+                productData.set(slice[idx].docId, snap.exists ? snap.data() ?? null : null);
+            });
+        }
+        // BulkWriter — auto-batches and parallelises all writes; ~1000s of writes/sec.
+        const writer = firestore.bulkWriter();
+        writer.onWriteError((err) => {
+            // Retry transient errors up to 5 times; surface anything else once.
+            if (err.failedAttempts < 5)
+                return true;
+            console.error("BulkWriter give-up:", err.message);
+            return false;
+        });
+        for (const s of staged) {
+            const productInfo = productData.get(s.docId);
+            if (!productInfo) {
                 failedRows++;
                 errors.push({
-                    row: rowNum,
-                    mpn,
-                    error: `MPN ${mpn} not found in catalog — check MPN format or verify the product exists`,
+                    row: s.rowNum,
+                    mpn: s.mpn,
+                    error: `MPN ${s.mpn} not found in catalog — check MPN format or verify the product exists`,
                 });
                 continue;
             }
-            try {
-                // Write map_policies document (one per MPN per batch — supports multiple terms per MPN)
-                await firestore
-                    .collection("map_policies")
-                    .doc(`${docId}_${batch_id}_${i}`)
-                    .set({
-                    mpn,
-                    brand,
-                    map_price: mapPrice,
-                    promo_price: promoPrice,
-                    start_date: normStart,
-                    end_date: normEnd,
-                    is_always_on: isAlwaysOn,
-                    source_batch_id: batch_id,
-                    created_at: ts(),
-                    updated_at: ts(),
-                });
-                // Update product with latest MAP state
-                await productRef.set({
-                    is_map_protected: true,
-                    map_price: mapPrice,
-                    map_promo_price: promoPrice,
-                    map_start_date: normStart,
-                    map_end_date: normEnd,
-                    map_is_always_on: isAlwaysOn,
-                    map_last_updated_at: ts(),
-                    map_source_batch_id: batch_id,
-                    // Clear any prior removal proposal now that this MPN is back in the file
-                    map_removal_proposed: false,
-                    map_removal_proposed_at: null,
-                    map_removal_source_batch: null,
-                }, { merge: true });
-                await (0, pricingExportQueue_1.queueForPricingExport)(mpn, "map_change", userId, normStart);
-                await firestore.collection("audit_log").add({
-                    product_mpn: mpn,
-                    event_type: "map_policy_imported",
-                    map_price: mapPrice,
-                    promo_price: promoPrice,
-                    start_date: normStart,
-                    end_date: normEnd,
-                    is_always_on: isAlwaysOn,
-                    source_batch_id: batch_id,
-                    acting_user_id: userId,
-                    created_at: ts(),
-                });
-                committedRows++;
-                committedMpns.push(mpn);
-            }
-            catch (rowErr) {
-                failedRows++;
-                errors.push({
-                    row: rowNum,
-                    mpn,
-                    error: "An unexpected error occurred while processing this row. Please verify the data and try again.",
-                });
-                console.error(`MAP commit row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
-            }
+            const productRef = firestore.collection("products").doc(s.docId);
+            // 1. map_policies/{docId_batchId_idx}
+            writer.set(firestore.collection("map_policies").doc(`${s.docId}_${batch_id}_${s.rowNum}`), {
+                mpn: s.mpn,
+                brand: s.brand,
+                map_price: s.mapPrice,
+                promo_price: s.promoPrice,
+                start_date: s.normStart,
+                end_date: s.normEnd,
+                is_always_on: s.isAlwaysOn,
+                source_batch_id: batch_id,
+                created_at: ts(),
+                updated_at: ts(),
+            });
+            // 2. products/{docId} — MAP fields
+            writer.set(productRef, {
+                is_map_protected: true,
+                map_price: s.mapPrice,
+                map_promo_price: s.promoPrice,
+                map_start_date: s.normStart,
+                map_end_date: s.normEnd,
+                map_is_always_on: s.isAlwaysOn,
+                map_last_updated_at: ts(),
+                map_source_batch_id: batch_id,
+                map_removal_proposed: false,
+                map_removal_proposed_at: null,
+                map_removal_source_batch: null,
+            }, { merge: true });
+            // 3. pricing_export_queue/{docId} — inline (we already have product data)
+            writer.set(firestore.collection("pricing_export_queue").doc(s.docId), {
+                mpn: productInfo.mpn || s.mpn,
+                sku: productInfo.sku || null,
+                rics_retail: productInfo.rics_retail || 0,
+                rics_offer: productInfo.rics_offer || 0,
+                scom: productInfo.scom || 0,
+                scom_sale: productInfo.scom_sale || null,
+                effective_date: s.normStart,
+                queued_at: ts(),
+                queued_by: userId,
+                queued_reason: "map_change",
+                exported_at: null,
+                export_job_id: null,
+            }, { merge: true });
+            // 4. audit_log entry (auto-id)
+            writer.create(firestore.collection("audit_log").doc(), {
+                product_mpn: s.mpn,
+                event_type: "map_policy_imported",
+                map_price: s.mapPrice,
+                promo_price: s.promoPrice,
+                start_date: s.normStart,
+                end_date: s.normEnd,
+                is_always_on: s.isAlwaysOn,
+                source_batch_id: batch_id,
+                acting_user_id: userId,
+                created_at: ts(),
+            });
+            committedRows++;
+            committedMpns.push(s.mpn);
         }
-        // MAP REMOVAL REVIEW — any currently-protected MPN absent from this import
+        await writer.close();
+        // MAP REMOVAL REVIEW — any currently-protected MPN absent from this import.
+        // Use a second BulkWriter for the marking writes.
         let removalProposed = 0;
         const previouslyMapped = await firestore
             .collection("products")
             .where("is_map_protected", "==", true)
             .get();
         const committedSet = new Set(committedMpns);
+        const removalWriter = firestore.bulkWriter();
         for (const doc of previouslyMapped.docs) {
             const d = doc.data();
             if (!committedSet.has(d.mpn)) {
-                await doc.ref.set({
+                removalWriter.set(doc.ref, {
                     map_removal_proposed: true,
                     map_removal_proposed_at: ts(),
                     map_removal_source_batch: batch_id,
@@ -313,12 +344,28 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(["
                 removalProposed++;
             }
         }
+        await removalWriter.close();
+        // Cap errors persisted on the batch doc to 50 entries (1MB Firestore doc limit).
+        // Spill the full list to a subcollection in chunks of 200 if there were more.
+        const totalErrors = errors.length;
+        const errorsForDoc = errors.slice(0, 50);
+        const errorsTruncated = errors.length > 50;
+        if (errorsTruncated) {
+            const errorWriter = firestore.bulkWriter();
+            const ERR_CHUNK = 200;
+            for (let i = 0; i < errors.length; i += ERR_CHUNK) {
+                errorWriter.set(batchRef.collection("errors").doc(`chunk_${String(i / ERR_CHUNK).padStart(4, "0")}`), { errors: errors.slice(i, i + ERR_CHUNK), start_index: i });
+            }
+            await errorWriter.close();
+        }
         const finalStatus = failedRows === records.length ? "failed" : "complete";
         await batchRef.update({
             status: finalStatus,
             committed_rows: committedRows,
             failed_rows: failedRows,
-            errors,
+            errors: errorsForDoc,
+            errors_total: totalErrors,
+            errors_truncated: errorsTruncated,
             completed_at: ts(),
             summary: { removal_proposed: removalProposed },
         });
@@ -329,7 +376,9 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(["
             committed_rows: committedRows,
             failed_rows: failedRows,
             removal_proposed: removalProposed,
-            errors,
+            errors: errorsForDoc,
+            errors_total: totalErrors,
+            errors_truncated: errorsTruncated,
         });
     }
     catch (err) {
