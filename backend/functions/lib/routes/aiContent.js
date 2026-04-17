@@ -314,50 +314,17 @@ router.post("/:mpn/ai-assistant", auth_1.requireAuth, (0, roles_1.requireRole)([
             res.status(404).json({ error: "Product not found" });
             return;
         }
-        // Build messages array
-        const messages = [];
-        if (image_data) {
-            messages.push({
-                role: "user",
-                content: [
-                    {
-                        type: "image",
-                        source: {
-                            type: "base64",
-                            media_type: "image/jpeg",
-                            data: image_data,
-                        },
-                    },
-                    { type: "text", text: message },
-                ],
-            });
-        }
-        else {
-            messages.push({ role: "user", content: message });
-        }
+        // Build user message
+        const userMessage = image_data
+            ? `[Image attached] ${message}`
+            : message;
         const systemPrompt = `You are a product specialist assistant helping a retail operator complete product information for ${product.name || "this product"} by ${product.brand || "unknown brand"}. 
 Provide vocabulary, terminology, and visual analysis support. 
 IMPORTANT: You are providing suggestions only. Never instruct the user to update any field directly — always phrase suggestions as observations the user can choose to apply.`;
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-api-key": process.env.ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-            },
-            body: JSON.stringify({
-                model: "claude-sonnet-4-6",
-                max_tokens: 512,
-                system: systemPrompt,
-                messages,
-            }),
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(`Anthropic API error: ${response.status} — ${JSON.stringify(data)}`);
-        }
+        const adapter = await (0, aiDescribe_1.getActiveAdapter)();
+        const responseText = await adapter.complete(userMessage, systemPrompt, image_data || undefined);
         // Return assistant response — do NOT write to any product fields
-        res.json({ response: data.content[0].text });
+        res.json({ response: responseText });
     }
     catch (err) {
         res.status(500).json({ error: err.message });

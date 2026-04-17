@@ -47,6 +47,13 @@ const SETTINGS = [
 
   // ── AI / LLM (4–7) ──
   {
+    id: "active_ai_provider",
+    category: "ai",
+    label: "Active AI Provider",
+    value: "anthropic",
+    type: "string",
+  },
+  {
     id: "ai_model_config",
     category: "ai",
     label: "AI Model Configuration",

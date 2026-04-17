@@ -55,6 +55,9 @@ export default function AIContentReviewPage() {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
+  // Observations textarea state (Correction 3)
+  const [observations, setObservations] = useState("");
+
   const loadVersions = useCallback(async () => {
     try {
       setLoading(true);
@@ -81,7 +84,7 @@ export default function AIContentReviewPage() {
     setError("");
     setSuccessMsg("");
     try {
-      await aiDescribe(mpn, [activeSite]);
+      await aiDescribe(mpn, [activeSite], observations || undefined);
       await loadVersions();
       setSuccessMsg("New version generated");
     } catch (err: any) {
@@ -180,6 +183,19 @@ export default function AIContentReviewPage() {
       <h1 className="text-2xl font-bold mb-1">AI Content Review</h1>
       <p className="text-gray-500 text-sm mb-6">{mpn}</p>
 
+      {/* Observations textarea (Correction 3) */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Observations (optional context for AI generation)
+        </label>
+        <textarea
+          value={observations}
+          onChange={e => setObservations(e.target.value)}
+          placeholder="Add any specific context, details, or notes to guide the AI generation..."
+          className="w-full border rounded p-2 text-sm h-20"
+        />
+      </div>
+
       {/* Site Tabs */}
       <div className="flex gap-1 mb-6 border-b">
         {siteOwners.map((site) => (
@@ -260,9 +276,58 @@ export default function AIContentReviewPage() {
 
           {/* Content Fields */}
           <div className="space-y-6 mb-8">
+            {/* Description field with HTML preview (TALLY-117) */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Description (HTML)
+              </label>
+              {editingField === "description" ? (
+                <div>
+                  <textarea
+                    className="w-full border rounded px-3 py-2 text-sm font-mono"
+                    rows={6}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                  />
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={() => handleInlineEdit("description")}
+                      disabled={actionLoading}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingField(null)}
+                      className="text-xs text-gray-500 hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div
+                    className="border rounded px-3 py-2 text-sm font-mono bg-white cursor-pointer hover:bg-gray-50 min-h-[38px]"
+                    onClick={() => startEdit("description", parsed["description"] || "")}
+                  >
+                    {parsed["description"] || (
+                      <span className="text-gray-400 italic">Click to edit</span>
+                    )}
+                  </div>
+                  {parsed["description"] && (
+                    <div className="mt-2 p-3 bg-gray-50 border rounded text-sm">
+                      <span className="text-xs text-gray-400 block mb-1">Preview:</span>
+                      <div dangerouslySetInnerHTML={{ __html: parsed["description"] }} />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Other content fields */}
             {(
               [
-                ["description", "Description"],
                 ["meta_name", "Meta Name"],
                 ["meta_description", "Meta Description"],
                 ["keywords", "Keywords"],
@@ -274,20 +339,11 @@ export default function AIContentReviewPage() {
                 </label>
                 {editingField === key ? (
                   <div>
-                    {key === "description" ? (
-                      <textarea
-                        className="w-full border rounded px-3 py-2 text-sm"
-                        rows={4}
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                      />
-                    ) : (
-                      <input
-                        className="w-full border rounded px-3 py-2 text-sm"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                      />
-                    )}
+                    <input
+                      className="w-full border rounded px-3 py-2 text-sm"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                    />
                     <div className="flex gap-2 mt-1">
                       <button
                         onClick={() => handleInlineEdit(key)}

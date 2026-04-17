@@ -166,6 +166,29 @@ function EditableAttrRow({
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
+            ) : fieldType === "multi_select" ? (
+              <div className="flex-1 flex flex-wrap gap-2">
+                {dropdownOptions.map((opt) => {
+                  const selected = draft.split(",").map(s => s.trim()).filter(Boolean);
+                  const isChecked = selected.includes(opt);
+                  return (
+                    <label key={opt} className="flex items-center gap-1 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          const next = isChecked
+                            ? selected.filter(s => s !== opt)
+                            : [...selected, opt];
+                          setDraft(next.join(", "));
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      {opt}
+                    </label>
+                  );
+                })}
+              </div>
             ) : fieldType === "toggle" ? (
               <label className="flex items-center gap-2 text-sm">
                 <input

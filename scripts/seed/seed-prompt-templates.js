@@ -43,12 +43,16 @@ Product details:
 - Gender/Age Group: {{gender}}
 
 Generate:
-1. Description: 2-3 engaging sentences describing the product
+1. Description: 2-3 paragraph HTML description using only <p> tags. 
+   First paragraph: opening hook about the product.
+   Second paragraph: key features, materials, and style details.
+   Third paragraph: lifestyle positioning or call to action.
+   No <h1>, <h2>, <div>, or any tags other than <p>.
 2. Meta Name: SEO-optimized title under 60 characters
 3. Meta Description: Compelling meta description under 160 characters
 4. Keywords: 8-10 comma-separated keywords
 
-Respond in JSON format: {"description": "", "meta_name": "", "meta_description": "", "keywords": ""}`,
+Respond in JSON format: {"description": "<p>...</p><p>...</p>", "meta_name": "", "meta_description": "", "keywords": ""}`,
     banned_words: [],
     required_attribute_inclusions: ["brand", "primary_color"],
   },
@@ -81,12 +85,16 @@ Product details:
 - Primary Color: {{primary_color}}
 
 Generate:
-1. Description: 2-3 sentences in authentic streetwear voice
+1. Description: 2-3 paragraph HTML description using only <p> tags. 
+   First paragraph: opening hook about the product.
+   Second paragraph: key features, materials, and style details.
+   Third paragraph: lifestyle positioning or call to action.
+   No <h1>, <h2>, <div>, or any tags other than <p>.
 2. Meta Name: Bold, brand-forward title under 60 characters
 3. Meta Description: Streetwear-voiced meta under 160 characters
 4. Keywords: 8-10 keywords with streetwear and brand terms
 
-Respond in JSON format: {"description": "", "meta_name": "", "meta_description": "", "keywords": ""}`,
+Respond in JSON format: {"description": "<p>...</p><p>...</p>", "meta_name": "", "meta_description": "", "keywords": ""}`,
     banned_words: [],
     required_attribute_inclusions: ["brand"],
   },
@@ -122,12 +130,16 @@ Product details:
 - Gender/Age Group: {{gender}}
 
 Generate:
-1. Description: 2-3 sentences in elevated contemporary voice
+1. Description: 2-3 paragraph HTML description using only <p> tags. 
+   First paragraph: opening hook about the product.
+   Second paragraph: key features, materials, and style details.
+   Third paragraph: lifestyle positioning or call to action.
+   No <h1>, <h2>, <div>, or any tags other than <p>.
 2. Meta Name: Style-forward title under 60 characters
 3. Meta Description: Editorial-toned meta under 160 characters
 4. Keywords: 8-10 keywords with contemporary and brand terms
 
-Respond in JSON format: {"description": "", "meta_name": "", "meta_description": "", "keywords": ""}`,
+Respond in JSON format: {"description": "<p>...</p><p>...</p>", "meta_name": "", "meta_description": "", "keywords": ""}`,
     banned_words: [],
     required_attribute_inclusions: ["brand", "primary_color"],
   },

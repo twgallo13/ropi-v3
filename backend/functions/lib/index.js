@@ -26,7 +26,8 @@ firebase_admin_1.default.initializeApp({
 });
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({ origin: true }));
-app.use(express_1.default.json());
+app.use(express_1.default.json({ limit: '50mb' }));
+app.use(express_1.default.urlencoded({ limit: '50mb', extended: true }));
 // ── Health Check (Section 17.0) ──
 app.get("/api/v1/health", (_req, res) => {
     res.status(200).json({

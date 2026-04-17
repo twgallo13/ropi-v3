@@ -3,7 +3,7 @@ import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
-import { generateContent } from "../services/aiDescribe";
+import { generateContent, getActiveAdapter } from "../services/aiDescribe";
 
 const router = Router();
 const db = admin.firestore;
@@ -395,57 +395,20 @@ router.post(
         return;
       }
 
-      // Build messages array
-      const messages: any[] = [];
-
-      if (image_data) {
-        messages.push({
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/jpeg",
-                data: image_data,
-              },
-            },
-            { type: "text", text: message },
-          ],
-        });
-      } else {
-        messages.push({ role: "user", content: message });
-      }
+      // Build user message
+      const userMessage = image_data
+        ? `[Image attached] ${message}`
+        : message;
 
       const systemPrompt = `You are a product specialist assistant helping a retail operator complete product information for ${product.name || "this product"} by ${product.brand || "unknown brand"}. 
 Provide vocabulary, terminology, and visual analysis support. 
 IMPORTANT: You are providing suggestions only. Never instruct the user to update any field directly — always phrase suggestions as observations the user can choose to apply.`;
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY!,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 512,
-          system: systemPrompt,
-          messages,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          `Anthropic API error: ${response.status} — ${JSON.stringify(data)}`
-        );
-      }
+      const adapter = await getActiveAdapter();
+      const responseText = await adapter.complete(userMessage, systemPrompt, image_data || undefined);
 
       // Return assistant response — do NOT write to any product fields
-      res.json({ response: data.content[0].text });
+      res.json({ response: responseText });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
       return;

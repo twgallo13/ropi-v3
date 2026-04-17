@@ -4,6 +4,72 @@ import { selectTemplate } from "./templateMatcher";
 
 const db = admin.firestore;
 
+// ── Adapter Pattern (TALLY-116) ──
+
+export interface AIProviderAdapter {
+  complete(prompt: string, systemPrompt?: string, imageData?: string): Promise<string>;
+}
+
+class AnthropicAdapter implements AIProviderAdapter {
+  async complete(prompt: string, systemPrompt?: string, imageData?: string): Promise<string> {
+    const messages: any[] = [];
+    if (imageData) {
+      messages.push({
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageData } },
+          { type: "text", text: prompt },
+        ],
+      });
+    } else {
+      messages.push({ role: "user", content: prompt });
+    }
+    const body: any = { model: "claude-sonnet-4-6", max_tokens: 1024, messages };
+    if (systemPrompt) body.system = systemPrompt;
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`Anthropic API error: ${res.status} — ${JSON.stringify(data)}`);
+    }
+    return data.content[0].text;
+  }
+}
+
+class GeminiAdapter implements AIProviderAdapter {
+  async complete(): Promise<string> {
+    throw new Error("Gemini adapter not yet configured");
+  }
+}
+
+class OpenAIAdapter implements AIProviderAdapter {
+  async complete(): Promise<string> {
+    throw new Error("OpenAI adapter not yet configured");
+  }
+}
+
+export async function getActiveAdapter(): Promise<AIProviderAdapter> {
+  const settingDoc = await db().collection("admin_settings").doc("active_ai_provider").get();
+  const provider = settingDoc.exists ? settingDoc.data()?.value : "anthropic";
+  switch (provider) {
+    case "gemini":
+      return new GeminiAdapter();
+    case "openai":
+      return new OpenAIAdapter();
+    default:
+      return new AnthropicAdapter();
+  }
+}
+
+// ── End Adapter Pattern ──
+
 const EXCLUDED_FIELDS = [
   "rics_category",
   "rics_color",
@@ -86,31 +152,10 @@ export async function generateContent(
     observations: observationsNote || "",
   });
 
-  // Call Anthropic API
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY!,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: "You are a product copywriter. Always respond with ONLY a valid JSON object. No markdown, no explanation, no extra text.",
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      `Anthropic API error: ${response.status} — ${JSON.stringify(data)}`
-    );
-  }
-
-  const rawText = data.content[0].text;
+  // Call AI via adapter (TALLY-116)
+  const adapter = await getActiveAdapter();
+  const systemPrompt = "You are a product copywriter. Always respond with ONLY a valid JSON object. No markdown, no explanation, no extra text.";
+  const rawText = await adapter.complete(prompt, systemPrompt);
 
   // Parse JSON response
   let parsed: Record<string, string> = {};
