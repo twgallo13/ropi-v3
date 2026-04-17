@@ -24,6 +24,7 @@ const cadenceEngine_1 = require("../services/cadenceEngine");
 const launchHighPriority_1 = require("../services/launchHighPriority");
 const executiveProjections_1 = require("../services/executiveProjections");
 const buyerPerformanceMatrix_1 = require("../services/buyerPerformanceMatrix");
+const aiWeeklyAdvisory_1 = require("../services/aiWeeklyAdvisory");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -308,6 +309,13 @@ router.post("/:batch_id/commit", async (req, res) => {
         }
         catch (bpErr) {
             console.error("computeBuyerPerformanceMatrix failed:", bpErr.message);
+        }
+        // Step 6b.3 — Step 3.4 — AI Weekly Advisory (fire-and-forget; don't block response)
+        try {
+            (0, aiWeeklyAdvisory_1.generateWeeklyAdvisories)(batch_id).catch((advErr) => console.error("generateWeeklyAdvisories (fire-and-forget) failed:", advErr?.message || advErr));
+        }
+        catch (_err) {
+            /* silent — fire-and-forget must never throw */
         }
         // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs
         if (committedMpns.length > 0) {

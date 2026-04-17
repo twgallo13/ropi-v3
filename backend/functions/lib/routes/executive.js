@@ -25,6 +25,7 @@ const auth_1 = require("../middleware/auth");
 const roles_1 = require("../middleware/roles");
 const executiveProjections_1 = require("../services/executiveProjections");
 const buyerPerformanceMatrix_1 = require("../services/buyerPerformanceMatrix");
+const aiWeeklyAdvisory_1 = require("../services/aiWeeklyAdvisory");
 const router = (0, express_1.Router)();
 const db = () => firebase_admin_1.default.firestore();
 async function resolveRole(req) {
@@ -298,6 +299,19 @@ router.post("/jobs/buyer-performance", auth_1.requireAuth, (0, roles_1.requireRo
     }
     catch (err) {
         console.error("jobs/buyer-performance error:", err);
+        res.status(500).json({ error: "Job failed." });
+    }
+});
+router.post("/jobs/weekly-advisory", auth_1.requireAuth, (0, roles_1.requireRole)(["admin", "head_buyer"]), async (req, res) => {
+    try {
+        const bodyBatchId = (req.body && typeof req.body.import_batch_id === "string"
+            ? req.body.import_batch_id
+            : null) || `manual-${Date.now()}`;
+        const result = await (0, aiWeeklyAdvisory_1.generateWeeklyAdvisories)(bodyBatchId);
+        res.status(200).json({ ok: true, import_batch_id: bodyBatchId, ...result });
+    }
+    catch (err) {
+        console.error("jobs/weekly-advisory error:", err);
         res.status(500).json({ error: "Job failed." });
     }
 });

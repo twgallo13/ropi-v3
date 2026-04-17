@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import {
   fetchNotificationPreferences,
   updateNotificationPreferences,
+  fetchAdvisoryPreferences,
+  updateAdvisoryPreferences,
   type NotificationPreferences,
+  type AdvisoryPreferences,
 } from "../lib/api";
 
 const ROWS: { key: keyof NotificationPreferences; label: string; locked?: boolean }[] = [
@@ -16,15 +19,22 @@ const ROWS: { key: keyof NotificationPreferences; label: string; locked?: boolea
 
 export default function NotificationSettingsPage() {
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
+  const [advPrefs, setAdvPrefs] = useState<AdvisoryPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingAdv, setSavingAdv] = useState(false);
   const [msg, setMsg] = useState("");
+  const [advMsg, setAdvMsg] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetchNotificationPreferences();
-        setPrefs(res.preferences);
+        const [nRes, aRes] = await Promise.all([
+          fetchNotificationPreferences(),
+          fetchAdvisoryPreferences(),
+        ]);
+        setPrefs(nRes.preferences);
+        setAdvPrefs(aRes.advisory_preferences);
       } catch (e: any) {
         setMsg(e?.message || "Failed to load");
       } finally {
@@ -94,6 +104,95 @@ export default function NotificationSettingsPage() {
         </button>
         {msg && <span className="text-sm text-gray-600">{msg}</span>}
       </div>
+
+      {/* ── Weekly Advisory Settings ── */}
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          Weekly Advisory Settings
+        </h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Personalize the focus and format of your AI-generated weekly advisory.
+        </p>
+        {advPrefs ? (
+          <div className="bg-white border rounded p-4 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Advisory Focus
+              </label>
+              <select
+                value={advPrefs.focus_area}
+                onChange={(e) =>
+                  setAdvPrefs((p) =>
+                    p ? { ...p, focus_area: e.target.value as AdvisoryPreferences["focus_area"] } : p
+                  )
+                }
+                className="w-full border rounded p-2 text-sm"
+              >
+                <option value="balanced">
+                  Balanced — equal weight across all sections
+                </option>
+                <option value="margin_health">
+                  Margin Health — lead with GM% analysis
+                </option>
+                <option value="inventory_clearance">
+                  Inventory Clearance — lead with dead wood and velocity
+                </option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Report Format
+              </label>
+              <select
+                value={advPrefs.format_preference}
+                onChange={(e) =>
+                  setAdvPrefs((p) =>
+                    p
+                      ? {
+                          ...p,
+                          format_preference: e.target
+                            .value as AdvisoryPreferences["format_preference"],
+                        }
+                      : p
+                  )
+                }
+                className="w-full border rounded p-2 text-sm"
+              >
+                <option value="prose">Prose — flowing paragraphs</option>
+                <option value="bullet_points">
+                  Bullet Points — concise lists
+                </option>
+              </select>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  if (!advPrefs) return;
+                  setSavingAdv(true);
+                  setAdvMsg("");
+                  try {
+                    await updateAdvisoryPreferences(advPrefs);
+                    setAdvMsg("Saved.");
+                  } catch (e: any) {
+                    setAdvMsg(e?.error || e?.message || "Failed to save");
+                  } finally {
+                    setSavingAdv(false);
+                  }
+                }}
+                disabled={savingAdv}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded disabled:opacity-50"
+              >
+                {savingAdv ? "Saving…" : "Save Advisory Settings"}
+              </button>
+              {advMsg && (
+                <span className="text-sm text-gray-600">{advMsg}</span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Loading advisory preferences…</p>
+        )}
+      </section>
     </div>
   );
 }

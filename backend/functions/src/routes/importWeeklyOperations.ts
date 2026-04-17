@@ -23,6 +23,7 @@ import { runCadenceEvaluation } from "../services/cadenceEngine";
 import { checkHighPriorityFlag } from "../services/launchHighPriority";
 import { writeWeeklySnapshots } from "../services/executiveProjections";
 import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
+import { generateWeeklyAdvisories } from "../services/aiWeeklyAdvisory";
 
 const router = Router();
 const upload = multer({
@@ -363,6 +364,18 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       await computeBuyerPerformanceMatrix();
     } catch (bpErr: any) {
       console.error("computeBuyerPerformanceMatrix failed:", bpErr.message);
+    }
+
+    // Step 6b.3 — Step 3.4 — AI Weekly Advisory (fire-and-forget; don't block response)
+    try {
+      generateWeeklyAdvisories(batch_id).catch((advErr: any) =>
+        console.error(
+          "generateWeeklyAdvisories (fire-and-forget) failed:",
+          advErr?.message || advErr
+        )
+      );
+    } catch (_err) {
+      /* silent — fire-and-forget must never throw */
     }
 
     // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs

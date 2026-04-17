@@ -1,13 +1,36 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
+import { useEffect, useState } from "react";
 import { auth } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
+import { fetchAdvisoryLatest } from "../lib/api";
 
 export default function Layout() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
   const isExec = role === "admin" || role === "owner" || role === "head_buyer";
+  const [advisoryUnread, setAdvisoryUnread] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const latest = await fetchAdvisoryLatest();
+        if (cancelled) return;
+        const own = latest.report && !latest.report.read_by_buyer;
+        const global =
+          isExec && latest.global_report && !latest.global_report.read_by_buyer;
+        setAdvisoryUnread(Boolean(own || global));
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isExec]);
 
   async function handleLogout() {
     await signOut(auth);
@@ -36,6 +59,17 @@ export default function Layout() {
                 Executive
               </Link>
             )}
+            <Link
+              to="/advisory"
+              className="relative text-gray-600 hover:text-gray-900"
+            >
+              Advisory
+              {advisoryUnread && (
+                <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-600 text-white align-middle">
+                  New
+                </span>
+              )}
+            </Link>
             <Link
               to="/queue/completion"
               className="text-gray-600 hover:text-gray-900"

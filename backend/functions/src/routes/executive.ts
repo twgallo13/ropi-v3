@@ -25,6 +25,7 @@ import {
   getWeekKey,
 } from "../services/executiveProjections";
 import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
+import { generateWeeklyAdvisories } from "../services/aiWeeklyAdvisory";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -400,6 +401,25 @@ router.post(
       res.status(200).json({ ok: true, ...result });
     } catch (err: any) {
       console.error("jobs/buyer-performance error:", err);
+      res.status(500).json({ error: "Job failed." });
+    }
+  }
+);
+
+router.post(
+  "/jobs/weekly-advisory",
+  requireAuth,
+  requireRole(["admin", "head_buyer"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const bodyBatchId =
+        (req.body && typeof req.body.import_batch_id === "string"
+          ? req.body.import_batch_id
+          : null) || `manual-${Date.now()}`;
+      const result = await generateWeeklyAdvisories(bodyBatchId);
+      res.status(200).json({ ok: true, import_batch_id: bodyBatchId, ...result });
+    } catch (err: any) {
+      console.error("jobs/weekly-advisory error:", err);
       res.status(500).json({ error: "Job failed." });
     }
   }

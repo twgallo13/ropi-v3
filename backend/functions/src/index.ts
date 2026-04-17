@@ -24,6 +24,7 @@ import siteVerificationReviewRouter from "./routes/siteVerificationReview";
 import notificationsRouter from "./routes/notifications";
 import dashboardRouter from "./routes/dashboard";
 import executiveRouter from "./routes/executive";
+import advisoryRouter from "./routes/advisory";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -90,6 +91,9 @@ app.use("/api/v1/dashboard", dashboardRouter);
 
 // ── Step 3.2 — Executive ──
 app.use("/api/v1/executive", executiveRouter);
+
+// ── Step 3.4 — AI Weekly Advisory ──
+app.use("/api/v1/advisory", advisoryRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

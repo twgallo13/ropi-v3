@@ -2023,3 +2023,126 @@ export async function fetchBuyerPerformance(buyerUid: string): Promise<BuyerPerf
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Step 3.4 — AI Weekly Advisory
+// ═══════════════════════════════════════════════════════════════
+
+export interface AdvisoryDeadWoodProduct {
+  mpn: string;
+  name: string;
+  brand: string;
+  department: string;
+  days_old: number;
+  inventory_total: number;
+  str_pct: number;
+  wos: number;
+  store_gm_pct: number;
+}
+
+export interface AdvisoryWarningProduct {
+  mpn: string;
+  name: string;
+  brand: string;
+  department: string;
+  wos: number;
+  inventory_total: number;
+  weekly_sales_rate: number;
+}
+
+export interface WeeklyAdvisoryReport {
+  report_id: string;
+  buyer_uid: string;
+  buyer_name: string;
+  generated_at: string | null;
+  import_batch_id: string;
+  week_label: string;
+  dead_wood: {
+    summary: string;
+    products: AdvisoryDeadWoodProduct[];
+  };
+  markdown_optimizer: {
+    summary: string;
+    insights: string[];
+  };
+  inventory_warning: {
+    summary: string;
+    products: AdvisoryWarningProduct[];
+  };
+  global_health_summary: string | null;
+  read_by_buyer: boolean;
+  read_at: string | null;
+  model_used?: string;
+}
+
+export interface AdvisoryLatestResponse {
+  report: WeeklyAdvisoryReport | null;
+  global_report: WeeklyAdvisoryReport | null;
+  buyer_reports: WeeklyAdvisoryReport[];
+  is_exec: boolean;
+}
+
+export async function fetchAdvisoryLatest(): Promise<AdvisoryLatestResponse> {
+  const res = await fetch(`${BASE}/api/v1/advisory/latest`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function fetchAdvisoryHistory(limit = 4): Promise<{ reports: WeeklyAdvisoryReport[] }> {
+  const res = await fetch(`${BASE}/api/v1/advisory/history?limit=${limit}`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function markAdvisoryRead(reportId: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/advisory/mark-read/${encodeURIComponent(reportId)}`,
+    { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function triggerWeeklyAdvisory(importBatchId?: string): Promise<{
+  ok: boolean;
+  import_batch_id: string;
+  buyer_reports: number;
+  global_reports: number;
+}> {
+  const res = await fetch(`${BASE}/api/v1/executive/jobs/weekly-advisory`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(importBatchId ? { import_batch_id: importBatchId } : {}),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Advisory Preferences ──
+export interface AdvisoryPreferences {
+  focus_area: "balanced" | "margin_health" | "inventory_clearance";
+  format_preference: "prose" | "bullet_points";
+}
+
+export async function fetchAdvisoryPreferences(): Promise<{ advisory_preferences: AdvisoryPreferences }> {
+  const res = await fetch(`${BASE}/api/v1/users/me/advisory-preferences`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function updateAdvisoryPreferences(
+  prefs: Partial<AdvisoryPreferences>
+): Promise<{ advisory_preferences: AdvisoryPreferences }> {
+  const res = await fetch(`${BASE}/api/v1/users/me/advisory-preferences`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(prefs),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}

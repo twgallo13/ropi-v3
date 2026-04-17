@@ -303,6 +303,24 @@
         { "fieldPath": "completion_state",   "order": "ASCENDING" },
         { "fieldPath": "first_received_at",  "order": "ASCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 31 — Step 3.4: weekly advisory reports by batch + buyer",
+      "collectionGroup": "weekly_advisory_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "import_batch_id", "order": "ASCENDING"  },
+        { "fieldPath": "buyer_uid",       "order": "ASCENDING"  }
+      ]
+    },
+    {
+      "__comment__": "Index 32 — Step 3.4: latest advisory for a user, newest first",
+      "collectionGroup": "weekly_advisory_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "buyer_uid",    "order": "ASCENDING"  },
+        { "fieldPath": "generated_at", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
