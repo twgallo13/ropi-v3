@@ -20,6 +20,7 @@
     }
   ],
   "hosting": {
+    "site": "ropi-aoss-dev",
     "public": "frontend/dist",
     "ignore": [
       "firebase.json",

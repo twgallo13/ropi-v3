@@ -368,6 +368,60 @@ router.post(
   }
 );
 
+// POST /api/v1/products/:mpn/content-versions/:version_id/regenerate
+// TALLY-118: Regenerate with optional critique
+router.post(
+  "/:mpn/content-versions/:version_id/regenerate",
+  requireAuth,
+  requireRole(["admin", "completion_specialist", "operations_operator"]),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const mpn = decodeURIComponent(req.params.mpn);
+      const { version_id } = req.params;
+      const { critique, observations_note } = req.body;
+      const docId = mpnToDocId(mpn);
+      const userId = req.user?.uid || "unknown";
+
+      // Load previous version for critique context
+      const prevRef = db()
+        .collection("products")
+        .doc(docId)
+        .collection("content_versions")
+        .doc(version_id);
+
+      const prevDoc = await prevRef.get();
+      if (!prevDoc.exists) {
+        res.status(404).json({ error: "Version not found" });
+        return;
+      }
+
+      const prevData = prevDoc.data()!;
+      const siteOwner = prevData.site_owner;
+
+      // Build critique context if critique is provided
+      const critiqueContext = critique
+        ? {
+            previousOutput: JSON.stringify(prevData.parsed_output),
+            critique: critique as string,
+          }
+        : undefined;
+
+      const result = await generateContent(
+        mpn,
+        siteOwner,
+        userId,
+        observations_note || undefined,
+        critiqueContext
+      );
+
+      res.json({ result });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+  }
+);
+
 // POST /api/v1/products/:mpn/ai-assistant
 router.post(
   "/:mpn/ai-assistant",

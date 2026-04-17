@@ -2,6 +2,25 @@ import admin from "firebase-admin";
 
 const db = admin.firestore;
 
+export interface ContentSection {
+  id: string;
+  type: "headline" | "text" | "bullet_list" | "paragraphs" | "spec_list" | "faq";
+  enabled: boolean;
+  header: string;
+  emoji_icon: string;
+}
+
+export interface ContentSchema {
+  use_emojis: boolean;
+  sections: ContentSection[];
+}
+
+export interface SeoStrategy {
+  primary_keyword_template: string;
+  include_faq_schema: boolean;
+  keyword_density_target: string;
+}
+
 export interface PromptTemplate {
   id: string;
   template_name: string;
@@ -12,9 +31,12 @@ export interface PromptTemplate {
   match_class: string | null;
   match_brand: string | null;
   match_category: string | null;
+  match_gender: string | null;
   tone_profile: string;
   tone_description: string;
   output_components: string[];
+  content_schema: ContentSchema;
+  seo_strategy: SeoStrategy;
   prompt_instructions: string;
   banned_words: string[];
   required_attribute_inclusions: string[];
@@ -24,7 +46,13 @@ export interface PromptTemplate {
 }
 
 export async function selectTemplate(
-  product: { department?: string; class?: string; brand?: string; category?: string },
+  product: {
+    department?: string;
+    class?: string;
+    brand?: string;
+    category?: string;
+    gender?: string;
+  },
   siteOwner: string
 ): Promise<PromptTemplate> {
   const snap = await db()
@@ -60,7 +88,13 @@ export async function selectTemplate(
 
 function templateMatches(
   template: PromptTemplate,
-  product: { department?: string; class?: string; brand?: string; category?: string },
+  product: {
+    department?: string;
+    class?: string;
+    brand?: string;
+    category?: string;
+    gender?: string;
+  },
   siteOwner: string
 ): boolean {
   if (template.match_site_owner && template.match_site_owner !== siteOwner)
@@ -73,12 +107,20 @@ function templateMatches(
     return false;
   if (template.match_category && template.match_category !== product.category)
     return false;
+  if (template.match_gender && template.match_gender !== product.gender)
+    return false;
   return true;
 }
 
 function countMatchingConditions(
   template: PromptTemplate,
-  product: { department?: string; class?: string; brand?: string; category?: string },
+  product: {
+    department?: string;
+    class?: string;
+    brand?: string;
+    category?: string;
+    gender?: string;
+  },
   siteOwner: string
 ): number {
   let score = 0;
@@ -87,5 +129,6 @@ function countMatchingConditions(
   if (template.match_class === product.class) score++;
   if (template.match_brand === product.brand) score++;
   if (template.match_category === product.category) score++;
+  if (template.match_gender && template.match_gender === product.gender) score++;
   return score;
 }

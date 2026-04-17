@@ -5,6 +5,7 @@ import {
   updatePromptTemplate,
   deletePromptTemplate,
   PromptTemplate,
+  ContentSection,
 } from "../lib/api";
 
 const TONE_OPTIONS = ["standard_retail", "streetwear", "contemporary", "luxury", "casual"];
@@ -63,13 +64,35 @@ interface TemplateFormData {
   match_class: string;
   match_brand: string;
   match_category: string;
+  match_gender: string;
   tone_profile: string;
   tone_description: string;
   output_components: string[];
+  content_schema: {
+    use_emojis: boolean;
+    sections: ContentSection[];
+  };
+  seo_strategy: {
+    primary_keyword_template: string;
+    include_faq_schema: boolean;
+    keyword_density_target: string;
+  };
   prompt_instructions: string;
   banned_words: string[];
   required_attribute_inclusions: string[];
 }
+
+const DEFAULT_SECTIONS: ContentSection[] = [
+  { id: "hero_hook", type: "headline", enabled: true, header: "", emoji_icon: "" },
+  { id: "tagline", type: "text", enabled: true, header: "", emoji_icon: "" },
+  { id: "benefits", type: "bullet_list", enabled: true, header: "Why You'll Want These", emoji_icon: "⚡" },
+  { id: "performance_narrative", type: "paragraphs", enabled: true, header: "Built for Performance", emoji_icon: "🧠" },
+  { id: "fit_sizing", type: "bullet_list", enabled: true, header: "Fit & Sizing", emoji_icon: "📏" },
+  { id: "product_details", type: "spec_list", enabled: true, header: "Product Details", emoji_icon: "🔍" },
+  { id: "best_for", type: "bullet_list", enabled: true, header: "Best For", emoji_icon: "🏃" },
+  { id: "faq", type: "faq", enabled: true, header: "FAQs", emoji_icon: "❓" },
+  { id: "complete_the_look", type: "bullet_list", enabled: true, header: "Complete the Look", emoji_icon: "🔗" },
+];
 
 const emptyForm: TemplateFormData = {
   template_name: "",
@@ -79,14 +102,23 @@ const emptyForm: TemplateFormData = {
   match_class: "",
   match_brand: "",
   match_category: "",
+  match_gender: "",
   tone_profile: "standard_retail",
   tone_description: "",
   output_components: ["description", "meta_name", "meta_description", "keywords"],
+  content_schema: {
+    use_emojis: true,
+    sections: [...DEFAULT_SECTIONS],
+  },
+  seo_strategy: {
+    primary_keyword_template: "{{brand}} {{gender}} {{category}}",
+    include_faq_schema: true,
+    keyword_density_target: "natural",
+  },
   prompt_instructions: "",
   banned_words: [],
   required_attribute_inclusions: [],
 };
-
 export default function PromptTemplatesAdminPage() {
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,9 +158,12 @@ export default function PromptTemplatesAdminPage() {
       match_class: t.match_class || "",
       match_brand: t.match_brand || "",
       match_category: t.match_category || "",
+      match_gender: t.match_gender || "",
       tone_profile: t.tone_profile,
       tone_description: t.tone_description,
       output_components: t.output_components || [],
+      content_schema: t.content_schema || { use_emojis: true, sections: [...DEFAULT_SECTIONS] },
+      seo_strategy: t.seo_strategy || { primary_keyword_template: "", include_faq_schema: true, keyword_density_target: "natural" },
       prompt_instructions: t.prompt_instructions,
       banned_words: t.banned_words || [],
       required_attribute_inclusions: t.required_attribute_inclusions || [],
@@ -148,6 +183,7 @@ export default function PromptTemplatesAdminPage() {
         match_class: form.match_class || null,
         match_brand: form.match_brand || null,
         match_category: form.match_category || null,
+        match_gender: form.match_gender || null,
       };
       if (editing === "new") {
         await createPromptTemplate(payload);
@@ -253,6 +289,7 @@ export default function PromptTemplatesAdminPage() {
                   ["match_class", "Class"],
                   ["match_brand", "Brand"],
                   ["match_category", "Category"],
+                  ["match_gender", "Gender"],
                 ] as const
               ).map(([key, label]) => (
                 <div key={key}>
@@ -266,6 +303,112 @@ export default function PromptTemplatesAdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Content Schema (TALLY-118) */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Content Schema
+            </h3>
+            <label className="flex items-center gap-2 mb-3 text-sm">
+              <input
+                type="checkbox"
+                checked={form.content_schema.use_emojis}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    content_schema: { ...form.content_schema, use_emojis: e.target.checked },
+                  })
+                }
+              />
+              Use Emojis in Headers
+            </label>
+            <div className="space-y-2">
+              {form.content_schema.sections.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-2 text-sm border rounded px-3 py-2 bg-white">
+                  <input
+                    type="checkbox"
+                    checked={s.enabled}
+                    onChange={(e) => {
+                      const sections = [...form.content_schema.sections];
+                      sections[i] = { ...sections[i], enabled: e.target.checked };
+                      setForm({ ...form, content_schema: { ...form.content_schema, sections } });
+                    }}
+                  />
+                  <span className="font-mono text-xs text-gray-500 w-40">{s.id}</span>
+                  <span className="text-xs text-gray-400 w-20">{s.type}</span>
+                  <input
+                    className="flex-1 border rounded px-2 py-1 text-xs"
+                    placeholder="Header text"
+                    value={s.header}
+                    onChange={(e) => {
+                      const sections = [...form.content_schema.sections];
+                      sections[i] = { ...sections[i], header: e.target.value };
+                      setForm({ ...form, content_schema: { ...form.content_schema, sections } });
+                    }}
+                  />
+                  <input
+                    className="w-12 border rounded px-2 py-1 text-center text-xs"
+                    placeholder="🔥"
+                    value={s.emoji_icon}
+                    onChange={(e) => {
+                      const sections = [...form.content_schema.sections];
+                      sections[i] = { ...sections[i], emoji_icon: e.target.value };
+                      setForm({ ...form, content_schema: { ...form.content_schema, sections } });
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SEO Strategy (TALLY-118) */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              SEO Strategy
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Primary Keyword Template</label>
+                <input
+                  className="w-full border rounded px-3 py-2 text-sm font-mono"
+                  value={form.seo_strategy.primary_keyword_template}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      seo_strategy: { ...form.seo_strategy, primary_keyword_template: e.target.value },
+                    })
+                  }
+                  placeholder='{{brand}} {{gender}} {{category}}'
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Keyword Density Target</label>
+                <input
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  value={form.seo_strategy.keyword_density_target}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      seo_strategy: { ...form.seo_strategy, keyword_density_target: e.target.value },
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 mt-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.seo_strategy.include_faq_schema}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    seo_strategy: { ...form.seo_strategy, include_faq_schema: e.target.checked },
+                  })
+                }
+              />
+              Include FAQ JSON-LD Schema
+            </label>
           </div>
 
           <div>
@@ -282,7 +425,8 @@ export default function PromptTemplatesAdminPage() {
             />
             <p className="text-xs text-gray-400 mt-1">
               Use {"{{placeholders}}"}: name, brand, department, class, category,
-              primary_color, gender, observations
+              primary_color, gender, material, fit, observations, primary_keyword,
+              secondary_keywords
             </p>
           </div>
 
@@ -370,6 +514,11 @@ export default function PromptTemplatesAdminPage() {
                 {t.match_site_owner && (
                   <span className="ml-2 text-xs text-gray-400">
                     Site: {t.match_site_owner}
+                  </span>
+                )}
+                {t.match_gender && (
+                  <span className="ml-2 text-xs text-gray-400">
+                    Gender: {t.match_gender}
                   </span>
                 )}
                 <span className="ml-2 text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">

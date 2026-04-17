@@ -901,6 +901,25 @@ export async function buyerPostponeReview(mpn: string, snooze_days: number): Pro
 
 // ── AI Content Pipeline (Step 2.3) ──
 
+export interface ContentSection {
+  id: string;
+  type: string;
+  enabled: boolean;
+  header: string;
+  emoji_icon: string;
+}
+
+export interface ContentSchema {
+  use_emojis: boolean;
+  sections: ContentSection[];
+}
+
+export interface SeoStrategy {
+  primary_keyword_template: string;
+  include_faq_schema: boolean;
+  keyword_density_target: string;
+}
+
 export interface PromptTemplate {
   template_id: string;
   template_name: string;
@@ -911,9 +930,12 @@ export interface PromptTemplate {
   match_class: string | null;
   match_brand: string | null;
   match_category: string | null;
+  match_gender: string | null;
   tone_profile: string;
   tone_description: string;
   output_components: string[];
+  content_schema: ContentSchema;
+  seo_strategy: SeoStrategy;
   prompt_instructions: string;
   banned_words: string[];
   required_attribute_inclusions: string[];
@@ -1077,6 +1099,26 @@ export async function restoreContentVersion(mpn: string, versionId: string): Pro
   const res = await fetch(
     `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/content-versions/${versionId}/restore`,
     { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// TALLY-118: Regenerate with critique
+export async function regenerateWithCritique(
+  mpn: string,
+  versionId: string,
+  critique?: string,
+  observationsNote?: string
+): Promise<{ result: AIGenerationResult }> {
+  const res = await fetch(
+    `${BASE}/api/v1/products/${encodeURIComponent(mpn)}/content-versions/${versionId}/regenerate`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ critique, observations_note: observationsNote }),
+    }
   );
   const data = await res.json();
   if (!res.ok) throw data;

@@ -39,6 +39,8 @@ function templateMatches(template, product, siteOwner) {
         return false;
     if (template.match_category && template.match_category !== product.category)
         return false;
+    if (template.match_gender && template.match_gender !== product.gender)
+        return false;
     return true;
 }
 function countMatchingConditions(template, product, siteOwner) {
@@ -52,6 +54,8 @@ function countMatchingConditions(template, product, siteOwner) {
     if (template.match_brand === product.brand)
         score++;
     if (template.match_category === product.category)
+        score++;
+    if (template.match_gender && template.match_gender === product.gender)
         score++;
     return score;
 }

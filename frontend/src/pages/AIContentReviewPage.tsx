@@ -7,6 +7,7 @@ import {
   editContentVersion,
   restoreContentVersion,
   aiDescribe,
+  regenerateWithCritique,
   ContentVersion,
 } from "../lib/api";
 
@@ -58,6 +59,10 @@ export default function AIContentReviewPage() {
   // Observations textarea state (Correction 3)
   const [observations, setObservations] = useState("");
 
+  // Regenerate with critique state (TALLY-118)
+  const [showCritiqueInput, setShowCritiqueInput] = useState(false);
+  const [critique, setCritique] = useState("");
+
   const loadVersions = useCallback(async () => {
     try {
       setLoading(true);
@@ -87,8 +92,33 @@ export default function AIContentReviewPage() {
       await aiDescribe(mpn, [activeSite], observations || undefined);
       await loadVersions();
       setSuccessMsg("New version generated");
+      setShowCritiqueInput(false);
+      setCritique("");
     } catch (err: any) {
       setError(err.error || "Generation failed");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleRegenerateWithCritique() {
+    if (!currentVersion || !critique.trim()) return;
+    setActionLoading(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      await regenerateWithCritique(
+        mpn,
+        currentVersion.version_id,
+        critique.trim(),
+        observations || undefined
+      );
+      await loadVersions();
+      setSuccessMsg("New version generated with critique applied");
+      setShowCritiqueInput(false);
+      setCritique("");
+    } catch (err: any) {
+      setError(err.error || "Regeneration with critique failed");
     } finally {
       setActionLoading(false);
     }
@@ -258,14 +288,53 @@ export default function AIContentReviewPage() {
                 </span>
               )}
             </div>
-            <button
-              onClick={handleRegenerate}
-              disabled={actionLoading}
-              className="text-blue-600 text-sm hover:underline disabled:opacity-50"
-            >
-              ⟳ Regenerate
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleRegenerate}
+                disabled={actionLoading}
+                className="text-blue-600 text-sm hover:underline disabled:opacity-50"
+              >
+                ⟳ Regenerate Fresh
+              </button>
+              <button
+                onClick={() => setShowCritiqueInput(!showCritiqueInput)}
+                disabled={actionLoading}
+                className="text-purple-600 text-sm hover:underline disabled:opacity-50"
+              >
+                ✏️ Regenerate with Critique
+              </button>
+            </div>
           </div>
+
+          {/* Critique Input (TALLY-118) */}
+          {showCritiqueInput && (
+            <div className="bg-purple-50 border border-purple-200 rounded px-4 py-3 mb-6">
+              <label className="block text-sm font-medium text-purple-700 mb-1">
+                Critique (what should be improved?)
+              </label>
+              <textarea
+                value={critique}
+                onChange={(e) => setCritique(e.target.value)}
+                placeholder="e.g. 'Make the benefits more specific to running performance', 'Add more detail about the cushioning system', 'Tone is too formal — make it more conversational'"
+                className="w-full border border-purple-200 rounded p-2 text-sm h-20 mb-2"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleRegenerateWithCritique}
+                  disabled={actionLoading || !critique.trim()}
+                  className="bg-purple-600 text-white px-4 py-1.5 rounded text-sm hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {actionLoading ? "Generating…" : "Submit Critique & Regenerate"}
+                </button>
+                <button
+                  onClick={() => { setShowCritiqueInput(false); setCritique(""); }}
+                  className="text-gray-500 text-sm hover:underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Banned Words Warning */}
           {currentVersion.banned_words_found?.length > 0 && (
