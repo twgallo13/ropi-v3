@@ -9,12 +9,18 @@ import {
   siteVerificationUpload,
   siteVerificationCommit,
   fetchSiteRegistry,
+  salesUpload,
+  salesCommit,
+  fetchSalesStatus,
   type SiteRegistryEntry,
   type ImportUploadResponse,
   type ImportCommitResponse,
   type MapUploadResponse,
   type MapColumnMapping,
   type MapTemplate,
+  type SalesUploadResponse,
+  type SalesCommitResponse,
+  type SalesStatusResponse,
 } from "../lib/api";
 
 type Family = "full-product" | "weekly-operations";
@@ -221,6 +227,9 @@ export default function ImportHubPage() {
         </div>
         <div data-tour="site-verification-import">
           <SiteVerificationImportCard />
+        </div>
+        <div data-tour="sales-import">
+          <SalesImportCard />
         </div>
       </div>
     </div>
@@ -837,6 +846,178 @@ function SiteVerificationImportCard() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Sales Import — single-stage upload + commit (web/store auto-detect)
+// ─────────────────────────────────────────────────────────────
+function SalesImportCard() {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [committing, setCommitting] = useState(false);
+  const [uploadResult, setUploadResult] = useState<SalesUploadResponse | null>(null);
+  const [commitResult, setCommitResult] = useState<SalesCommitResponse | null>(null);
+  const [error, setError] = useState<string>("");
+  const [status, setStatus] = useState<SalesStatusResponse | null>(null);
+
+  useEffect(() => {
+    fetchSalesStatus()
+      .then(setStatus)
+      .catch(() => setStatus({ last_web: null, last_store: null }));
+  }, [commitResult]);
+
+  function reset() {
+    setFile(null);
+    setUploading(false);
+    setCommitting(false);
+    setUploadResult(null);
+    setCommitResult(null);
+    setError("");
+  }
+
+  async function handleUpload() {
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    try {
+      const res = await salesUpload(file);
+      setUploadResult(res);
+    } catch (e: any) {
+      setError(e?.error || e?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleCommit() {
+    if (!uploadResult) return;
+    setCommitting(true);
+    setError("");
+    try {
+      const res = await salesCommit(uploadResult.batch_id);
+      setCommitResult(res);
+    } catch (e: any) {
+      setError(e?.error || e?.message || "Commit failed");
+    } finally {
+      setCommitting(false);
+    }
+  }
+
+  const lastWebText = status?.last_web
+    ? `${status.last_web.report_date} (${status.last_web.committed_rows.toLocaleString()} products)`
+    : "Never";
+  const lastStoreText = status?.last_store
+    ? `${status.last_store.report_date} (${status.last_store.committed_rows.toLocaleString()} products)`
+    : "Never";
+
+  return (
+    <div className="border rounded-lg p-6 bg-white shadow-sm">
+      <h2 className="text-lg font-semibold mb-1">Sales Import</h2>
+      <p className="text-sm text-gray-600 mb-4">
+        Upload web or store sales report from RetailOps.
+        <br />
+        Accepts: Web Sales CSV or Store Sales CSV — auto-detects file type from column headers.
+      </p>
+
+      {!uploadResult && (
+        <div className="space-y-3">
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => {
+              setFile(e.target.files?.[0] || null);
+              setError("");
+            }}
+            className="block w-full text-sm"
+          />
+          <button
+            onClick={handleUpload}
+            disabled={!file || uploading}
+            className="px-4 py-2 rounded text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {uploading ? "Uploading…" : "Upload Sales File"}
+          </button>
+        </div>
+      )}
+
+      {uploadResult && !commitResult && (
+        <div className="space-y-3">
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm">
+            <div>
+              Detected: <strong className="capitalize">{uploadResult.import_type}</strong> sales file
+            </div>
+            <div>
+              Report date: <strong>{uploadResult.report_date}</strong>
+            </div>
+            <div>
+              Rows ready: <strong>{uploadResult.row_count.toLocaleString()}</strong>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCommit}
+              disabled={committing}
+              className="px-4 py-2 rounded text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {committing ? "Committing…" : "Commit Sales Import"}
+            </button>
+            <button
+              onClick={reset}
+              className="px-4 py-2 rounded text-sm font-medium border hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {commitResult && (
+        <div className="space-y-2">
+          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded text-sm">
+            <div>
+              ✅ {commitResult.import_type === "web" ? "Web" : "Store"} sales import complete for{" "}
+              <strong>{commitResult.report_date}</strong>
+            </div>
+            <div>
+              {commitResult.committed_rows.toLocaleString()} committed,{" "}
+              {commitResult.skipped_rows.toLocaleString()} skipped (blank MPN),{" "}
+              {commitResult.failed_rows.toLocaleString()} failed
+            </div>
+            <div>
+              {commitResult.metrics_calculated.toLocaleString()} products had STR%/WOS recomputed.
+            </div>
+            {commitResult.product_not_found_count > 0 && (
+              <div className="text-yellow-700">
+                {commitResult.product_not_found_count.toLocaleString()} MPNs were not found in the
+                catalog (snapshot still written).
+              </div>
+            )}
+          </div>
+          <button
+            onClick={reset}
+            className="px-4 py-2 rounded text-sm font-medium border hover:bg-gray-50"
+          >
+            Upload Another
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-3 bg-red-50 border border-red-200 text-red-800 p-3 rounded text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-4 pt-4 border-t text-xs text-gray-600 space-y-0.5">
+        <div>
+          Last web import: <strong>{lastWebText}</strong>
+        </div>
+        <div>
+          Last store import: <strong>{lastStoreText}</strong>
+        </div>
+      </div>
     </div>
   );
 }

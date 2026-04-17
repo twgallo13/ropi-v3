@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runPostImportCalculations = runPostImportCalculations;
+exports.recomputeSalesMetrics = recomputeSalesMetrics;
 /**
  * Post-Import Calculation Job — TALLY-019
  * Fires after every successful Weekly Operations Import commit.
@@ -58,6 +59,53 @@ async function runPostImportCalculations(batchId, mpns, settings) {
             store_gm_pct: storeGmPct,
             web_gm_pct: webGmPct,
             is_slow_moving: isSlowMoving,
+            metrics_calculated_at: db.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        calculated++;
+    }
+    return { calculated, skipped };
+}
+/**
+ * Sales-import-driven metric recompute.
+ *
+ * Triggered after a Sales Import (web or store) commits.
+ * Combines web + store sales fields stamped on the product document with
+ * current inventory to recompute STR%, WOS, and weekly_sales_rate.
+ *
+ * Brief formulas:
+ *   STR% = totalSales30d / (totalInventory + totalSales30d) * 100
+ *   weeklySalesRate = totalSales7d > 0 ? totalSales7d : (totalSales30d / 4)
+ *   WOS  = totalInventory / weeklySalesRate  (null if rate is 0)
+ *
+ * Values are rounded to 1 decimal place.
+ */
+async function recomputeSalesMetrics(mpns) {
+    const firestore = firebase_admin_1.default.firestore();
+    let calculated = 0;
+    let skipped = 0;
+    for (const mpn of mpns) {
+        const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+        const ref = firestore.collection("products").doc(docId);
+        const snap = await ref.get();
+        if (!snap.exists) {
+            skipped++;
+            continue;
+        }
+        const p = snap.data();
+        const totalInventory = (p.inventory_store || 0) +
+            (p.inventory_warehouse || 0) +
+            (p.inventory_whs || 0);
+        const totalSales30d = (p.web_sales_30d || 0) + (p.store_sales_30d || 0);
+        const totalSales7d = (p.web_sales_7d || 0) + (p.store_sales_7d || 0);
+        const strPct = totalSales30d > 0
+            ? (totalSales30d / (totalInventory + totalSales30d)) * 100
+            : 0;
+        const weeklySalesRate = totalSales7d > 0 ? totalSales7d : totalSales30d / 4;
+        const wos = weeklySalesRate > 0 ? totalInventory / weeklySalesRate : null;
+        await ref.set({
+            str_pct: Math.round(strPct * 10) / 10,
+            wos: wos !== null ? Math.round(wos * 10) / 10 : null,
+            weekly_sales_rate: Math.round(weeklySalesRate * 10) / 10,
             metrics_calculated_at: db.FieldValue.serverTimestamp(),
         }, { merge: true });
         calculated++;

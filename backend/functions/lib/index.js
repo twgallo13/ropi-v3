@@ -8,6 +8,7 @@ const cors_1 = __importDefault(require("cors"));
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const importFullProduct_1 = __importDefault(require("./routes/importFullProduct"));
 const importWeeklyOperations_1 = __importDefault(require("./routes/importWeeklyOperations"));
+const importSales_1 = __importDefault(require("./routes/importSales"));
 const products_1 = __importDefault(require("./routes/products"));
 const attributeRegistry_1 = __importDefault(require("./routes/attributeRegistry"));
 const buyerReview_1 = __importDefault(require("./routes/buyerReview"));
@@ -54,6 +55,7 @@ app.get("/api/v1/health", (_req, res) => {
 // ── Import Routes ──
 app.use("/api/v1/imports/full-product", importFullProduct_1.default);
 app.use("/api/v1/imports/weekly-operations", importWeeklyOperations_1.default);
+app.use("/api/v1/imports/sales", importSales_1.default);
 // ── Product Routes ──
 app.use("/api/v1/products", products_1.default);
 // ── Attribute Registry ──

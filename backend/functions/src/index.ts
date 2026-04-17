@@ -3,6 +3,7 @@ import cors from "cors";
 import admin from "firebase-admin";
 import importFullProductRouter from "./routes/importFullProduct";
 import importWeeklyOperationsRouter from "./routes/importWeeklyOperations";
+import importSalesRouter from "./routes/importSales";
 import productsRouter from "./routes/products";
 import attributeRegistryRouter from "./routes/attributeRegistry";
 import buyerReviewRouter from "./routes/buyerReview";
@@ -52,6 +53,7 @@ app.get("/api/v1/health", (_req, res) => {
 // ── Import Routes ──
 app.use("/api/v1/imports/full-product", importFullProductRouter);
 app.use("/api/v1/imports/weekly-operations", importWeeklyOperationsRouter);
+app.use("/api/v1/imports/sales", importSalesRouter);
 
 // ── Product Routes ──
 app.use("/api/v1/products", productsRouter);

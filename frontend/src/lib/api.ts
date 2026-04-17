@@ -416,6 +416,83 @@ export async function commitImport(family: "full-product" | "weekly-operations",
   return data;
 }
 
+// ── Sales Import (web + store) ──
+export interface SalesUploadResponse {
+  batch_id: string;
+  import_type: "web" | "store";
+  report_date: string;
+  row_count: number;
+  headers: string[];
+  error?: string;
+  missing_columns?: string[];
+}
+
+export interface SalesCommitResponse {
+  batch_id: string;
+  status: string;
+  import_type: "web" | "store";
+  report_date: string;
+  total_rows: number;
+  committed_rows: number;
+  skipped_rows: number;
+  failed_rows: number;
+  product_not_found_count: number;
+  metrics_calculated: number;
+  errors?: Array<{ row: number; mpn: string; error: string }>;
+}
+
+export interface SalesStatusResponse {
+  last_web: {
+    batch_id: string;
+    report_date: string;
+    committed_rows: number;
+    skipped_rows: number;
+    failed_rows: number;
+    completed_at: string | null;
+  } | null;
+  last_store: {
+    batch_id: string;
+    report_date: string;
+    committed_rows: number;
+    skipped_rows: number;
+    failed_rows: number;
+    completed_at: string | null;
+  } | null;
+  warning?: string;
+}
+
+export async function salesUpload(file: File): Promise<SalesUploadResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/api/v1/imports/sales/upload`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function salesCommit(batchId: string): Promise<SalesCommitResponse> {
+  const res = await fetch(`${BASE}/api/v1/imports/sales/${encodeURIComponent(batchId)}/commit`, {
+    method: "POST",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function fetchSalesStatus(): Promise<SalesStatusResponse> {
+  const res = await fetch(`${BASE}/api/v1/imports/sales/status`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
 // ── MAP Policy Import (Step 2.1 Part 1) ──
 export interface MapUploadResponse {
   batch_id: string;
