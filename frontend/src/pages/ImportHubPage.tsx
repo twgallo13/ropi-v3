@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   uploadImport,
   commitImport,
@@ -8,6 +8,8 @@ import {
   fetchMapTemplates,
   siteVerificationUpload,
   siteVerificationCommit,
+  fetchSiteRegistry,
+  type SiteRegistryEntry,
   type ImportUploadResponse,
   type ImportCommitResponse,
   type MapUploadResponse,
@@ -545,16 +547,29 @@ function SiteVerificationImportCard() {
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<{
     mpn: string;
-    site: string;
     product_url: string;
     image_url: string;
-  }>({ mpn: "", site: "", product_url: "", image_url: "" });
+    additional_image_url: string;
+  }>({ mpn: "", product_url: "", image_url: "", additional_image_url: "" });
+  const [globalSite, setGlobalSite] = useState("");
+  const [globalVerificationDate, setGlobalVerificationDate] = useState(
+    () => new Date().toISOString().split("T")[0]
+  );
+  const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
   const [result, setResult] = useState<{
     total_rows: number;
     committed_rows: number;
     failed_rows: number;
     mismatches: number;
   } | null>(null);
+
+  useEffect(() => {
+    fetchSiteRegistry()
+      .then(setSiteRegistry)
+      .catch(() => {
+        /* non-fatal — dropdown will be empty */
+      });
+  }, []);
 
   async function handleUpload() {
     if (!file) return;
@@ -564,15 +579,30 @@ function SiteVerificationImportCard() {
       const res = await siteVerificationUpload(file);
       setBatchId(res.batch_id);
       setHeaders(res.raw_headers || []);
-      // Best-effort auto-map
-      const h = (name: string) =>
-        res.raw_headers.find((x: string) => x.toLowerCase().replace(/\s|_/g, "") === name) || "";
-      setMapping({
-        mpn: h("mpn"),
-        site: h("site"),
-        product_url: h("producturl") || h("url"),
-        image_url: h("imageurl") || h("image"),
-      });
+      // Auto-map known column names from the ecomm platform CSV.
+      const AUTO_MAPPINGS: Record<string, keyof typeof mapping> = {
+        mpn: "mpn",
+        link: "product_url",
+        product_url: "product_url",
+        url: "product_url",
+        image_link: "image_url",
+        image_url: "image_url",
+        image: "image_url",
+        additional_image_link: "additional_image_url",
+        additional_image_url: "additional_image_url",
+      };
+      const next = {
+        mpn: "",
+        product_url: "",
+        image_url: "",
+        additional_image_url: "",
+      };
+      for (const header of res.raw_headers || []) {
+        const key = header.toLowerCase().trim();
+        const target = AUTO_MAPPINGS[key];
+        if (target && !next[target]) next[target] = header;
+      }
+      setMapping(next);
       setStage("map");
     } catch (e: any) {
       setError(e?.error || e?.message || "Upload failed");
@@ -582,23 +612,36 @@ function SiteVerificationImportCard() {
   }
 
   async function handleCommit() {
-    if (!mapping.mpn || !mapping.site || !mapping.product_url) {
-      setError("mpn, site, and product_url mappings are required");
+    if (!mapping.mpn || !mapping.product_url) {
+      setError("mpn and product_url mappings are required");
+      return;
+    }
+    if (!globalSite) {
+      setError("Site is required");
+      return;
+    }
+    if (!globalVerificationDate) {
+      setError("Verification Date is required");
       return;
     }
     setBusy(true);
     setError("");
     try {
-      const res = await siteVerificationCommit(batchId, {
+      const cm: Record<string, string> = {
         mpn: mapping.mpn,
-        site: mapping.site,
         product_url: mapping.product_url,
-        ...(mapping.image_url ? { image_url: mapping.image_url } : {}),
+      };
+      if (mapping.image_url) cm.image_url = mapping.image_url;
+      if (mapping.additional_image_url)
+        cm.additional_image_url = mapping.additional_image_url;
+      const res = await siteVerificationCommit(batchId, cm, {
+        global_site: globalSite,
+        global_verification_date: globalVerificationDate,
       });
       setResult({
-        total_rows: res.total_rows,
-        committed_rows: res.committed_rows,
-        failed_rows: res.failed_rows,
+        total_rows: res.total_rows ?? res.committed + (res.failed || 0),
+        committed_rows: res.committed_rows ?? res.committed ?? 0,
+        failed_rows: res.failed_rows ?? res.failed ?? 0,
         mismatches: res.mismatches || 0,
       });
       setStage("done");
@@ -614,10 +657,17 @@ function SiteVerificationImportCard() {
     setFile(null);
     setBatchId("");
     setHeaders([]);
-    setMapping({ mpn: "", site: "", product_url: "", image_url: "" });
+    setMapping({ mpn: "", product_url: "", image_url: "", additional_image_url: "" });
     setResult(null);
     setError("");
   }
+
+  const commitDisabled =
+    busy ||
+    !mapping.mpn ||
+    !mapping.product_url ||
+    !globalSite ||
+    !globalVerificationDate;
 
   return (
     <div className="bg-white rounded-lg border p-6">
@@ -647,42 +697,99 @@ function SiteVerificationImportCard() {
             </button>
           </div>
           <p className="text-xs text-gray-500">
-            CSV with columns for MPN, site key, product URL, and (optionally) image URL.
+            Ecomm-platform CSV with columns <code>mpn</code>,{" "}
+            <code>link</code>, <code>image_link</code>, and optional{" "}
+            <code>additional_image_link</code>. Site and verification date are
+            set globally on the next step.
           </p>
         </div>
       )}
 
       {stage === "map" && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-sm text-gray-700">
             Batch <span className="font-mono">{batchId}</span> parsed with{" "}
-            <span className="font-medium">{headers.length}</span> columns. Map them:
+            <span className="font-medium">{headers.length}</span> columns.
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            {(["mpn", "site", "product_url", "image_url"] as const).map((key) => (
-              <label key={key} className="text-sm">
-                <span className="block font-medium mb-1">
-                  {key} {key !== "image_url" && <span className="text-red-600">*</span>}
-                </span>
+
+          {/* Global settings — applied to all rows */}
+          <div className="p-3 bg-gray-50 border rounded">
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              Global settings — applied to all rows in this import
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-600">
+                  Site <span className="text-red-600">*</span>
+                </label>
                 <select
-                  value={mapping[key]}
-                  onChange={(e) => setMapping({ ...mapping, [key]: e.target.value })}
-                  className="w-full border rounded px-2 py-1"
+                  value={globalSite}
+                  onChange={(e) => setGlobalSite(e.target.value)}
+                  className="w-full border rounded p-1 text-sm mt-1"
                 >
-                  <option value="">— select —</option>
-                  {headers.map((h) => (
-                    <option key={h} value={h}>
-                      {h}
+                  <option value="">Select site…</option>
+                  {siteRegistry.map((s) => (
+                    <option key={s.site_id} value={s.domain}>
+                      {s.label || s.domain}
                     </option>
                   ))}
                 </select>
-              </label>
-            ))}
+              </div>
+              <div>
+                <label className="text-xs text-gray-600">
+                  Verification Date <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={globalVerificationDate}
+                  onChange={(e) => setGlobalVerificationDate(e.target.value)}
+                  className="w-full border rounded p-1 text-sm mt-1"
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Column mapping */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              Column mapping
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  { key: "mpn", required: true },
+                  { key: "product_url", required: true },
+                  { key: "image_url", required: false },
+                  { key: "additional_image_url", required: false },
+                ] as const
+              ).map(({ key, required }) => (
+                <label key={key} className="text-sm">
+                  <span className="block font-medium mb-1">
+                    {key} {required && <span className="text-red-600">*</span>}
+                  </span>
+                  <select
+                    value={mapping[key]}
+                    onChange={(e) =>
+                      setMapping({ ...mapping, [key]: e.target.value })
+                    }
+                    className="w-full border rounded px-2 py-1"
+                  >
+                    <option value="">— select —</option>
+                    {headers.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-2 pt-2">
             <button
               onClick={handleCommit}
-              disabled={busy}
+              disabled={commitDisabled}
               className="px-4 py-2 rounded text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
             >
               {busy ? "Committing…" : "Commit"}

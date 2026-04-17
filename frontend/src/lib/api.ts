@@ -1638,15 +1638,34 @@ export async function siteVerificationUpload(file: File): Promise<{
 }
 export async function siteVerificationCommit(
   batchId: string,
-  column_mapping: Record<string, string>
+  column_mapping: Record<string, string>,
+  opts?: { global_site?: string; global_verification_date?: string }
 ): Promise<any> {
+  const body: Record<string, unknown> = { column_mapping };
+  if (opts?.global_site) body.global_site = opts.global_site;
+  if (opts?.global_verification_date)
+    body.global_verification_date = opts.global_verification_date;
   const res = await fetch(
     `${BASE}/api/v1/imports/site-verification/${encodeURIComponent(batchId)}/commit`,
-    { method: "POST", headers: await headers(), body: JSON.stringify({ column_mapping }) }
+    { method: "POST", headers: await headers(), body: JSON.stringify(body) }
   );
   const data = await res.json();
   if (!res.ok) throw data;
   return data;
+}
+
+export interface SiteRegistryEntry {
+  site_id: string;
+  domain: string;
+  label: string;
+}
+export async function fetchSiteRegistry(): Promise<SiteRegistryEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/imports/site-verification/sites`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.sites || [];
 }
 
 // ── Site Verification Review ──

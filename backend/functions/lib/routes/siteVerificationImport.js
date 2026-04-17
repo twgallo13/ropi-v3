@@ -26,6 +26,26 @@ const upload = (0, multer_1.default)({
 });
 const ts = () => firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
 const operatorRoles = ["operations_operator", "product_ops"];
+// ── GET /sites — list site_registry for the UI global-site dropdown ──
+router.get("/sites", auth_1.requireAuth, async (_req, res) => {
+    try {
+        const firestore = firebase_admin_1.default.firestore();
+        const snap = await firestore.collection("site_registry").get();
+        const sites = snap.docs.map((d) => {
+            const data = d.data() || {};
+            return {
+                site_id: d.id,
+                domain: data.domain || d.id,
+                label: data.label || data.domain || d.id,
+            };
+        });
+        res.json({ sites });
+    }
+    catch (err) {
+        console.error("GET site_registry error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
 // ── POST /upload ──
 router.post("/upload", auth_1.requireAuth, (0, roles_1.requireRole)(operatorRoles), upload.single("file"), async (req, res) => {
     try {
@@ -74,13 +94,19 @@ router.post("/upload", auth_1.requireAuth, (0, roles_1.requireRole)(operatorRole
 router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(operatorRoles), async (req, res) => {
     try {
         const { batch_id } = req.params;
-        const { column_mapping } = req.body || {};
+        const { column_mapping, global_site, global_verification_date, } = req.body || {};
         if (!column_mapping ||
             !column_mapping.mpn ||
-            !column_mapping.site ||
             !column_mapping.product_url) {
             res.status(400).json({
-                error: "column_mapping.mpn, column_mapping.site, and column_mapping.product_url are required",
+                error: "column_mapping.mpn and column_mapping.product_url are required",
+            });
+            return;
+        }
+        // Either per-row site column OR a global_site must be supplied.
+        if (!column_mapping.site && !global_site) {
+            res.status(400).json({
+                error: "Either column_mapping.site or global_site is required",
             });
             return;
         }
@@ -112,11 +138,22 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(op
         for (let i = 0; i < rawRows.length; i++) {
             const row = rawRows[i];
             const mpn = cell(row, column_mapping.mpn);
-            const site = cell(row, column_mapping.site);
+            const site = (column_mapping.site ? cell(row, column_mapping.site) : "") ||
+                (typeof global_site === "string" ? global_site.trim() : "");
             const productUrl = cell(row, column_mapping.product_url);
             const imageUrl = column_mapping.image_url
                 ? cell(row, column_mapping.image_url)
                 : "";
+            const additionalImageUrl = column_mapping.additional_image_url
+                ? cell(row, column_mapping.additional_image_url)
+                : "";
+            const verificationDate = (column_mapping.verification_date
+                ? cell(row, column_mapping.verification_date)
+                : "") ||
+                (typeof global_verification_date === "string"
+                    ? global_verification_date.trim()
+                    : "") ||
+                new Date().toISOString().split("T")[0];
             if (!mpn) {
                 errors.push(`Row ${i + 2}: missing MPN`);
                 continue;
@@ -151,7 +188,9 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(op
                         verification_state,
                         product_url: hasProductUrl ? productUrl : null,
                         image_url: hasImageUrl ? imageUrl : null,
+                        additional_image_url: additionalImageUrl || null,
                         last_verified_at: ts(),
+                        verification_date: verificationDate,
                         mismatch_reason,
                     },
                 },
@@ -166,6 +205,8 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(op
             warnings,
             completed_at: ts(),
             column_mapping,
+            global_site: global_site || null,
+            global_verification_date: global_verification_date || null,
         });
         await firestore.collection("audit_log").add({
             event_type: "site_verification_import_committed",
