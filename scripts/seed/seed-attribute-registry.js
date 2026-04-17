@@ -57,15 +57,15 @@ const CORE_INFORMATION = [
   }),
   attr("department",        "Department",           "dropdown", "core_information", {
     required: true, ai_prompt: true,
-    options: ["Footwear", "Clothing", "Accessories", "Hats", "Socks", "Underwear", "Other"],
+    options: ["Footwear", "Clothing", "Accessories", "Home & Tech"],
   }),
   attr("gender",           "Gender",               "dropdown", "core_information", {
     required: true, ai_prompt: true, cadence: true,
-    options: ["men", "women", "unisex", "kids", "toddler", "infant"],
+    options: ["Mens", "Womens", "Unisex", "Boys", "Girls", "Toddler"],
   }),
   attr("age_group",        "Age Group",            "dropdown", "core_information", {
     required: true, ai_prompt: true, cadence: true,
-    options: ["adult", "youth", "toddler", "infant"],
+    options: ["Adult", "Grade-School", "Pre-School", "Toddler"],
   }),
   attr("primary_color",    "Primary Color",        "dropdown", "core_information", {
     ai_prompt: true,
@@ -97,7 +97,13 @@ const PRODUCT_ATTRIBUTES = [
   attr("descriptive_color", "Descriptive Color",   "text",     "product_attributes", { ai_prompt: true }),
   attr("fit",               "Fit",                 "dropdown", "product_attributes", {
     ai_prompt: true,
-    options: ["slim", "regular", "relaxed", "oversized", "athletic", "loose"],
+    options: [
+      "Runs one Size Small",
+      "Runs a Half Size Small",
+      "True to Size",
+      "Runs A Half Size Big",
+      "Runs One Size Big",
+    ],
   }),
   attr("material",          "Material / Fabric",   "text",     "product_attributes", { ai_prompt: true }),
   attr("colorway",          "Colorway",            "text",     "product_attributes", { ai_prompt: true }),
