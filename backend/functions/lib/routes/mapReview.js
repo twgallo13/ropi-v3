@@ -201,6 +201,9 @@ router.get("/removals", auth_1.requireAuth, (0, roles_1.requireRole)(resolverRol
         const items = snap.docs
             .map((doc) => {
             const p = doc.data();
+            const invStore = Number(p.inventory_store) || 0;
+            const invWarehouse = Number(p.inventory_warehouse) || 0;
+            const invWhs = Number(p.inventory_whs) || 0;
             return {
                 mpn: p.mpn || doc.id,
                 name: p.name || "",
@@ -209,6 +212,15 @@ router.get("/removals", auth_1.requireAuth, (0, roles_1.requireRole)(resolverRol
                 map_removal_proposed_at: p.map_removal_proposed_at?.toDate?.()?.toISOString() || null,
                 map_removal_source_batch: p.map_removal_source_batch || null,
                 map_removal_review_after: p.map_removal_review_after || null,
+                rics_retail: Number(p.rics_retail) || 0,
+                rics_offer: Number(p.rics_offer) || 0,
+                scom: Number(p.scom) || 0,
+                scom_sale: Number(p.scom_sale) || 0,
+                inventory_total: invStore + invWarehouse + invWhs,
+                str_pct: p.str_pct ?? null,
+                wos: p.wos ?? null,
+                store_gm_pct: p.store_gm_pct ?? null,
+                web_gm_pct: p.web_gm_pct ?? null,
             };
         })
             .filter((i) => !i.map_removal_review_after ||
@@ -224,7 +236,7 @@ router.get("/removals", auth_1.requireAuth, (0, roles_1.requireRole)(resolverRol
 router.post("/removal/:mpn/resolve", auth_1.requireAuth, (0, roles_1.requireRole)(resolverRoles), async (req, res) => {
     try {
         const { mpn } = req.params;
-        const { action, defer_days, note } = req.body || {};
+        const { action, defer_days, note, new_scom, new_scom_sale, new_rics_offer, web_discount_cap } = req.body || {};
         const userId = req.user?.uid || "system";
         const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
         const productRef = db().collection("products").doc(docId);
@@ -239,7 +251,7 @@ router.post("/removal/:mpn/resolve", auth_1.requireAuth, (0, roles_1.requireRole
             return;
         }
         if (action === "approve_removal") {
-            await productRef.set({
+            const updates = {
                 is_map_protected: false,
                 map_price: null,
                 map_promo_price: null,
@@ -254,13 +266,48 @@ router.post("/removal/:mpn/resolve", auth_1.requireAuth, (0, roles_1.requireRole
                 map_conflict_reason: null,
                 map_removed_at: ts(),
                 map_removed_by: userId,
+                // TALLY-113 — buyer decision is final: post-removal pricing goes straight to export_ready
+                pricing_domain_state: "export_ready",
                 updated_at: ts(),
-            }, { merge: true });
+            };
+            // Apply optional buyer-set prices
+            if (new_scom != null && new_scom !== "") {
+                const v = Number(new_scom);
+                if (!isNaN(v))
+                    updates.scom = v;
+            }
+            if (new_scom_sale != null && new_scom_sale !== "") {
+                const v = Number(new_scom_sale);
+                if (!isNaN(v))
+                    updates.scom_sale = v;
+            }
+            if (new_rics_offer != null && new_rics_offer !== "") {
+                const v = Number(new_rics_offer);
+                if (!isNaN(v))
+                    updates.rics_offer = v;
+            }
+            await productRef.set(updates, { merge: true });
+            // Mirror web_discount_cap as an attribute if provided (NO / 5 / 10 … / Final Sale)
+            if (web_discount_cap != null && web_discount_cap !== "") {
+                await productRef
+                    .collection("attributes")
+                    .doc("web_discount_cap")
+                    .set({
+                    value: String(web_discount_cap),
+                    source: "Human-Verified",
+                    verified_by: userId,
+                    verified_at: ts(),
+                }, { merge: true });
+            }
             await (0, pricingExportQueue_1.queueForPricingExport)(mpn, "map_removal", userId, null);
             await db().collection("audit_log").add({
                 product_mpn: mpn,
                 event_type: "map_removed",
                 note: note || null,
+                new_scom: updates.scom ?? null,
+                new_scom_sale: updates.scom_sale ?? null,
+                new_rics_offer: updates.rics_offer ?? null,
+                web_discount_cap: web_discount_cap || null,
                 acting_user_id: userId,
                 created_at: ts(),
             });

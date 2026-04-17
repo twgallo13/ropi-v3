@@ -21,7 +21,7 @@ function ConflictCard({
 }) {
   const [action, setAction] = useState<Action | null>(null);
   const [note, setNote] = useState("");
-  const [cap, setCap] = useState("NO");
+  const [cap, setCap] = useState("5");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -82,7 +82,7 @@ function ConflictCard({
             action === "accept_map" ? "bg-green-600 text-white border-green-700" : "border-gray-300 hover:bg-gray-50"
           }`}
         >
-          Accept MAP (scom = scom_sale = MAP)
+          Set Web Price to MAP Floor
         </button>
         <button
           onClick={() => setAction("request_buyer_map")}
@@ -90,7 +90,7 @@ function ConflictCard({
             action === "request_buyer_map" ? "bg-blue-600 text-white border-blue-700" : "border-gray-300 hover:bg-gray-50"
           }`}
         >
-          In-Cart Promo (buyer cap)
+          Authorize In-Cart Promo
         </button>
         <button
           onClick={() => setAction("flag_for_contact")}
@@ -98,9 +98,13 @@ function ConflictCard({
             action === "flag_for_contact" ? "bg-amber-600 text-white border-amber-700" : "border-gray-300 hover:bg-gray-50"
           }`}
         >
-          Flag for Vendor Contact
+          Hold — Contact Vendor
         </button>
       </div>
+
+      <p className="mt-2 text-xs text-gray-500 italic">
+        Web pricing only — store pricing updates export automatically to RetailOps
+      </p>
 
       {action && (
         <div className="mt-3 p-3 bg-gray-50 border rounded">
@@ -114,9 +118,9 @@ function ConflictCard({
                 onChange={(e) => setCap(e.target.value)}
                 className="border rounded px-2 py-1 text-sm"
               >
-                {["NO", "5", "10", "15", "20", "25", "30"].map((o) => (
+                {["5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "Final Sale"].map((o) => (
                   <option key={o} value={o}>
-                    {o}
+                    {o === "Final Sale" ? "Final Sale" : `${o}%`}
                   </option>
                 ))}
               </select>

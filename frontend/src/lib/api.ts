@@ -547,6 +547,15 @@ export interface MapRemovalItem {
   map_removal_proposed_at: string | null;
   map_removal_source_batch: string | null;
   map_removal_review_after: string | null;
+  rics_retail: number;
+  rics_offer: number;
+  scom: number;
+  scom_sale: number;
+  inventory_total: number;
+  str_pct: number | null;
+  wos: number | null;
+  store_gm_pct: number | null;
+  web_gm_pct: number | null;
 }
 
 export async function fetchMapRemovals(): Promise<{ items: MapRemovalItem[]; total: number }> {
@@ -562,6 +571,10 @@ export async function resolveMapRemoval(
     action: "approve_removal" | "keep_map" | "defer";
     note?: string;
     defer_days?: number;
+    new_scom?: string;
+    new_scom_sale?: string;
+    new_rics_offer?: string;
+    web_discount_cap?: string;
   }
 ): Promise<any> {
   const res = await fetch(
