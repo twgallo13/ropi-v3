@@ -70,8 +70,9 @@ async function generateContent(mpn, siteOwner, operatorUserId, observationsNote)
             "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
+            model: "claude-sonnet-4-6",
             max_tokens: 1024,
+            system: "You are a product copywriter. Always respond with ONLY a valid JSON object. No markdown, no explanation, no extra text.",
             messages: [{ role: "user", content: prompt }],
         }),
     });
@@ -83,16 +84,35 @@ async function generateContent(mpn, siteOwner, operatorUserId, observationsNote)
     // Parse JSON response
     let parsed = {};
     try {
-        const clean = rawText.replace(/```json|```/g, "").trim();
-        parsed = JSON.parse(clean);
+        parsed = JSON.parse(rawText.trim());
     }
     catch {
-        parsed = {
-            description: rawText,
-            meta_name: "",
-            meta_description: "",
-            keywords: "",
-        };
+        try {
+            // Extract JSON from markdown code block
+            const match = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (match) {
+                parsed = JSON.parse(match[1].trim());
+            }
+            else {
+                // Find first { to last }
+                const start = rawText.indexOf("{");
+                const end = rawText.lastIndexOf("}");
+                if (start !== -1 && end > start) {
+                    parsed = JSON.parse(rawText.substring(start, end + 1));
+                }
+                else {
+                    throw new Error("No JSON found");
+                }
+            }
+        }
+        catch {
+            parsed = {
+                description: rawText,
+                meta_name: "",
+                meta_description: "",
+                keywords: "",
+            };
+        }
     }
     // Check banned words
     const fullText = Object.values(parsed).join(" ").toLowerCase();
