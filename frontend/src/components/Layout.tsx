@@ -39,6 +39,18 @@ export default function Layout() {
               Buyer Review
             </Link>
             <Link
+              to="/cadence-review"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Cadence Review
+            </Link>
+            <Link
+              to="/cadence-unassigned"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Cadence Unassigned
+            </Link>
+            <Link
               to="/map-conflict-review"
               className="text-gray-600 hover:text-gray-900"
             >
@@ -55,6 +67,12 @@ export default function Layout() {
               className="text-gray-600 hover:text-gray-900"
             >
               Export Center
+            </Link>
+            <Link
+              to="/admin/cadence-rules"
+              className="text-gray-500 hover:text-gray-900 ml-2 border-l pl-3"
+            >
+              ⚙ Rules
             </Link>
           </nav>
         </div>

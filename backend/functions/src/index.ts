@@ -11,6 +11,8 @@ import exportsRouter from "./routes/exports";
 import mapImportRouter from "./routes/mapImport";
 import mapReviewRouter from "./routes/mapReview";
 import pricingExportRouter from "./routes/pricingExport";
+import cadenceRulesRouter from "./routes/cadenceRules";
+import cadenceReviewRouter from "./routes/cadenceReview";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -52,6 +54,10 @@ app.use("/api/v1/exports/pricing", pricingExportRouter);
 // ── MAP Policy Import + Review (Step 2.1) ──
 app.use("/api/v1/imports/map-policy", mapImportRouter);
 app.use("/api/v1/map-review", mapReviewRouter);
+
+// ── Cadence (Step 2.2) ──
+app.use("/api/v1/cadence-rules", cadenceRulesRouter);
+app.use("/api/v1", cadenceReviewRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

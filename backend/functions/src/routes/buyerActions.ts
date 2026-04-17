@@ -20,8 +20,8 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
       return;
     }
 
-    if (!["approve", "deny", "adjust"].includes(action_type)) {
-      res.status(400).json({ error: "action_type must be approve, deny, or adjust" });
+    if (!["approve", "deny", "adjust", "off_sale"].includes(action_type)) {
+      res.status(400).json({ error: "action_type must be approve, deny, adjust, or off_sale" });
       return;
     }
 
@@ -107,6 +107,9 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
     if (action_type === "approve") {
       // 15% default markdown
       newRicsOffer = Math.round(ricsRetail * 0.85 * 100) / 100;
+    } else if (action_type === "off_sale") {
+      // Section 14.7 — revert rics_offer to rics_retail
+      newRicsOffer = Math.round(ricsRetail * 100) / 100;
     } else {
       // adjust
       if (!adjustment) {
@@ -308,6 +311,161 @@ router.post("/loss-leader-veto", requireAuth, async (req: AuthenticatedRequest, 
     });
   } catch (err: any) {
     console.error("POST /buyer-actions/loss-leader-veto error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Step 2.2 — Cadence buyer actions (Section 14.7) ──
+
+// POST /api/v1/buyer-actions/hold
+router.post("/hold", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { mpn, hold_reason } = req.body || {};
+    if (!mpn) {
+      res.status(400).json({ error: "mpn is required" });
+      return;
+    }
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    const docId = mpnToDocId(mpn);
+    const productRef = db().collection("products").doc(docId);
+    const productDoc = await productRef.get();
+    if (!productDoc.exists) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+    await productRef.set({ cadence_hold: true, updated_at: ts() }, { merge: true });
+    await db()
+      .collection("cadence_assignments")
+      .doc(docId)
+      .set(
+        {
+          in_buyer_queue: false,
+          last_buyer_action: "hold",
+          last_buyer_action_at: ts(),
+        },
+        { merge: true }
+      );
+    await db().collection("audit_log").add({
+      product_mpn: mpn,
+      event_type: "buyer_action_hold",
+      hold_reason: hold_reason || null,
+      acting_user_id: uid,
+      created_at: ts(),
+    });
+    res.json({ status: "success", mpn, action: "hold" });
+  } catch (err: any) {
+    console.error("POST /buyer-actions/hold error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/buyer-actions/save-for-season
+router.post("/save-for-season", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { mpn, return_date } = req.body || {};
+    if (!mpn || !return_date) {
+      res.status(400).json({ error: "mpn and return_date are required" });
+      return;
+    }
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    const docId = mpnToDocId(mpn);
+    const productRef = db().collection("products").doc(docId);
+    const productDoc = await productRef.get();
+    if (!productDoc.exists) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+    await productRef.set(
+      { cadence_seasonal_return: return_date, updated_at: ts() },
+      { merge: true }
+    );
+    await db()
+      .collection("cadence_assignments")
+      .doc(docId)
+      .set(
+        {
+          in_buyer_queue: false,
+          last_buyer_action: "save_for_season",
+          last_buyer_action_at: ts(),
+        },
+        { merge: true }
+      );
+    await db().collection("audit_log").add({
+      product_mpn: mpn,
+      event_type: "buyer_action_save_for_season",
+      return_date,
+      acting_user_id: uid,
+      created_at: ts(),
+    });
+    res.json({ status: "success", mpn, action: "save_for_season", return_date });
+  } catch (err: any) {
+    console.error("POST /buyer-actions/save-for-season error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/v1/buyer-actions/postpone-review
+router.post("/postpone-review", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { mpn, snooze_days } = req.body || {};
+    if (!mpn || !snooze_days) {
+      res.status(400).json({ error: "mpn and snooze_days are required" });
+      return;
+    }
+    const uid = req.user?.uid;
+    if (!uid) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    const days = Number(snooze_days);
+    if (isNaN(days) || days < 1) {
+      res.status(400).json({ error: "snooze_days must be a positive number" });
+      return;
+    }
+    const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+    const docId = mpnToDocId(mpn);
+    const productRef = db().collection("products").doc(docId);
+    const productDoc = await productRef.get();
+    if (!productDoc.exists) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+    await productRef.set(
+      { cadence_snooze_until: until, updated_at: ts() },
+      { merge: true }
+    );
+    await db()
+      .collection("cadence_assignments")
+      .doc(docId)
+      .set(
+        {
+          in_buyer_queue: false,
+          last_buyer_action: "postpone_review",
+          last_buyer_action_at: ts(),
+        },
+        { merge: true }
+      );
+    await db().collection("audit_log").add({
+      product_mpn: mpn,
+      event_type: "buyer_action_postponed",
+      snooze_days: days,
+      snooze_until: until,
+      acting_user_id: uid,
+      created_at: ts(),
+    });
+    res.json({ status: "success", mpn, action: "postpone_review", snooze_until: until });
+  } catch (err: any) {
+    console.error("POST /buyer-actions/postpone-review error:", err);
     res.status(500).json({ error: err.message });
   }
 });

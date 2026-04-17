@@ -16,6 +16,8 @@ const exports_1 = __importDefault(require("./routes/exports"));
 const mapImport_1 = __importDefault(require("./routes/mapImport"));
 const mapReview_1 = __importDefault(require("./routes/mapReview"));
 const pricingExport_1 = __importDefault(require("./routes/pricingExport"));
+const cadenceRules_1 = __importDefault(require("./routes/cadenceRules"));
+const cadenceReview_1 = __importDefault(require("./routes/cadenceReview"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -48,6 +50,9 @@ app.use("/api/v1/exports/pricing", pricingExport_1.default);
 // ── MAP Policy Import + Review (Step 2.1) ──
 app.use("/api/v1/imports/map-policy", mapImport_1.default);
 app.use("/api/v1/map-review", mapReview_1.default);
+// ── Cadence (Step 2.2) ──
+app.use("/api/v1/cadence-rules", cadenceRules_1.default);
+app.use("/api/v1", cadenceReview_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({

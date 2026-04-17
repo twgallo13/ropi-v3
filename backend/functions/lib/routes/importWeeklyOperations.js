@@ -20,6 +20,7 @@ const adminSettings_1 = require("../services/adminSettings");
 const pricingResolution_1 = require("../services/pricingResolution");
 const mapState_1 = require("../services/mapState");
 const postImportCalculation_1 = require("../services/postImportCalculation");
+const cadenceEngine_1 = require("../services/cadenceEngine");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -281,6 +282,16 @@ router.post("/:batch_id/commit", async (req, res) => {
         if (committedMpns.length > 0) {
             metricsResult = await (0, postImportCalculation_1.runPostImportCalculations)(batch_id, committedMpns, adminSettings);
         }
+        // Step 6b — Step 2.2 — Run cadence evaluation after post-import calcs
+        let cadenceResult = { evaluated: 0, assigned: 0, unassigned: 0, conflicts: 0, skipped_mid_cadence: 0 };
+        if (committedMpns.length > 0) {
+            try {
+                cadenceResult = await (0, cadenceEngine_1.runCadenceEvaluation)(committedMpns);
+            }
+            catch (ce) {
+                console.error("runCadenceEvaluation failed:", ce.message);
+            }
+        }
         // Step 7 — Update batch record with final counts
         const finalStatus = failedRows === records.length ? "failed" : "complete";
         await batchRef.update({
@@ -296,6 +307,10 @@ router.post("/:batch_id/commit", async (req, res) => {
                 loss_leader_review: lossLeaderReview,
                 metrics_calculated: metricsResult.calculated,
                 metrics_skipped: metricsResult.skipped,
+                cadence_evaluated: cadenceResult.evaluated,
+                cadence_assigned: cadenceResult.assigned,
+                cadence_unassigned: cadenceResult.unassigned,
+                cadence_conflicts: cadenceResult.conflicts,
             },
         });
         res.status(200).json({

@@ -648,3 +648,251 @@ export async function fetchPricingExportJobs(): Promise<{ jobs: PricingExportJob
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
+
+// ── Step 2.2 Cadence types ──
+
+export interface CadenceTargetFilter {
+  field: string;
+  operator: "equals" | "not_equals" | "contains" | "starts_with";
+  value: string;
+  case_sensitive: boolean;
+}
+
+export interface CadenceTriggerCondition {
+  field: string;
+  operator:
+    | "less_than"
+    | "greater_than"
+    | "less_than_or_equal"
+    | "greater_than_or_equal"
+    | "equals";
+  value: number | boolean;
+  logic: "AND" | "OR";
+}
+
+export interface CadenceMarkdownStep {
+  step_number: number;
+  day_threshold: number;
+  action_type: "markdown_pct" | "custom_price" | "off_sale" | "set_in_cart_promo";
+  markdown_scope: "store_and_web" | "store_only";
+  value: number;
+  apply_99_rounding: boolean;
+}
+
+export interface CadenceRule {
+  rule_id: string;
+  rule_name: string;
+  version: number;
+  is_active: boolean;
+  owner_buyer_id: string;
+  owner_site_owner: string;
+  target_filters: CadenceTargetFilter[];
+  trigger_conditions: CadenceTriggerCondition[];
+  markdown_steps: CadenceMarkdownStep[];
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface CadenceRecommendation {
+  action_type: string;
+  markdown_scope: string;
+  value: number;
+  new_rics_offer: number;
+  export_rics_offer: number;
+  new_scom_sale?: number;
+  export_scom_sale?: number;
+  rule_name: string;
+  rule_id: string;
+  step_number: number;
+  explanation: string[];
+}
+
+export interface CadenceReviewItem {
+  mpn: string;
+  name: string;
+  brand: string;
+  department: string;
+  class: string;
+  site_owner: string;
+  rics_retail: number;
+  rics_offer: number;
+  scom: number;
+  scom_sale: number;
+  is_map_protected: boolean;
+  map_price: number | null;
+  map_conflict_active: boolean;
+  str_pct: number | null;
+  wos: number | null;
+  store_gm_pct: number | null;
+  web_gm_pct: number | null;
+  inventory_total: number;
+  is_slow_moving: boolean;
+  recommendation: CadenceRecommendation;
+  current_step: number;
+  days_in_queue: number;
+}
+
+export interface CadenceUnassignedItem {
+  mpn: string;
+  name: string;
+  brand: string;
+  department: string;
+  class: string;
+  wos: number | null;
+  str_pct: number | null;
+  inventory_total: number;
+  last_evaluated_at: string | null;
+}
+
+// ── Cadence Rules CRUD ──
+
+export async function fetchCadenceRules(): Promise<{ rules: CadenceRule[]; total: number }> {
+  const res = await fetch(`${BASE}/api/v1/cadence-rules`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function fetchCadenceRule(ruleId: string): Promise<CadenceRule> {
+  const res = await fetch(`${BASE}/api/v1/cadence-rules/${encodeURIComponent(ruleId)}`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function createCadenceRule(
+  rule: Omit<CadenceRule, "rule_id" | "version" | "created_at" | "updated_at">
+): Promise<CadenceRule> {
+  const res = await fetch(`${BASE}/api/v1/cadence-rules`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(rule),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function updateCadenceRule(
+  ruleId: string,
+  rule: Omit<CadenceRule, "rule_id" | "version" | "created_at" | "updated_at">
+): Promise<CadenceRule> {
+  const res = await fetch(`${BASE}/api/v1/cadence-rules/${encodeURIComponent(ruleId)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(rule),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function deactivateCadenceRule(ruleId: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/v1/cadence-rules/${encodeURIComponent(ruleId)}`, {
+    method: "DELETE",
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+}
+
+// ── Cadence Review + Assignments ──
+
+export async function fetchCadenceReview(): Promise<{ items: CadenceReviewItem[]; total: number }> {
+  const res = await fetch(`${BASE}/api/v1/cadence-review`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function fetchCadenceUnassigned(): Promise<{
+  items: CadenceUnassignedItem[];
+  total: number;
+}> {
+  const res = await fetch(`${BASE}/api/v1/cadence-assignments/unassigned`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function assignCadenceRule(mpn: string, ruleId: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/cadence-assignments/${encodeURIComponent(mpn)}/assign`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ rule_id: ruleId }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function excludeFromCadence(mpn: string, reason: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/cadence-assignments/${encodeURIComponent(mpn)}/exclude`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ reason }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// ── Extended buyer actions ──
+
+export async function buyerAction(
+  mpn: string,
+  action_type: "approve" | "deny" | "adjust" | "off_sale",
+  adjustment?: {
+    type: "pct" | "dollar" | "price";
+    value: number;
+    effective_date?: string | null;
+  }
+): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/buyer-actions/markdown`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ mpn, action_type, adjustment }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function buyerHold(mpn: string, hold_reason?: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/buyer-actions/hold`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ mpn, hold_reason }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function buyerSaveForSeason(mpn: string, return_date: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/buyer-actions/save-for-season`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ mpn, return_date }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function buyerPostponeReview(mpn: string, snooze_days: number): Promise<any> {
+  const res = await fetch(`${BASE}/api/v1/buyer-actions/postpone-review`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ mpn, snooze_days }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+

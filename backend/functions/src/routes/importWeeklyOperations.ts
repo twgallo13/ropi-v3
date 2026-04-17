@@ -19,6 +19,7 @@ import {
 } from "../services/pricingResolution";
 import { getMapState } from "../services/mapState";
 import { runPostImportCalculations } from "../services/postImportCalculation";
+import { runCadenceEvaluation } from "../services/cadenceEngine";
 
 const router = Router();
 const upload = multer({
@@ -337,6 +338,16 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       );
     }
 
+    // Step 6b — Step 2.2 — Run cadence evaluation after post-import calcs
+    let cadenceResult = { evaluated: 0, assigned: 0, unassigned: 0, conflicts: 0, skipped_mid_cadence: 0 };
+    if (committedMpns.length > 0) {
+      try {
+        cadenceResult = await runCadenceEvaluation(committedMpns);
+      } catch (ce: any) {
+        console.error("runCadenceEvaluation failed:", ce.message);
+      }
+    }
+
     // Step 7 — Update batch record with final counts
     const finalStatus = failedRows === records.length ? "failed" : "complete";
     await batchRef.update({
@@ -352,6 +363,10 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         loss_leader_review: lossLeaderReview,
         metrics_calculated: metricsResult.calculated,
         metrics_skipped: metricsResult.skipped,
+        cadence_evaluated: cadenceResult.evaluated,
+        cadence_assigned: cadenceResult.assigned,
+        cadence_unassigned: cadenceResult.unassigned,
+        cadence_conflicts: cadenceResult.conflicts,
       },
     });
 
