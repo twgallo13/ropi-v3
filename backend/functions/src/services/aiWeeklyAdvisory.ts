@@ -347,7 +347,7 @@ async function generateBuyerReport(
     },
     global_health_summary: null,
     raw_prompt: prompt,
-    model_used: "claude-sonnet-4-20250514",
+    model_used: "claude-sonnet-4-5-20250929",
     read_by_buyer: false,
     read_at: null,
   });
@@ -457,7 +457,7 @@ async function generateGlobalReport(
     inventory_warning: { summary: "", products: allWarnings.slice(0, 20) },
     global_health_summary: parsed.global_health_summary || "",
     raw_prompt: prompt,
-    model_used: "claude-sonnet-4-20250514",
+    model_used: "claude-sonnet-4-5-20250929",
     read_by_buyer: false,
     read_at: null,
   });

@@ -24,7 +24,7 @@ class AnthropicAdapter implements AIProviderAdapter {
     } else {
       messages.push({ role: "user", content: prompt });
     }
-    const body: any = { model: "claude-sonnet-4-6", max_tokens: 4096, messages };
+    const body: any = { model: "claude-sonnet-4-5-20250929", max_tokens: 4096, messages };
     if (systemPrompt) body.system = systemPrompt;
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
