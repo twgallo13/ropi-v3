@@ -8,6 +8,7 @@ exports.generateContent = generateContent;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const mpnUtils_1 = require("./mpnUtils");
 const templateMatcher_1 = require("./templateMatcher");
+const emailService_1 = require("./emailService");
 const db = firebase_admin_1.default.firestore;
 class AnthropicAdapter {
     async complete(prompt, systemPrompt, imageData) {
@@ -24,7 +25,9 @@ class AnthropicAdapter {
         else {
             messages.push({ role: "user", content: prompt });
         }
-        const body = { model: "claude-sonnet-4-5-20250929", max_tokens: 4096, messages };
+        const model = (await (0, emailService_1.getAdminSetting)("active_ai_model", "claude-sonnet-4-5")) ||
+            "claude-sonnet-4-5";
+        const body = { model, max_tokens: 4096, messages };
         if (systemPrompt)
             body.system = systemPrompt;
         const res = await fetch("https://api.anthropic.com/v1/messages", {

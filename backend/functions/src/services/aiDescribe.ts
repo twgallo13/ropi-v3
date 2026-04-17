@@ -1,6 +1,7 @@
 import admin from "firebase-admin";
 import { mpnToDocId } from "./mpnUtils";
 import { selectTemplate, PromptTemplate } from "./templateMatcher";
+import { getAdminSetting } from "./emailService";
 
 const db = admin.firestore;
 
@@ -24,7 +25,10 @@ class AnthropicAdapter implements AIProviderAdapter {
     } else {
       messages.push({ role: "user", content: prompt });
     }
-    const body: any = { model: "claude-sonnet-4-5-20250929", max_tokens: 4096, messages };
+    const model =
+      (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
+      "claude-sonnet-4-5";
+    const body: any = { model, max_tokens: 4096, messages };
     if (systemPrompt) body.system = systemPrompt;
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

@@ -12,6 +12,7 @@ import admin from "firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { mpnToDocId } from "./mpnUtils";
 import { getActiveAdapter } from "./aiDescribe";
+import { getAdminSetting } from "./emailService";
 
 const db = () => admin.firestore();
 
@@ -304,6 +305,10 @@ async function generateBuyerReport(
     inventory_warning: { summary: "" },
   });
 
+  const modelUsed =
+    (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
+    "claude-sonnet-4-5";
+
   // ── Write report ──
   const reportRef = db().collection("weekly_advisory_reports").doc();
   await reportRef.set({
@@ -347,7 +352,7 @@ async function generateBuyerReport(
     },
     global_health_summary: null,
     raw_prompt: prompt,
-    model_used: "claude-sonnet-4-5-20250929",
+    model_used: modelUsed,
     read_by_buyer: false,
     read_at: null,
   });
@@ -444,6 +449,10 @@ async function generateGlobalReport(
     global_health_summary: raw || "",
   });
 
+  const globalModelUsed =
+    (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
+    "claude-sonnet-4-5";
+
   const reportRef = db().collection("weekly_advisory_reports").doc();
   await reportRef.set({
     report_id: reportRef.id,
@@ -457,7 +466,7 @@ async function generateGlobalReport(
     inventory_warning: { summary: "", products: allWarnings.slice(0, 20) },
     global_health_summary: parsed.global_health_summary || "",
     raw_prompt: prompt,
-    model_used: "claude-sonnet-4-5-20250929",
+    model_used: globalModelUsed,
     read_by_buyer: false,
     read_at: null,
   });

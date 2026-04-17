@@ -111,8 +111,8 @@ router.post(
         (await getAdminSetting<string>("active_ai_provider", "anthropic")) ||
         "anthropic";
       const model =
-        (await getAdminSetting<string>("active_model", "claude-sonnet-4-5-20250929")) ||
-        "claude-sonnet-4-5-20250929";
+        (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
+        "claude-sonnet-4-5";
 
       if (provider !== "anthropic") {
         res.json({

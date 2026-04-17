@@ -808,7 +808,10 @@ function SmtpTab() {
 function AIProviderTab() {
   const [settings, setSettings] = useState<AdminSetting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [aiProvider, setAiProvider] = useState("anthropic");
+  const [aiModel, setAiModel] = useState("");
   const [testResult, setTestResult] = useState<{
     ok: boolean;
     message: string;
@@ -817,17 +820,45 @@ function AIProviderTab() {
   useEffect(() => {
     (async () => {
       try {
-        setSettings(await fetchAdminSettings());
+        const s = await fetchAdminSettings();
+        setSettings(s);
       } catch {}
       setLoading(false);
     })();
   }, []);
 
-  const provider =
-    settings.find((s) => s.key === "active_ai_provider")?.value || "anthropic";
-  const model =
-    settings.find((s) => s.key === "active_model")?.value ||
-    "claude-sonnet-4-20250514";
+  useEffect(() => {
+    const modelSetting = settings.find((s) => s.key === "active_ai_model");
+    const providerSetting = settings.find(
+      (s) => s.key === "active_ai_provider"
+    );
+    if (modelSetting && modelSetting.value != null)
+      setAiModel(String(modelSetting.value));
+    if (providerSetting && providerSetting.value != null)
+      setAiProvider(String(providerSetting.value));
+  }, [settings]);
+
+  async function saveSettings() {
+    setSaving(true);
+    setTestResult(null);
+    try {
+      await updateAdminSetting("active_ai_provider", aiProvider, {
+        type: "string",
+        category: "ai",
+        label: "Active AI Provider",
+      });
+      await updateAdminSetting("active_ai_model", aiModel, {
+        type: "string",
+        category: "ai",
+        label: "Active AI Model String",
+      });
+      setTestResult({ ok: true, message: "✅ Saved" });
+    } catch (e: any) {
+      setTestResult({ ok: false, message: e?.error || "Save failed" });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function runTest() {
     setTesting(true);
@@ -837,7 +868,7 @@ function AIProviderTab() {
       setTestResult({
         ok: r.ok,
         message: r.ok
-          ? `✅ Connected. Provider=${r.provider} Model=${r.model}`
+          ? `✅ Connected — ${r.model}`
           : `❌ ${r.error || "Test failed"}`,
       });
     } catch (e: any) {
@@ -850,32 +881,71 @@ function AIProviderTab() {
   if (loading) return <p className="text-sm text-gray-500">Loading…</p>;
 
   return (
-    <div className="space-y-3 max-w-2xl">
-      <Field label="Active Provider">
-        <div className="text-sm font-medium capitalize">{provider}</div>
-      </Field>
-      <Field label="Model">
-        <code className="text-sm font-mono">{model}</code>
-      </Field>
+    <div className="space-y-4 max-w-2xl">
       <div>
+        <label className="text-xs text-gray-600 dark:text-gray-400">
+          Active Provider
+        </label>
+        <select
+          value={aiProvider}
+          onChange={(e) => setAiProvider(e.target.value)}
+          className="mt-1 w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm bg-white dark:bg-gray-900"
+        >
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="openai">OpenAI (stub)</option>
+          <option value="gemini">Gemini (stub)</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs text-gray-600 dark:text-gray-400">
+          Model String
+          <span className="ml-1 text-gray-400">
+            — update when Anthropic releases new models
+          </span>
+        </label>
+        <input
+          type="text"
+          value={aiModel}
+          onChange={(e) => setAiModel(e.target.value)}
+          placeholder="e.g. claude-sonnet-4-5"
+          className="mt-1 w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm font-mono bg-white dark:bg-gray-900"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          Current Anthropic models: claude-sonnet-4-5, claude-opus-4-5,
+          claude-haiku-4-5
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={saveSettings}
+          disabled={saving}
+          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save AI Settings"}
+        </button>
+
         <button
           onClick={runTest}
           disabled={testing}
-          className="bg-blue-600 text-white text-sm rounded px-3 py-1.5 disabled:opacity-50"
+          className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
         >
           {testing ? "Testing…" : "Test Connection"}
         </button>
+
+        {testResult && (
+          <span
+            className={`text-sm ${
+              testResult.ok ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {testResult.message}
+          </span>
+        )}
       </div>
-      {testResult && (
-        <p
-          className={`text-sm ${
-            testResult.ok ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {testResult.message}
-        </p>
-      )}
-      <p className="text-xs text-gray-500">
+
+      <p className="text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-800">
         The API key is stored as a Cloud Run environment variable
         (<code className="font-mono">ANTHROPIC_API_KEY</code>). Update it via the
         GCP Console.

@@ -19,6 +19,7 @@ const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const firestore_1 = require("firebase-admin/firestore");
 const mpnUtils_1 = require("./mpnUtils");
 const aiDescribe_1 = require("./aiDescribe");
+const emailService_1 = require("./emailService");
 const db = () => firebase_admin_1.default.firestore();
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -253,6 +254,8 @@ async function generateBuyerReport(buyerUid, buyer, importBatchId, weekLabel) {
         markdown_optimizer: { summary: "", insights: [] },
         inventory_warning: { summary: "" },
     });
+    const modelUsed = (await (0, emailService_1.getAdminSetting)("active_ai_model", "claude-sonnet-4-5")) ||
+        "claude-sonnet-4-5";
     // ── Write report ──
     const reportRef = db().collection("weekly_advisory_reports").doc();
     await reportRef.set({
@@ -296,7 +299,7 @@ async function generateBuyerReport(buyerUid, buyer, importBatchId, weekLabel) {
         },
         global_health_summary: null,
         raw_prompt: prompt,
-        model_used: "claude-sonnet-4-5-20250929",
+        model_used: modelUsed,
         read_by_buyer: false,
         read_at: null,
     });
@@ -367,6 +370,8 @@ async function generateGlobalReport(importBatchId, weekLabel, recipientName) {
     const parsed = safeParseJson(raw, {
         global_health_summary: raw || "",
     });
+    const globalModelUsed = (await (0, emailService_1.getAdminSetting)("active_ai_model", "claude-sonnet-4-5")) ||
+        "claude-sonnet-4-5";
     const reportRef = db().collection("weekly_advisory_reports").doc();
     await reportRef.set({
         report_id: reportRef.id,
@@ -380,7 +385,7 @@ async function generateGlobalReport(importBatchId, weekLabel, recipientName) {
         inventory_warning: { summary: "", products: allWarnings.slice(0, 20) },
         global_health_summary: parsed.global_health_summary || "",
         raw_prompt: prompt,
-        model_used: "claude-sonnet-4-5-20250929",
+        model_used: globalModelUsed,
         read_by_buyer: false,
         read_at: null,
     });

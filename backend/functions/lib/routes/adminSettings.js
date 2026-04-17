@@ -94,8 +94,8 @@ router.post("/ai/test", auth_1.requireAuth, (0, roles_1.requireRole)(["admin", "
     try {
         const provider = (await (0, emailService_1.getAdminSetting)("active_ai_provider", "anthropic")) ||
             "anthropic";
-        const model = (await (0, emailService_1.getAdminSetting)("active_model", "claude-sonnet-4-5-20250929")) ||
-            "claude-sonnet-4-5-20250929";
+        const model = (await (0, emailService_1.getAdminSetting)("active_ai_model", "claude-sonnet-4-5")) ||
+            "claude-sonnet-4-5";
         if (provider !== "anthropic") {
             res.json({
                 ok: false,

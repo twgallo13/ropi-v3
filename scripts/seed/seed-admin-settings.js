@@ -54,6 +54,15 @@ const SETTINGS = [
     type: "string",
   },
   {
+    id: "active_ai_model",
+    category: "ai",
+    label: "Active AI Model String",
+    description:
+      "Anthropic model identifier used for all AI generation. Update when new models release.",
+    value: "claude-sonnet-4-5",
+    type: "string",
+  },
+  {
     id: "ai_model_config",
     category: "ai",
     label: "AI Model Configuration",
