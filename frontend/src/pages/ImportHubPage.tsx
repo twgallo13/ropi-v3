@@ -12,6 +12,8 @@ import {
   salesUpload,
   salesCommit,
   fetchSalesStatus,
+  fetchActiveImportJobs,
+  type ImportStatus,
   type SiteRegistryEntry,
   type ImportUploadResponse,
   type ImportCommitResponse,
@@ -22,6 +24,7 @@ import {
   type SalesCommitResponse,
   type SalesStatusResponse,
 } from "../lib/api";
+import ImportProgressCard from "../components/ImportProgressCard";
 
 type Family = "full-product" | "weekly-operations";
 
@@ -33,6 +36,7 @@ interface UploadState {
   committing: boolean;
   commitResult: ImportCommitResponse | null;
   commitError: string;
+  progressBatchId: string | null;
 }
 
 const INITIAL: UploadState = {
@@ -43,6 +47,7 @@ const INITIAL: UploadState = {
   committing: false,
   commitResult: null,
   commitError: "",
+  progressBatchId: null,
 };
 
 function ImportCard({
@@ -71,10 +76,16 @@ function ImportCard({
 
   async function handleCommit() {
     if (!state.uploadResult?.batch_id) return;
-    setState((s) => ({ ...s, committing: true, commitError: "", commitResult: null }));
+    setState((s) => ({ ...s, committing: true, commitError: "", commitResult: null, progressBatchId: null }));
     try {
       const result = await commitImport(family, state.uploadResult.batch_id);
-      setState((s) => ({ ...s, committing: false, commitResult: result }));
+      // Async pattern: backend returns 202 with { batch_id, status: 'processing' }.
+      // Mount the progress card; we synthesize a final commitResult on completion.
+      setState((s) => ({
+        ...s,
+        committing: false,
+        progressBatchId: result.batch_id || s.uploadResult!.batch_id,
+      }));
     } catch (err: any) {
       setState((s) => ({
         ...s,
@@ -82,6 +93,19 @@ function ImportCard({
         commitError: err?.message || err?.error || "Commit failed",
       }));
     }
+  }
+
+  function handleProgressComplete(s: ImportStatus) {
+    setState((p) => ({
+      ...p,
+      progressBatchId: null,
+      commitResult: {
+        batch_id: s.batch_id,
+        committed_rows: s.committed_rows,
+        failed_rows: s.failed_rows,
+        errors: [],
+      } as ImportCommitResponse,
+    }));
   }
 
   function handleReset() {
@@ -138,7 +162,7 @@ function ImportCard({
           )}
 
           {/* Commit controls */}
-          {!state.commitResult && (
+          {!state.commitResult && !state.progressBatchId && (
             <div className="mt-3 flex items-center gap-3">
               <button
                 onClick={handleCommit}
@@ -147,6 +171,16 @@ function ImportCard({
               >
                 {state.committing ? "Committing…" : "Commit Import"}
               </button>
+            </div>
+          )}
+
+          {/* Live progress while the import processes in the background */}
+          {state.progressBatchId && (
+            <div className="mt-3">
+              <ImportProgressCard
+                batchId={state.progressBatchId}
+                onComplete={handleProgressComplete}
+              />
             </div>
           )}
         </div>
@@ -212,9 +246,51 @@ function ImportCard({
 }
 
 export default function ImportHubPage() {
+  const [activeJobs, setActiveJobs] = useState<ImportStatus[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const r = await fetchActiveImportJobs();
+        if (mounted) setActiveJobs(r.jobs);
+      } catch {
+        /* ignore */
+      }
+    };
+    load();
+    const id = setInterval(load, 5000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Import Hub</h1>
+
+      {activeJobs.length > 0 && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <h2 className="text-sm font-semibold text-amber-900 mb-3">
+            Active import jobs ({activeJobs.length})
+          </h2>
+          <div className="space-y-3">
+            {activeJobs.map((j) => (
+              <div key={j.batch_id} className="bg-white border rounded p-3">
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span className="font-medium uppercase tracking-wide">
+                    {j.import_type || "import"}
+                  </span>
+                  <code className="text-[10px]">{j.batch_id.slice(0, 8)}…</code>
+                </div>
+                <ImportProgressCard batchId={j.batch_id} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
         <div data-tour="full-product-import">
           <ImportCard title="Full Product Import" family="full-product" />
@@ -239,7 +315,7 @@ export default function ImportHubPage() {
 // ─────────────────────────────────────────────────────────────
 //  MAP Policy Import — 3-stage flow (upload → map columns → commit)
 // ─────────────────────────────────────────────────────────────
-type MapStage = "upload" | "map" | "done";
+type MapStage = "upload" | "map" | "processing" | "done";
 
 interface MapResultState {
   batch_id: string;
@@ -332,9 +408,9 @@ function MapPolicyImportCard() {
         saveTemplate && !!templateName,
         templateName
       );
-      const commitResult = await mapPolicyCommit(upload.batch_id);
-      setResult(commitResult);
-      setStage("done");
+      // Async: backend returns 202 with { batch_id, status: 'processing' }.
+      await mapPolicyCommit(upload.batch_id);
+      setStage("processing");
     } catch (err: any) {
       setError(err?.error || err?.message || "Commit failed");
     } finally {
@@ -472,6 +548,27 @@ function MapPolicyImportCard() {
         </div>
       )}
 
+      {/* Stage 2.5 — Background processing */}
+      {stage === "processing" && upload && (
+        <div>
+          <ImportProgressCard
+            batchId={upload.batch_id}
+            onComplete={(s) => {
+              setResult({
+                batch_id: s.batch_id,
+                status: s.status,
+                total_rows: s.row_count || s.committed_rows + s.failed_rows,
+                committed_rows: s.committed_rows,
+                failed_rows: s.failed_rows,
+                removal_proposed: 0,
+                errors: [],
+              } as MapResultState);
+              setStage("done");
+            }}
+          />
+        </div>
+      )}
+
       {/* Stage 3 — Results */}
       {stage === "done" && result && (
         <div>
@@ -556,7 +653,7 @@ function MapRow({
 //  Site Verification Import — upload CSV + map columns + commit
 // ─────────────────────────────────────────────────────────────
 function SiteVerificationImportCard() {
-  const [stage, setStage] = useState<"upload" | "map" | "done">("upload");
+  const [stage, setStage] = useState<"upload" | "map" | "processing" | "done">("upload");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -655,13 +752,10 @@ function SiteVerificationImportCard() {
         global_site: globalSite,
         global_verification_date: globalVerificationDate,
       });
-      setResult({
-        total_rows: res.total_rows ?? res.committed + (res.failed || 0),
-        committed_rows: res.committed_rows ?? res.committed ?? 0,
-        failed_rows: res.failed_rows ?? res.failed ?? 0,
-        mismatches: res.mismatches || 0,
-      });
-      setStage("done");
+      // Async: backend returns 202 with { batch_id, status: 'processing' }.
+      // Track via progress card; final result is synthesized on completion.
+      void res;
+      setStage("processing");
     } catch (e: any) {
       setError(e?.error || e?.message || "Commit failed");
     } finally {
@@ -821,15 +915,32 @@ function SiteVerificationImportCard() {
         </div>
       )}
 
-      {stage === "done" && result && (
-        <div className="space-y-2">
-          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded text-sm">
-            Imported <strong>{result.committed_rows}</strong> of {result.total_rows} rows.
-            {result.mismatches > 0 && (
-              <>
-                {" "}
-                <strong>{result.mismatches}</strong> flagged as mismatch.
-              </>
+      {stage === "processing" && batchId && (
+        <ImportProgressCard
+          batchId={batchId}
+          onComplete={(s) => {
+            setResult({
+              total_rows: s.row_count || s.committed_rows + s.failed_rows,
+              committed_rows: s.committed_rows,
+              failed_rows: s.failed_rows,
+              mismatches: 0,
+         progressBatchId, setProgressBatchId] = useState<string | null>(null);
+  const [error, setError] = useState<string>("");
+  const [status, setStatus] = useState<SalesStatusResponse | null>(null);
+
+  useEffect(() => {
+    fetchSalesStatus()
+      .then(setStatus)
+      .catch(() => setStatus({ last_web: null, last_store: null }));
+  }, [commitResult]);
+
+  function reset() {
+    setFile(null);
+    setUploading(false);
+    setCommitting(false);
+    setUploadResult(null);
+    setCommitResult(null);
+    setProgressBatchId
             )}
             {result.failed_rows > 0 && (
               <>
@@ -853,12 +964,14 @@ function SiteVerificationImportCard() {
 // ─────────────────────────────────────────────────────────────
 //  Sales Import — single-stage upload + commit (web/store auto-detect)
 // ─────────────────────────────────────────────────────────────
-function SalesImportCard() {
+functi// Async: backend returns 202 with { batch_id, status: 'processing' }.
+      setProgressBatchId((res as any).batch_id || uploadResult.batch_id) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [uploadResult, setUploadResult] = useState<SalesUploadResponse | null>(null);
   const [commitResult, setCommitResult] = useState<SalesCommitResponse | null>(null);
+  const [progressBatchId, setProgressBatchId] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
   const [status, setStatus] = useState<SalesStatusResponse | null>(null);
 
@@ -874,6 +987,7 @@ function SalesImportCard() {
     setCommitting(false);
     setUploadResult(null);
     setCommitResult(null);
+    setProgressBatchId(null);
     setError("");
   }
 
@@ -896,8 +1010,9 @@ function SalesImportCard() {
     setCommitting(true);
     setError("");
     try {
-      const res = await salesCommit(uploadResult.batch_id);
-      setCommitResult(res);
+      const res = await salesCommit(uplo!progressBatchId && adResult.batch_id);
+      // Async: backend returns 202 with { batch_id, status: 'processing' }.
+      setProgressBatchId((res as any).batch_id || uploadResult.batch_id);
     } catch (e: any) {
       setError(e?.error || e?.message || "Commit failed");
     } finally {
@@ -926,7 +1041,31 @@ function SalesImportCard() {
           <input
             type="file"
             accept=".csv,text/csv"
-            onChange={(e) => {
+       progressBatchId && !commitResult && (
+        <div className="mt-3">
+          <ImportProgressCard
+            batchId={progressBatchId}
+            onComplete={(s) => {
+              setCommitResult({
+                batch_id: s.batch_id,
+                status: s.status,
+                import_type: (uploadResult?.import_type || "web") as "web" | "store",
+                report_date: uploadResult?.report_date || "",
+                total_rows: s.row_count || 0,
+                committed_rows: s.committed_rows,
+                skipped_rows: s.skipped_rows,
+                failed_rows: s.failed_rows,
+                product_not_found_count: 0,
+                metrics_calculated: 0,
+                errors: [],
+              } as SalesCommitResponse);
+              setProgressBatchId(null);
+            }}
+          />
+        </div>
+      )}
+
+      {     onChange={(e) => {
               setFile(e.target.files?.[0] || null);
               setError("");
             }}
@@ -942,7 +1081,7 @@ function SalesImportCard() {
         </div>
       )}
 
-      {uploadResult && !commitResult && (
+      {uploadResult && !commitResult && !progressBatchId && (
         <div className="space-y-3">
           <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm">
             <div>
@@ -970,6 +1109,30 @@ function SalesImportCard() {
               Cancel
             </button>
           </div>
+        </div>
+      )}
+
+      {progressBatchId && !commitResult && (
+        <div className="mt-3">
+          <ImportProgressCard
+            batchId={progressBatchId}
+            onComplete={(s) => {
+              setCommitResult({
+                batch_id: s.batch_id,
+                status: s.status,
+                import_type: (uploadResult?.import_type || "web") as "web" | "store",
+                report_date: uploadResult?.report_date || "",
+                total_rows: s.row_count || 0,
+                committed_rows: s.committed_rows,
+                skipped_rows: s.skipped_rows,
+                failed_rows: s.failed_rows,
+                product_not_found_count: 0,
+                metrics_calculated: 0,
+                errors: [],
+              } as SalesCommitResponse);
+              setProgressBatchId(null);
+            }}
+          />
         </div>
       )}
 

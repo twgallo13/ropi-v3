@@ -21,6 +21,7 @@ const auth_1 = require("../middleware/auth");
 const roles_1 = require("../middleware/roles");
 const mpnUtils_1 = require("../services/mpnUtils");
 const csvUtils_1 = require("../services/csvUtils");
+const importJobRunner_1 = require("../services/importJobRunner");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -247,257 +248,260 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(["
             return;
         }
         const mapping = batchData.column_mapping || {};
-        await batchRef.update({ status: "processing" });
-        const bucket = firebase_admin_1.default.storage().bucket();
-        const [fileBuffer] = await bucket.file(batchData.file_path).download();
-        const csvContent = fileBuffer.toString("utf-8");
-        // Parse CSV with headers as-is (no canonicalization — user mapped manually)
-        const records = (0, sync_1.parse)(csvContent, {
-            columns: (header) => header.map((h) => h.trim().replace(/^\uFEFF/, "")),
-            skip_empty_lines: true,
-            relax_column_count: true,
-            trim: true,
+        await batchRef.update({
+            status: "processing",
+            progress_pct: 0,
+            processing_started_at: ts(),
         });
-        const getField = (row, col) => {
-            if (!col)
-                return "";
-            return (row[col] ?? "").toString().trim();
-        };
-        const errors = [];
-        let committedRows = 0;
-        let failedRows = 0;
-        let skippedRows = 0;
-        const committedMpns = [];
-        const staged = [];
-        for (let i = 0; i < records.length; i++) {
-            const row = records[i];
-            const rowNum = i + 2;
-            const mpn = getField(row, mapping.mpn);
-            if (!mpn) {
-                // No identifier — silent skip; promo-only rows commonly have empty MPN
-                skippedRows++;
-                continue;
-            }
-            const brandRaw = mapping.brand ? getField(row, mapping.brand) : "";
-            const brand = brandRaw || null;
-            const mapPriceRaw = getField(row, mapping.map_price);
-            const mapPrice = parseFloat(mapPriceRaw);
-            if (!mapPriceRaw || isNaN(mapPrice) || mapPrice <= 0) {
-                // No usable base MAP price — skip silently (often a promo-only follow-up row)
-                skippedRows++;
-                continue;
-            }
-            const promoPriceRaw = mapping.promo_price ? getField(row, mapping.promo_price) : "";
-            const promoParsed = promoPriceRaw ? parseFloat(promoPriceRaw) : NaN;
-            const promoPrice = !isNaN(promoParsed) && promoParsed > 0 ? promoParsed : null;
-            const startDate = parseMapDate(mapping.start_date ? getField(row, mapping.start_date) : null);
-            const endDate = parseMapDate(mapping.end_date ? getField(row, mapping.end_date) : null);
-            const isPromoRow = promoPrice !== null && (startDate !== null || endDate !== null);
-            staged.push({
-                rowNum,
-                mpn,
-                docId: (0, mpnUtils_1.mpnToDocId)(mpn),
-                brand,
-                mapPrice,
-                promoPrice,
-                startDate,
-                endDate,
-                isPromoRow,
+        (0, importJobRunner_1.respondAsync)(res, batch_id);
+        (0, importJobRunner_1.runInBackground)(batch_id, "map_policy", async () => {
+            const bucket = firebase_admin_1.default.storage().bucket();
+            const [fileBuffer] = await bucket.file(batchData.file_path).download();
+            const csvContent = fileBuffer.toString("utf-8");
+            // Parse CSV with headers as-is (no canonicalization — user mapped manually)
+            const records = (0, sync_1.parse)(csvContent, {
+                columns: (header) => header.map((h) => h.trim().replace(/^\uFEFF/, "")),
+                skip_empty_lines: true,
+                relax_column_count: true,
+                trim: true,
             });
-        }
-        // Batched product existence check via getAll() in chunks of 300.
-        const productData = new Map();
-        const GET_CHUNK = 300;
-        for (let i = 0; i < staged.length; i += GET_CHUNK) {
-            const slice = staged.slice(i, i + GET_CHUNK);
-            const refs = slice.map((s) => firestore.collection("products").doc(s.docId));
-            const snaps = await firestore.getAll(...refs);
-            snaps.forEach((snap, idx) => {
-                productData.set(slice[idx].docId, snap.exists ? snap.data() ?? null : null);
-            });
-        }
-        // BulkWriter — auto-batches and parallelises all writes; ~1000s of writes/sec.
-        const writer = firestore.bulkWriter();
-        writer.onWriteError((err) => {
-            // Retry transient errors up to 5 times; surface anything else once.
-            if (err.failedAttempts < 5)
-                return true;
-            console.error("BulkWriter give-up:", err.message);
-            return false;
-        });
-        const productStamps = new Map();
-        for (const s of staged) {
-            const productInfo = productData.get(s.docId);
-            if (!productInfo)
-                continue; // counted as MPN-not-found below
-            const existing = productStamps.get(s.docId);
-            if (!existing) {
-                productStamps.set(s.docId, {
-                    docId: s.docId,
-                    mpn: s.mpn,
-                    brand: s.brand,
-                    mapPrice: s.mapPrice,
-                    promoPrice: s.isPromoRow ? s.promoPrice : null,
-                    promoStart: s.isPromoRow ? s.startDate : null,
-                    promoEnd: s.isPromoRow ? s.endDate : null,
+            const getField = (row, col) => {
+                if (!col)
+                    return "";
+                return (row[col] ?? "").toString().trim();
+            };
+            const errors = [];
+            let committedRows = 0;
+            let failedRows = 0;
+            let skippedRows = 0;
+            const committedMpns = [];
+            const staged = [];
+            for (let i = 0; i < records.length; i++) {
+                if (i % 50 === 0) {
+                    await (0, importJobRunner_1.updateProgress)(batch_id, (i / records.length) * 100, {
+                        committed: committedRows,
+                        failed: failedRows,
+                        skipped: skippedRows,
+                    });
+                }
+                const row = records[i];
+                const rowNum = i + 2;
+                const mpn = getField(row, mapping.mpn);
+                if (!mpn) {
+                    // No identifier — silent skip; promo-only rows commonly have empty MPN
+                    skippedRows++;
+                    continue;
+                }
+                const brandRaw = mapping.brand ? getField(row, mapping.brand) : "";
+                const brand = brandRaw || null;
+                const mapPriceRaw = getField(row, mapping.map_price);
+                const mapPrice = parseFloat(mapPriceRaw);
+                if (!mapPriceRaw || isNaN(mapPrice) || mapPrice <= 0) {
+                    // No usable base MAP price — skip silently (often a promo-only follow-up row)
+                    skippedRows++;
+                    continue;
+                }
+                const promoPriceRaw = mapping.promo_price ? getField(row, mapping.promo_price) : "";
+                const promoParsed = promoPriceRaw ? parseFloat(promoPriceRaw) : NaN;
+                const promoPrice = !isNaN(promoParsed) && promoParsed > 0 ? promoParsed : null;
+                const startDate = parseMapDate(mapping.start_date ? getField(row, mapping.start_date) : null);
+                const endDate = parseMapDate(mapping.end_date ? getField(row, mapping.end_date) : null);
+                const isPromoRow = promoPrice !== null && (startDate !== null || endDate !== null);
+                staged.push({
+                    rowNum,
+                    mpn,
+                    docId: (0, mpnUtils_1.mpnToDocId)(mpn),
+                    brand,
+                    mapPrice,
+                    promoPrice,
+                    startDate,
+                    endDate,
+                    isPromoRow,
                 });
             }
-            else {
-                // Always keep the latest non-null brand and the latest base map_price.
-                if (!existing.brand && s.brand)
-                    existing.brand = s.brand;
-                if (!s.isPromoRow)
-                    existing.mapPrice = s.mapPrice;
-                // Prefer the promo row's window/price if we don't already have one,
-                // or if this row's start_date is later (newest active promo wins).
-                if (s.isPromoRow) {
-                    if (existing.promoPrice === null ||
-                        (s.startDate && existing.promoStart && s.startDate > existing.promoStart)) {
-                        existing.promoPrice = s.promoPrice;
-                        existing.promoStart = s.startDate;
-                        existing.promoEnd = s.endDate;
+            // Batched product existence check via getAll() in chunks of 300.
+            const productData = new Map();
+            const GET_CHUNK = 300;
+            for (let i = 0; i < staged.length; i += GET_CHUNK) {
+                const slice = staged.slice(i, i + GET_CHUNK);
+                const refs = slice.map((s) => firestore.collection("products").doc(s.docId));
+                const snaps = await firestore.getAll(...refs);
+                snaps.forEach((snap, idx) => {
+                    productData.set(slice[idx].docId, snap.exists ? snap.data() ?? null : null);
+                });
+            }
+            // BulkWriter — auto-batches and parallelises all writes; ~1000s of writes/sec.
+            const writer = firestore.bulkWriter();
+            writer.onWriteError((err) => {
+                // Retry transient errors up to 5 times; surface anything else once.
+                if (err.failedAttempts < 5)
+                    return true;
+                console.error("BulkWriter give-up:", err.message);
+                return false;
+            });
+            const productStamps = new Map();
+            for (const s of staged) {
+                const productInfo = productData.get(s.docId);
+                if (!productInfo)
+                    continue; // counted as MPN-not-found below
+                const existing = productStamps.get(s.docId);
+                if (!existing) {
+                    productStamps.set(s.docId, {
+                        docId: s.docId,
+                        mpn: s.mpn,
+                        brand: s.brand,
+                        mapPrice: s.mapPrice,
+                        promoPrice: s.isPromoRow ? s.promoPrice : null,
+                        promoStart: s.isPromoRow ? s.startDate : null,
+                        promoEnd: s.isPromoRow ? s.endDate : null,
+                    });
+                }
+                else {
+                    // Always keep the latest non-null brand and the latest base map_price.
+                    if (!existing.brand && s.brand)
+                        existing.brand = s.brand;
+                    if (!s.isPromoRow)
+                        existing.mapPrice = s.mapPrice;
+                    // Prefer the promo row's window/price if we don't already have one,
+                    // or if this row's start_date is later (newest active promo wins).
+                    if (s.isPromoRow) {
+                        if (existing.promoPrice === null ||
+                            (s.startDate && existing.promoStart && s.startDate > existing.promoStart)) {
+                            existing.promoPrice = s.promoPrice;
+                            existing.promoStart = s.startDate;
+                            existing.promoEnd = s.endDate;
+                        }
                     }
                 }
             }
-        }
-        for (const s of staged) {
-            const productInfo = productData.get(s.docId);
-            if (!productInfo) {
-                failedRows++;
-                errors.push({
-                    row: s.rowNum,
+            for (const s of staged) {
+                const productInfo = productData.get(s.docId);
+                if (!productInfo) {
+                    failedRows++;
+                    errors.push({
+                        row: s.rowNum,
+                        mpn: s.mpn,
+                        error: `MPN ${s.mpn} not found in catalog — check MPN format or verify the product exists`,
+                    });
+                    continue;
+                }
+                // 1. map_policies/{docId_base}  or  map_policies/{docId_promo_<startDate|open>}
+                //    Same MPN can have one base row + multiple promo windows.
+                const docSuffix = s.isPromoRow
+                    ? `promo_${s.startDate || "open"}`
+                    : "base";
+                const mapPolicyDocId = `${s.docId}_${docSuffix}`;
+                writer.set(firestore.collection("map_policies").doc(mapPolicyDocId), {
                     mpn: s.mpn,
-                    error: `MPN ${s.mpn} not found in catalog — check MPN format or verify the product exists`,
-                });
-                continue;
-            }
-            // 1. map_policies/{docId_base}  or  map_policies/{docId_promo_<startDate|open>}
-            //    Same MPN can have one base row + multiple promo windows.
-            const docSuffix = s.isPromoRow
-                ? `promo_${s.startDate || "open"}`
-                : "base";
-            const mapPolicyDocId = `${s.docId}_${docSuffix}`;
-            writer.set(firestore.collection("map_policies").doc(mapPolicyDocId), {
-                mpn: s.mpn,
-                brand: s.brand,
-                map_price: s.mapPrice,
-                promo_price: s.promoPrice,
-                start_date: s.startDate,
-                end_date: s.endDate,
-                is_promo_row: s.isPromoRow,
-                import_batch_id: batch_id,
-                // Back-compat fields used by existing readers:
-                source_batch_id: batch_id,
-                is_always_on: !s.startDate && !s.endDate,
-                created_at: ts(),
-                updated_at: ts(),
-            }, { merge: true });
-            // 4. audit_log entry per row
-            writer.create(firestore.collection("audit_log").doc(), {
-                product_mpn: s.mpn,
-                event_type: "map_policy_imported",
-                map_price: s.mapPrice,
-                promo_price: s.promoPrice,
-                start_date: s.startDate,
-                end_date: s.endDate,
-                is_promo_row: s.isPromoRow,
-                source_batch_id: batch_id,
-                acting_user_id: userId,
-                created_at: ts(),
-            });
-            committedRows++;
-            committedMpns.push(s.mpn);
-        }
-        // 2 + 3. Product stamps + pricing_export_queue \u2014 one write per MPN, deterministic.
-        for (const stamp of productStamps.values()) {
-            const productInfo = productData.get(stamp.docId);
-            const productRef = firestore.collection("products").doc(stamp.docId);
-            writer.set(productRef, {
-                is_map_protected: true,
-                map_price: stamp.mapPrice,
-                map_promo_price: stamp.promoPrice,
-                map_promo_start: stamp.promoStart,
-                map_promo_end: stamp.promoEnd,
-                map_brand: stamp.brand,
-                map_last_updated_at: ts(),
-                map_source_batch_id: batch_id,
-                map_removal_proposed: false,
-                map_removal_proposed_at: null,
-                map_removal_source_batch: null,
-            }, { merge: true });
-            writer.set(firestore.collection("pricing_export_queue").doc(stamp.docId), {
-                mpn: productInfo.mpn || stamp.mpn,
-                sku: productInfo.sku || null,
-                rics_retail: productInfo.rics_retail || 0,
-                rics_offer: productInfo.rics_offer || 0,
-                scom: productInfo.scom || 0,
-                scom_sale: productInfo.scom_sale || null,
-                effective_date: stamp.promoStart,
-                queued_at: ts(),
-                queued_by: userId,
-                queued_reason: "map_change",
-                exported_at: null,
-                export_job_id: null,
-            }, { merge: true });
-        }
-        await writer.close();
-        // MAP REMOVAL REVIEW — any currently-protected MPN absent from this import.
-        // Use a second BulkWriter for the marking writes.
-        let removalProposed = 0;
-        const previouslyMapped = await firestore
-            .collection("products")
-            .where("is_map_protected", "==", true)
-            .get();
-        const committedSet = new Set(committedMpns);
-        const removalWriter = firestore.bulkWriter();
-        for (const doc of previouslyMapped.docs) {
-            const d = doc.data();
-            if (!committedSet.has(d.mpn)) {
-                removalWriter.set(doc.ref, {
-                    map_removal_proposed: true,
-                    map_removal_proposed_at: ts(),
-                    map_removal_source_batch: batch_id,
+                    brand: s.brand,
+                    map_price: s.mapPrice,
+                    promo_price: s.promoPrice,
+                    start_date: s.startDate,
+                    end_date: s.endDate,
+                    is_promo_row: s.isPromoRow,
+                    import_batch_id: batch_id,
+                    // Back-compat fields used by existing readers:
+                    source_batch_id: batch_id,
+                    is_always_on: !s.startDate && !s.endDate,
+                    created_at: ts(),
+                    updated_at: ts(),
                 }, { merge: true });
-                removalProposed++;
+                // 4. audit_log entry per row
+                writer.create(firestore.collection("audit_log").doc(), {
+                    product_mpn: s.mpn,
+                    event_type: "map_policy_imported",
+                    map_price: s.mapPrice,
+                    promo_price: s.promoPrice,
+                    start_date: s.startDate,
+                    end_date: s.endDate,
+                    is_promo_row: s.isPromoRow,
+                    source_batch_id: batch_id,
+                    acting_user_id: userId,
+                    created_at: ts(),
+                });
+                committedRows++;
+                committedMpns.push(s.mpn);
             }
-        }
-        await removalWriter.close();
-        // Cap errors persisted on the batch doc to 50 entries (1MB Firestore doc limit).
-        // Spill the full list to a subcollection in chunks of 200 if there were more.
-        const totalErrors = errors.length;
-        const errorsForDoc = errors.slice(0, 50);
-        const errorsTruncated = errors.length > 50;
-        if (errorsTruncated) {
-            const errorWriter = firestore.bulkWriter();
-            const ERR_CHUNK = 200;
-            for (let i = 0; i < errors.length; i += ERR_CHUNK) {
-                errorWriter.set(batchRef.collection("errors").doc(`chunk_${String(i / ERR_CHUNK).padStart(4, "0")}`), { errors: errors.slice(i, i + ERR_CHUNK), start_index: i });
+            // 2 + 3. Product stamps + pricing_export_queue \u2014 one write per MPN, deterministic.
+            for (const stamp of productStamps.values()) {
+                const productInfo = productData.get(stamp.docId);
+                const productRef = firestore.collection("products").doc(stamp.docId);
+                writer.set(productRef, {
+                    is_map_protected: true,
+                    map_price: stamp.mapPrice,
+                    map_promo_price: stamp.promoPrice,
+                    map_promo_start: stamp.promoStart,
+                    map_promo_end: stamp.promoEnd,
+                    map_brand: stamp.brand,
+                    map_last_updated_at: ts(),
+                    map_source_batch_id: batch_id,
+                    map_removal_proposed: false,
+                    map_removal_proposed_at: null,
+                    map_removal_source_batch: null,
+                }, { merge: true });
+                writer.set(firestore.collection("pricing_export_queue").doc(stamp.docId), {
+                    mpn: productInfo.mpn || stamp.mpn,
+                    sku: productInfo.sku || null,
+                    rics_retail: productInfo.rics_retail || 0,
+                    rics_offer: productInfo.rics_offer || 0,
+                    scom: productInfo.scom || 0,
+                    scom_sale: productInfo.scom_sale || null,
+                    effective_date: stamp.promoStart,
+                    queued_at: ts(),
+                    queued_by: userId,
+                    queued_reason: "map_change",
+                    exported_at: null,
+                    export_job_id: null,
+                }, { merge: true });
             }
-            await errorWriter.close();
-        }
-        const finalStatus = committedRows === 0 ? "failed" : "complete";
-        await batchRef.update({
-            status: finalStatus,
-            committed_rows: committedRows,
-            failed_rows: failedRows,
-            skipped_rows: skippedRows,
-            errors: errorsForDoc,
-            errors_total: totalErrors,
-            errors_truncated: errorsTruncated,
-            completed_at: ts(),
-            summary: { removal_proposed: removalProposed },
-        });
-        res.status(200).json({
-            batch_id,
-            status: finalStatus,
-            total_rows: records.length,
-            committed_rows: committedRows,
-            failed_rows: failedRows,
-            skipped_rows: skippedRows,
-            removal_proposed: removalProposed,
-            errors: errorsForDoc,
-            errors_total: totalErrors,
-            errors_truncated: errorsTruncated,
+            await writer.close();
+            // MAP REMOVAL REVIEW — any currently-protected MPN absent from this import.
+            // Use a second BulkWriter for the marking writes.
+            let removalProposed = 0;
+            const previouslyMapped = await firestore
+                .collection("products")
+                .where("is_map_protected", "==", true)
+                .get();
+            const committedSet = new Set(committedMpns);
+            const removalWriter = firestore.bulkWriter();
+            for (const doc of previouslyMapped.docs) {
+                const d = doc.data();
+                if (!committedSet.has(d.mpn)) {
+                    removalWriter.set(doc.ref, {
+                        map_removal_proposed: true,
+                        map_removal_proposed_at: ts(),
+                        map_removal_source_batch: batch_id,
+                    }, { merge: true });
+                    removalProposed++;
+                }
+            }
+            await removalWriter.close();
+            // Cap errors persisted on the batch doc to 50 entries (1MB Firestore doc limit).
+            // Spill the full list to a subcollection in chunks of 200 if there were more.
+            const totalErrors = errors.length;
+            const errorsForDoc = errors.slice(0, 50);
+            const errorsTruncated = errors.length > 50;
+            if (errorsTruncated) {
+                const errorWriter = firestore.bulkWriter();
+                const ERR_CHUNK = 200;
+                for (let i = 0; i < errors.length; i += ERR_CHUNK) {
+                    errorWriter.set(batchRef.collection("errors").doc(`chunk_${String(i / ERR_CHUNK).padStart(4, "0")}`), { errors: errors.slice(i, i + ERR_CHUNK), start_index: i });
+                }
+                await errorWriter.close();
+            }
+            const finalStatus = committedRows === 0 ? "failed" : "complete";
+            await batchRef.update({
+                status: finalStatus,
+                committed_rows: committedRows,
+                failed_rows: failedRows,
+                skipped_rows: skippedRows,
+                errors: errorsForDoc,
+                errors_total: totalErrors,
+                errors_truncated: errorsTruncated,
+                completed_at: ts(),
+                summary: { removal_proposed: removalProposed },
+            });
+            await (0, importJobRunner_1.finishImportJob)(batch_id, userId === "system" ? null : userId, "map_policy", `MAP Policy import complete — ${committedRows.toLocaleString()} committed, ${skippedRows.toLocaleString()} skipped`);
         });
     }
     catch (err) {
@@ -512,9 +516,11 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(["
         catch (_) {
             // best effort
         }
-        res.status(500).json({
-            error: "An unexpected error occurred during batch commit. Please try again.",
-        });
+        if (!res.headersSent) {
+            res.status(500).json({
+                error: "An unexpected error occurred during batch commit. Please try again.",
+            });
+        }
     }
 });
 // ── GET /templates — list saved templates ──

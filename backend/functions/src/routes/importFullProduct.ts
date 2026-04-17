@@ -7,6 +7,12 @@ import { executeSmartRules } from "../services/smartRules";
 import { mpnToDocId } from "../services/mpnUtils";
 import { mapFullProductRow, FULL_PRODUCT_ROW_MAP } from "../services/ricsParser";
 import { buildSearchTokens } from "../services/searchTokens";
+import {
+  respondAsync,
+  runInBackground,
+  finishImportJob,
+  updateProgress,
+} from "../services/importJobRunner";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -148,8 +154,18 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       return;
     }
 
-    // Step 2 — Set status to processing
-    await batchRef.update({ status: "processing" });
+    // Step 2 — Set status to processing and respond immediately so the
+    // client can show a progress card while the heavy work runs in the
+    // background. The remainder of this handler runs detached.
+    await batchRef.update({
+      status: "processing",
+      progress_pct: 0,
+      processing_started_at: db.FieldValue.serverTimestamp(),
+    });
+    const __userId = (req as any).user?.uid || batchData.uploaded_by || null;
+    respondAsync(res, batch_id);
+
+    runInBackground(batch_id, "full_product", async () => {
 
     // Step 3 — Retrieve the file from Firebase Storage
     const bucket = admin.storage().bucket();
@@ -197,6 +213,13 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
 
     // Step 5 — Process each row
     for (let i = 0; i < records.length; i++) {
+      // Background progress signal — throttled inside updateProgress.
+      if (i % 25 === 0) {
+        await updateProgress(batch_id, (i / records.length) * 100, {
+          committed: committedRows,
+          failed: failedRows,
+        });
+      }
       const row = records[i];
       const rowNum = i + 2; // 1-indexed, +1 for header
       const mpn = (row.MPN || "").trim();
@@ -675,19 +698,13 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       },
     });
 
-    // Part 4 — Import Results Response
-    res.status(200).json({
+    // Part 4 — async progress notification (replaces the now-detached res.json)
+    await finishImportJob(
       batch_id,
-      status: finalStatus,
-      total_rows: records.length,
-      committed_rows: committedRows,
-      failed_rows: failedRows,
-      pricing_incomplete: pricingIncomplete,
-      pricing_discrepancy: pricingDiscrepancy,
-      uuid_names_cleaned: uuidNamesCleaned,
-      no_image_products: noImageProducts,
-      errors,
-      warnings: batchWarnings,
+      __userId,
+      "full_product",
+      `Full product import complete — ${committedRows.toLocaleString()} committed, ${failedRows.toLocaleString()} failed`
+    );
     });
   } catch (err: any) {
     console.error("Commit error:", err);
@@ -701,7 +718,9 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     } catch (_) {
       // swallow — best effort
     }
-    res.status(500).json({ error: "An unexpected error occurred during batch commit. Please try again." });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "An unexpected error occurred during batch commit. Please try again." });
+    }
   }
 });
 

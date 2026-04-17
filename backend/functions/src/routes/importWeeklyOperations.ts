@@ -24,6 +24,12 @@ import { checkHighPriorityFlag } from "../services/launchHighPriority";
 import { writeWeeklySnapshots } from "../services/executiveProjections";
 import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
 import { generateWeeklyAdvisories } from "../services/aiWeeklyAdvisory";
+import {
+  respondAsync,
+  runInBackground,
+  finishImportJob,
+  updateProgress,
+} from "../services/importJobRunner";
 
 const router = Router();
 const upload = multer({
@@ -190,8 +196,17 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       return;
     }
 
-    // Step 2 — Set status to processing
-    await batchRef.update({ status: "processing" });
+    // Step 2 — Set status to processing and respond immediately. The rest
+    // of the handler runs detached in the background.
+    await batchRef.update({
+      status: "processing",
+      progress_pct: 0,
+      processing_started_at: db.FieldValue.serverTimestamp(),
+    });
+    const __userId = (req as any).user?.uid || batchData.uploaded_by || null;
+    respondAsync(res, batch_id);
+
+    runInBackground(batch_id, "weekly_operations", async () => {
 
     // Step 3 — Retrieve the file from Firebase Storage
     const bucket = admin.storage().bucket();
@@ -228,6 +243,12 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
 
     // Step 5 — Process each row
     for (let i = 0; i < records.length; i++) {
+      if (i % 25 === 0) {
+        await updateProgress(batch_id, (i / records.length) * 100, {
+          committed: committedRows,
+          failed: failedRows,
+        });
+      }
       const row = records[i];
       const rowNum = i + 2;
       const mpn = (row.MPN || "").trim();
@@ -411,18 +432,12 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       },
     });
 
-    res.status(200).json({
+    await finishImportJob(
       batch_id,
-      status: finalStatus,
-      total_rows: records.length,
-      committed_rows: committedRows,
-      failed_rows: failedRows,
-      pricing_current: pricingCurrent,
-      pricing_discrepancy: pricingDiscrepancy,
-      pricing_pending: pricingPending,
-      loss_leader_review: lossLeaderReview,
-      metrics_calculated: metricsResult.calculated,
-      errors,
+      __userId,
+      "weekly_operations",
+      `Weekly Operations import complete — ${committedRows.toLocaleString()} committed, ${failedRows.toLocaleString()} failed`
+    );
     });
   } catch (err: any) {
     console.error("Weekly Operations commit error:", err);
@@ -443,10 +458,12 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     } catch (_) {
       // swallow — best effort
     }
-    res.status(500).json({
-      error:
-        "An unexpected error occurred during batch commit. Please try again.",
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        error:
+          "An unexpected error occurred during batch commit. Please try again.",
+      });
+    }
   }
 });
 

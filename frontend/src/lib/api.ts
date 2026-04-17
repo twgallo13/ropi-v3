@@ -2392,3 +2392,36 @@ export async function deleteProduct(mpn: string): Promise<{ ok: boolean }> {
   if (!res.ok) throw data;
   return data;
 }
+
+// ──────────────────────────────────────────────────────────────
+//  Async import progress (shared across all five import families)
+// ──────────────────────────────────────────────────────────────
+export interface ImportStatus {
+  batch_id: string;
+  status: string;
+  import_type: string | null;
+  row_count: number;
+  committed_rows: number;
+  failed_rows: number;
+  skipped_rows: number;
+  progress_pct: number;
+  completed_at: string | null;
+  error_message: string | null;
+}
+
+export async function fetchImportStatus(batchId: string): Promise<ImportStatus> {
+  const res = await fetch(
+    `${BASE}/api/v1/imports/status/${encodeURIComponent(batchId)}`,
+    { headers: await headers() }
+  );
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+export async function fetchActiveImportJobs(): Promise<{ jobs: ImportStatus[] }> {
+  const res = await fetch(`${BASE}/api/v1/imports/active`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}

@@ -21,6 +21,12 @@ import { v4 as uuidv4 } from "uuid";
 import { parse } from "csv-parse/sync";
 import { mpnToDocId } from "../services/mpnUtils";
 import { recomputeSalesMetrics } from "../services/postImportCalculation";
+import {
+  respondAsync,
+  runInBackground,
+  finishImportJob,
+  updateProgress,
+} from "../services/importJobRunner";
 
 const router = Router();
 const upload = multer({
@@ -279,7 +285,15 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       return;
     }
 
-    await batchRef.update({ status: "processing" });
+    await batchRef.update({
+      status: "processing",
+      progress_pct: 0,
+      processing_started_at: dbNS.FieldValue.serverTimestamp(),
+    });
+    const __userId = (req as any).user?.uid || batchData.uploaded_by || null;
+    respondAsync(res, batch_id);
+
+    runInBackground(batch_id, "sales", async () => {
 
     const importType: "web" | "store" = batchData.import_type;
     const reportDate: string = batchData.report_date;
@@ -310,6 +324,13 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     const productNotFoundMpns: string[] = [];
 
     for (let i = 0; i < dataRows.length; i++) {
+      if (i % 50 === 0) {
+        await updateProgress(batch_id, (i / dataRows.length) * 100, {
+          committed: committedRows,
+          failed: failedRows,
+          skipped: skippedRows,
+        });
+      }
       const r = dataRows[i] || [];
       const rowNum = i + 3;
       const mpn = (r[colIdx.mpn] || "").trim();
@@ -413,18 +434,12 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       },
     });
 
-    res.status(200).json({
+    await finishImportJob(
       batch_id,
-      status: finalStatus,
-      import_type: importType,
-      report_date: reportDate,
-      total_rows: dataRows.length,
-      committed_rows: committedRows,
-      skipped_rows: skippedRows,
-      failed_rows: failedRows,
-      product_not_found_count: productNotFoundMpns.length,
-      metrics_calculated: metricsResult.calculated,
-      errors,
+      __userId,
+      "sales",
+      `Sales import (${importType}) complete — ${committedRows.toLocaleString()} committed, ${skippedRows.toLocaleString()} skipped`
+    );
     });
   } catch (err: any) {
     console.error("Sales commit error:", err);
@@ -441,10 +456,12 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     } catch {
       /* best effort */
     }
-    res.status(500).json({
-      error: "An unexpected error occurred during batch commit. Please try again.",
-      detail: err?.message || String(err),
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: "An unexpected error occurred during batch commit. Please try again.",
+        detail: err?.message || String(err),
+      });
+    }
   }
 });
 

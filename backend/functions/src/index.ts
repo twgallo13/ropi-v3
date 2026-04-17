@@ -4,6 +4,7 @@ import admin from "firebase-admin";
 import importFullProductRouter from "./routes/importFullProduct";
 import importWeeklyOperationsRouter from "./routes/importWeeklyOperations";
 import importSalesRouter from "./routes/importSales";
+import importsStatusRouter from "./routes/importsStatus";
 import productsRouter from "./routes/products";
 import attributeRegistryRouter from "./routes/attributeRegistry";
 import buyerReviewRouter from "./routes/buyerReview";
@@ -54,6 +55,9 @@ app.get("/api/v1/health", (_req, res) => {
 app.use("/api/v1/imports/full-product", importFullProductRouter);
 app.use("/api/v1/imports/weekly-operations", importWeeklyOperationsRouter);
 app.use("/api/v1/imports/sales", importSalesRouter);
+// Shared async-progress endpoints (mounted before family routers so /status
+// and /active resolve here regardless of which import family the batch is for)
+app.use("/api/v1/imports", importsStatusRouter);
 
 // ── Product Routes ──
 app.use("/api/v1/products", productsRouter);

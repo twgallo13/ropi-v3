@@ -15,6 +15,12 @@ import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
 import { extractHeaders } from "../services/csvUtils";
+import {
+  respondAsync,
+  runInBackground,
+  finishImportJob,
+  updateProgress,
+} from "../services/importJobRunner";
 
 const router = Router();
 const upload = multer({
@@ -277,7 +283,14 @@ router.post(
 
       const mapping = batchData.column_mapping || {};
 
-      await batchRef.update({ status: "processing" });
+      await batchRef.update({
+        status: "processing",
+        progress_pct: 0,
+        processing_started_at: ts(),
+      });
+      respondAsync(res, batch_id);
+
+      runInBackground(batch_id, "map_policy", async () => {
 
       const bucket = admin.storage().bucket();
       const [fileBuffer] = await bucket.file(batchData.file_path).download();
@@ -320,6 +333,13 @@ router.post(
       const staged: Staged[] = [];
 
       for (let i = 0; i < records.length; i++) {
+        if (i % 50 === 0) {
+          await updateProgress(batch_id, (i / records.length) * 100, {
+            committed: committedRows,
+            failed: failedRows,
+            skipped: skippedRows,
+          });
+        }
         const row = records[i];
         const rowNum = i + 2;
 
@@ -590,17 +610,12 @@ router.post(
         summary: { removal_proposed: removalProposed },
       });
 
-      res.status(200).json({
+      await finishImportJob(
         batch_id,
-        status: finalStatus,
-        total_rows: records.length,
-        committed_rows: committedRows,
-        failed_rows: failedRows,
-        skipped_rows: skippedRows,
-        removal_proposed: removalProposed,
-        errors: errorsForDoc,
-        errors_total: totalErrors,
-        errors_truncated: errorsTruncated,
+        userId === "system" ? null : userId,
+        "map_policy",
+        `MAP Policy import complete — ${committedRows.toLocaleString()} committed, ${skippedRows.toLocaleString()} skipped`
+      );
       });
     } catch (err: any) {
       console.error("MAP commit error:", err);
@@ -613,9 +628,11 @@ router.post(
       } catch (_) {
         // best effort
       }
-      res.status(500).json({
-        error: "An unexpected error occurred during batch commit. Please try again.",
-      });
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: "An unexpected error occurred during batch commit. Please try again.",
+        });
+      }
     }
   }
 );

@@ -26,6 +26,7 @@ const uuid_1 = require("uuid");
 const sync_1 = require("csv-parse/sync");
 const mpnUtils_1 = require("../services/mpnUtils");
 const postImportCalculation_1 = require("../services/postImportCalculation");
+const importJobRunner_1 = require("../services/importJobRunner");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -259,132 +260,135 @@ router.post("/:batch_id/commit", async (req, res) => {
             });
             return;
         }
-        await batchRef.update({ status: "processing" });
-        const importType = batchData.import_type;
-        const reportDate = batchData.report_date;
-        const colIdx = batchData.column_indexes;
-        const bucket = firebase_admin_1.default.storage().bucket();
-        const [fileBuffer] = await bucket.file(batchData.file_path).download();
-        const csvContent = fileBuffer.toString("utf-8");
-        const rows = (0, sync_1.parse)(csvContent, {
-            columns: false,
-            skip_empty_lines: true,
-            relax_column_count: true,
-            trim: true,
+        await batchRef.update({
+            status: "processing",
+            progress_pct: 0,
+            processing_started_at: dbNS.FieldValue.serverTimestamp(),
         });
-        const dataRows = rows.slice(2);
-        let committedRows = 0;
-        let skippedRows = 0;
-        let failedRows = 0;
-        const errors = [];
-        const touchedMpns = [];
-        const productNotFoundMpns = [];
-        for (let i = 0; i < dataRows.length; i++) {
-            const r = dataRows[i] || [];
-            const rowNum = i + 3;
-            const mpn = (r[colIdx.mpn] || "").trim();
-            if (!mpn) {
-                skippedRows++;
-                continue;
-            }
-            try {
-                const sales7 = parseSalesInt(r[colIdx.sales_7d]);
-                const sales30 = parseSalesInt(r[colIdx.sales_30d]);
-                const lastSoldRaw = r[colIdx.last_sold_date] || "";
-                const { date: lastSaleDate, past: lastSalePast } = parseLastSoldDate(lastSoldRaw);
-                const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
-                // Snapshot — overwrite per MPN per report_date per import_type
-                const snapshotId = `${docId}_${reportDate}_${importType}`;
-                await firestore.collection("sales_snapshots").doc(snapshotId).set({
-                    mpn,
-                    report_date: reportDate,
-                    import_type: importType,
-                    web_sales_7d: importType === "web" ? sales7 : 0,
-                    web_sales_30d: importType === "web" ? sales30 : 0,
-                    store_sales_7d: importType === "store" ? sales7 : 0,
-                    store_sales_30d: importType === "store" ? sales30 : 0,
-                    last_sale_date: lastSaleDate,
-                    last_sale_date_past: lastSalePast,
-                    imported_at: dbNS.FieldValue.serverTimestamp(),
-                }, { merge: false });
-                // Stamp on product document (only if exists)
-                const productRef = firestore.collection("products").doc(docId);
-                const productSnap = await productRef.get();
-                if (!productSnap.exists) {
-                    productNotFoundMpns.push(mpn);
-                    // Snapshot still written — but product stamp + recompute skipped
-                    committedRows++;
+        const __userId = req.user?.uid || batchData.uploaded_by || null;
+        (0, importJobRunner_1.respondAsync)(res, batch_id);
+        (0, importJobRunner_1.runInBackground)(batch_id, "sales", async () => {
+            const importType = batchData.import_type;
+            const reportDate = batchData.report_date;
+            const colIdx = batchData.column_indexes;
+            const bucket = firebase_admin_1.default.storage().bucket();
+            const [fileBuffer] = await bucket.file(batchData.file_path).download();
+            const csvContent = fileBuffer.toString("utf-8");
+            const rows = (0, sync_1.parse)(csvContent, {
+                columns: false,
+                skip_empty_lines: true,
+                relax_column_count: true,
+                trim: true,
+            });
+            const dataRows = rows.slice(2);
+            let committedRows = 0;
+            let skippedRows = 0;
+            let failedRows = 0;
+            const errors = [];
+            const touchedMpns = [];
+            const productNotFoundMpns = [];
+            for (let i = 0; i < dataRows.length; i++) {
+                if (i % 50 === 0) {
+                    await (0, importJobRunner_1.updateProgress)(batch_id, (i / dataRows.length) * 100, {
+                        committed: committedRows,
+                        failed: failedRows,
+                        skipped: skippedRows,
+                    });
+                }
+                const r = dataRows[i] || [];
+                const rowNum = i + 3;
+                const mpn = (r[colIdx.mpn] || "").trim();
+                if (!mpn) {
+                    skippedRows++;
                     continue;
                 }
-                const stamp = {
-                    last_sales_import_at: dbNS.FieldValue.serverTimestamp(),
-                    updated_at: dbNS.FieldValue.serverTimestamp(),
-                };
-                if (importType === "web") {
-                    stamp.web_sales_7d = sales7;
-                    stamp.web_sales_30d = sales30;
-                    stamp.last_web_sale_date = lastSaleDate;
-                    stamp.last_web_sale_past = lastSalePast;
-                    stamp.last_web_sales_report_date = reportDate;
+                try {
+                    const sales7 = parseSalesInt(r[colIdx.sales_7d]);
+                    const sales30 = parseSalesInt(r[colIdx.sales_30d]);
+                    const lastSoldRaw = r[colIdx.last_sold_date] || "";
+                    const { date: lastSaleDate, past: lastSalePast } = parseLastSoldDate(lastSoldRaw);
+                    const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+                    // Snapshot — overwrite per MPN per report_date per import_type
+                    const snapshotId = `${docId}_${reportDate}_${importType}`;
+                    await firestore.collection("sales_snapshots").doc(snapshotId).set({
+                        mpn,
+                        report_date: reportDate,
+                        import_type: importType,
+                        web_sales_7d: importType === "web" ? sales7 : 0,
+                        web_sales_30d: importType === "web" ? sales30 : 0,
+                        store_sales_7d: importType === "store" ? sales7 : 0,
+                        store_sales_30d: importType === "store" ? sales30 : 0,
+                        last_sale_date: lastSaleDate,
+                        last_sale_date_past: lastSalePast,
+                        imported_at: dbNS.FieldValue.serverTimestamp(),
+                    }, { merge: false });
+                    // Stamp on product document (only if exists)
+                    const productRef = firestore.collection("products").doc(docId);
+                    const productSnap = await productRef.get();
+                    if (!productSnap.exists) {
+                        productNotFoundMpns.push(mpn);
+                        // Snapshot still written — but product stamp + recompute skipped
+                        committedRows++;
+                        continue;
+                    }
+                    const stamp = {
+                        last_sales_import_at: dbNS.FieldValue.serverTimestamp(),
+                        updated_at: dbNS.FieldValue.serverTimestamp(),
+                    };
+                    if (importType === "web") {
+                        stamp.web_sales_7d = sales7;
+                        stamp.web_sales_30d = sales30;
+                        stamp.last_web_sale_date = lastSaleDate;
+                        stamp.last_web_sale_past = lastSalePast;
+                        stamp.last_web_sales_report_date = reportDate;
+                    }
+                    else {
+                        stamp.store_sales_7d = sales7;
+                        stamp.store_sales_30d = sales30;
+                        stamp.last_store_sale_date = lastSaleDate;
+                        stamp.last_store_sale_past = lastSalePast;
+                        stamp.last_store_sales_report_date = reportDate;
+                    }
+                    await productRef.set(stamp, { merge: true });
+                    touchedMpns.push(mpn);
+                    committedRows++;
                 }
-                else {
-                    stamp.store_sales_7d = sales7;
-                    stamp.store_sales_30d = sales30;
-                    stamp.last_store_sale_date = lastSaleDate;
-                    stamp.last_store_sale_past = lastSalePast;
-                    stamp.last_store_sales_report_date = reportDate;
+                catch (rowErr) {
+                    failedRows++;
+                    errors.push({
+                        row: rowNum,
+                        mpn,
+                        error: rowErr?.message || "Unexpected error processing row.",
+                    });
+                    console.error(`Sales Row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
                 }
-                await productRef.set(stamp, { merge: true });
-                touchedMpns.push(mpn);
-                committedRows++;
             }
-            catch (rowErr) {
-                failedRows++;
-                errors.push({
-                    row: rowNum,
-                    mpn,
-                    error: rowErr?.message || "Unexpected error processing row.",
-                });
-                console.error(`Sales Row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
+            // Recompute STR% / WOS / weekly_sales_rate for touched products
+            let metricsResult = { calculated: 0, skipped: 0 };
+            if (touchedMpns.length > 0) {
+                try {
+                    metricsResult = await (0, postImportCalculation_1.recomputeSalesMetrics)(touchedMpns);
+                }
+                catch (mErr) {
+                    console.error("recomputeSalesMetrics failed:", mErr?.message || mErr);
+                }
             }
-        }
-        // Recompute STR% / WOS / weekly_sales_rate for touched products
-        let metricsResult = { calculated: 0, skipped: 0 };
-        if (touchedMpns.length > 0) {
-            try {
-                metricsResult = await (0, postImportCalculation_1.recomputeSalesMetrics)(touchedMpns);
-            }
-            catch (mErr) {
-                console.error("recomputeSalesMetrics failed:", mErr?.message || mErr);
-            }
-        }
-        const finalStatus = committedRows === 0 ? "failed" : "complete";
-        await batchRef.update({
-            status: finalStatus,
-            committed_rows: committedRows,
-            failed_rows: failedRows,
-            skipped_rows: skippedRows,
-            product_not_found_count: productNotFoundMpns.length,
-            errors,
-            completed_at: dbNS.FieldValue.serverTimestamp(),
-            summary: {
-                metrics_calculated: metricsResult.calculated,
-                metrics_skipped: metricsResult.skipped,
-                product_not_found: productNotFoundMpns.length,
-            },
-        });
-        res.status(200).json({
-            batch_id,
-            status: finalStatus,
-            import_type: importType,
-            report_date: reportDate,
-            total_rows: dataRows.length,
-            committed_rows: committedRows,
-            skipped_rows: skippedRows,
-            failed_rows: failedRows,
-            product_not_found_count: productNotFoundMpns.length,
-            metrics_calculated: metricsResult.calculated,
-            errors,
+            const finalStatus = committedRows === 0 ? "failed" : "complete";
+            await batchRef.update({
+                status: finalStatus,
+                committed_rows: committedRows,
+                failed_rows: failedRows,
+                skipped_rows: skippedRows,
+                product_not_found_count: productNotFoundMpns.length,
+                errors,
+                completed_at: dbNS.FieldValue.serverTimestamp(),
+                summary: {
+                    metrics_calculated: metricsResult.calculated,
+                    metrics_skipped: metricsResult.skipped,
+                    product_not_found: productNotFoundMpns.length,
+                },
+            });
+            await (0, importJobRunner_1.finishImportJob)(batch_id, __userId, "sales", `Sales import (${importType}) complete — ${committedRows.toLocaleString()} committed, ${skippedRows.toLocaleString()} skipped`);
         });
     }
     catch (err) {
@@ -403,10 +407,12 @@ router.post("/:batch_id/commit", async (req, res) => {
         catch {
             /* best effort */
         }
-        res.status(500).json({
-            error: "An unexpected error occurred during batch commit. Please try again.",
-            detail: err?.message || String(err),
-        });
+        if (!res.headersSent) {
+            res.status(500).json({
+                error: "An unexpected error occurred during batch commit. Please try again.",
+                detail: err?.message || String(err),
+            });
+        }
     }
 });
 // ─────────────────────────────────────────────────────────────

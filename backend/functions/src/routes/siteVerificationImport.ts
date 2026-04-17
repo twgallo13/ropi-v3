@@ -15,6 +15,12 @@ import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
 import { extractHeaders } from "../services/csvUtils";
+import {
+  respondAsync,
+  runInBackground,
+  finishImportJob,
+  updateProgress,
+} from "../services/importJobRunner";
 
 const router = Router();
 const upload = multer({
@@ -161,12 +167,28 @@ router.post(
         return idx === undefined ? "" : (row[idx] || "").trim();
       }
 
-      let committed = 0;
-      const warnings: string[] = [];
-      const errors: string[] = [];
+      // Mark processing and respond immediately — the rest runs in the background.
+      await batchRef.update({
+        status: "processing",
+        progress_pct: 0,
+        processing_started_at: ts(),
+      });
+      const __userId = req.user?.uid || null;
+      respondAsync(res, batch_id);
 
-      for (let i = 0; i < rawRows.length; i++) {
-        const row = rawRows[i];
+      runInBackground(batch_id, "site_verification", async () => {
+        let committed = 0;
+        const warnings: string[] = [];
+        const errors: string[] = [];
+
+        for (let i = 0; i < rawRows.length; i++) {
+          if (i % 25 === 0) {
+            await updateProgress(batch_id, (i / rawRows.length) * 100, {
+              committed,
+              failed: errors.length,
+            });
+          }
+          const row = rawRows[i];
         const mpn = cell(row, column_mapping.mpn);
         const site =
           (column_mapping.site ? cell(row, column_mapping.site) : "") ||
@@ -260,10 +282,18 @@ router.post(
         created_at: ts(),
       });
 
-      res.json({ batch_id, committed, failed: errors.length, warnings, errors });
+      await finishImportJob(
+        batch_id,
+        __userId,
+        "site_verification",
+        `Site Verification import complete — ${committed.toLocaleString()} committed, ${errors.length.toLocaleString()} failed`
+      );
+      });
     } catch (err: any) {
       console.error("Site verification commit error:", err);
-      res.status(500).json({ error: err.message });
+      if (!res.headersSent) {
+        res.status(500).json({ error: err.message });
+      }
     }
   }
 );

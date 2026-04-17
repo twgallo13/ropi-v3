@@ -25,6 +25,7 @@ const launchHighPriority_1 = require("../services/launchHighPriority");
 const executiveProjections_1 = require("../services/executiveProjections");
 const buyerPerformanceMatrix_1 = require("../services/buyerPerformanceMatrix");
 const aiWeeklyAdvisory_1 = require("../services/aiWeeklyAdvisory");
+const importJobRunner_1 = require("../services/importJobRunner");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -165,202 +166,205 @@ router.post("/:batch_id/commit", async (req, res) => {
             });
             return;
         }
-        // Step 2 — Set status to processing
-        await batchRef.update({ status: "processing" });
-        // Step 3 — Retrieve the file from Firebase Storage
-        const bucket = firebase_admin_1.default.storage().bucket();
-        const [fileBuffer] = await bucket.file(batchData.file_path).download();
-        const csvContent = fileBuffer.toString("utf-8");
-        // Step 4 — Parse all data rows (case-insensitive, BOM-safe headers)
-        const CANONICAL_WEEKLY = {};
-        REQUIRED_COLUMNS_WEEKLY.forEach((c) => { CANONICAL_WEEKLY[c.toLowerCase()] = c; });
-        const records = (0, sync_1.parse)(csvContent, {
-            columns: (header) => header.map((h) => {
-                const clean = h.trim().replace(/^\uFEFF/, "");
-                return CANONICAL_WEEKLY[clean.toLowerCase()] || clean;
-            }),
-            skip_empty_lines: true,
-            relax_column_count: true,
-            trim: true,
-        });
-        // Load admin settings for pricing resolution
-        const adminSettings = await (0, adminSettings_1.getAdminSettings)();
-        // Counters
-        let committedRows = 0;
-        let failedRows = 0;
-        let pricingCurrent = 0;
-        let pricingDiscrepancy = 0;
-        let pricingPending = 0;
-        let lossLeaderReview = 0;
-        const errors = [];
-        const committedMpns = [];
-        // Step 5 — Process each row
-        for (let i = 0; i < records.length; i++) {
-            const row = records[i];
-            const rowNum = i + 2;
-            const mpn = (row.MPN || "").trim();
-            if (!mpn) {
-                failedRows++;
-                errors.push({
-                    row: rowNum,
-                    mpn: "",
-                    error: "MPN is required — this row has no product identifier",
-                });
-                continue;
-            }
-            // Look up product by MPN — if not found, add to failed rows
-            const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
-            const productSnap = await firestore.collection("products").doc(docId).get();
-            if (!productSnap.exists) {
-                failedRows++;
-                errors.push({
-                    row: rowNum,
-                    mpn,
-                    error: `MPN ${mpn} not found in catalog — verify the product exists before running a Weekly Operations import`,
-                });
-                continue;
-            }
-            try {
-                const existingProduct = productSnap.data();
-                // Parse pricing and inventory fields
-                const ricsRetail = parseFloat(row["Store Price"]) || 0;
-                const ricsOffer = parseFloat(row["Store Sale Price"]) || 0;
-                const scom = parseFloat(row["Web Price"]) || 0;
-                const scomSale = parseFloat(row["Web Sale Price"]) || 0;
-                const inventoryStore = parseInt(row["Store Inv"]) || 0;
-                const inventoryWarehouse = parseInt(row["Warehouse Inv"]) || 0;
-                const inventoryWhs = parseInt(row["WHS inv"]) || 0;
-                // Update pricing fields on product document (merge)
-                await firestore.collection("products").doc(docId).set({
-                    rics_retail: ricsRetail,
-                    rics_offer: ricsOffer,
-                    scom,
-                    scom_sale: scomSale,
-                    inventory_store: inventoryStore,
-                    inventory_warehouse: inventoryWarehouse,
-                    inventory_whs: inventoryWhs,
-                    last_weekly_import_at: db.FieldValue.serverTimestamp(),
-                    updated_at: db.FieldValue.serverTimestamp(),
-                }, { merge: true });
-                // Immediately fire Pricing Resolution for this product
-                const pricingInputs = {
-                    rics_retail: ricsRetail,
-                    rics_offer: ricsOffer,
-                    scom,
-                    scom_sale: scomSale,
-                    actual_cost: existingProduct.actual_cost || null,
-                };
-                const pricingResult = await (0, pricingResolution_1.resolvePricing)(mpn, pricingInputs, await (0, mapState_1.getMapState)(mpn), adminSettings);
-                // Write pricing snapshot
-                await (0, pricingResolution_1.writePricingSnapshot)(mpn, batch_id, pricingResult);
-                // Track routing outcomes
-                switch (pricingResult.status) {
-                    case "Pricing Current":
-                        pricingCurrent++;
-                        break;
-                    case "Pricing Discrepancy":
-                        pricingDiscrepancy++;
-                        break;
-                    case "Pricing Pending":
-                        pricingPending++;
-                        break;
-                    case "Loss-Leader Review Pending":
-                        lossLeaderReview++;
-                        break;
-                }
-                committedRows++;
-                committedMpns.push(mpn);
-            }
-            catch (rowErr) {
-                failedRows++;
-                errors.push({
-                    row: rowNum,
-                    mpn,
-                    error: "An unexpected error occurred while processing this row. Please verify the data and try again.",
-                });
-                console.error(`Weekly Ops Row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
-            }
-        }
-        // Step 6 — Fire Post-Import Calculation Job for all committed MPNs
-        let metricsResult = { calculated: 0, skipped: 0 };
-        if (committedMpns.length > 0) {
-            metricsResult = await (0, postImportCalculation_1.runPostImportCalculations)(batch_id, committedMpns, adminSettings);
-        }
-        // Step 6b — Step 2.2 — Run cadence evaluation after post-import calcs
-        let cadenceResult = { evaluated: 0, assigned: 0, unassigned: 0, conflicts: 0, skipped_mid_cadence: 0 };
-        if (committedMpns.length > 0) {
-            try {
-                cadenceResult = await (0, cadenceEngine_1.runCadenceEvaluation)(committedMpns);
-            }
-            catch (ce) {
-                console.error("runCadenceEvaluation failed:", ce.message);
-            }
-        }
-        // Step 6b.1 — Step 3.2 — Weekly metric snapshots for executive dashboard
-        try {
-            await (0, executiveProjections_1.writeWeeklySnapshots)();
-        }
-        catch (snapErr) {
-            console.error("writeWeeklySnapshots failed:", snapErr.message);
-        }
-        // Step 6b.2 — Step 3.3 — Buyer performance matrix (depends on fresh snapshots)
-        try {
-            await (0, buyerPerformanceMatrix_1.computeBuyerPerformanceMatrix)();
-        }
-        catch (bpErr) {
-            console.error("computeBuyerPerformanceMatrix failed:", bpErr.message);
-        }
-        // Step 6b.3 — Step 3.4 — AI Weekly Advisory (fire-and-forget; don't block response)
-        try {
-            (0, aiWeeklyAdvisory_1.generateWeeklyAdvisories)(batch_id).catch((advErr) => console.error("generateWeeklyAdvisories (fire-and-forget) failed:", advErr?.message || advErr));
-        }
-        catch (_err) {
-            /* silent — fire-and-forget must never throw */
-        }
-        // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs
-        if (committedMpns.length > 0) {
-            for (const mpn of committedMpns) {
-                try {
-                    await (0, launchHighPriority_1.checkHighPriorityFlag)(mpn);
-                }
-                catch (hpErr) {
-                    console.error(`checkHighPriorityFlag failed for ${mpn}:`, hpErr.message);
-                }
-            }
-        }
-        // Step 7 — Update batch record with final counts
-        const finalStatus = failedRows === records.length ? "failed" : "complete";
+        // Step 2 — Set status to processing and respond immediately. The rest
+        // of the handler runs detached in the background.
         await batchRef.update({
-            status: finalStatus,
-            committed_rows: committedRows,
-            failed_rows: failedRows,
-            errors,
-            completed_at: db.FieldValue.serverTimestamp(),
-            summary: {
-                pricing_current: pricingCurrent,
-                pricing_discrepancy: pricingDiscrepancy,
-                pricing_pending: pricingPending,
-                loss_leader_review: lossLeaderReview,
-                metrics_calculated: metricsResult.calculated,
-                metrics_skipped: metricsResult.skipped,
-                cadence_evaluated: cadenceResult.evaluated,
-                cadence_assigned: cadenceResult.assigned,
-                cadence_unassigned: cadenceResult.unassigned,
-                cadence_conflicts: cadenceResult.conflicts,
-            },
+            status: "processing",
+            progress_pct: 0,
+            processing_started_at: db.FieldValue.serverTimestamp(),
         });
-        res.status(200).json({
-            batch_id,
-            status: finalStatus,
-            total_rows: records.length,
-            committed_rows: committedRows,
-            failed_rows: failedRows,
-            pricing_current: pricingCurrent,
-            pricing_discrepancy: pricingDiscrepancy,
-            pricing_pending: pricingPending,
-            loss_leader_review: lossLeaderReview,
-            metrics_calculated: metricsResult.calculated,
-            errors,
+        const __userId = req.user?.uid || batchData.uploaded_by || null;
+        (0, importJobRunner_1.respondAsync)(res, batch_id);
+        (0, importJobRunner_1.runInBackground)(batch_id, "weekly_operations", async () => {
+            // Step 3 — Retrieve the file from Firebase Storage
+            const bucket = firebase_admin_1.default.storage().bucket();
+            const [fileBuffer] = await bucket.file(batchData.file_path).download();
+            const csvContent = fileBuffer.toString("utf-8");
+            // Step 4 — Parse all data rows (case-insensitive, BOM-safe headers)
+            const CANONICAL_WEEKLY = {};
+            REQUIRED_COLUMNS_WEEKLY.forEach((c) => { CANONICAL_WEEKLY[c.toLowerCase()] = c; });
+            const records = (0, sync_1.parse)(csvContent, {
+                columns: (header) => header.map((h) => {
+                    const clean = h.trim().replace(/^\uFEFF/, "");
+                    return CANONICAL_WEEKLY[clean.toLowerCase()] || clean;
+                }),
+                skip_empty_lines: true,
+                relax_column_count: true,
+                trim: true,
+            });
+            // Load admin settings for pricing resolution
+            const adminSettings = await (0, adminSettings_1.getAdminSettings)();
+            // Counters
+            let committedRows = 0;
+            let failedRows = 0;
+            let pricingCurrent = 0;
+            let pricingDiscrepancy = 0;
+            let pricingPending = 0;
+            let lossLeaderReview = 0;
+            const errors = [];
+            const committedMpns = [];
+            // Step 5 — Process each row
+            for (let i = 0; i < records.length; i++) {
+                if (i % 25 === 0) {
+                    await (0, importJobRunner_1.updateProgress)(batch_id, (i / records.length) * 100, {
+                        committed: committedRows,
+                        failed: failedRows,
+                    });
+                }
+                const row = records[i];
+                const rowNum = i + 2;
+                const mpn = (row.MPN || "").trim();
+                if (!mpn) {
+                    failedRows++;
+                    errors.push({
+                        row: rowNum,
+                        mpn: "",
+                        error: "MPN is required — this row has no product identifier",
+                    });
+                    continue;
+                }
+                // Look up product by MPN — if not found, add to failed rows
+                const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
+                const productSnap = await firestore.collection("products").doc(docId).get();
+                if (!productSnap.exists) {
+                    failedRows++;
+                    errors.push({
+                        row: rowNum,
+                        mpn,
+                        error: `MPN ${mpn} not found in catalog — verify the product exists before running a Weekly Operations import`,
+                    });
+                    continue;
+                }
+                try {
+                    const existingProduct = productSnap.data();
+                    // Parse pricing and inventory fields
+                    const ricsRetail = parseFloat(row["Store Price"]) || 0;
+                    const ricsOffer = parseFloat(row["Store Sale Price"]) || 0;
+                    const scom = parseFloat(row["Web Price"]) || 0;
+                    const scomSale = parseFloat(row["Web Sale Price"]) || 0;
+                    const inventoryStore = parseInt(row["Store Inv"]) || 0;
+                    const inventoryWarehouse = parseInt(row["Warehouse Inv"]) || 0;
+                    const inventoryWhs = parseInt(row["WHS inv"]) || 0;
+                    // Update pricing fields on product document (merge)
+                    await firestore.collection("products").doc(docId).set({
+                        rics_retail: ricsRetail,
+                        rics_offer: ricsOffer,
+                        scom,
+                        scom_sale: scomSale,
+                        inventory_store: inventoryStore,
+                        inventory_warehouse: inventoryWarehouse,
+                        inventory_whs: inventoryWhs,
+                        last_weekly_import_at: db.FieldValue.serverTimestamp(),
+                        updated_at: db.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    // Immediately fire Pricing Resolution for this product
+                    const pricingInputs = {
+                        rics_retail: ricsRetail,
+                        rics_offer: ricsOffer,
+                        scom,
+                        scom_sale: scomSale,
+                        actual_cost: existingProduct.actual_cost || null,
+                    };
+                    const pricingResult = await (0, pricingResolution_1.resolvePricing)(mpn, pricingInputs, await (0, mapState_1.getMapState)(mpn), adminSettings);
+                    // Write pricing snapshot
+                    await (0, pricingResolution_1.writePricingSnapshot)(mpn, batch_id, pricingResult);
+                    // Track routing outcomes
+                    switch (pricingResult.status) {
+                        case "Pricing Current":
+                            pricingCurrent++;
+                            break;
+                        case "Pricing Discrepancy":
+                            pricingDiscrepancy++;
+                            break;
+                        case "Pricing Pending":
+                            pricingPending++;
+                            break;
+                        case "Loss-Leader Review Pending":
+                            lossLeaderReview++;
+                            break;
+                    }
+                    committedRows++;
+                    committedMpns.push(mpn);
+                }
+                catch (rowErr) {
+                    failedRows++;
+                    errors.push({
+                        row: rowNum,
+                        mpn,
+                        error: "An unexpected error occurred while processing this row. Please verify the data and try again.",
+                    });
+                    console.error(`Weekly Ops Row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
+                }
+            }
+            // Step 6 — Fire Post-Import Calculation Job for all committed MPNs
+            let metricsResult = { calculated: 0, skipped: 0 };
+            if (committedMpns.length > 0) {
+                metricsResult = await (0, postImportCalculation_1.runPostImportCalculations)(batch_id, committedMpns, adminSettings);
+            }
+            // Step 6b — Step 2.2 — Run cadence evaluation after post-import calcs
+            let cadenceResult = { evaluated: 0, assigned: 0, unassigned: 0, conflicts: 0, skipped_mid_cadence: 0 };
+            if (committedMpns.length > 0) {
+                try {
+                    cadenceResult = await (0, cadenceEngine_1.runCadenceEvaluation)(committedMpns);
+                }
+                catch (ce) {
+                    console.error("runCadenceEvaluation failed:", ce.message);
+                }
+            }
+            // Step 6b.1 — Step 3.2 — Weekly metric snapshots for executive dashboard
+            try {
+                await (0, executiveProjections_1.writeWeeklySnapshots)();
+            }
+            catch (snapErr) {
+                console.error("writeWeeklySnapshots failed:", snapErr.message);
+            }
+            // Step 6b.2 — Step 3.3 — Buyer performance matrix (depends on fresh snapshots)
+            try {
+                await (0, buyerPerformanceMatrix_1.computeBuyerPerformanceMatrix)();
+            }
+            catch (bpErr) {
+                console.error("computeBuyerPerformanceMatrix failed:", bpErr.message);
+            }
+            // Step 6b.3 — Step 3.4 — AI Weekly Advisory (fire-and-forget; don't block response)
+            try {
+                (0, aiWeeklyAdvisory_1.generateWeeklyAdvisories)(batch_id).catch((advErr) => console.error("generateWeeklyAdvisories (fire-and-forget) failed:", advErr?.message || advErr));
+            }
+            catch (_err) {
+                /* silent — fire-and-forget must never throw */
+            }
+            // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs
+            if (committedMpns.length > 0) {
+                for (const mpn of committedMpns) {
+                    try {
+                        await (0, launchHighPriority_1.checkHighPriorityFlag)(mpn);
+                    }
+                    catch (hpErr) {
+                        console.error(`checkHighPriorityFlag failed for ${mpn}:`, hpErr.message);
+                    }
+                }
+            }
+            // Step 7 — Update batch record with final counts
+            const finalStatus = failedRows === records.length ? "failed" : "complete";
+            await batchRef.update({
+                status: finalStatus,
+                committed_rows: committedRows,
+                failed_rows: failedRows,
+                errors,
+                completed_at: db.FieldValue.serverTimestamp(),
+                summary: {
+                    pricing_current: pricingCurrent,
+                    pricing_discrepancy: pricingDiscrepancy,
+                    pricing_pending: pricingPending,
+                    loss_leader_review: lossLeaderReview,
+                    metrics_calculated: metricsResult.calculated,
+                    metrics_skipped: metricsResult.skipped,
+                    cadence_evaluated: cadenceResult.evaluated,
+                    cadence_assigned: cadenceResult.assigned,
+                    cadence_unassigned: cadenceResult.unassigned,
+                    cadence_conflicts: cadenceResult.conflicts,
+                },
+            });
+            await (0, importJobRunner_1.finishImportJob)(batch_id, __userId, "weekly_operations", `Weekly Operations import complete — ${committedRows.toLocaleString()} committed, ${failedRows.toLocaleString()} failed`);
         });
     }
     catch (err) {
@@ -382,9 +386,11 @@ router.post("/:batch_id/commit", async (req, res) => {
         catch (_) {
             // swallow — best effort
         }
-        res.status(500).json({
-            error: "An unexpected error occurred during batch commit. Please try again.",
-        });
+        if (!res.headersSent) {
+            res.status(500).json({
+                error: "An unexpected error occurred during batch commit. Please try again.",
+            });
+        }
     }
 });
 exports.default = router;
