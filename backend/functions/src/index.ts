@@ -15,6 +15,7 @@ import cadenceRulesRouter from "./routes/cadenceRules";
 import cadenceReviewRouter from "./routes/cadenceReview";
 import promptTemplatesRouter from "./routes/promptTemplates";
 import aiContentRouter from "./routes/aiContent";
+import launchesRouter from "./routes/launches";
 
 // ── Firebase Admin Init ──
 admin.initializeApp({
@@ -65,6 +66,9 @@ app.use("/api/v1", cadenceReviewRouter);
 // ── AI Content Pipeline (Step 2.3) ──
 app.use("/api/v1/admin/prompt-templates", promptTemplatesRouter);
 app.use("/api/v1/products", aiContentRouter);
+
+// ── Launch Calendar (Step 2.4) ──
+app.use("/api/v1/launches", launchesRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

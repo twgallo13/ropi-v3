@@ -20,6 +20,7 @@ import {
 import { getMapState } from "../services/mapState";
 import { runPostImportCalculations } from "../services/postImportCalculation";
 import { runCadenceEvaluation } from "../services/cadenceEngine";
+import { checkHighPriorityFlag } from "../services/launchHighPriority";
 
 const router = Router();
 const upload = multer({
@@ -345,6 +346,17 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         cadenceResult = await runCadenceEvaluation(committedMpns);
       } catch (ce: any) {
         console.error("runCadenceEvaluation failed:", ce.message);
+      }
+    }
+
+    // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs
+    if (committedMpns.length > 0) {
+      for (const mpn of committedMpns) {
+        try {
+          await checkHighPriorityFlag(mpn);
+        } catch (hpErr: any) {
+          console.error(`checkHighPriorityFlag failed for ${mpn}:`, hpErr.message);
+        }
       }
     }
 

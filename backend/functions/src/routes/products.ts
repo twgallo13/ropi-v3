@@ -3,6 +3,7 @@ import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
+import { checkHighPriorityFlag } from "../services/launchHighPriority";
 
 const router = Router();
 const db = admin.firestore;
@@ -491,6 +492,13 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
         { merge: true }
       );
 
+      // Step 2.4 — clear High Priority flag now that the product is complete
+      try {
+        await checkHighPriorityFlag(mpn);
+      } catch (hpErr: any) {
+        console.error("checkHighPriorityFlag (discrepancy) failed:", hpErr.message);
+      }
+
       res.status(200).json({
         mpn,
         doc_id: docId,
@@ -515,6 +523,13 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
       },
       { merge: true }
     );
+
+    // Step 2.4 — clear High Priority flag now that the product is complete
+    try {
+      await checkHighPriorityFlag(mpn);
+    } catch (hpErr: any) {
+      console.error("checkHighPriorityFlag (complete) failed:", hpErr.message);
+    }
 
     res.status(200).json({
       mpn,

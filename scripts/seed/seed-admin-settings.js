@@ -272,6 +272,35 @@ const SETTINGS = [
       circuit_breaker_threshold: 5,
     },
   },
+
+  // ── Launch Calendar (Step 2.4 — Section 9.13 / 10.8) ──
+  {
+    id: "launch_priority_window_days",
+    category: "launches",
+    label: "Launch Priority Window (days)",
+    value: 7,
+    type: "number",
+    description:
+      "Products with an upcoming launch within this many days are flagged High Priority in the Completion Queue.",
+  },
+  {
+    id: "smtp_throttle_hours",
+    category: "communications",
+    label: "SMTP Notification Throttle Window (hours)",
+    value: 24,
+    type: "number",
+    description:
+      "Minimum hours between repeated SMTP notifications for the same launch date change event.",
+  },
+  {
+    id: "launch_past_retention_days",
+    category: "launches",
+    label: "Past Launch Retention (days)",
+    value: 90,
+    type: "number",
+    description:
+      "Past published launches remain visible on the Public Launch Calendar for this many days.",
+  },
 ];
 
 // Attach timestamps to each

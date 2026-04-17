@@ -1144,3 +1144,258 @@ export async function aiAssistant(
   return data;
 }
 
+// ──────────────────────────────────────────────────────────────
+//  Launch Calendar (Step 2.4 — Section 9.13 / 10.8)
+// ──────────────────────────────────────────────────────────────
+export interface LaunchRecord {
+  launch_id: string;
+  mpn: string;
+  mpn_is_placeholder: boolean;
+  product_name: string;
+  brand: string;
+  launch_date: string;
+  sales_channel: string;
+  drawing_fcfs: string;
+  token_status: string;
+  launch_status: "draft" | "ready" | "published" | "archived";
+  is_high_priority: boolean;
+  gender: string | null;
+  category: string | null;
+  class: string | null;
+  primary_color: string | null;
+  teaser_text: string | null;
+  image_1_url: string | null;
+  image_2_url: string | null;
+  image_3_url: string | null;
+  previous_launch_date: string | null;
+  date_changed_at: any;
+  date_change_badge_expires_at: any;
+  date_change_log: Array<{
+    old_date: string;
+    new_date: string;
+    changed_by: string;
+    changed_at: any;
+    reason: string | null;
+  }>;
+  linked_product_mpn: string | null;
+  is_launch_only: boolean;
+  internal_comments_count: number;
+  created_by: string;
+  created_at: any;
+  updated_at: any;
+  published_at: any;
+  archived_at: any;
+}
+
+export interface LaunchReadiness {
+  ok: boolean;
+  missing: string[];
+  checks: {
+    launch_date: boolean;
+    sales_channel: boolean;
+    drawing_fcfs: boolean;
+    token_status_set: boolean;
+    image_1_uploaded: boolean;
+    mpn_confirmed: boolean;
+  };
+}
+
+export interface LaunchComment {
+  comment_id: string;
+  launch_id: string;
+  comment_text: string;
+  author_uid: string;
+  author_name: string;
+  created_at: any;
+}
+
+export async function fetchLaunches(
+  params?: Record<string, string>
+): Promise<{ records: LaunchRecord[]; count: number }> {
+  const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+  const res = await fetch(`${BASE}/api/v1/launches${qs}`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function fetchLaunch(launchId: string): Promise<{
+  launch: LaunchRecord;
+  readiness: LaunchReadiness;
+  comments: LaunchComment[];
+}> {
+  const res = await fetch(
+    `${BASE}/api/v1/launches/${encodeURIComponent(launchId)}`,
+    { headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function createLaunch(
+  body: Partial<LaunchRecord>
+): Promise<{ launch: LaunchRecord }> {
+  const res = await fetch(`${BASE}/api/v1/launches`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function patchLaunch(
+  launchId: string,
+  body: Partial<LaunchRecord> & { reason?: string }
+): Promise<{ launch: LaunchRecord }> {
+  const res = await fetch(
+    `${BASE}/api/v1/launches/${encodeURIComponent(launchId)}`,
+    {
+      method: "PATCH",
+      headers: await headers(),
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function uploadLaunchImage(
+  launchId: string,
+  slot: 1 | 2 | 3,
+  file: File
+): Promise<{ launch_id: string; slot: number; url: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("slot", String(slot));
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not authenticated");
+  const token = await user.getIdToken();
+  const res = await fetch(
+    `${BASE}/api/v1/launches/${encodeURIComponent(launchId)}/images`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function publishLaunch(launchId: string): Promise<{
+  launch?: LaunchRecord;
+  published?: boolean;
+  blocked?: boolean;
+  missing?: string[];
+  checks?: Record<string, boolean>;
+}> {
+  const res = await fetch(
+    `${BASE}/api/v1/launches/${encodeURIComponent(launchId)}/publish`,
+    { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  // Surface 400 blocked responses as return values (not throws)
+  if (!res.ok && data?.blocked) return data;
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function setLaunchTokenStatus(
+  launchId: string,
+  tokenStatus: "Set" | "Not Set"
+): Promise<{ launch_id: string; token_status: string }> {
+  const res = await fetch(
+    `${BASE}/api/v1/launches/${encodeURIComponent(launchId)}/token-status`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ token_status: tokenStatus }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function postLaunchComment(
+  launchId: string,
+  commentText: string
+): Promise<LaunchComment> {
+  const res = await fetch(
+    `${BASE}/api/v1/launches/${encodeURIComponent(launchId)}/comments`,
+    {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ comment_text: commentText }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function archiveLaunch(
+  launchId: string
+): Promise<{ launch_id: string; archived: boolean }> {
+  const res = await fetch(
+    `${BASE}/api/v1/launches/${encodeURIComponent(launchId)}`,
+    { method: "DELETE", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+// Public (unauthenticated) endpoints — no Authorization header
+export interface PublicLaunchCard {
+  launch_id: string;
+  product_name: string;
+  brand: string;
+  launch_date: string;
+  gender: string | null;
+  category: string | null;
+  class: string | null;
+  primary_color: string | null;
+  sales_channel: string;
+  drawing_fcfs: string;
+  image_1_url: string | null;
+  image_2_url: string | null;
+  image_3_url: string | null;
+  teaser_text: string | null;
+  is_high_priority: boolean;
+  date_change_badge_expires_at: string | null;
+  previous_launch_date: string | null;
+}
+
+export async function fetchPublicLaunches(): Promise<{
+  upcoming: PublicLaunchCard[];
+  past: PublicLaunchCard[];
+  retention_days: number;
+  generated_at: string;
+}> {
+  const res = await fetch(`${BASE}/api/v1/launches/public`);
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+export async function subscribeLaunchEmail(
+  email: string
+): Promise<{ email: string; subscribed: boolean }> {
+  const res = await fetch(`${BASE}/api/v1/launches/subscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+

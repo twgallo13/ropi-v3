@@ -1,0 +1,136 @@
+{
+  "artifact_1_full_launch_record": {
+    "launch_id": "a5f09ba9-2931-4194-aa42-9570d974e61a",
+    "mpn": "SHIEKH-ACCEPTANCE-001",
+    "mpn_is_placeholder": false,
+    "product_name": "Acceptance Test Launch",
+    "brand": "Shiekh",
+    "launch_date": "2026-04-22",
+    "sales_channel": "Online",
+    "drawing_fcfs": "FCFS",
+    "is_high_priority": false,
+    "gender": "Men",
+    "category": "Footwear",
+    "class": "Sneaker",
+    "primary_color": "Black",
+    "teaser_text": "A landmark release for QA verification.",
+    "image_2_url": null,
+    "image_3_url": null,
+    "previous_launch_date": null,
+    "date_changed_at": null,
+    "date_change_badge_expires_at": null,
+    "date_change_log": [],
+    "linked_product_mpn": null,
+    "is_launch_only": true,
+    "internal_comments_count": 0,
+    "created_by": "step22-verify-bot",
+    "archived_at": null,
+    "created_at": {
+      "_seconds": 1776402384,
+      "_nanoseconds": 879000000
+    },
+    "token_status": "Set",
+    "image_1_url": "https://storage.googleapis.com/ropi-aoss-dev-imports/launches/acceptance/image_1.jpg",
+    "updated_at": {
+      "_seconds": 1776402385,
+      "_nanoseconds": 848000000
+    },
+    "launch_status": "published",
+    "published_at": {
+      "_seconds": 1776402385,
+      "_nanoseconds": 848000000
+    }
+  },
+  "artifact_2_public_response": {
+    "upcoming": [
+      {
+        "launch_id": "a5f09ba9-2931-4194-aa42-9570d974e61a",
+        "product_name": "Acceptance Test Launch",
+        "brand": "Shiekh",
+        "launch_date": "2026-04-22",
+        "gender": "Men",
+        "category": "Footwear",
+        "class": "Sneaker",
+        "primary_color": "Black",
+        "sales_channel": "Online",
+        "drawing_fcfs": "FCFS",
+        "image_1_url": "https://storage.googleapis.com/ropi-aoss-dev-imports/launches/acceptance/image_1.jpg",
+        "image_2_url": null,
+        "image_3_url": null,
+        "teaser_text": "A landmark release for QA verification.",
+        "is_high_priority": false,
+        "date_change_badge_expires_at": null,
+        "previous_launch_date": null
+      }
+    ],
+    "past": [],
+    "retention_days": 90,
+    "generated_at": "2026-04-17T05:06:26.379Z"
+  },
+  "artifact_3_publish_blocked": {
+    "status": 400,
+    "body": {
+      "blocked": true,
+      "missing": [
+        "token_status",
+        "image_1_url"
+      ],
+      "checks": {
+        "launch_date": true,
+        "sales_channel": true,
+        "drawing_fcfs": true,
+        "token_status_set": false,
+        "image_1_uploaded": false,
+        "mpn_confirmed": true
+      }
+    }
+  },
+  "artifact_4_publish_success": {
+    "status": 200,
+    "body": {
+      "launch": {
+        "launch_id": "a5f09ba9-2931-4194-aa42-9570d974e61a",
+        "mpn": "SHIEKH-ACCEPTANCE-001",
+        "mpn_is_placeholder": false,
+        "product_name": "Acceptance Test Launch",
+        "brand": "Shiekh",
+        "launch_date": "2026-04-22",
+        "sales_channel": "Online",
+        "drawing_fcfs": "FCFS",
+        "is_high_priority": false,
+        "gender": "Men",
+        "category": "Footwear",
+        "class": "Sneaker",
+        "primary_color": "Black",
+        "teaser_text": "A landmark release for QA verification.",
+        "image_2_url": null,
+        "image_3_url": null,
+        "previous_launch_date": null,
+        "date_changed_at": null,
+        "date_change_badge_expires_at": null,
+        "date_change_log": [],
+        "linked_product_mpn": null,
+        "is_launch_only": true,
+        "internal_comments_count": 0,
+        "created_by": "step22-verify-bot",
+        "archived_at": null,
+        "created_at": {
+          "_seconds": 1776402384,
+          "_nanoseconds": 879000000
+        },
+        "token_status": "Set",
+        "image_1_url": "https://storage.googleapis.com/ropi-aoss-dev-imports/launches/acceptance/image_1.jpg",
+        "updated_at": {
+          "_seconds": 1776402385,
+          "_nanoseconds": 848000000
+        },
+        "launch_status": "published",
+        "published_at": {
+          "_seconds": 1776402385,
+          "_nanoseconds": 848000000
+        }
+      },
+      "published": true
+    }
+  }
+}

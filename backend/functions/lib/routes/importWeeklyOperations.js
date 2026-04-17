@@ -21,6 +21,7 @@ const pricingResolution_1 = require("../services/pricingResolution");
 const mapState_1 = require("../services/mapState");
 const postImportCalculation_1 = require("../services/postImportCalculation");
 const cadenceEngine_1 = require("../services/cadenceEngine");
+const launchHighPriority_1 = require("../services/launchHighPriority");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({
     storage: multer_1.default.memoryStorage(),
@@ -290,6 +291,17 @@ router.post("/:batch_id/commit", async (req, res) => {
             }
             catch (ce) {
                 console.error("runCadenceEvaluation failed:", ce.message);
+            }
+        }
+        // Step 6c — Step 2.4 — Re-evaluate launch High Priority flags for committed MPNs
+        if (committedMpns.length > 0) {
+            for (const mpn of committedMpns) {
+                try {
+                    await (0, launchHighPriority_1.checkHighPriorityFlag)(mpn);
+                }
+                catch (hpErr) {
+                    console.error(`checkHighPriorityFlag failed for ${mpn}:`, hpErr.message);
+                }
             }
         }
         // Step 7 — Update batch record with final counts

@@ -15,6 +15,9 @@ import CadenceUnassignedPage from "./pages/CadenceUnassignedPage";
 import CadenceRulesAdminPage from "./pages/CadenceRulesAdminPage";
 import PromptTemplatesAdminPage from "./pages/PromptTemplatesAdminPage";
 import AIContentReviewPage from "./pages/AIContentReviewPage";
+import LaunchAdminListPage from "./pages/LaunchAdminListPage";
+import LaunchAdminDetailPage from "./pages/LaunchAdminDetailPage";
+import PublicLaunchCalendarPage from "./pages/PublicLaunchCalendarPage";
 
 export default function App() {
   return (
@@ -22,6 +25,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          {/* Public Launch Calendar — NO auth required */}
+          <Route path="/launches" element={<PublicLaunchCalendarPage />} />
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route path="/queue/completion" element={<CompletionQueuePage />} />
@@ -34,6 +39,8 @@ export default function App() {
               <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
               <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
               <Route path="/export-center" element={<ExportCenterPage />} />
+              <Route path="/launch-admin" element={<LaunchAdminListPage />} />
+              <Route path="/launch-admin/:launchId" element={<LaunchAdminDetailPage />} />
               <Route path="/products/:mpn" element={<ProductDetailPage />} />
               <Route path="/products/:mpn/review" element={<AIContentReviewPage />} />
               <Route path="/" element={<Navigate to="/queue/completion" replace />} />

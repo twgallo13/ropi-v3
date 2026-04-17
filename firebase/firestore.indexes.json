@@ -182,6 +182,43 @@
         { "fieldPath": "site_owner",    "order": "ASCENDING" },
         { "fieldPath": "generated_at",  "order": "DESCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 20 — Completion Queue: high priority first, soonest launch first (Step 2.4)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_high_priority",       "order": "DESCENDING" },
+        { "fieldPath": "launch_days_remaining",  "order": "ASCENDING"  },
+        { "fieldPath": "updated_at",             "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 21 — Launch records by mpn for high-priority recompute (Step 2.4)",
+      "collectionGroup": "launch_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mpn",            "order": "ASCENDING" },
+        { "fieldPath": "launch_status",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 22 — Public Launch Calendar by status + launch_date (Step 2.4)",
+      "collectionGroup": "launch_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "launch_status", "order": "ASCENDING" },
+        { "fieldPath": "launch_date",   "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 23 — Launch comments by launch_id + created_at (Step 2.4)",
+      "collectionGroup": "launch_comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "launch_id",  "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -156,8 +156,11 @@ export default function CompletionQueuePage() {
                 </td>
                 <td className="px-3 py-2">
                   {p.is_high_priority && (
-                    <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded mr-1">
-                      {p.launch_days_remaining}d
+                    <span
+                      className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded mr-1"
+                      title="Upcoming launch — high priority"
+                    >
+                      🚀 Launch in {p.launch_days_remaining}d
                     </span>
                   )}
                   {p.map_conflict_active && (

@@ -8,6 +8,7 @@ const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const auth_1 = require("../middleware/auth");
 const mpnUtils_1 = require("../services/mpnUtils");
 const pricingExportQueue_1 = require("../services/pricingExportQueue");
+const launchHighPriority_1 = require("../services/launchHighPriority");
 const router = (0, express_1.Router)();
 const db = firebase_admin_1.default.firestore;
 /** Cache required field keys from attribute_registry (refreshed per request group). */
@@ -411,6 +412,13 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
                 completed_at: db.FieldValue.serverTimestamp(),
                 completed_by: req.user?.uid || "unknown",
             }, { merge: true });
+            // Step 2.4 — clear High Priority flag now that the product is complete
+            try {
+                await (0, launchHighPriority_1.checkHighPriorityFlag)(mpn);
+            }
+            catch (hpErr) {
+                console.error("checkHighPriorityFlag (discrepancy) failed:", hpErr.message);
+            }
             res.status(200).json({
                 mpn,
                 doc_id: docId,
@@ -430,6 +438,13 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
             completed_at: db.FieldValue.serverTimestamp(),
             completed_by: req.user?.uid || "unknown",
         }, { merge: true });
+        // Step 2.4 — clear High Priority flag now that the product is complete
+        try {
+            await (0, launchHighPriority_1.checkHighPriorityFlag)(mpn);
+        }
+        catch (hpErr) {
+            console.error("checkHighPriorityFlag (complete) failed:", hpErr.message);
+        }
         res.status(200).json({
             mpn,
             doc_id: docId,

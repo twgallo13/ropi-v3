@@ -51,6 +51,12 @@ export default function Layout() {
               Cadence Unassigned
             </Link>
             <Link
+              to="/launch-admin"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Launch Admin
+            </Link>
+            <Link
               to="/map-conflict-review"
               className="text-gray-600 hover:text-gray-900"
             >
