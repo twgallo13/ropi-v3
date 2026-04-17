@@ -38,12 +38,13 @@ router.get("/", auth_1.requireAuth, (0, roles_1.requireRole)(rolesAllowed), asyn
         const uid = req.user.uid;
         const role = req.user?.role;
         let query = db().collection("cadence_rules");
-        // Mike (head_buyer) + admin see all; buyers see their own
-        if (role !== "head_buyer" && role !== "admin") {
+        // Exec (admin/owner/head_buyer) see all; buyers see their own
+        const EXEC_ROLES = ["admin", "owner", "head_buyer"];
+        if (!EXEC_ROLES.includes(role)) {
             // fall back to Firestore users/{uid}.role
             const userDoc = await db().collection("users").doc(uid).get();
             const uRole = userDoc.data()?.role;
-            if (uRole !== "head_buyer" && uRole !== "admin") {
+            if (!EXEC_ROLES.includes(uRole)) {
                 query = query.where("owner_buyer_id", "==", uid);
             }
         }
