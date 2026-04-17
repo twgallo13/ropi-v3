@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e: FormEvent) {
@@ -22,6 +27,32 @@ export default function LoginPage() {
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      // Force-refresh so custom claims (role) are picked up if they were
+      // just set server-side for a pre-seeded account.
+      const token = await user.getIdTokenResult(true);
+      if (!token.claims.role) {
+        setError(
+          `Welcome ${user.displayName || user.email}. Your account is pending role assignment. Contact Theo.`
+        );
+        await auth.signOut();
+        return;
+      }
+      navigate("/queue/completion");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Google sign-in failed";
+      setError(msg);
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -62,6 +93,25 @@ export default function LoginPage() {
         >
           {loading ? "Signing in…" : "Sign In"}
         </button>
+        <div className="mt-4">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">or</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
+            {googleLoading ? "Signing in…" : "Sign in with Google"}
+          </button>
+        </div>
       </form>
     </div>
   );

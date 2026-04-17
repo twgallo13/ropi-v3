@@ -7,7 +7,7 @@ import NotificationBell from "./NotificationBell";
 export default function Layout() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
-  const isExec = role === "admin" || role === "head_buyer";
+  const isExec = role === "admin" || role === "owner" || role === "head_buyer";
 
   async function handleLogout() {
     await signOut(auth);

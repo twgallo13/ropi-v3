@@ -12,8 +12,8 @@ function requireRole(allowed) {
             res.status(401).json({ error: "Authentication required" });
             return;
         }
-        // Admins always allowed.
-        const allowedWithAdmin = Array.from(new Set([...allowed, "admin"]));
+        // Admins and owners always allowed.
+        const allowedWithAdmin = Array.from(new Set([...allowed, "admin", "owner"]));
         // 1. Custom claims
         const claimRole = req.user?.role;
         if (claimRole && allowedWithAdmin.includes(claimRole)) {

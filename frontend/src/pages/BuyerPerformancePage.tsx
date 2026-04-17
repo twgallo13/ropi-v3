@@ -149,7 +149,7 @@ export default function BuyerPerformancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isExec = role === "admin" || role === "head_buyer";
+  const isExec = role === "admin" || role === "owner" || role === "head_buyer";
 
   useEffect(() => {
     let cancelled = false;

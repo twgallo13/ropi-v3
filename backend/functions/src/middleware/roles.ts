@@ -5,7 +5,8 @@
  *   - If neither is set, the request is PERMITTED (deferred enforcement)
  *     so existing test accounts continue to work while roles roll out.
  * Known roles (Section 4): map_analyst, head_buyer, operations_operator,
- *                          buyer, completion_specialist, admin
+ *                          buyer, completion_specialist, admin, owner,
+ *                          product_ops
  */
 import { Response, NextFunction } from "express";
 import admin from "firebase-admin";
@@ -23,8 +24,8 @@ export function requireRole(allowed: string[]) {
       return;
     }
 
-    // Admins always allowed.
-    const allowedWithAdmin = Array.from(new Set([...allowed, "admin"]));
+    // Admins and owners always allowed.
+    const allowedWithAdmin = Array.from(new Set([...allowed, "admin", "owner"]));
 
     // 1. Custom claims
     const claimRole = (req.user as any)?.role;
