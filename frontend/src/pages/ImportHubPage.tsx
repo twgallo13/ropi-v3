@@ -924,23 +924,21 @@ function SiteVerificationImportCard() {
               committed_rows: s.committed_rows,
               failed_rows: s.failed_rows,
               mismatches: 0,
-         progressBatchId, setProgressBatchId] = useState<string | null>(null);
-  const [error, setError] = useState<string>("");
-  const [status, setStatus] = useState<SalesStatusResponse | null>(null);
+            });
+            setStage("done");
+          }}
+        />
+      )}
 
-  useEffect(() => {
-    fetchSalesStatus()
-      .then(setStatus)
-      .catch(() => setStatus({ last_web: null, last_store: null }));
-  }, [commitResult]);
-
-  function reset() {
-    setFile(null);
-    setUploading(false);
-    setCommitting(false);
-    setUploadResult(null);
-    setCommitResult(null);
-    setProgressBatchId
+      {stage === "done" && result && (
+        <div className="space-y-2">
+          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded text-sm">
+            Imported <strong>{result.committed_rows}</strong> of {result.total_rows} rows.
+            {result.mismatches > 0 && (
+              <>
+                {" "}
+                <strong>{result.mismatches}</strong> flagged as mismatch.
+              </>
             )}
             {result.failed_rows > 0 && (
               <>
@@ -964,8 +962,7 @@ function SiteVerificationImportCard() {
 // ─────────────────────────────────────────────────────────────
 //  Sales Import — single-stage upload + commit (web/store auto-detect)
 // ─────────────────────────────────────────────────────────────
-functi// Async: backend returns 202 with { batch_id, status: 'processing' }.
-      setProgressBatchId((res as any).batch_id || uploadResult.batch_id) {
+function SalesImportCard() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [committing, setCommitting] = useState(false);
@@ -1010,7 +1007,7 @@ functi// Async: backend returns 202 with { batch_id, status: 'processing' }.
     setCommitting(true);
     setError("");
     try {
-      const res = await salesCommit(uplo!progressBatchId && adResult.batch_id);
+      const res = await salesCommit(uploadResult.batch_id);
       // Async: backend returns 202 with { batch_id, status: 'processing' }.
       setProgressBatchId((res as any).batch_id || uploadResult.batch_id);
     } catch (e: any) {
@@ -1041,31 +1038,7 @@ functi// Async: backend returns 202 with { batch_id, status: 'processing' }.
           <input
             type="file"
             accept=".csv,text/csv"
-       progressBatchId && !commitResult && (
-        <div className="mt-3">
-          <ImportProgressCard
-            batchId={progressBatchId}
-            onComplete={(s) => {
-              setCommitResult({
-                batch_id: s.batch_id,
-                status: s.status,
-                import_type: (uploadResult?.import_type || "web") as "web" | "store",
-                report_date: uploadResult?.report_date || "",
-                total_rows: s.row_count || 0,
-                committed_rows: s.committed_rows,
-                skipped_rows: s.skipped_rows,
-                failed_rows: s.failed_rows,
-                product_not_found_count: 0,
-                metrics_calculated: 0,
-                errors: [],
-              } as SalesCommitResponse);
-              setProgressBatchId(null);
-            }}
-          />
-        </div>
-      )}
-
-      {     onChange={(e) => {
+            onChange={(e) => {
               setFile(e.target.files?.[0] || null);
               setError("");
             }}
