@@ -137,7 +137,7 @@ export function AttributeField({
           <input
             type="checkbox"
             id={`attr-${fieldKey}`}
-            checked={value === "true" || (value as unknown) === true}
+            checked={value === "true" || (value as unknown) === true || value === "TRUE"}
             onChange={(e) => {
               const newVal = e.target.checked ? "true" : "false";
               setValue(newVal);
@@ -146,11 +146,11 @@ export function AttributeField({
                 onSaved?.(fieldKey, resp);
               }).catch(() => {});
             }}
-            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             disabled={saveState === "saving"}
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">
-            {value === "true" ? "Enabled" : "Disabled"}
+            {value === "true" || (value as unknown) === true || value === "TRUE" ? "Enabled" : "Not enabled"}
           </span>
         </div>
       ) : effectiveType === "multi_select" && hasOptions ? (
