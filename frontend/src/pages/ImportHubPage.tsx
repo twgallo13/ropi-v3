@@ -13,6 +13,7 @@ import {
   salesCommit,
   fetchSalesStatus,
   fetchActiveImportJobs,
+  cancelImportJob,
   type ImportStatus,
   type SiteRegistryEntry,
   type ImportUploadResponse,
@@ -272,9 +273,27 @@ export default function ImportHubPage() {
 
       {activeJobs.length > 0 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h2 className="text-sm font-semibold text-amber-900 mb-3">
-            Active import jobs ({activeJobs.length})
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-amber-900">
+              Active import jobs ({activeJobs.length})
+            </h2>
+            <button
+              onClick={async () => {
+                if (!confirm(`Cancel all ${activeJobs.length} processing job(s)?`)) return;
+                for (const j of activeJobs) {
+                  try {
+                    await cancelImportJob(j.batch_id);
+                  } catch {
+                    /* ignore */
+                  }
+                }
+                setActiveJobs([]);
+              }}
+              className="text-xs text-red-600 hover:text-red-800 underline"
+            >
+              Clear stuck jobs
+            </button>
+          </div>
           <div className="space-y-3">
             {activeJobs.map((j) => (
               <div key={j.batch_id} className="bg-white border rounded p-3">

@@ -3,7 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ImportCancelledError = void 0;
 exports.respondAsync = respondAsync;
+exports.isCancelled = isCancelled;
 exports.runInBackground = runInBackground;
 exports.updateProgress = updateProgress;
 exports.finishImportJob = finishImportJob;
@@ -38,6 +40,28 @@ function respondAsync(res, batchId) {
         message: "Import is processing in the background. You can navigate away.",
     });
 }
+// Sentinel error thrown by updateProgress / isCancelled when the batch has
+// been cancelled by an operator. runInBackground catches this and exits
+// silently, leaving the cancelled status doc in place.
+class ImportCancelledError extends Error {
+    constructor(batchId) {
+        super(`Import ${batchId} was cancelled`);
+        this.batchId = batchId;
+        this.name = "ImportCancelledError";
+    }
+}
+exports.ImportCancelledError = ImportCancelledError;
+// Lightweight check — read the doc and throw if the operator cancelled.
+// Call this between chunks of expensive work (Firestore reads are cheap).
+async function isCancelled(batchId) {
+    try {
+        const snap = await firebase_admin_1.default.firestore().collection("import_batches").doc(batchId).get();
+        return snap.exists && snap.data()?.status === "cancelled";
+    }
+    catch {
+        return false;
+    }
+}
 // Fire-and-forget the heavy commit body. Errors are caught and the batch
 // is marked failed so the UI's progress card surfaces the message.
 function runInBackground(batchId, importType, body) {
@@ -46,6 +70,10 @@ function runInBackground(batchId, importType, body) {
             await body();
         }
         catch (err) {
+            if (err instanceof ImportCancelledError) {
+                console.log(`[${importType}] background commit cancelled for ${batchId}`);
+                return;
+            }
             console.error(`[${importType}] background commit failed for ${batchId}:`, err);
             try {
                 await firebase_admin_1.default
@@ -65,8 +93,15 @@ function runInBackground(batchId, importType, body) {
     });
 }
 // Throttled progress writer — at most one Firestore write per 1500ms per batch.
+// Also enforces cancellation: every call reads the current status doc and
+// throws ImportCancelledError if the operator cancelled the job. Throws bubble
+// up to runInBackground which exits silently.
 const lastWriteAt = new Map();
 async function updateProgress(batchId, pct, counters) {
+    // Cancellation check — bail before writing more progress.
+    if (await isCancelled(batchId)) {
+        throw new ImportCancelledError(batchId);
+    }
     const now = Date.now();
     const last = lastWriteAt.get(batchId) || 0;
     if (now - last < 1500)

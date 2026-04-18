@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchImportStatus, type ImportStatus } from "../lib/api";
+import { fetchImportStatus, cancelImportJob, type ImportStatus } from "../lib/api";
 
 interface Props {
   batchId: string;
@@ -14,6 +14,7 @@ interface Props {
 export function ImportProgressCard({ batchId, onComplete }: Props) {
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (!batchId) return;
@@ -25,10 +26,10 @@ export function ImportProgressCard({ batchId, onComplete }: Props) {
         if (stopped) return;
         setStatus(s);
         setError(null);
-        if (s.status === "complete" || s.status === "failed") {
+        if (s.status === "complete" || s.status === "failed" || s.status === "cancelled") {
           stopped = true;
           clearInterval(interval);
-          onComplete?.(s);
+          if (s.status !== "cancelled") onComplete?.(s);
         }
       } catch (err: any) {
         if (!stopped) setError(err?.message || "polling error");
@@ -42,6 +43,19 @@ export function ImportProgressCard({ batchId, onComplete }: Props) {
       clearInterval(interval);
     };
   }, [batchId, onComplete]);
+
+  async function handleCancel() {
+    if (cancelling) return;
+    if (!confirm("Cancel this import? Already-committed rows will remain.")) return;
+    setCancelling(true);
+    try {
+      await cancelImportJob(batchId);
+    } catch (err: any) {
+      setError(err?.error || err?.message || "Cancel failed");
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   if (error && !status) {
     return (
@@ -77,8 +91,34 @@ export function ImportProgressCard({ batchId, onComplete }: Props) {
               ? ` · ${status.skipped_rows.toLocaleString()} skipped`
               : ""}
           </span>
-          <span className="text-blue-600">You can navigate away</span>
+          <div className="flex items-center gap-3">
+            <span className="text-blue-600">You can navigate away</span>
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="text-red-500 hover:text-red-700 underline disabled:opacity-50"
+            >
+              {cancelling ? "Cancelling…" : "Cancel"}
+            </button>
+          </div>
         </div>
+      </div>
+    );
+  }
+
+  if (status.status === "cancelled") {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-sm">
+        <div className="font-medium text-yellow-800">⚠️ Import cancelled</div>
+        <div className="text-yellow-700">
+          {(status.committed_rows || 0).toLocaleString()} rows were committed before cancellation.
+        </div>
+        <button
+          onClick={() => onComplete?.(status)}
+          className="mt-2 text-xs text-gray-500 underline hover:text-gray-700"
+        >
+          Dismiss
+        </button>
       </div>
     );
   }

@@ -88,4 +88,38 @@ router.get(
   }
 );
 
+router.post(
+  "/cancel/:batch_id",
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const { batch_id } = req.params;
+    try {
+      const ref = admin.firestore().collection("import_batches").doc(batch_id);
+      const doc = await ref.get();
+      if (!doc.exists) {
+        res.status(404).json({ error: "Batch not found" });
+        return;
+      }
+      const current = doc.data()?.status;
+      if (current === "complete" || current === "failed" || current === "cancelled") {
+        res.status(400).json({ error: `Cannot cancel \u2014 job is already ${current}` });
+        return;
+      }
+      await ref.set(
+        {
+          status: "cancelled",
+          cancelled_at: admin.firestore.FieldValue.serverTimestamp(),
+          cancelled_by: req.user?.uid || null,
+          completed_at: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      res.status(200).json({ ok: true, batch_id, status: "cancelled" });
+    } catch (err: any) {
+      console.error("cancel failed:", err);
+      res.status(500).json({ error: "Failed to cancel import" });
+    }
+  }
+);
+
 export default router;

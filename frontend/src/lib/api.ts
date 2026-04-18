@@ -2425,3 +2425,15 @@ export async function fetchActiveImportJobs(): Promise<{ jobs: ImportStatus[] }>
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.json();
 }
+
+export async function cancelImportJob(
+  batchId: string
+): Promise<{ ok: boolean; batch_id: string; status: string }> {
+  const res = await fetch(
+    `${BASE}/api/v1/imports/cancel/${encodeURIComponent(batchId)}`,
+    { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
