@@ -397,6 +397,15 @@
         { "fieldPath": "site_owner",        "order": "ASCENDING" },
         { "fieldPath": "first_received_at", "order": "ASCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 41 — audit_log: event_type + created_at (queue stats)",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "event_type",  "order": "ASCENDING" },
+        { "fieldPath": "created_at",  "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
