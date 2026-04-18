@@ -31,6 +31,7 @@ import toursRouter from "./routes/tours";
 import adminUsersRouter from "./routes/adminUsers";
 import adminSettingsRouter from "./routes/adminSettings";
 import aiEnrichmentRouter from "./routes/aiEnrichment";
+import queueStatsRouter from "./routes/queueStats";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -114,6 +115,9 @@ app.use("/api/v1/admin", adminSettingsRouter);
 
 // ── Import Intelligence Layer — AI Enrichment ──
 app.use("/api/v1/ai-enrich", aiEnrichmentRouter);
+
+// ── Queue Stats ──
+app.use("/api/v1/queue", queueStatsRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

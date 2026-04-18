@@ -38,8 +38,11 @@ function requireRole(allowed) {
         catch (err) {
             // fall through to permissive mode on read failures
         }
-        // 3. Phase 1 fallback — no role data present, permit.
-        next();
+        // 3. No role data present — deny access.
+        res.status(403).json({
+            error: `No role assigned. Required: ${allowed.join(" or ")}`,
+        });
+        return;
     };
 }
 //# sourceMappingURL=roles.js.map

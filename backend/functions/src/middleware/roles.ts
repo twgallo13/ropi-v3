@@ -1,9 +1,8 @@
 /**
- * Role-check middleware. Phase 1 implementation:
+ * Role-check middleware.
  *   - Reads role from Firebase Auth custom claim `role`
  *   - Falls back to `users/{uid}.role` in Firestore
- *   - If neither is set, the request is PERMITTED (deferred enforcement)
- *     so existing test accounts continue to work while roles roll out.
+ *   - If neither is set, the request is DENIED (403).
  * Known roles (Section 4): map_analyst, head_buyer, operations_operator,
  *                          buyer, completion_specialist, admin, owner,
  *                          product_ops
@@ -52,7 +51,10 @@ export function requireRole(allowed: string[]) {
       // fall through to permissive mode on read failures
     }
 
-    // 3. Phase 1 fallback — no role data present, permit.
-    next();
+    // 3. No role data present — deny access.
+    res.status(403).json({
+      error: `No role assigned. Required: ${allowed.join(" or ")}`,
+    });
+    return;
   };
 }

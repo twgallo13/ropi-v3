@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import NotificationBell from "./NotificationBell";
 import TourLoader from "./TourLoader";
 import Sidebar from "./Sidebar";
+import { MobileBottomNav } from "./MobileBottomNav";
 import UserMenu from "./UserMenu";
 import ThemeToggle from "./ThemeToggle";
 import { fetchAdvisoryLatest } from "../lib/api";
@@ -95,13 +96,15 @@ export default function Layout() {
           <UserMenu />
         </header>
 
-        <main className="flex-1">
+        <main className="flex-1 pb-16 md:pb-0">
           {currentHub && (
             <TourLoader hub={currentHub} forceReplayKey={replayKey} />
           )}
           <Outlet />
         </main>
       </div>
+
+      <MobileBottomNav />
     </div>
   );
 }

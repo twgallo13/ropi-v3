@@ -14,6 +14,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const auth_1 = require("../middleware/auth");
+const roles_1 = require("../middleware/roles");
 const exportEligibility_1 = require("../services/exportEligibility");
 const exportSerializer_1 = require("../services/exportSerializer");
 const scheduledPromotion_1 = require("../services/scheduledPromotion");
@@ -21,7 +22,7 @@ const router = (0, express_1.Router)();
 const db = () => firebase_admin_1.default.firestore();
 const ts = () => firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
 // ── GET /api/v1/exports/pending — Preview eligible + blocked ──
-router.get("/pending", auth_1.requireAuth, async (_req, res) => {
+router.get("/pending", auth_1.requireAuth, (0, roles_1.requireRole)(["head_buyer"]), async (_req, res) => {
     try {
         const { eligible, blocked } = await (0, exportEligibility_1.getExportEligibleProducts)();
         const pending = eligible.map((doc) => {
@@ -43,7 +44,7 @@ router.get("/pending", auth_1.requireAuth, async (_req, res) => {
     }
 });
 // ── POST /api/v1/exports/daily/trigger — Full export ──
-router.post("/daily/trigger", auth_1.requireAuth, async (req, res) => {
+router.post("/daily/trigger", auth_1.requireAuth, (0, roles_1.requireRole)(["head_buyer"]), async (req, res) => {
     const userId = req.user?.uid;
     if (!userId) {
         res.status(401).json({ error: "Authentication required" });
@@ -162,7 +163,7 @@ router.post("/daily/trigger", auth_1.requireAuth, async (req, res) => {
     }
 });
 // ── POST /api/v1/exports/notify-buyer ──
-router.post("/notify-buyer", auth_1.requireAuth, async (req, res) => {
+router.post("/notify-buyer", auth_1.requireAuth, (0, roles_1.requireRole)(["head_buyer"]), async (req, res) => {
     try {
         const userId = req.user?.uid;
         if (!userId) {
@@ -217,7 +218,7 @@ router.post("/notify-buyer", auth_1.requireAuth, async (req, res) => {
     }
 });
 // ── POST /api/v1/exports/promote-scheduled — Manual trigger ──
-router.post("/promote-scheduled", auth_1.requireAuth, async (req, res) => {
+router.post("/promote-scheduled", auth_1.requireAuth, (0, roles_1.requireRole)(["head_buyer"]), async (req, res) => {
     try {
         const userId = req.user?.uid;
         if (!userId) {
@@ -241,7 +242,7 @@ router.post("/promote-scheduled", auth_1.requireAuth, async (req, res) => {
     }
 });
 // ── GET /api/v1/exports/jobs — List past export jobs ──
-router.get("/jobs", auth_1.requireAuth, async (_req, res) => {
+router.get("/jobs", auth_1.requireAuth, (0, roles_1.requireRole)(["head_buyer"]), async (_req, res) => {
     try {
         const snap = await db()
             .collection("export_jobs")

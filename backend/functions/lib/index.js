@@ -36,6 +36,7 @@ const tours_1 = __importDefault(require("./routes/tours"));
 const adminUsers_1 = __importDefault(require("./routes/adminUsers"));
 const adminSettings_1 = __importDefault(require("./routes/adminSettings"));
 const aiEnrichment_1 = __importDefault(require("./routes/aiEnrichment"));
+const queueStats_1 = __importDefault(require("./routes/queueStats"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -101,6 +102,8 @@ app.use("/api/v1/admin/users", adminUsers_1.default);
 app.use("/api/v1/admin", adminSettings_1.default);
 // ── Import Intelligence Layer — AI Enrichment ──
 app.use("/api/v1/ai-enrich", aiEnrichment_1.default);
+// ── Queue Stats ──
+app.use("/api/v1/queue", queueStats_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({

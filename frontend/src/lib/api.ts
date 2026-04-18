@@ -92,6 +92,23 @@ export async function fetchProducts(params?: Record<string, string>): Promise<Pr
   return res.json();
 }
 
+export interface QueueStats {
+  total_incomplete: number;
+  completed_today: number;
+  my_completions_today: number;
+  my_edits_today: number;
+  team_edits_today: number;
+  leaderboard: { name: string; count: number }[];
+  brands_added_today: string[];
+  products_edited_today: number;
+}
+
+export async function fetchQueueStats(): Promise<QueueStats> {
+  const res = await fetch(`${BASE}/api/v1/queue/stats`, { headers: await headers() });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
 export async function fetchProduct(mpn: string): Promise<ProductDetail> {
   const res = await fetch(`${BASE}/api/v1/products/${encodeURIComponent(mpn)}`, {
     headers: await headers(),

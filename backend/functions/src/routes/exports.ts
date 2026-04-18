@@ -9,6 +9,7 @@
 import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
+import { requireRole } from "../middleware/roles";
 import {
   getExportEligibleProducts,
 } from "../services/exportEligibility";
@@ -20,7 +21,7 @@ const db = () => admin.firestore();
 const ts = () => admin.firestore.FieldValue.serverTimestamp();
 
 // ── GET /api/v1/exports/pending — Preview eligible + blocked ──
-router.get("/pending", requireAuth, async (_req: AuthenticatedRequest, res: Response) => {
+router.get("/pending", requireAuth, requireRole(["head_buyer"]), async (_req: AuthenticatedRequest, res: Response) => {
   try {
     const { eligible, blocked } = await getExportEligibleProducts();
 
@@ -44,7 +45,7 @@ router.get("/pending", requireAuth, async (_req: AuthenticatedRequest, res: Resp
 });
 
 // ── POST /api/v1/exports/daily/trigger — Full export ──
-router.post("/daily/trigger", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post("/daily/trigger", requireAuth, requireRole(["head_buyer"]), async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.uid;
   if (!userId) {
     res.status(401).json({ error: "Authentication required" });
@@ -175,7 +176,7 @@ router.post("/daily/trigger", requireAuth, async (req: AuthenticatedRequest, res
 });
 
 // ── POST /api/v1/exports/notify-buyer ──
-router.post("/notify-buyer", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post("/notify-buyer", requireAuth, requireRole(["head_buyer"]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.uid;
     if (!userId) {
@@ -236,7 +237,7 @@ router.post("/notify-buyer", requireAuth, async (req: AuthenticatedRequest, res:
 });
 
 // ── POST /api/v1/exports/promote-scheduled — Manual trigger ──
-router.post("/promote-scheduled", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+router.post("/promote-scheduled", requireAuth, requireRole(["head_buyer"]), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.uid;
     if (!userId) {
@@ -263,7 +264,7 @@ router.post("/promote-scheduled", requireAuth, async (req: AuthenticatedRequest,
 });
 
 // ── GET /api/v1/exports/jobs — List past export jobs ──
-router.get("/jobs", requireAuth, async (_req: AuthenticatedRequest, res: Response) => {
+router.get("/jobs", requireAuth, requireRole(["head_buyer"]), async (_req: AuthenticatedRequest, res: Response) => {
   try {
     const snap = await db()
       .collection("export_jobs")

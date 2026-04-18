@@ -70,11 +70,15 @@ const NAV_TREE: NavNode[] = [
     icon: "🔧",
     roles: ["admin", "owner"],
     children: [
+      { label: "Overview", path: "/admin" },
       { label: "Settings", path: "/admin/settings" },
       { label: "Users", path: "/admin/settings?tab=users" },
       { label: "Smart Rules", path: "/admin/smart-rules" },
       { label: "Prompt Templates", path: "/admin/prompt-templates" },
       { label: "Cadence Rules", path: "/admin/cadence-rules" },
+      { label: "Pricing Guardrails", path: "/admin/pricing-guardrails" },
+      { label: "Export Profiles", path: "/admin/export-profiles" },
+      { label: "Permissions", path: "/admin/permissions" },
     ],
   },
 ];

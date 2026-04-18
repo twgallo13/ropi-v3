@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { fetchProducts, type ProductListItem } from "../lib/api";
+import { fetchProducts, fetchQueueStats, type ProductListItem, type QueueStats } from "../lib/api";
 import { useGridDensity } from "../hooks/useGridDensity";
+import { useAuth } from "../contexts/AuthContext";
 
 const SITE_COLORS: Record<string, string> = {
   shiekh: "bg-blue-100 text-blue-800",
@@ -32,6 +33,8 @@ const DEFAULT_SORT: SortKey = "priority";
 const PAGE_SIZE = 25;
 
 export default function CompletionQueuePage() {
+  const { role } = useAuth();
+  const isLead = role === "admin" || role === "owner" || role === "head_buyer";
   const [items, setItems] = useState<ProductListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -41,10 +44,17 @@ export default function CompletionQueuePage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [stats, setStats] = useState<QueueStats | null>(null);
+  const [activeTab, setActiveTab] = useState<"queue" | "history">("queue");
   const { density, toggle: toggleDensity, isCompact } = useGridDensity(
     "completion-queue"
   );
   void density;
+
+  // Load KPI stats
+  useEffect(() => {
+    fetchQueueStats().then(setStats).catch(() => {});
+  }, []);
 
   const buildParams = useCallback(
     (pageCursor?: string | null): Record<string, string> => {
@@ -115,6 +125,108 @@ export default function CompletionQueuePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-4">Completion Queue</h1>
+
+      {/* KPI Bar */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="bg-white dark:bg-gray-800 border rounded-lg p-3">
+            <p className="text-xs text-gray-500 uppercase">Incomplete</p>
+            <p className="text-2xl font-bold">{stats.total_incomplete}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 border rounded-lg p-3">
+            <p className="text-xs text-gray-500 uppercase">Completed Today</p>
+            <p className="text-2xl font-bold">{stats.completed_today}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 border rounded-lg p-3">
+            <p className="text-xs text-gray-500 uppercase">My Completions</p>
+            <p className="text-2xl font-bold">{stats.my_completions_today}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 border rounded-lg p-3">
+            <p className="text-xs text-gray-500 uppercase">Team Edits Today</p>
+            <p className="text-2xl font-bold">{stats.team_edits_today}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard + Brand Activity panels (admin/owner/head_buyer only) */}
+      {isLead && stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Leaderboard */}
+          <div className="bg-white dark:bg-gray-800 border rounded-lg p-4">
+            <h3 className="text-sm font-semibold mb-2">Leaderboard (Today)</h3>
+            {stats.leaderboard.length === 0 ? (
+              <p className="text-xs text-gray-400">No completions yet today</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {stats.leaderboard.map((entry, i) => (
+                  <li key={i} className="flex justify-between">
+                    <span className="truncate">{entry.name}</span>
+                    <span className="font-mono font-bold">{entry.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {/* Brand Activity */}
+          <div className="bg-white dark:bg-gray-800 border rounded-lg p-4">
+            <h3 className="text-sm font-semibold mb-2">Products Added Today</h3>
+            {stats.brands_added_today.length === 0 ? (
+              <p className="text-xs text-gray-400">No new products today</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {stats.brands_added_today.slice(0, 10).map((mpn, i) => (
+                  <li key={i} className="text-xs font-mono text-gray-600 dark:text-gray-300">{mpn}</li>
+                ))}
+                {stats.brands_added_today.length > 10 && (
+                  <li className="text-xs text-gray-400">
+                    +{stats.brands_added_today.length - 10} more
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab bar: Queue / History */}
+      <div className="flex gap-4 border-b mb-4">
+        <button
+          onClick={() => setActiveTab("queue")}
+          className={`pb-2 text-sm font-medium border-b-2 ${
+            activeTab === "queue"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Queue
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`pb-2 text-sm font-medium border-b-2 ${
+            activeTab === "history"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          History
+        </button>
+      </div>
+
+      {activeTab === "history" ? (
+        <div className="text-sm text-gray-500">
+          <p className="mb-2">Recent activity from audit log:</p>
+          {stats ? (
+            <div className="space-y-2">
+              <p><strong>{stats.team_edits_today}</strong> field edits today across <strong>{stats.products_edited_today}</strong> products</p>
+              <p><strong>{stats.my_edits_today}</strong> of those are yours</p>
+              <p><strong>{stats.completed_today}</strong> products completed today</p>
+            </div>
+          ) : (
+            <p>Loading stats…</p>
+          )}
+        </div>
+      ) : (
+      <>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
@@ -308,6 +420,9 @@ export default function CompletionQueuePage() {
         >
           {loadingMore ? "Loading…" : "Load more products"}
         </button>
+      )}
+
+      </>
       )}
     </div>
   );

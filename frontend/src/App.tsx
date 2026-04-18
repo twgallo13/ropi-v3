@@ -33,6 +33,12 @@ import ChannelDisparityPage from "./pages/ChannelDisparityPage";
 import BuyerPerformancePage from "./pages/BuyerPerformancePage";
 import AdvisoryPage from "./pages/AdvisoryPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
+import MorePage from "./pages/MorePage";
+import ProductListPage from "./pages/ProductListPage";
+import AdminOverviewPage from "./pages/AdminOverviewPage";
+import PricingGuardrailsPage from "./pages/PricingGuardrailsPage";
+import ExportProfilesPage from "./pages/ExportProfilesPage";
+import PermissionsPage from "./pages/PermissionsPage";
 
 export default function App() {
   return (
@@ -110,6 +116,12 @@ function AppInner() {
             <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
             <Route path="/advisory" element={<AdvisoryPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            <Route path="/admin" element={<AdminOverviewPage />} />
+            <Route path="/admin/pricing-guardrails" element={<PricingGuardrailsPage />} />
+            <Route path="/admin/export-profiles" element={<ExportProfilesPage />} />
+            <Route path="/admin/permissions" element={<PermissionsPage />} />
+            <Route path="/products" element={<ProductListPage />} />
+            <Route path="/more" element={<MorePage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Route>
