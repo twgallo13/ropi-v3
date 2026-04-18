@@ -475,10 +475,20 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
             // Block with discrepancy — Joey re-imports corrected data
             await productRef.set({
                 completion_state: "complete",
+                product_is_active: true,
                 pricing_domain_state: "discrepancy",
                 discrepancy_reasons: discrepancyReasons,
                 completed_at: db.FieldValue.serverTimestamp(),
                 completed_by: req.user?.uid || "unknown",
+            }, { merge: true });
+            // Auto-set product_is_active attribute_value for consistency
+            await productRef.collection("attribute_values").doc("product_is_active").set({
+                field_name: "product_is_active",
+                value: "true",
+                origin_type: "System",
+                origin_rule: "Mark Complete",
+                verification_state: "Rule-Verified",
+                updated_at: db.FieldValue.serverTimestamp()
             }, { merge: true });
             // Step 2.4 — clear High Priority flag now that the product is complete
             try {
@@ -518,9 +528,19 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
         // No discrepancy — go straight to export_ready
         await productRef.set({
             completion_state: "complete",
+            product_is_active: true,
             pricing_domain_state: "export_ready",
             completed_at: db.FieldValue.serverTimestamp(),
             completed_by: req.user?.uid || "unknown",
+        }, { merge: true });
+        // Auto-set product_is_active attribute_value for consistency
+        await productRef.collection("attribute_values").doc("product_is_active").set({
+            field_name: "product_is_active",
+            value: "true",
+            origin_type: "System",
+            origin_rule: "Mark Complete",
+            verification_state: "Rule-Verified",
+            updated_at: db.FieldValue.serverTimestamp()
         }, { merge: true });
         // Step 2.4 — clear High Priority flag now that the product is complete
         try {

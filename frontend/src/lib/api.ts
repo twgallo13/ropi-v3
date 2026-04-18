@@ -111,8 +111,10 @@ export interface AttributeRegistryEntry {
   dropdown_options: string[];
   display_group?: string;
   display_order?: number;
+  tab_group_order?: number;
   full_width?: boolean;
   is_editable?: boolean;
+  depends_on?: { field: string; value: string } | null;
 }
 
 export async function fetchAttributeRegistry(): Promise<AttributeRegistryEntry[]> {

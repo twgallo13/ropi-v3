@@ -43,6 +43,7 @@ function StatusBar({
   mapPrice,
   needsAiReview,
   aiReviewReason,
+  imageStatus,
 }: {
   completionState: string;
   completionProgress: CompletionProgress;
@@ -53,6 +54,7 @@ function StatusBar({
   mapPrice?: number | null;
   needsAiReview?: boolean;
   aiReviewReason?: string | null;
+  imageStatus?: string | null;
 }) {
   const isComplete = completionState === "complete";
   const cp = completionProgress;
@@ -119,7 +121,7 @@ function StatusBar({
 
   return (
     <div className="mt-4 bg-white rounded-lg border p-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {/* Completion signal */}
         <div>
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Completion</p>
@@ -142,6 +144,20 @@ function StatusBar({
               }`}
               style={{ width: `${cp.pct}%` }}
             />
+          </div>
+        </div>
+
+        {/* Image Status signal */}
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Image Status</p>
+          <div className="mt-1">
+            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+              imageStatus === 'complete' ? 'bg-green-100 text-green-700'
+                : imageStatus === 'missing' ? 'bg-red-50 text-red-700'
+                : 'bg-gray-100 text-gray-600'
+            }`}>
+              {imageStatus || '—'}
+            </span>
           </div>
         </div>
 
@@ -350,10 +366,13 @@ export default function ProductDetailPage() {
     }
   }
 
-  // Sort each tab's entries: by display_group first, then display_order,
-  // finally alphabetical by display_label as a stable fallback.
+  // Sort each tab's entries: by tab_group_order first, then display_group name,
+  // then display_order, finally alphabetical by display_label as a stable fallback.
   for (const tab of TABS) {
     byTab[tab.key].sort((a, b) => {
+      const tga = a.tab_group_order ?? 99;
+      const tgb = b.tab_group_order ?? 99;
+      if (tga !== tgb) return tga - tgb;
       const ga = a.display_group || "zzz_Other";
       const gb = b.display_group || "zzz_Other";
       if (ga !== gb) return ga.localeCompare(gb);
@@ -366,8 +385,22 @@ export default function ProductDetailPage() {
 
   const tabEntries = byTab[activeTab] || [];
 
+  // Build live values map — used for depends_on conditional rendering
+  const liveValues: Record<string, string> = {};
+  for (const [key, attr] of Object.entries(p.attribute_values)) {
+    if (attr?.value !== undefined && attr?.value !== null) {
+      liveValues[key] = String(attr.value);
+    }
+  }
+
+  // Filter out entries whose depends_on condition is not met
+  const visibleTabEntries = tabEntries.filter((entry) => {
+    if (!entry.depends_on) return true;
+    return liveValues[entry.depends_on.field] === entry.depends_on.value;
+  });
+
   // Bucket tab entries by display_group for sub-headered rendering
-  const groupedTabEntries = tabEntries.reduce<Record<string, AttributeRegistryEntry[]>>(
+  const groupedTabEntries = visibleTabEntries.reduce<Record<string, AttributeRegistryEntry[]>>(
     (acc, entry) => {
       const g = entry.display_group || "Other";
       if (!acc[g]) acc[g] = [];
@@ -418,6 +451,7 @@ export default function ProductDetailPage() {
         mapPrice={p.map_price}
         needsAiReview={p.needs_ai_review}
         aiReviewReason={p.ai_review_reason}
+        imageStatus={p.image_status}
       />
 
       {/* MAP auto-populate toast */}
