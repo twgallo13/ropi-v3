@@ -74,7 +74,7 @@ function runInBackground(batchId, importType, body) {
                 console.log(`[${importType}] background commit cancelled for ${batchId}`);
                 return;
             }
-            console.error(`[${importType}] background commit failed for ${batchId}:`, err);
+            console.error(`[${importType}] background commit error for ${batchId}:`, err);
             try {
                 await firebase_admin_1.default
                     .firestore()

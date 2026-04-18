@@ -8,6 +8,7 @@ export interface AttributeFieldProps {
   label: string;
   initialValue: string;
   isVerified?: boolean;
+  verificationState?: string;
   fieldType?: "text" | "textarea" | "select" | "dropdown" | "multi_select" | "number" | "toggle" | "date";
   options?: string[];
   tabIndex?: number;
@@ -21,6 +22,7 @@ export function AttributeField({
   label,
   initialValue,
   isVerified,
+  verificationState,
   fieldType = "text",
   options,
   tabIndex,
@@ -88,13 +90,31 @@ export function AttributeField({
               ✕ Error
             </span>
           )}
-          {saveState === "idle" && isVerified && (
+          {saveState === "idle" && isVerified && verificationState === "Human-Verified" && (
             <span
               className="text-green-600"
               title="Human Verified"
               aria-label="Human Verified"
             >
               🔒
+            </span>
+          )}
+          {saveState === "idle" && verificationState === "Rule-Verified" && (
+            <span
+              className="text-blue-500"
+              title="Auto-filled by Smart Rule"
+              aria-label="Auto-filled by Smart Rule"
+            >
+              ⚡
+            </span>
+          )}
+          {saveState === "idle" && !isVerified && verificationState !== "Rule-Verified" && (
+            <span
+              className="text-gray-300"
+              title="Needs verification"
+              aria-label="Needs verification"
+            >
+              ○
             </span>
           )}
         </span>

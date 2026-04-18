@@ -576,6 +576,19 @@ export default function ProductDetailPage() {
                       | "number"
                       | "toggle"
                       | "date";
+
+                    // Item 5: Read-only fields render as display-only badges
+                    if (entry.is_editable === false) {
+                      return (
+                        <div key={entry.field_key} className="flex flex-col gap-1">
+                          <label className="text-xs font-medium text-gray-600">{entry.display_label}</label>
+                          <div className="text-sm text-gray-700 py-2 px-3 bg-gray-50 rounded-lg border border-gray-100">
+                            {initial || '—'}
+                          </div>
+                        </div>
+                      );
+                    }
+
                     return (
                       <AttributeField
                         key={entry.field_key}
@@ -584,6 +597,7 @@ export default function ProductDetailPage() {
                         label={entry.display_label}
                         initialValue={initial}
                         isVerified={verified}
+                        verificationState={attr?.verification_state ?? undefined}
                         fieldType={ft}
                         options={entry.dropdown_options || []}
                         fullWidth={entry.full_width === true}

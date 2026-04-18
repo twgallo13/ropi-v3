@@ -401,7 +401,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
 
             const newVerificationState = autoVerifiedKeys.has(key)
               ? "Human-Verified"
-              : "System-Applied";
+              : "Rule-Verified";
 
             await productRef
               .collection("attribute_values")
@@ -558,7 +558,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
                 value: attrValue,
                 origin_type: "Import",
                 origin_detail: `Import Batch ${batch_id}`,
-                verification_state: "System-Applied",
+                verification_state: "Rule-Verified",
                 written_at: db.FieldValue.serverTimestamp(),
               },
               { merge: true }
@@ -626,7 +626,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
                 origin_type: "Import",
                 origin_rule: "Full Product Import",
                 origin_detail: `Import Batch ${batch_id}`,
-                verification_state: "System-Applied",
+                verification_state: "Rule-Verified",
                 updated_at: db.FieldValue.serverTimestamp(),
                 written_at: db.FieldValue.serverTimestamp(),
               },

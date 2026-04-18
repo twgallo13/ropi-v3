@@ -67,42 +67,10 @@ export function runInBackground(
       if (err instanceof ImportCancelledError) {
         console.log(`[${importType}] background commit cancelled for ${batchId}`);
         return;
-      }ead the doc and throw if the operator cancelled.
-// Call this between chunks of expensive work (Firestore reads are cheap).
-export async function isCancelled(batchId: string): Promise<boolean> {
-  try {
-    const snap = await admin.firestore().collection("import_batches").doc(batchId).get();
-    return snap.exists && snap.data()?.status === "cancelled";
-  } catch {
-    return false;
-  }
-}
-
-// Fire-and-forget the heavy commit body. Errors are caught and the batch
-// is marked failed so the UI's progress card surfaces the message.
-export function runInBackground(
-  batchId: string,
-  importType: string,
-  body: () => Promise<void>
-): void {
-  setImmediate(async () => {
-    try {
-      await body();
-    } catch (err: any) {
-      if (err instanceof ImportCancelledError) {
-// Also enforces cancellation: every call reads the current status doc and
-// throws ImportCancelledError if the operator cancelled the job. Throws bubble
-// up to runInBackground which exits silently.
-const lastWriteAt = new Map<string, number>();
-export async function updateProgress(
-  batchId: string,
-  pct: number,
-  counters?: { committed?: number; failed?: number; skipped?: number }
-): Promise<void> {
-  // Cancellation check — bail before writing more progress.
-  if (await isCancelled(batchId)) {
-    throw new ImportCancelledError(batchId);
-  }n
+      }
+      console.error(`[${importType}] background commit error for ${batchId}:`, err);
+      try {
+        await admin
           .firestore()
           .collection("import_batches")
           .doc(batchId)

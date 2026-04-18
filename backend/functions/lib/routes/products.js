@@ -42,11 +42,13 @@ async function computeCompletionProgress(firestore, docId, requiredFields) {
     for (const rf of requiredFields) {
         const attr = attrMap.get(rf.field_key);
         if (attr && attr.value !== undefined && attr.value !== null && attr.value !== "") {
-            if (attr.verification_state === "Human-Verified") {
+            const isVerified = attr.verification_state === "Human-Verified"
+                || attr.verification_state === "Rule-Verified";
+            if (isVerified) {
                 completed++;
             }
             else {
-                blockers.push(`${rf.display_label} must be Human-Verified`);
+                blockers.push(`${rf.display_label} must be verified`);
             }
         }
         else {
@@ -445,8 +447,12 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
             if (!attr || attr.value === undefined || attr.value === null || attr.value === "") {
                 blockers.push(`${rf.display_label} is required`);
             }
-            else if (attr.verification_state !== "Human-Verified") {
-                blockers.push(`${rf.display_label} must be Human-Verified`);
+            else {
+                const isVerified = attr.verification_state === "Human-Verified"
+                    || attr.verification_state === "Rule-Verified";
+                if (!isVerified) {
+                    blockers.push(`${rf.display_label} must be verified`);
+                }
             }
         }
         if (blockers.length > 0) {

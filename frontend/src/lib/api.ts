@@ -112,6 +112,7 @@ export interface AttributeRegistryEntry {
   display_group?: string;
   display_order?: number;
   full_width?: boolean;
+  is_editable?: boolean;
 }
 
 export async function fetchAttributeRegistry(): Promise<AttributeRegistryEntry[]> {

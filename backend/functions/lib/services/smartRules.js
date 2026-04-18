@@ -203,7 +203,7 @@ async function writeRuleAction(firestore, mpn, batchId, ruleId, ruleName, target
         value,
         origin_type: "Smart Rule",
         origin_detail: `Rule #${ruleId} — ${ruleName}`,
-        verification_state: "System-Applied",
+        verification_state: "Rule-Verified",
         written_at: db.FieldValue.serverTimestamp(),
     }, { merge: true });
     await firestore.collection("audit_log").add({
@@ -217,7 +217,7 @@ async function writeRuleAction(firestore, mpn, batchId, ruleId, ruleName, target
         old_value: oldValue,
         old_verification_state: oldVerificationState,
         new_value: value,
-        new_verification_state: "System-Applied",
+        new_verification_state: "Rule-Verified",
         value,
         overwrite: !!alwaysOverwrite,
         batch_id: batchId || null,
@@ -308,7 +308,7 @@ async function executeSmartRules(mpn, batchId) {
                 // Refresh cache so subsequent higher-priority rules see fresh values
                 ctx.attributeValues[a.target_field] = {
                     value: a.value,
-                    verification_state: "System-Applied",
+                    verification_state: "Rule-Verified",
                 };
                 if (a.target_field === "image_status") {
                     result.image_status_set = String(a.value);
