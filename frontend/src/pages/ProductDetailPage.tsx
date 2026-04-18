@@ -54,7 +54,7 @@ function StatusBar({
   mapPrice?: number | null;
   needsAiReview?: boolean;
   aiReviewReason?: string | null;
-  imageStatus?: string | null;
+  imageStatus?: unknown;
 }) {
   const isComplete = completionState === "complete";
   const cp = completionProgress;
@@ -152,11 +152,10 @@ function StatusBar({
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Image Status</p>
           <div className="mt-1">
             <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-              imageStatus === 'complete' ? 'bg-green-100 text-green-700'
-                : imageStatus === 'missing' ? 'bg-red-50 text-red-700'
-                : 'bg-gray-100 text-gray-600'
+              imageStatus ? 'bg-green-100 text-green-700 font-medium'
+                : 'bg-gray-100 text-gray-400'
             }`}>
-              {imageStatus || '—'}
+              {imageStatus ? 'YES' : 'NO'}
             </span>
           </div>
         </div>
@@ -451,7 +450,7 @@ export default function ProductDetailPage() {
         mapPrice={p.map_price}
         needsAiReview={p.needs_ai_review}
         aiReviewReason={p.ai_review_reason}
-        imageStatus={p.image_status}
+        imageStatus={p.attribute_values?.media_status?.value || p.attribute_values?.image_status?.value || p.image_status}
       />
 
       {/* MAP auto-populate toast */}
@@ -496,7 +495,6 @@ export default function ProductDetailPage() {
       {/* Key info cards */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
         <InfoCard label="Status" value={p.status} />
-        <InfoCard label="Image Status" value={p.image_status || "—"} />
         <InfoCard label="Store Inv" value={String(p.inventory_store)} />
         <InfoCard label="WH Inv" value={String(p.inventory_warehouse)} />
         <InfoCard label="SCOM" value={`$${p.scom.toFixed(2)}`} />

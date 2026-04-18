@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAttributeField } from "../hooks/useAttributeField";
+import { saveField } from "../lib/api";
 import type { SaveFieldResponse } from "../lib/api";
 
 export interface AttributeFieldProps {
@@ -131,6 +132,27 @@ export function AttributeField({
           className={inputClass}
           disabled={saveState === "saving"}
         />
+      ) : effectiveType === "toggle" ? (
+        <div className="flex items-center gap-3 py-2">
+          <input
+            type="checkbox"
+            id={`attr-${fieldKey}`}
+            checked={value === "true" || (value as unknown) === true}
+            onChange={(e) => {
+              const newVal = e.target.checked ? "true" : "false";
+              setValue(newVal);
+              // Toggle saves immediately — don't wait for blur
+              saveField(mpn, fieldKey, newVal).then((resp) => {
+                onSaved?.(fieldKey, resp);
+              }).catch(() => {});
+            }}
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            disabled={saveState === "saving"}
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            {value === "true" ? "Enabled" : "Disabled"}
+          </span>
+        </div>
       ) : effectiveType === "multi_select" && hasOptions ? (
         <select
           id={`attr-${fieldKey}`}
