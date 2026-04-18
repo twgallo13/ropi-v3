@@ -393,7 +393,9 @@ export default function ProductDetailPage() {
   }
 
   // Filter out entries whose depends_on condition is not met
+  // Fast Fashion child fields are rendered inside the drawer, not the main grid
   const visibleTabEntries = tabEntries.filter((entry) => {
+    if (entry.depends_on?.field === 'is_fast_fashion') return false;
     if (!entry.depends_on) return true;
     return liveValues[entry.depends_on.field] === entry.depends_on.value;
   });
@@ -587,7 +589,80 @@ export default function ProductDetailPage() {
           {tabEntries.length === 0 ? (
             <p className="text-sm text-gray-400 italic py-4">No attributes in this tab.</p>
           ) : (
-            Object.entries(groupedTabEntries).map(([groupName, groupFields]) => (
+            Object.entries(groupedTabEntries).map(([groupName, groupFields]) => {
+
+              // ── Fast Fashion special case — toggle + inline drawer ──
+              if (groupName === 'Fast Fashion') {
+                const toggleEntry = groupFields.find(e => e.field_key === 'is_fast_fashion');
+                if (!toggleEntry) return null;
+
+                const ffAttr = p.attribute_values['is_fast_fashion'];
+                const isEnabled = liveValues['is_fast_fashion'] === 'true';
+
+                // Fast Fashion Details fields — everything with depends_on is_fast_fashion
+                const drawerFields = byTab['product_attributes'].filter(
+                  e => e.depends_on?.field === 'is_fast_fashion'
+                );
+
+                return (
+                  <div key={groupName}>
+                    <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 pb-1 border-b border-gray-200 dark:border-gray-700">
+                      Fast Fashion
+                    </h4>
+
+                    {/* Toggle row */}
+                    <AttributeField
+                      mpn={p.mpn}
+                      fieldKey="is_fast_fashion"
+                      label="Fast Fashion"
+                      initialValue={ffAttr?.value !== undefined && ffAttr?.value !== null ? String(ffAttr.value) : 'false'}
+                      isVerified={ffAttr?.verification_state === 'Human-Verified'}
+                      verificationState={ffAttr?.verification_state ?? undefined}
+                      fieldType="toggle"
+                      options={[]}
+                      fullWidth={false}
+                      tabIndex={0}
+                      onSaved={handleFieldSaved}
+                    />
+
+                    {/* Drawer — only renders when enabled */}
+                    {isEnabled && (
+                      <div className="mt-3 ml-4 pl-4 border-l-2 border-blue-200 space-y-4">
+                        <p className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-2">
+                          Fast Fashion Details
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {drawerFields.map((entry, idx) => {
+                            const dAttr = p.attribute_values[entry.field_key];
+                            const rawValue = dAttr?.value;
+                            const initial = rawValue !== undefined && rawValue !== null
+                              ? String(rawValue) : '';
+                            return (
+                              <AttributeField
+                                key={entry.field_key}
+                                mpn={p.mpn}
+                                fieldKey={entry.field_key}
+                                label={entry.display_label}
+                                initialValue={initial}
+                                isVerified={dAttr?.verification_state === 'Human-Verified'}
+                                verificationState={dAttr?.verification_state ?? undefined}
+                                fieldType={entry.field_type as "text" | "textarea" | "select" | "dropdown" | "multi_select" | "number" | "toggle" | "date"}
+                                options={entry.dropdown_options || []}
+                                fullWidth={entry.full_width === true}
+                                tabIndex={idx + 1}
+                                onSaved={handleFieldSaved}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // ── All other groups render normally ──
+              return (
               <div key={groupName}>
                 <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 pb-1 border-b border-gray-200 dark:border-gray-700">
                   {groupName}
@@ -640,7 +715,7 @@ export default function ProductDetailPage() {
                   })}
                 </div>
               </div>
-            ))
+            );})
           )}
         </div>
       </div>
