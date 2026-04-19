@@ -359,10 +359,11 @@ export default function ProductDetailPage() {
   // Group registry entries by destination_tab (exclude system tab from UI)
   const byTab: Record<string, AttributeRegistryEntry[]> = {};
   for (const tab of TABS) byTab[tab.key] = [];
+  const ALLOWED_TABS = new Set(["core_information", "product_attributes", "descriptions_seo", "launch_media"]);
   for (const entry of registry) {
-    if (entry.destination_tab !== "system" && byTab[entry.destination_tab]) {
-      byTab[entry.destination_tab].push(entry);
-    }
+    if (entry.active !== true) continue;
+    if (!entry.destination_tab || !ALLOWED_TABS.has(entry.destination_tab)) continue;
+    byTab[entry.destination_tab].push(entry);
   }
 
   // Sort each tab's entries: by tab_group_order first, then display_group name,

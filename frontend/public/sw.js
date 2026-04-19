@@ -1,5 +1,5 @@
 /* ROPI Service Worker — Step 3.5 */
-const CACHE_NAME = "ropi-v4";
+const CACHE_NAME = "ropi-v5";
 const STATIC_ASSETS = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (event) => {

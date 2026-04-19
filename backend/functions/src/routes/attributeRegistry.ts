@@ -12,7 +12,13 @@ router.get("/", requireAuth, async (_req: AuthenticatedRequest, res: Response) =
     const snap = await firestore.collection("attribute_registry").get();
 
     const attributes = snap.docs
-      .filter((d) => d.data().active === true)
+      .filter((d) => {
+        const data = d.data();
+        if (data.active !== true) return false;
+        if (data.destination_tab === "system") return false;
+        if (data.is_editable === false) return false;
+        return true;
+      })
       .map((d) => ({
       field_key: d.id,
       display_label: d.data().display_label || d.id,
