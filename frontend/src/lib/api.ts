@@ -1754,15 +1754,28 @@ export async function siteVerificationCommit(
   return data;
 }
 
+// Phase 4.4 §3.1 canonical site registry entry.
 export interface SiteRegistryEntry {
-  site_id: string;
-  domain: string;
-  label: string;
+  site_key: string;
+  display_name: string;
+  domain: string | null;
+  is_active: boolean;
+  priority: number;
+  badge_color: string | null;
+  notes: string | null;
 }
-export async function fetchSiteRegistry(): Promise<SiteRegistryEntry[]> {
-  const res = await fetch(`${BASE}/api/v1/imports/site-verification/sites`, {
-    headers: await headers(),
-  });
+/**
+ * Fetch site registry from the canonical Phase 4.4 §8 endpoint.
+ *   activeOnly=true → only is_active === true entries (use for operator dropdowns).
+ *   activeOnly=false → all entries (use for admin/registry UI).
+ */
+export async function fetchSiteRegistry(
+  activeOnly = false
+): Promise<SiteRegistryEntry[]> {
+  const url = activeOnly
+    ? `${BASE}/api/v1/site-registry?active=true`
+    : `${BASE}/api/v1/site-registry`;
+  const res = await fetch(url, { headers: await headers() });
   const data = await res.json();
   if (!res.ok) throw data;
   return data.sites || [];

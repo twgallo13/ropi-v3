@@ -697,7 +697,8 @@ function SiteVerificationImportCard() {
   } | null>(null);
 
   useEffect(() => {
-    fetchSiteRegistry()
+    // Phase 4.4 §2.1 — import dropdown reads active-only from site_registry.
+    fetchSiteRegistry(true)
       .then(setSiteRegistry)
       .catch(() => {
         /* non-fatal — dropdown will be empty */
@@ -859,8 +860,8 @@ function SiteVerificationImportCard() {
                 >
                   <option value="">Select site…</option>
                   {siteRegistry.map((s) => (
-                    <option key={s.site_id} value={s.domain}>
-                      {s.label || s.domain}
+                    <option key={s.site_key} value={s.site_key}>
+                      {s.display_name}
                     </option>
                   ))}
                 </select>

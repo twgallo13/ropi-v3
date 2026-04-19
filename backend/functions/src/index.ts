@@ -23,6 +23,7 @@ import usersRouter from "./routes/users";
 import pricingDiscrepancyRouter from "./routes/pricingDiscrepancy";
 import siteVerificationImportRouter from "./routes/siteVerificationImport";
 import siteVerificationReviewRouter from "./routes/siteVerificationReview";
+import siteRegistryRouter from "./routes/siteRegistry";
 import notificationsRouter from "./routes/notifications";
 import dashboardRouter from "./routes/dashboard";
 import executiveRouter from "./routes/executive";
@@ -97,6 +98,8 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/pricing/discrepancy", pricingDiscrepancyRouter);
 app.use("/api/v1/imports/site-verification", siteVerificationImportRouter);
 app.use("/api/v1/site-verification", siteVerificationReviewRouter);
+// Phase 4.4 §8 — canonical site registry endpoint (relocated from /imports/site-verification/sites)
+app.use("/api/v1/site-registry", siteRegistryRouter);
 app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 

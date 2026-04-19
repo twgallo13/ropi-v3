@@ -1,21 +1,33 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { fetchProducts, fetchQueueStats, type ProductListItem, type QueueStats } from "../lib/api";
+import {
+  fetchProducts,
+  fetchQueueStats,
+  fetchSiteRegistry,
+  type ProductListItem,
+  type QueueStats,
+  type SiteRegistryEntry,
+} from "../lib/api";
 import { useGridDensity } from "../hooks/useGridDensity";
 import { useAuth } from "../contexts/AuthContext";
 
+// Phase 4.4 §3.1.1 — keys are canonical site_key values.
 const SITE_COLORS: Record<string, string> = {
-  shiekh: "bg-blue-100 text-blue-800",
-  karmaloop: "bg-green-100 text-green-800",
-  mltd: "bg-purple-100 text-purple-800",
+  shiekh_com: "bg-blue-100 text-blue-800",
+  karmaloop_com: "bg-green-100 text-green-800",
+  mltd_com: "bg-purple-100 text-purple-800",
 };
 
-function siteBadge(siteOwner: string) {
-  const key = siteOwner.toLowerCase();
-  const color = SITE_COLORS[key] || "bg-gray-100 text-gray-700";
+function siteBadge(
+  siteOwner: string,
+  registry: SiteRegistryEntry[] = []
+) {
+  const color = SITE_COLORS[siteOwner] || "bg-gray-100 text-gray-700";
+  const entry = registry.find((r) => r.site_key === siteOwner);
+  const label = entry?.display_name || siteOwner || "—";
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded ${color}`}>
-      {siteOwner}
+      {label}
     </span>
   );
 }
@@ -46,6 +58,7 @@ export default function CompletionQueuePage() {
   const [hasMore, setHasMore] = useState(false);
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [activeTab, setActiveTab] = useState<"queue" | "history">("queue");
+  const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
   const { density, toggle: toggleDensity, isCompact } = useGridDensity(
     "completion-queue"
   );
@@ -54,6 +67,11 @@ export default function CompletionQueuePage() {
   // Load KPI stats
   useEffect(() => {
     fetchQueueStats().then(setStats).catch(() => {});
+  }, []);
+
+  // Phase 4.4 §3.1.1 — site filter options come from registry, active-only.
+  useEffect(() => {
+    fetchSiteRegistry(true).then(setSiteRegistry).catch(() => {});
   }, []);
 
   const buildParams = useCallback(
@@ -246,10 +264,9 @@ export default function CompletionQueuePage() {
           className="border rounded px-3 py-1.5 text-sm"
         >
           <option value="">All Sites</option>
-          <option value="shiekh">Shiekh</option>
-          <option value="karmaloop">Karmaloop</option>
-          <option value="mltd">MLTD</option>
-          <option value="SHOES.COM">SHOES.COM</option>
+          {siteRegistry.map((s) => (
+            <option key={s.site_key} value={s.site_key}>{s.display_name}</option>
+          ))}
         </select>
 
         <input
@@ -355,7 +372,7 @@ export default function CompletionQueuePage() {
                 </td>
                 <td className="px-3 py-2 max-w-[200px] truncate">{p.name}</td>
                 <td className="px-3 py-2">{p.brand}</td>
-                <td className="px-3 py-2">{siteBadge(p.site_owner)}</td>
+                <td className="px-3 py-2">{siteBadge(p.site_owner, siteRegistry)}</td>
                 <td className="px-3 py-2">
                   <span
                     className={

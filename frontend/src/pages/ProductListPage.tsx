@@ -1,6 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { fetchProducts, type ProductListItem } from "../lib/api";
+import {
+  fetchProducts,
+  fetchSiteRegistry,
+  type ProductListItem,
+  type SiteRegistryEntry,
+} from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
 type SortKey = "first_received" | "last_modified" | "completion_pct";
@@ -28,6 +33,12 @@ export default function ProductListPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
+
+  useEffect(() => {
+    // Phase 4.4 §3.1.1 — dropdown options sourced from site_registry, active-only.
+    fetchSiteRegistry(true).then(setSiteRegistry).catch(() => {});
+  }, []);
 
   const buildParams = useCallback(
     (pageCursor?: string | null): Record<string, string> => {
@@ -154,10 +165,9 @@ export default function ProductListPage() {
           className="border rounded px-3 py-1.5 text-sm"
         >
           <option value="">All Sites</option>
-          <option value="shiekh">Shiekh</option>
-          <option value="karmaloop">Karmaloop</option>
-          <option value="mltd">MLTD</option>
-          <option value="SHOES.COM">SHOES.COM</option>
+          {siteRegistry.map((s) => (
+            <option key={s.site_key} value={s.site_key}>{s.display_name}</option>
+          ))}
         </select>
 
         <select
