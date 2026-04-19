@@ -10,8 +10,10 @@ import {
   updateAdminSetting,
   testSmtp,
   testAI,
+  fetchSiteRegistry,
   type AdminUser,
   type AdminSetting,
+  type SiteRegistryEntry,
 } from "../lib/api";
 
 type TabKey = "users" | "variables" | "smtp" | "ai";
@@ -216,8 +218,13 @@ function AddUserModal({
   const [role, setRole] = useState("buyer");
   const [departments, setDepartments] = useState("");
   const [siteScope, setSiteScope] = useState<string[]>([]);
+  const [siteOptions, setSiteOptions] = useState<SiteRegistryEntry[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchSiteRegistry(true).then(setSiteOptions).catch(() => {});
+  }, []);
   const [tempPw, setTempPw] = useState<string | null>(null);
 
   async function submit() {
@@ -308,20 +315,20 @@ function AddUserModal({
           </Field>
           <Field label="Site Scope">
             <div className="flex gap-3 text-sm">
-              {["shiekh", "karmaloop", "mltd"].map((s) => (
-                <label key={s} className="flex items-center gap-1">
+              {siteOptions.map((s) => (
+                <label key={s.site_key} className="flex items-center gap-1">
                   <input
                     type="checkbox"
-                    checked={siteScope.includes(s)}
+                    checked={siteScope.includes(s.site_key)}
                     onChange={(e) =>
                       setSiteScope((prev) =>
                         e.target.checked
-                          ? [...prev, s]
-                          : prev.filter((x) => x !== s)
+                          ? [...prev, s.site_key]
+                          : prev.filter((x) => x !== s.site_key)
                       )
                     }
                   />
-                  {s}
+                  {s.display_name}
                 </label>
               ))}
             </div>

@@ -18,6 +18,7 @@ interface NavNode {
 
 const NAV_TREE: NavNode[] = [
   { label: "Dashboard", icon: "🏠", path: "/dashboard" },
+  { label: "Products", icon: "📦", path: "/products" },
   { label: "Advisory", icon: "📋", path: "/advisory" },
   {
     label: "Inventory Workspace",

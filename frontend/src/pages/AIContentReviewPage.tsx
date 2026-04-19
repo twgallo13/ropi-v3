@@ -8,6 +8,7 @@ import {
   restoreContentVersion,
   aiDescribe,
   regenerateWithCritique,
+  fetchSiteRegistry,
   ContentVersion,
 } from "../lib/api";
 
@@ -44,8 +45,8 @@ export default function AIContentReviewPage() {
   const { mpn: rawMpn } = useParams<{ mpn: string }>();
   const mpn = decodeURIComponent(rawMpn || "");
 
-  const [siteOwners] = useState<string[]>(["shiekh", "karmaloop", "mltd"]);
-  const [activeSite, setActiveSite] = useState("shiekh");
+  const [siteOwners, setSiteOwners] = useState<string[]>([]);
+  const [activeSite, setActiveSite] = useState("");
   const [versions, setVersions] = useState<ContentVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -63,6 +64,18 @@ export default function AIContentReviewPage() {
   const [showCritiqueInput, setShowCritiqueInput] = useState(false);
   const [critique, setCritique] = useState("");
 
+  // TALLY-124 — source site tabs from site_registry (active-only).
+  // AI content subsystem uses short names (e.g. "shiekh") derived from site_key.
+  useEffect(() => {
+    fetchSiteRegistry(true)
+      .then((entries) => {
+        const keys = entries.map((e) => e.site_key.replace(/_com$/, ""));
+        setSiteOwners(keys);
+        if (!activeSite && keys.length > 0) setActiveSite(keys[0]);
+      })
+      .catch(() => {});
+  }, []);
+
   const loadVersions = useCallback(async () => {
     try {
       setLoading(true);
@@ -77,8 +90,8 @@ export default function AIContentReviewPage() {
   }, [mpn, activeSite]);
 
   useEffect(() => {
-    if (mpn) loadVersions();
-  }, [mpn, loadVersions]);
+    if (mpn && activeSite) loadVersions();
+  }, [mpn, activeSite, loadVersions]);
 
   // Show up to 3 most recent versions
   const displayVersions = versions.slice(0, 3);
