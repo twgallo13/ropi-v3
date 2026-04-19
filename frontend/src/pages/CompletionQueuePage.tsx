@@ -59,6 +59,8 @@ export default function CompletionQueuePage() {
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [activeTab, setActiveTab] = useState<"queue" | "history">("queue");
   const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
+  const [siteRegistryError, setSiteRegistryError] = useState(false);
+  const [siteRegistryLoaded, setSiteRegistryLoaded] = useState(false);
   const { density, toggle: toggleDensity, isCompact } = useGridDensity(
     "completion-queue"
   );
@@ -70,8 +72,21 @@ export default function CompletionQueuePage() {
   }, []);
 
   // Phase 4.4 §3.1.1 — site filter options come from registry, active-only.
+  // Phase 5 Pass 2 — explicit failure contracts:
+  //   fetch-fails    → disabled select + error message
+  //   empty-registry → disabled select + admin guidance
+  //   stored-value orphaned → selected option still rendered, marked "(inactive)"
   useEffect(() => {
-    fetchSiteRegistry(true).then(setSiteRegistry).catch(() => {});
+    fetchSiteRegistry(true)
+      .then((rows) => {
+        setSiteRegistry(rows);
+        setSiteRegistryError(false);
+      })
+      .catch(() => {
+        setSiteRegistry([]);
+        setSiteRegistryError(true);
+      })
+      .finally(() => setSiteRegistryLoaded(true));
   }, []);
 
   const buildParams = useCallback(
@@ -258,16 +273,40 @@ export default function CompletionQueuePage() {
           <option value="complete">Complete</option>
         </select>
 
-        <select
-          value={filters.site_owner}
-          onChange={(e) => setFilters((p) => ({ ...p, site_owner: e.target.value }))}
-          className="border rounded px-3 py-1.5 text-sm"
-        >
-          <option value="">All Sites</option>
-          {siteRegistry.map((s) => (
-            <option key={s.site_key} value={s.site_key}>{s.display_name}</option>
-          ))}
-        </select>
+        <div className="flex flex-col">
+          <select
+            value={filters.site_owner}
+            onChange={(e) => setFilters((p) => ({ ...p, site_owner: e.target.value }))}
+            disabled={siteRegistryError || (siteRegistryLoaded && siteRegistry.length === 0)}
+            className="border rounded px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+            title={
+              siteRegistryError
+                ? "Could not load site list — site filter disabled."
+                : siteRegistryLoaded && siteRegistry.length === 0
+                ? "No active sites in registry — ask an admin to seed site_registry."
+                : undefined
+            }
+          >
+            <option value="">All Sites</option>
+            {siteRegistry.map((s) => (
+              <option key={s.site_key} value={s.site_key}>{s.display_name}</option>
+            ))}
+            {filters.site_owner &&
+              !siteRegistry.some((s) => s.site_key === filters.site_owner) && (
+                <option value={filters.site_owner}>
+                  {filters.site_owner} (inactive)
+                </option>
+              )}
+          </select>
+          {siteRegistryError && (
+            <span className="text-xs text-red-600 mt-1">Could not load site list.</span>
+          )}
+          {!siteRegistryError && siteRegistryLoaded && siteRegistry.length === 0 && (
+            <span className="text-xs text-amber-600 mt-1">
+              No active sites — ask an admin to seed site_registry.
+            </span>
+          )}
+        </div>
 
         <input
           type="text"

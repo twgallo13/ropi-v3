@@ -34,10 +34,25 @@ export default function ProductListPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
+  const [siteRegistryError, setSiteRegistryError] = useState(false);
+  const [siteRegistryLoaded, setSiteRegistryLoaded] = useState(false);
 
   useEffect(() => {
     // Phase 4.4 §3.1.1 — dropdown options sourced from site_registry, active-only.
-    fetchSiteRegistry(true).then(setSiteRegistry).catch(() => {});
+    // Phase 5 Pass 2 — explicit failure contracts:
+    //   fetch-fails    → disabled select + error message
+    //   empty-registry → disabled select + admin guidance
+    //   stored-value orphaned → selected option still rendered, marked "(inactive)"
+    fetchSiteRegistry(true)
+      .then((rows) => {
+        setSiteRegistry(rows);
+        setSiteRegistryError(false);
+      })
+      .catch(() => {
+        setSiteRegistry([]);
+        setSiteRegistryError(true);
+      })
+      .finally(() => setSiteRegistryLoaded(true));
   }, []);
 
   const buildParams = useCallback(
@@ -159,16 +174,40 @@ export default function ProductListPage() {
           <option value="">All Departments</option>
         </select>
 
-        <select
-          value={filters.site_owner}
-          onChange={(e) => setFilters((p) => ({ ...p, site_owner: e.target.value }))}
-          className="border rounded px-3 py-1.5 text-sm"
-        >
-          <option value="">All Sites</option>
-          {siteRegistry.map((s) => (
-            <option key={s.site_key} value={s.site_key}>{s.display_name}</option>
-          ))}
-        </select>
+        <div className="flex flex-col">
+          <select
+            value={filters.site_owner}
+            onChange={(e) => setFilters((p) => ({ ...p, site_owner: e.target.value }))}
+            disabled={siteRegistryError || (siteRegistryLoaded && siteRegistry.length === 0)}
+            className="border rounded px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+            title={
+              siteRegistryError
+                ? "Could not load site list \u2014 site filter disabled."
+                : siteRegistryLoaded && siteRegistry.length === 0
+                ? "No active sites in registry \u2014 ask an admin to seed site_registry."
+                : undefined
+            }
+          >
+            <option value="">All Sites</option>
+            {siteRegistry.map((s) => (
+              <option key={s.site_key} value={s.site_key}>{s.display_name}</option>
+            ))}
+            {filters.site_owner &&
+              !siteRegistry.some((s) => s.site_key === filters.site_owner) && (
+                <option value={filters.site_owner}>
+                  {filters.site_owner} (inactive)
+                </option>
+              )}
+          </select>
+          {siteRegistryError && (
+            <span className="text-xs text-red-600 mt-1">Could not load site list.</span>
+          )}
+          {!siteRegistryError && siteRegistryLoaded && siteRegistry.length === 0 && (
+            <span className="text-xs text-amber-600 mt-1">
+              No active sites — ask an admin to seed site_registry.
+            </span>
+          )}
+        </div>
 
         <select
           value={filters.completion_state}
