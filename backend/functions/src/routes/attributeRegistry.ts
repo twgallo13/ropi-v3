@@ -11,7 +11,9 @@ router.get("/", requireAuth, async (_req: AuthenticatedRequest, res: Response) =
     const firestore = admin.firestore();
     const snap = await firestore.collection("attribute_registry").get();
 
-    const attributes = snap.docs.map((d) => ({
+    const attributes = snap.docs
+      .filter((d) => d.data().active === true)
+      .map((d) => ({
       field_key: d.id,
       display_label: d.data().display_label || d.id,
       field_type: d.data().field_type || "text",
