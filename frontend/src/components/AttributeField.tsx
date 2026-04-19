@@ -124,6 +124,7 @@ export function AttributeField({
       {effectiveType === "textarea" ? (
         <textarea
           id={`attr-${fieldKey}`}
+          name={fieldKey}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleBlur}
@@ -137,6 +138,7 @@ export function AttributeField({
           <input
             type="checkbox"
             id={`attr-${fieldKey}`}
+            name={fieldKey}
             checked={value === "true" || (value as unknown) === true || value === "TRUE"}
             onChange={(e) => {
               const newVal = e.target.checked ? "true" : "false";
@@ -156,6 +158,7 @@ export function AttributeField({
       ) : effectiveType === "multi_select" && hasOptions ? (
         <select
           id={`attr-${fieldKey}`}
+          name={fieldKey}
           multiple
           value={value ? value.split(",").map((v) => v.trim()) : []}
           onChange={(e) => {
@@ -176,6 +179,7 @@ export function AttributeField({
       ) : effectiveType === "select" && hasOptions ? (
         <select
           id={`attr-${fieldKey}`}
+          name={fieldKey}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleBlur}
@@ -193,7 +197,8 @@ export function AttributeField({
       ) : (
         <input
           id={`attr-${fieldKey}`}
-          type={effectiveType === "number" ? "number" : "text"}
+          name={fieldKey}
+          type={effectiveType === "number" ? "number" : effectiveType === "date" ? "date" : "text"}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleBlur}
