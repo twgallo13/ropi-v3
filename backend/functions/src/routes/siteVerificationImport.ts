@@ -31,30 +31,6 @@ const ts = () => admin.firestore.FieldValue.serverTimestamp();
 
 const operatorRoles = ["operations_operator", "product_ops"];
 
-// ── GET /sites — list site_registry for the UI global-site dropdown ──
-router.get(
-  "/sites",
-  requireAuth,
-  async (_req: AuthenticatedRequest, res: Response) => {
-    try {
-      const firestore = admin.firestore();
-      const snap = await firestore.collection("site_registry").get();
-      const sites = snap.docs.map((d) => {
-        const data = d.data() || {};
-        return {
-          site_id: d.id,
-          domain: data.domain || d.id,
-          label: data.label || data.domain || d.id,
-        };
-      });
-      res.json({ sites });
-    } catch (err: any) {
-      console.error("GET site_registry error:", err);
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
 // ── POST /upload ──
 router.post(
   "/upload",

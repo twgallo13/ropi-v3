@@ -28,26 +28,6 @@ const upload = (0, multer_1.default)({
 });
 const ts = () => firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
 const operatorRoles = ["operations_operator", "product_ops"];
-// ── GET /sites — list site_registry for the UI global-site dropdown ──
-router.get("/sites", auth_1.requireAuth, async (_req, res) => {
-    try {
-        const firestore = firebase_admin_1.default.firestore();
-        const snap = await firestore.collection("site_registry").get();
-        const sites = snap.docs.map((d) => {
-            const data = d.data() || {};
-            return {
-                site_id: d.id,
-                domain: data.domain || d.id,
-                label: data.label || data.domain || d.id,
-            };
-        });
-        res.json({ sites });
-    }
-    catch (err) {
-        console.error("GET site_registry error:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
 // ── POST /upload ──
 router.post("/upload", auth_1.requireAuth, (0, roles_1.requireRole)(operatorRoles), upload.single("file"), async (req, res) => {
     try {

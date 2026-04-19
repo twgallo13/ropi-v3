@@ -10,9 +10,8 @@
  *
  * Sorted by priority ascending, then site_key.
  *
- * Relocates GET /api/v1/imports/site-verification/sites which previously
- * returned a different shape ({ site_id, domain, label }). The old endpoint
- * remains in place for back-compat until Pass 2 completes consumer migration.
+ * Canonical replacement for the legacy GET /api/v1/imports/site-verification/sites
+ * endpoint, which was removed in Phase 5 Pass 2 (TALLY-123 Task 8).
  */
 import { Router, Response } from "express";
 import admin from "firebase-admin";

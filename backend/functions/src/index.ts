@@ -98,7 +98,7 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/pricing/discrepancy", pricingDiscrepancyRouter);
 app.use("/api/v1/imports/site-verification", siteVerificationImportRouter);
 app.use("/api/v1/site-verification", siteVerificationReviewRouter);
-// Phase 4.4 §8 — canonical site registry endpoint (relocated from /imports/site-verification/sites)
+// Phase 4.4 §8 — canonical site registry endpoint. Legacy GET /api/v1/imports/site-verification/sites was removed in Phase 5 Pass 2 (TALLY-123 Task 8).
 app.use("/api/v1/site-registry", siteRegistryRouter);
 app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/dashboard", dashboardRouter);

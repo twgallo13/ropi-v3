@@ -28,6 +28,7 @@ const users_1 = __importDefault(require("./routes/users"));
 const pricingDiscrepancy_1 = __importDefault(require("./routes/pricingDiscrepancy"));
 const siteVerificationImport_1 = __importDefault(require("./routes/siteVerificationImport"));
 const siteVerificationReview_1 = __importDefault(require("./routes/siteVerificationReview"));
+const siteRegistry_1 = __importDefault(require("./routes/siteRegistry"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
 const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const executive_1 = __importDefault(require("./routes/executive"));
@@ -89,6 +90,8 @@ app.use("/api/v1/users", users_1.default);
 app.use("/api/v1/pricing/discrepancy", pricingDiscrepancy_1.default);
 app.use("/api/v1/imports/site-verification", siteVerificationImport_1.default);
 app.use("/api/v1/site-verification", siteVerificationReview_1.default);
+// Phase 4.4 §8 — canonical site registry endpoint. Legacy GET /api/v1/imports/site-verification/sites was removed in Phase 5 Pass 2 (TALLY-123 Task 8).
+app.use("/api/v1/site-registry", siteRegistry_1.default);
 app.use("/api/v1/notifications", notifications_1.default);
 app.use("/api/v1/dashboard", dashboard_1.default);
 // ── Step 3.2 — Executive ──
