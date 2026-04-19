@@ -649,6 +649,7 @@ export default function ProductDetailPage() {
                                 verificationState={dAttr?.verification_state ?? undefined}
                                 fieldType={entry.field_type as "text" | "textarea" | "select" | "dropdown" | "multi_select" | "number" | "toggle" | "date"}
                                 options={entry.dropdown_options || []}
+                                dropdownSource={entry.dropdown_source}
                                 fullWidth={entry.full_width === true}
                                 tabIndex={idx + 1}
                                 onSaved={handleFieldSaved}
@@ -708,6 +709,7 @@ export default function ProductDetailPage() {
                         verificationState={attr?.verification_state ?? undefined}
                         fieldType={ft}
                         options={entry.dropdown_options || []}
+                        dropdownSource={entry.dropdown_source}
                         fullWidth={entry.full_width === true}
                         tabIndex={idx + 1}
                         onSaved={handleFieldSaved}

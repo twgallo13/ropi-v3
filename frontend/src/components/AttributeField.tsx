@@ -1,7 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAttributeField } from "../hooks/useAttributeField";
-import { saveField } from "../lib/api";
-import type { SaveFieldResponse } from "../lib/api";
+import { saveField, fetchSiteRegistry } from "../lib/api";
+import type { SaveFieldResponse, SiteRegistryEntry } from "../lib/api";
+
+/** Resolved option for dropdowns — label shown to user, value submitted on save. */
+interface ResolvedOption {
+  label: string;
+  value: string;
+}
 
 export interface AttributeFieldProps {
   mpn: string;
@@ -12,6 +18,7 @@ export interface AttributeFieldProps {
   verificationState?: string;
   fieldType?: "text" | "textarea" | "select" | "dropdown" | "multi_select" | "number" | "toggle" | "date";
   options?: string[];
+  dropdownSource?: string;
   tabIndex?: number;
   fullWidth?: boolean;
   onSaved?: (fieldKey: string, resp: SaveFieldResponse) => void;
@@ -26,6 +33,7 @@ export function AttributeField({
   verificationState,
   fieldType = "text",
   options,
+  dropdownSource,
   tabIndex,
   fullWidth,
   onSaved,
@@ -37,6 +45,38 @@ export function AttributeField({
     onSaved
   );
 
+  // ── Registry-driven dropdown support (dropdown_source: "site_registry") ──
+  // Three failure contracts from TALLY-123 Task 7:
+  //   1. fetch-fails  → disabled + red border
+  //   2. empty-registry → disabled + amber border
+  //   3. orphaned-value → preserved with "(inactive)" suffix
+  const [registryOptions, setRegistryOptions] = useState<ResolvedOption[] | null>(null);
+  const [registryError, setRegistryError] = useState<"fetch-fail" | "empty" | null>(null);
+
+  useEffect(() => {
+    if (dropdownSource !== "site_registry") return;
+    let cancelled = false;
+    fetchSiteRegistry(true)
+      .then((sites: SiteRegistryEntry[]) => {
+        if (cancelled) return;
+        if (sites.length === 0) {
+          setRegistryError("empty");
+          setRegistryOptions([]);
+        } else {
+          setRegistryOptions(
+            sites.map((s) => ({ label: s.display_name, value: s.site_key }))
+          );
+          setRegistryError(null);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setRegistryError("fetch-fail");
+        setRegistryOptions(null);
+      });
+    return () => { cancelled = true; };
+  }, [dropdownSource]);
+
   // If the parent-provided initialValue changes (e.g. after a save from
   // elsewhere or a refetch), sync it in — but only while idle.
   useEffect(() => {
@@ -44,9 +84,27 @@ export function AttributeField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValue]);
 
-  // Derive effective field type: if dropdown_options exist, render as select
-  // (or multi_select). This handles field_type "dropdown" from the registry.
-  const hasOptions = options && options.length > 0;
+  // ── Resolve effective options ──
+  // Registry-driven fields override the static options prop.
+  const isRegistryDriven = dropdownSource === "site_registry";
+  let resolvedOptions: ResolvedOption[] = [];
+  const registryDisabled = isRegistryDriven && (registryError === "fetch-fail" || registryError === "empty");
+
+  if (isRegistryDriven && registryOptions) {
+    resolvedOptions = [...registryOptions];
+    // Orphaned-value contract: if current value(s) not in registry, preserve with "(inactive)" marker
+    const knownValues = new Set(resolvedOptions.map((o) => o.value));
+    const currentValues = value ? value.split(",").map((v) => v.trim()).filter(Boolean) : [];
+    for (const cv of currentValues) {
+      if (cv && !knownValues.has(cv)) {
+        resolvedOptions.push({ label: `${cv} (inactive)`, value: cv });
+      }
+    }
+  } else if (!isRegistryDriven && options) {
+    resolvedOptions = options.map((o) => ({ label: o, value: o }));
+  }
+
+  const hasOptions = resolvedOptions.length > 0;
   const isMultiSelect = fieldType === "multi_select";
   const effectiveType: string = hasOptions
     ? isMultiSelect
@@ -60,9 +118,13 @@ export function AttributeField({
     "w-full border rounded-lg px-3 py-2 text-sm",
     "focus:outline-none focus:ring-2 focus:ring-blue-500",
     "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100",
-    isVerified
-      ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/10"
-      : "border-gray-200 dark:border-gray-700",
+    registryError === "fetch-fail"
+      ? "border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-900/10"
+      : registryError === "empty"
+        ? "border-amber-400 bg-amber-50 dark:border-amber-600 dark:bg-amber-900/10"
+        : isVerified
+          ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/10"
+          : "border-gray-200 dark:border-gray-700",
     saveState === "error" ? "border-red-400" : "",
   ].join(" ");
 
@@ -168,11 +230,11 @@ export function AttributeField({
           onBlur={handleBlur}
           tabIndex={tabIndex}
           className={inputClass + " min-h-[80px]"}
-          disabled={saveState === "saving"}
+          disabled={saveState === "saving" || registryDisabled}
         >
-          {options!.map((o) => (
-            <option key={o} value={o}>
-              {o}
+          {resolvedOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
             </option>
           ))}
         </select>
@@ -185,12 +247,12 @@ export function AttributeField({
           onBlur={handleBlur}
           tabIndex={tabIndex}
           className={inputClass}
-          disabled={saveState === "saving"}
+          disabled={saveState === "saving" || registryDisabled}
         >
           <option value="">— Select —</option>
-          {options!.map((o) => (
-            <option key={o} value={o}>
-              {o}
+          {resolvedOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
             </option>
           ))}
         </select>
@@ -210,6 +272,13 @@ export function AttributeField({
 
       {saveState === "error" && error && (
         <p className="text-xs text-red-500 mt-0.5">{error}</p>
+      )}
+
+      {registryError === "fetch-fail" && (
+        <p className="text-xs text-red-500 mt-0.5">⚠ Could not load site registry — field disabled</p>
+      )}
+      {registryError === "empty" && (
+        <p className="text-xs text-amber-600 mt-0.5">⚠ No active sites in registry — field disabled</p>
       )}
     </div>
   );

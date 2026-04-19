@@ -126,6 +126,7 @@ export interface AttributeRegistryEntry {
   active: boolean;
   export_enabled: boolean;
   dropdown_options: string[];
+  dropdown_source?: string;
   display_group?: string;
   display_order?: number;
   tab_group_order?: number;
