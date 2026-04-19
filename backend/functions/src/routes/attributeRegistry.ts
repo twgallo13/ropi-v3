@@ -32,6 +32,7 @@ router.get("/", requireAuth, async (_req: AuthenticatedRequest, res: Response) =
       active: d.data().active ?? true,
       export_enabled: d.data().export_enabled ?? true,
       dropdown_options: d.data().dropdown_options || [],
+      dropdown_source: d.data().dropdown_source || null,
       full_width: d.data().full_width ?? false,
       is_editable: d.data().is_editable ?? true,
       depends_on: d.data().depends_on || null,
