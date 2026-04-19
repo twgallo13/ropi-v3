@@ -1,15 +1,14 @@
 /**
- * emailService — Step 4.2 Amendment A
- * Shared transport factory supporting SendGrid (via nodemailer-sendgrid)
- * or Custom SMTP. Provider selection is read from admin_settings.email_provider.
+ * emailService — Step 4.2 Amendment B
+ * Supports SendGrid (via @sendgrid/mail) or Custom SMTP (via nodemailer).
+ * Provider selection is read from admin_settings.email_provider.
  *
  * SMTP password is sensitive — loaded from the SMTP_PASSWORD env var only,
  * never from Firestore. Same for SendGrid API key (SENDGRID_API_KEY).
  */
 import admin from "firebase-admin";
 import nodemailer from "nodemailer";
-// @ts-expect-error — nodemailer-sendgrid ships without TS types
-import sgTransport from "nodemailer-sendgrid";
+import sgMail from "@sendgrid/mail";
 
 const db = () => admin.firestore();
 
@@ -27,7 +26,23 @@ export async function getAdminSetting<T = any>(
   }
 }
 
-export async function getEmailTransport(): Promise<nodemailer.Transporter> {
+export interface SendEmailOpts {
+  to: string;
+  subject: string;
+  html: string;
+  from?: string;
+}
+
+export async function sendEmail(opts: SendEmailOpts): Promise<void> {
+  const fromAddress =
+    (await getAdminSetting<string>(
+      "smtp_from_address",
+      "theo@shiekhshoes.org"
+    )) || "theo@shiekhshoes.org";
+  const fromName =
+    (await getAdminSetting<string>("smtp_from_name", "ROPI Operations")) ||
+    "ROPI Operations";
+
   const provider =
     (await getAdminSetting<string>("email_provider", "sendgrid")) || "sendgrid";
 
@@ -38,10 +53,24 @@ export async function getEmailTransport(): Promise<nodemailer.Transporter> {
         "SendGrid selected but SENDGRID_API_KEY env var is not set."
       );
     }
-    return nodemailer.createTransport(sgTransport({ apiKey }));
+    sgMail.setApiKey(apiKey);
+    const from = opts.from || { name: fromName, email: fromAddress };
+    try {
+      await sgMail.send({
+        to: opts.to,
+        from,
+        subject: opts.subject,
+        html: opts.html,
+      });
+    } catch (err: any) {
+      const body = err?.response?.body;
+      const msg = body?.errors?.[0]?.message || err.message || String(err);
+      throw new Error(`SendGrid send failed: ${msg}`);
+    }
+    return;
   }
 
-  // Custom SMTP
+  // Custom SMTP (nodemailer)
   const host = await getAdminSetting<string>("smtp_host");
   const port = (await getAdminSetting<number>("smtp_port", 587)) || 587;
   const user = await getAdminSetting<string>("smtp_username");
@@ -56,31 +85,12 @@ export async function getEmailTransport(): Promise<nodemailer.Transporter> {
       "Custom SMTP selected but SMTP_PASSWORD env var is not set."
     );
   }
-  return nodemailer.createTransport({
+  const transport = nodemailer.createTransport({
     host,
     port: Number(port),
     secure: Number(port) === 465,
     auth: { user, pass },
   });
-}
-
-export interface SendEmailOpts {
-  to: string;
-  subject: string;
-  html: string;
-  from?: string;
-}
-
-export async function sendEmail(opts: SendEmailOpts): Promise<void> {
-  const fromAddress =
-    (await getAdminSetting<string>(
-      "smtp_from_address",
-      "noreply@shiekhshoes.com"
-    )) || "noreply@shiekhshoes.com";
-  const fromName =
-    (await getAdminSetting<string>("smtp_from_name", "ROPI Operations")) ||
-    "ROPI Operations";
-  const transport = await getEmailTransport();
   await transport.sendMail({
     from: opts.from || `"${fromName}" <${fromAddress}>`,
     to: opts.to,
