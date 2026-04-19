@@ -8,6 +8,7 @@
 import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
+import { deriveStaleness, getStalenessThresholdDays } from "../lib/staleness";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -129,17 +130,20 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       );
     }
     if (visible.has("site_verification_count")) {
-      // Approximate — full scan of products with site_verification flagged
+      // Approximate — full scan of products with site_verification flagged.
+      // Staleness derivation routes through the shared helper (Phase 4.4 §4.4.1).
+      const thresholdDays = await getStalenessThresholdDays();
       const snap = await db().collection("products").limit(2000).get();
       let count = 0;
-      const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
       for (const d of snap.docs) {
         const sv = d.data().site_verification || {};
         for (const entry of Object.values(sv)) {
           const e = entry as any;
           const state = e?.verification_state;
-          const lastMs = e?.last_verified_at?.toDate?.()?.getTime?.() || 0;
-          if (state === "mismatch" || (state === "verified_live" && lastMs > 0 && lastMs < cutoff)) {
+          const isStale =
+            state === "verified_live" &&
+            deriveStaleness(e?.last_verified_at, thresholdDays);
+          if (state === "mismatch" || isStale) {
             count++;
             break;
           }

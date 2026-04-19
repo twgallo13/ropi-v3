@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const auth_1 = require("../middleware/auth");
+const staleness_1 = require("../lib/staleness");
 const router = (0, express_1.Router)();
 const db = () => firebase_admin_1.default.firestore();
 // Role → visible KPI cards map (Correction 4)
@@ -116,17 +117,19 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
             response.kpis.pricing_discrepancy_count = await countWhere("products", "pricing_domain_state", "discrepancy");
         }
         if (visible.has("site_verification_count")) {
-            // Approximate — full scan of products with site_verification flagged
+            // Approximate — full scan of products with site_verification flagged.
+            // Staleness derivation routes through the shared helper (Phase 4.4 §4.4.1).
+            const thresholdDays = await (0, staleness_1.getStalenessThresholdDays)();
             const snap = await db().collection("products").limit(2000).get();
             let count = 0;
-            const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
             for (const d of snap.docs) {
                 const sv = d.data().site_verification || {};
                 for (const entry of Object.values(sv)) {
                     const e = entry;
                     const state = e?.verification_state;
-                    const lastMs = e?.last_verified_at?.toDate?.()?.getTime?.() || 0;
-                    if (state === "mismatch" || (state === "verified_live" && lastMs > 0 && lastMs < cutoff)) {
+                    const isStale = state === "verified_live" &&
+                        (0, staleness_1.deriveStaleness)(e?.last_verified_at, thresholdDays);
+                    if (state === "mismatch" || isStale) {
                         count++;
                         break;
                     }
