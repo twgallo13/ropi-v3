@@ -17,7 +17,7 @@ router.get("/", auth_1.requireAuth, async (_req, res) => {
             field_key: d.id,
             display_label: d.data().display_label || d.id,
             field_type: d.data().field_type || "text",
-            destination_tab: d.data().destination_tab || "product_attributes",
+            destination_tab: d.data().destination_tab ?? null,
             display_group: d.data().display_group || "",
             display_order: d.data().display_order ?? 99,
             tab_group_order: d.data().tab_group_order ?? 99,
