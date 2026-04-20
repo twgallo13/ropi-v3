@@ -76,7 +76,6 @@ router.get(
       ]);
 
       const items: any[] = [];
-      const orphanedAuditWrites: Promise<unknown>[] = [];
 
       for (const doc of productsSnap.docs) {
         const p = doc.data();
@@ -127,11 +126,10 @@ router.get(
         // ── Coverage-gap rows ─────────────────────────────────────────────
         // Scope rules (per spec §6.1.1 + PO Round 4 audit):
         // - Inactive registry sites: skip silently; no coverage-gap row emitted.
-        // - Orphaned site_targets values (not in registry): log as
-        //   site_targets.orphaned_reference and continue; no queue row emitted.
-        // Rationale: orphans are data-integrity issues, not verification gaps,
-        // and belong in a separate cleanup pass rather than polluting the
-        // Product Specialist queue.
+        // - Unrecognized site_targets keys: skip silently; cleanup is owned
+        //   by TALLY-128 Task 5 (commit 38ed25e). The orphaned_reference
+        //   audit branch was removed by TALLY-128 Task 6 (6a INV-A:
+        //   historical artifact, not a runtime defect).
         const stSnap = await doc.ref.collection("site_targets").get();
         for (const stDoc of stSnap.docs) {
           const t = stDoc.data() || {};
@@ -139,19 +137,7 @@ router.get(
           const targetKey = (t.site_id as string) || stDoc.id;
           const reg = registry.get(targetKey);
 
-          if (!reg) {
-            // Orphaned reference — log + ignore (do NOT emit a queue row).
-            orphanedAuditWrites.push(
-              db().collection("audit_log").add({
-                event_type: "site_targets.orphaned_reference",
-                product_mpn: mpn,
-                orphaned_site_key: targetKey,
-                actor_uid: "system:tally-123",
-                created_at: ts(),
-              }),
-            );
-            continue;
-          }
+          if (!reg) continue; // unrecognized site_target key → silent skip
           if (!reg.is_active) continue; // inactive registry site → silent skip
 
           const svEntry = sv[targetKey];
@@ -176,8 +162,6 @@ router.get(
           });
         }
       }
-
-      Promise.allSettled(orphanedAuditWrites).catch(() => {});
 
       const durationMs = Date.now() - startMs;
       console.log(
