@@ -6,6 +6,7 @@ import {
   postLossLeaderAcknowledge,
   type BuyerReviewItem,
   type PriceProjection,
+  type SiteVerificationEntry,
 } from "../lib/api";
 import {
   LineChart,
@@ -230,6 +231,117 @@ function LossLeaderAcknowledge({
   );
 }
 
+// ── Site verification helpers (Task 3) ─────────────────────────────
+// Backend response shape for buyer-review rows:
+//   site_verification: ordered map keyed by site_key (primary first, then by registry priority)
+//   primary_site_key: string | null   (null = no primary, e.g. site_owner unset)
+// Iterating Object.entries() on the map preserves the backend's order.
+
+function siteEntries(item: BuyerReviewItem): SiteVerificationEntry[] {
+  const sv = item.site_verification || {};
+  return Object.values(sv);
+}
+
+// Subtask 3b — Primary image fallback hierarchy.
+// 1. primary_site_key + non-null image_url → use it
+// 2. first verified_live entry by priority (backend already sorted) with non-null image_url
+// 3. {url:null, site_key:null} → no-image placeholder
+function resolvePrimaryImage(item: BuyerReviewItem): {
+  url: string | null;
+  site_key: string | null;
+} {
+  const sv = item.site_verification || {};
+  const primaryKey = item.primary_site_key;
+  if (primaryKey && sv[primaryKey]?.image_url) {
+    return { url: sv[primaryKey].image_url, site_key: primaryKey };
+  }
+  for (const entry of siteEntries(item)) {
+    if (entry.verification_state === "verified_live" && entry.image_url) {
+      return { url: entry.image_url, site_key: entry.site_key };
+    }
+  }
+  return { url: null, site_key: null };
+}
+
+// Subtask 3e — Click resolves to primary product_url first, then any-site URL.
+function resolvePrimaryProductUrl(item: BuyerReviewItem): {
+  url: string | null;
+  site_key: string | null;
+} {
+  const sv = item.site_verification || {};
+  const primaryKey = item.primary_site_key;
+  if (primaryKey && sv[primaryKey]?.product_url) {
+    return { url: sv[primaryKey].product_url, site_key: primaryKey };
+  }
+  for (const entry of siteEntries(item)) {
+    if (entry.product_url) {
+      return { url: entry.product_url, site_key: entry.site_key };
+    }
+  }
+  return { url: null, site_key: null };
+}
+
+// Subtask 3d — Per-site badge styling (color + text, never color-only).
+// State color rules per §7.1.3 of the brief:
+//   verified_live → green   mismatch → red   unverified/unknown → gray
+function badgeClasses(state: string): string {
+  switch (state) {
+    case "verified_live":
+      return "bg-green-100 text-green-800 border-green-300";
+    case "mismatch":
+      return "bg-red-100 text-red-800 border-red-300";
+    case "stale":
+      return "bg-amber-100 text-amber-800 border-amber-300";
+    case "unverified":
+    default:
+      return "bg-gray-100 text-gray-600 border-gray-300";
+  }
+}
+
+function badgeLabel(state: string): string {
+  switch (state) {
+    case "verified_live": return "Live";
+    case "mismatch":      return "Mismatch";
+    case "stale":         return "Stale";
+    case "unverified":    return "Unverified";
+    default:              return state;
+  }
+}
+
+// Subtask 3c — Hover preview popover.
+// ~300ms open delay; renders absolute over card; auto-dismisses on mouse leave.
+// No-image rows fall back to a tooltip-style label rather than a popover.
+function ImageHoverPreview({
+  url,
+  alt,
+  siteKey,
+}: {
+  url: string;
+  alt: string;
+  siteKey: string | null;
+}) {
+  return (
+    <div
+      className="absolute z-50 left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-xl p-2"
+      style={{ minWidth: 240 }}
+    >
+      <img
+        src={url}
+        alt={alt}
+        className="block max-w-[240px] max-h-[240px] object-contain rounded"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+      {siteKey && (
+        <div className="mt-1 text-[10px] text-gray-500 text-center">
+          source: {siteKey}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Product Card ──
 function ProductCard({
   item,
@@ -253,6 +365,29 @@ function ProductCard({
   const [projection, setProjection] = useState<PriceProjection | null>(null);
   const [error] = useState("");
   const isCompact = density === "compact";
+
+  // Task 3 — image fallback + hover preview state
+  const primaryImage = resolvePrimaryImage(item);
+  const primaryProductUrl = resolvePrimaryProductUrl(item);
+  const hasImage = primaryImage.url !== null;
+  const [hoverArmed, setHoverArmed] = useState(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const armHover = () => {
+    if (!hasImage) return;
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => setHoverArmed(true), 300);
+  };
+  const disarmHover = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoverArmed(false);
+  };
+  useEffect(() => () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+  }, []);
 
   const loadProjection = useCallback(async () => {
     if (projection) return;
@@ -293,11 +428,68 @@ function ProductCard({
 
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className={`bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs ${
-          isCompact ? "w-10 h-10" : "w-16 h-16"
-        }`}>
-          No Img
+        {/* Subtask 3b/3c/3e/3f — image tile with fallback hierarchy + hover preview + click-through */}
+        <div
+          className="relative shrink-0"
+          onMouseEnter={armHover}
+          onMouseLeave={disarmHover}
+        >
+          {hasImage ? (
+            primaryProductUrl.url ? (
+              <a
+                href={primaryProductUrl.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Open product on ${primaryProductUrl.site_key ?? "site"} ↗`}
+                className="block"
+              >
+                <img
+                  src={primaryImage.url!}
+                  alt={item.name || item.mpn}
+                  className={`object-cover rounded border border-gray-200 bg-gray-50 ${
+                    isCompact ? "w-10 h-10" : "w-16 h-16"
+                  }`}
+                  onError={(e) => {
+                    // Hide broken image and fall back to placeholder; preserves trust
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </a>
+            ) : (
+              <img
+                src={primaryImage.url!}
+                alt={item.name || item.mpn}
+                title={`source: ${primaryImage.site_key ?? "site"} (no product URL available)`}
+                className={`object-cover rounded border border-gray-200 bg-gray-50 ${
+                  isCompact ? "w-10 h-10" : "w-16 h-16"
+                }`}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            )
+          ) : (
+            // Subtask 3f — no-image trust preservation: gray tile + tooltip
+            <div
+              className={`bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-gray-400 text-[10px] text-center leading-tight px-1 ${
+                isCompact ? "w-10 h-10" : "w-16 h-16"
+              }`}
+              title="No image available — no verified site has an image_url for this product"
+            >
+              No image
+              <br />
+              available
+            </div>
+          )}
+          {hoverArmed && hasImage && primaryImage.url && (
+            <ImageHoverPreview
+              url={primaryImage.url}
+              alt={item.name || item.mpn}
+              siteKey={primaryImage.site_key}
+            />
+          )}
         </div>
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs text-gray-500">{item.mpn}</span>
@@ -310,16 +502,43 @@ function ProductCard({
           <p className="text-xs text-gray-500">
             {item.department} › {item.class}
           </p>
-          <div className="flex items-center gap-2 mt-1">
-            {item.site_targets.map((st) => (
-              <span key={st.site_id} className="text-xs text-blue-600">
-                {st.domain} ↗
-              </span>
-            ))}
-            <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
-              Not Live
-            </span>
+          {/* Subtask 3d — per-site badges, primary first then priority (backend order preserved) */}
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            {siteEntries(item).map((entry) => {
+              const isPrimary = entry.site_key === item.primary_site_key;
+              const tooltipParts = [
+                `${entry.site_display_name || entry.site_key}: ${badgeLabel(entry.verification_state)}`,
+              ];
+              if (isPrimary) tooltipParts.push("(primary)");
+              if (entry.mismatch_reason) tooltipParts.push(`reason: ${entry.mismatch_reason}`);
+              if (entry.last_verified_at) tooltipParts.push(`last verified ${entry.last_verified_at}`);
+              return (
+                <span
+                  key={entry.site_key}
+                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${badgeClasses(
+                    entry.verification_state,
+                  )} ${isPrimary ? "ring-1 ring-offset-0 ring-blue-300" : ""}`}
+                  title={tooltipParts.join(" · ")}
+                >
+                  {entry.site_key}: {badgeLabel(entry.verification_state)}
+                </span>
+              );
+            })}
           </div>
+          {/* Compact site links row — preserves any-site URL access even when image is missing */}
+          {!hasImage && primaryProductUrl.url && (
+            <div className="mt-1">
+              <a
+                href={primaryProductUrl.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-blue-600 hover:underline"
+                title={`Open on ${primaryProductUrl.site_key ?? "site"}`}
+              >
+                Open on {primaryProductUrl.site_key} ↗
+              </a>
+            </div>
+          )}
         </div>
         {item.days_in_queue > 0 && (
           <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded shrink-0">

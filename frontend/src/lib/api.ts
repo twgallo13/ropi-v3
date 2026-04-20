@@ -214,14 +214,6 @@ export interface BuyerReviewRecommendation {
   rule_id: string | null;
 }
 
-export interface SiteTarget {
-  site_id: string;
-  domain: string;
-  verification_state: string;
-  product_link: string | null;
-  image_link: string | null;
-}
-
 export interface BuyerReviewItem {
   mpn: string;
   name: string;
@@ -244,7 +236,10 @@ export interface BuyerReviewItem {
   inventory_total: number;
   is_slow_moving: boolean;
   recommendation: BuyerReviewRecommendation;
-  site_targets: SiteTarget[];
+  // TALLY-127 Task 2: real per-site verification map + primary key.
+  // Replaces the prior synthetic single-element site_targets array.
+  site_verification: SiteVerificationMap;
+  primary_site_key: string | null;
   is_loss_leader: boolean;
   days_in_queue: number;
   pricing_domain_state: string;
