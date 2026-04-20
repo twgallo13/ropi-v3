@@ -83,7 +83,27 @@ export interface ProductDetail extends ProductListItem {
     active: boolean;
   }>;
   source_inputs: Record<string, unknown>;
+  primary_site_key: string | null;
+  site_verification: SiteVerificationMap;
 }
+
+// ── Site Verification per-site entry (Task 2 GET /:mpn response shape) ──
+export interface SiteVerificationEntry {
+  site_key: string;
+  site_display_name: string;
+  site_domain: string | null;
+  verification_state: string;
+  product_url: string | null;
+  image_url: string | null;
+  additional_image_url_parsed: string[];
+  last_verified_at: string | null;
+  verification_date: string | null;
+  mismatch_reason: string | null;
+  reviewer_uid: string | null;
+  reviewer_action_at: string | null;
+}
+
+export type SiteVerificationMap = Record<string, SiteVerificationEntry>;
 
 export async function fetchProducts(params?: Record<string, string>): Promise<ProductListResponse> {
   const qs = params ? "?" + new URLSearchParams(params).toString() : "";
@@ -1816,6 +1836,15 @@ export async function siteVerificationFlag(
   const res = await fetch(
     `${BASE}/api/v1/site-verification/${encodeURIComponent(mpn)}/flag`,
     { method: "POST", headers: await headers(), body: JSON.stringify({ site_key, reason }) }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+export async function siteVerificationReverify(mpn: string, site_key: string): Promise<any> {
+  const res = await fetch(
+    `${BASE}/api/v1/site-verification/${encodeURIComponent(mpn)}/reverify`,
+    { method: "POST", headers: await headers(), body: JSON.stringify({ site_key }) }
   );
   const data = await res.json();
   if (!res.ok) throw data;
