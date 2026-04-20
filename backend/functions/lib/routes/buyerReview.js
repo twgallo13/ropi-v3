@@ -8,8 +8,82 @@ const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const pricingUtils_1 = require("../services/pricingUtils");
 const adminSettings_1 = require("../services/adminSettings");
 const mpnUtils_1 = require("../services/mpnUtils");
+const staleness_1 = require("../lib/staleness");
+const parseAdditionalImageUrls_1 = require("../lib/parseAdditionalImageUrls");
 const router = (0, express_1.Router)();
 const db = () => firebase_admin_1.default.firestore();
+// Builds the site_verification map + primary_site_key for one product row.
+// Mirrors the Pass 3 builder pattern in routes/products.ts (§7.1.6):
+//   - Real entries from product.site_verification get state derived via staleness helper
+//   - Sites in active registry without stored entries get an "unverified" stub
+//   - Output order: primary site (matches site_owner) first, then by registry priority asc
+function buildBuyerReviewSiteVerification(d, registryBySiteKey, stalenessThreshold) {
+    const storedSv = d.site_verification || {};
+    const productSiteOwner = typeof d.site_owner === "string" && d.site_owner.trim()
+        ? d.site_owner.trim()
+        : null;
+    const serializeTs = (ts) => ts?.toDate?.()?.toISOString() || null;
+    const svEntries = [];
+    for (const siteKey of Object.keys(registryBySiteKey)) {
+        const reg = registryBySiteKey[siteKey];
+        const stored = storedSv[siteKey];
+        if (stored) {
+            const derivedState = (0, staleness_1.deriveVerificationState)(stored.verification_state, stored.last_verified_at, stalenessThreshold);
+            svEntries.push({
+                key: siteKey,
+                entry: {
+                    site_key: siteKey,
+                    site_display_name: reg.display_name,
+                    site_domain: reg.domain,
+                    verification_state: derivedState,
+                    product_url: stored.product_url || null,
+                    image_url: stored.image_url || null,
+                    additional_image_url_parsed: (0, parseAdditionalImageUrls_1.parseAdditionalImageUrls)(stored.additional_image_url),
+                    last_verified_at: serializeTs(stored.last_verified_at),
+                    verification_date: stored.verification_date || null,
+                    mismatch_reason: stored.mismatch_reason || null,
+                    reviewer_uid: stored.reviewer_uid || null,
+                    reviewer_action_at: serializeTs(stored.reviewer_action_at),
+                },
+            });
+        }
+        else {
+            svEntries.push({
+                key: siteKey,
+                entry: {
+                    site_key: siteKey,
+                    site_display_name: reg.display_name,
+                    site_domain: reg.domain,
+                    verification_state: "unverified",
+                    product_url: null,
+                    image_url: null,
+                    additional_image_url_parsed: [],
+                    last_verified_at: null,
+                    verification_date: null,
+                    mismatch_reason: null,
+                    reviewer_uid: null,
+                    reviewer_action_at: null,
+                },
+            });
+        }
+    }
+    // Primary first, then by registry priority asc
+    svEntries.sort((a, b) => {
+        const aIsPrimary = a.key === productSiteOwner ? 0 : 1;
+        const bIsPrimary = b.key === productSiteOwner ? 0 : 1;
+        if (aIsPrimary !== bIsPrimary)
+            return aIsPrimary - bIsPrimary;
+        return (registryBySiteKey[a.key]?.priority ?? 999) - (registryBySiteKey[b.key]?.priority ?? 999);
+    });
+    const site_verification = {};
+    for (const { key, entry } of svEntries) {
+        site_verification[key] = entry;
+    }
+    // primary_site_key is null when the product has no site_owner OR when
+    // site_owner does not match any active registry key (Scenario E branch).
+    const primary_site_key = productSiteOwner && registryBySiteKey[productSiteOwner] ? productSiteOwner : null;
+    return { site_verification, primary_site_key };
+}
 // ── Phase 1 recommendation builder ──
 function buildPhase1Recommendation(product) {
     const PCT = 0.15;
@@ -67,7 +141,23 @@ router.get("/", async (req, res) => {
                 query = query.startAfter(cursorDoc);
             }
         }
-        const snap = await query.get();
+        // Pre-fetch active site_registry + staleness threshold once per request
+        // (single StalenessCache shared across all rows — not per row).
+        const stalenessCache = {};
+        const [snap, activeRegistrySnap, stalenessThreshold] = await Promise.all([
+            query.get(),
+            db().collection("site_registry").where("is_active", "==", true).get(),
+            (0, staleness_1.getStalenessThresholdDays)(stalenessCache),
+        ]);
+        const registryBySiteKey = {};
+        activeRegistrySnap.docs.forEach((rDoc) => {
+            const rd = rDoc.data();
+            registryBySiteKey[rDoc.id] = {
+                display_name: rd.display_name || rDoc.id,
+                domain: rd.domain || "",
+                priority: typeof rd.priority === "number" ? rd.priority : 999,
+            };
+        });
         const docs = snap.docs.slice(0, limitNum);
         const hasMore = snap.docs.length > limitNum;
         const now = Date.now();
@@ -88,6 +178,7 @@ router.get("/", async (req, res) => {
                 return null;
             if (map_status === "not_protected" && isMapProtected)
                 return null;
+            const { site_verification, primary_site_key } = buildBuyerReviewSiteVerification(d, registryBySiteKey, stalenessThreshold);
             return {
                 mpn: d.mpn || doc.id,
                 name: d.name || "",
@@ -110,15 +201,8 @@ router.get("/", async (req, res) => {
                 inventory_total: inventoryTotal,
                 is_slow_moving: d.is_slow_moving ?? false,
                 recommendation: buildPhase1Recommendation(d),
-                site_targets: [
-                    {
-                        site_id: d.site_owner || "shiekh",
-                        domain: `${d.site_owner || "shiekh"}.com`,
-                        verification_state: "not_verified",
-                        product_link: null,
-                        image_link: null,
-                    },
-                ],
+                site_verification,
+                primary_site_key,
                 is_loss_leader: d.is_loss_leader ?? false,
                 days_in_queue: daysInQueue,
                 pricing_domain_state: d.pricing_domain_state,

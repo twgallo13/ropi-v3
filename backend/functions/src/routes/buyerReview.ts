@@ -3,9 +3,110 @@ import admin from "firebase-admin";
 import { apply99Rounding } from "../services/pricingUtils";
 import { getAdminSettings } from "../services/adminSettings";
 import { mpnToDocId } from "../services/mpnUtils";
+import {
+  deriveVerificationState,
+  getStalenessThresholdDays,
+  StalenessCache,
+} from "../lib/staleness";
+import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
 
 const router = Router();
 const db = () => admin.firestore();
+
+// ── Per-site registry entry shape (subset used by buyer-review) ──
+interface RegistryEntry {
+  display_name: string;
+  domain: string;
+  priority: number;
+}
+
+// Builds the site_verification map + primary_site_key for one product row.
+// Mirrors the Pass 3 builder pattern in routes/products.ts (§7.1.6):
+//   - Real entries from product.site_verification get state derived via staleness helper
+//   - Sites in active registry without stored entries get an "unverified" stub
+//   - Output order: primary site (matches site_owner) first, then by registry priority asc
+function buildBuyerReviewSiteVerification(
+  d: any,
+  registryBySiteKey: Record<string, RegistryEntry>,
+  stalenessThreshold: number,
+): { site_verification: Record<string, any>; primary_site_key: string | null } {
+  const storedSv: Record<string, any> = d.site_verification || {};
+  const productSiteOwner: string | null =
+    typeof d.site_owner === "string" && d.site_owner.trim()
+      ? d.site_owner.trim()
+      : null;
+
+  const serializeTs = (ts: any) => ts?.toDate?.()?.toISOString() || null;
+
+  const svEntries: Array<{ key: string; entry: Record<string, any> }> = [];
+  for (const siteKey of Object.keys(registryBySiteKey)) {
+    const reg = registryBySiteKey[siteKey];
+    const stored = storedSv[siteKey];
+
+    if (stored) {
+      const derivedState = deriveVerificationState(
+        stored.verification_state,
+        stored.last_verified_at,
+        stalenessThreshold,
+      );
+      svEntries.push({
+        key: siteKey,
+        entry: {
+          site_key: siteKey,
+          site_display_name: reg.display_name,
+          site_domain: reg.domain,
+          verification_state: derivedState,
+          product_url: stored.product_url || null,
+          image_url: stored.image_url || null,
+          additional_image_url_parsed: parseAdditionalImageUrls(stored.additional_image_url),
+          last_verified_at: serializeTs(stored.last_verified_at),
+          verification_date: stored.verification_date || null,
+          mismatch_reason: stored.mismatch_reason || null,
+          reviewer_uid: stored.reviewer_uid || null,
+          reviewer_action_at: serializeTs(stored.reviewer_action_at),
+        },
+      });
+    } else {
+      svEntries.push({
+        key: siteKey,
+        entry: {
+          site_key: siteKey,
+          site_display_name: reg.display_name,
+          site_domain: reg.domain,
+          verification_state: "unverified",
+          product_url: null,
+          image_url: null,
+          additional_image_url_parsed: [],
+          last_verified_at: null,
+          verification_date: null,
+          mismatch_reason: null,
+          reviewer_uid: null,
+          reviewer_action_at: null,
+        },
+      });
+    }
+  }
+
+  // Primary first, then by registry priority asc
+  svEntries.sort((a, b) => {
+    const aIsPrimary = a.key === productSiteOwner ? 0 : 1;
+    const bIsPrimary = b.key === productSiteOwner ? 0 : 1;
+    if (aIsPrimary !== bIsPrimary) return aIsPrimary - bIsPrimary;
+    return (registryBySiteKey[a.key]?.priority ?? 999) - (registryBySiteKey[b.key]?.priority ?? 999);
+  });
+
+  const site_verification: Record<string, any> = {};
+  for (const { key, entry } of svEntries) {
+    site_verification[key] = entry;
+  }
+
+  // primary_site_key is null when the product has no site_owner OR when
+  // site_owner does not match any active registry key (Scenario E branch).
+  const primary_site_key: string | null =
+    productSiteOwner && registryBySiteKey[productSiteOwner] ? productSiteOwner : null;
+
+  return { site_verification, primary_site_key };
+}
 
 // ── Phase 1 recommendation builder ──
 function buildPhase1Recommendation(product: any) {
@@ -76,7 +177,25 @@ router.get("/", async (req: Request, res: Response) => {
       }
     }
 
-    const snap = await query.get();
+    // Pre-fetch active site_registry + staleness threshold once per request
+    // (single StalenessCache shared across all rows — not per row).
+    const stalenessCache: StalenessCache = {};
+    const [snap, activeRegistrySnap, stalenessThreshold] = await Promise.all([
+      query.get(),
+      db().collection("site_registry").where("is_active", "==", true).get(),
+      getStalenessThresholdDays(stalenessCache),
+    ]);
+
+    const registryBySiteKey: Record<string, RegistryEntry> = {};
+    activeRegistrySnap.docs.forEach((rDoc) => {
+      const rd = rDoc.data();
+      registryBySiteKey[rDoc.id] = {
+        display_name: rd.display_name || rDoc.id,
+        domain: rd.domain || "",
+        priority: typeof rd.priority === "number" ? rd.priority : 999,
+      };
+    });
+
     const docs = snap.docs.slice(0, limitNum);
     const hasMore = snap.docs.length > limitNum;
 
@@ -101,6 +220,12 @@ router.get("/", async (req: Request, res: Response) => {
       // Phase 1 filter: map_status
       if (map_status === "protected" && !isMapProtected) return null;
       if (map_status === "not_protected" && isMapProtected) return null;
+
+      const { site_verification, primary_site_key } = buildBuyerReviewSiteVerification(
+        d,
+        registryBySiteKey,
+        stalenessThreshold,
+      );
 
       return {
         mpn: d.mpn || doc.id,
@@ -128,15 +253,8 @@ router.get("/", async (req: Request, res: Response) => {
 
         recommendation: buildPhase1Recommendation(d),
 
-        site_targets: [
-          {
-            site_id: d.site_owner || "shiekh",
-            domain: `${d.site_owner || "shiekh"}.com`,
-            verification_state: "not_verified",
-            product_link: null,
-            image_link: null,
-          },
-        ],
+        site_verification,
+        primary_site_key,
 
         is_loss_leader: d.is_loss_leader ?? false,
         days_in_queue: daysInQueue,
