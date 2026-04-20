@@ -1,0 +1,23 @@
+=== JS4967 canary preservation (written_at must be 2026-04-20T16:44:55.143Z) ===
+{
+  "origin_rule": "tally-128-task4-attrval-mirror",
+  "origin_type": "Backfill",
+  "written_at": "2026-04-20T16:44:55.143Z",
+  "updated_at": "2026-04-20T16:44:55.143Z",
+  "origin_detail": "TALLY-128 Task 4 — attribute_values/site_owner mirror",
+  "field_name": "site_owner",
+  "verification_state": "Unverified",
+  "value": "shiekh"
+}
+
+=== Random 5-MPN spot check (must show 8 fields, vstate=Unverified, sentinel) ===
+KI5720 | top.site_owner="shiekh" | sub={"origin_detail":"TALLY-128 Task 4 — attribute_values/site_owner mirror","updated_at":"2026-04-20T17:44:14.218Z","value":"shiekh","written_at":"2026-04-20T17:44:14.218Z","origin_type":"Backfill","field_name":"site_owner","verification_state":"Unverified","origin_rule":"tally-128-task4-attrval-mirror"} | 8-field+sentinel OK: 2026-04-20T17:44:14.218Z
+JQ2006 | top.site_owner="shiekh" | sub={"origin_detail":"TALLY-128 Task 4 — attribute_values/site_owner mirror","origin_rule":"tally-128-task4-attrval-mirror","verification_state":"Unverified","origin_type":"Backfill","field_name":"site_owner","value":"shiekh","updated_at":"2026-04-20T17:44:14.218Z","written_at":"2026-04-20T17:44:14.218Z"} | 8-field+sentinel OK: 2026-04-20T17:44:14.218Z
+AF5836 | top.site_owner="shiekh" | sub={"origin_type":"Backfill","verification_state":"Unverified","origin_detail":"TALLY-128 Task 4 — attribute_values/site_owner mirror","origin_rule":"tally-128-task4-attrval-mirror","value":"shiekh","updated_at":"2026-04-20T17:44:14.218Z","written_at":"2026-04-20T17:44:14.218Z","field_name":"site_owner"} | 8-field+sentinel OK: 2026-04-20T17:44:14.218Z
+B000027990399: NO DOC (skipped — owner empty?)
+1031309: NO DOC (skipped — owner empty?)
+HQ6998 600 | top="shiekh" sub.value="shiekh" | 8-field:YES | valOK=true vstate=true otype=true sentinel=true fname=true
+206990-001 | top="shiekh" sub.value="shiekh" | 8-field:YES | valOK=true vstate=true otype=true sentinel=true fname=true
+JQ4730 | top="shiekh" sub.value="shiekh" | 8-field:YES | valOK=true vstate=true otype=true sentinel=true fname=true
+5161841-JL4448 | top="shiekh" sub.value="shiekh" | 8-field:YES | valOK=true vstate=true otype=true sentinel=true fname=true
+EF5398 | top="shiekh" sub.value="shiekh" | 8-field:YES | valOK=true vstate=true otype=true sentinel=true fname=true

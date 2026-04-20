@@ -1,0 +1,25 @@
+=== TALLY-128 Task 4 DRY-RUN ===
+Project: ropi-aoss-dev
+Origin rule sentinel: tally-128-task4-attrval-mirror
+Timestamp: 2026-04-20T17:46:52.528Z
+Contract: Option B (verification_state="Unverified")
+
+Total products: 672
+Products with non-empty data.site_owner: 574
+
+  scanned 100/574
+  scanned 200/574
+  scanned 300/574
+  scanned 400/574
+  scanned 500/574
+=== TALLY-128 Task 4 Dry-Run ===
+Total products scanned with non-empty data.site_owner:  574
+Category breakdown:
+  Will create (subcoll doc missing):   0  ← primary action set
+  Will update (Path A: never):         0
+  Skip (already matches or preserved): 574
+
+Preserved (pre-existing docs left unchanged per Path A):
+  206991-6SW: existing="Shiekh" | top.site_owner="shiekh"
+
+Dry-run complete. No writes performed. Re-run with --execute after PO ack.
