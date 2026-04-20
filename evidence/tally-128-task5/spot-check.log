@@ -1,0 +1,41 @@
+=== 5-MPN + 1-gap spot check ===
+
+206991-6SW (create-only)
+  current site_targets: [shiekh]
+  expected:             [shiekh]
+  match: true
+    shiekh: {"active":true,"updated_at":"2026-04-20T22:32:49.495Z","domain":"shiekh.com","site_targets_source":"tally-128-task5","site_id":"shiekh"}
+
+101639C (delete-only)
+  current site_targets: [karmaloop]
+  expected:             [karmaloop]
+  match: true
+    karmaloop: {"site_id":"karmaloop","active":true,"updated_at":"2026-04-17T23:49:54.987Z","domain":"karmaloop.com"}
+
+IY9664 (fully-deleted)
+  current site_targets: []
+  expected:             []
+  match: true
+
+BB9076 (fully-deleted)
+  current site_targets: []
+  expected:             []
+  match: true
+
+JS4967 (no-change)
+  current site_targets: [karmaloop]
+  expected:             [karmaloop,mltd,shiekh]
+  match: false
+    karmaloop: {"domain":"karmaloop.com","site_id":"karmaloop","active":true,"updated_at":"2026-04-17T23:43:03.984Z"}
+
+1003868 (gap)
+  current site_targets: []
+  expected:             [untouched]
+  match: n/a (gap — just verifies current state)
+
+=== Stale-key confirmation (scan all 672) ===
+  plndr docs remaining: 16
+  shiekhshoes docs remaining: 3
+  fbrk docs remaining: 2
+  trendswap docs remaining: 1
+  (scanned 672 products)

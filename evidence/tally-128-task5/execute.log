@@ -1,0 +1,66 @@
+=== TALLY-128 Task 5 EXECUTE ===
+Project: ropi-aoss-dev
+Sentinel: tally-128-task5
+Timestamp: 2026-04-20T22:32:49.495Z
+
+Active registry sites: [karmaloop, mltd, shiekh]
+
+Total products scanned: 672
+
+=== Subtask 5b — Schema verification ===
+Observed schema fields (from JS4967 + 5 samples + all scanned): site_id, domain, active, updated_at
+Total existing site_targets docs scanned: 1175
+Docs with fields outside observed schema: 0
+Outcome: 2A — schema consistent across all samples. Creates will write:
+  site_id (string), domain (string), active (bool), updated_at (timestamp),
+  site_targets_source (string, sentinel="tally-128-task5")
+
+=== TALLY-128 Task 5 Dry-Run ===
+Total products scanned:                    672
+Active registry sites:                     [karmaloop, mltd, shiekh]
+
+Gap bucket (empty Active Websites, preserved unchanged per R2-Q2):
+  Products counted:                        177
+
+Mutation-candidate bucket (non-empty Active Websites):
+  No change (current == expected):         130
+  Create-only (pure add):                  5
+  Delete-only (pure remove):               340
+  Mixed (create + delete in same product): 1
+  Fully deleted (expected empty):          6   ← GUARDRAIL 1: PO sign-off required
+  No-op (current empty + expected empty):  13   (non-registry-only AW; neither mutated)
+  Mutation-candidate total:                495
+
+Operation totals (mutation-candidates only):
+  Docs to create:                          7
+  Docs to delete:                          592
+  Docs to preserve untouched:              470
+
+Fully-deleted sample (all 6 listed):
+  BB9076 | aw=[plndr] | current=[plndr,shiekh] | nonReg=[plndr]
+  BY9961 | aw=[plndr] | current=[plndr,shiekh] | nonReg=[plndr]
+  CQ2118-VNDS | aw=[vnds.com] | current=[trendswap] | nonReg=[vnds.com]
+  FBRK133072-TINT | aw=[fbrkclothing.com] | current=[fbrk] | nonReg=[fbrkclothing.com]
+  IY9664 | aw=[fbrkclothing.com] | current=[fbrk,karmaloop,mltd,shiekh] | nonReg=[fbrkclothing.com]
+  M20324 | aw=[plndr] | current=[plndr] | nonReg=[plndr]
+
+Non-registry Active Websites audit (informational):
+  "vnds.com": 13
+  "plndr": 3
+  "fbrkclothing.com": 2
+  "shoes.com": 1
+
+=== EXECUTE phase ===
+Products with diff: 352 (chunked at 100/batch)
+  batch 1: 100 products (running 100/352)
+  batch 2: 100 products (running 200/352)
+  batch 3: 100 products (running 300/352)
+  batch 4: 52 products (running 352/352)
+
+=== EXECUTE complete ===
+Products touched:      352
+Docs created:          7
+Docs deleted:          592
+Docs preserved:        470
+Gap products skipped:  177
+Errors:                0
