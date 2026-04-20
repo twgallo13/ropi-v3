@@ -6,6 +6,8 @@ import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
 import { checkHighPriorityFlag } from "../services/launchHighPriority";
 import { getWeekKey } from "../services/executiveProjections";
+import { deriveVerificationState, getStalenessThresholdDays, StalenessCache } from "../lib/staleness";
+import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
 
 const router = Router();
 const db = admin.firestore;
@@ -387,11 +389,14 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
     const data = productSnap.data()!;
 
     // Fetch subcollections in parallel
-    const [avSnap, stSnap, requiredFields, launchWindowDays] = await Promise.all([
+    const stalenessCache: StalenessCache = {};
+    const [avSnap, stSnap, requiredFields, launchWindowDays, activeRegistrySnap, stalenessThreshold] = await Promise.all([
       productRef.collection("attribute_values").get(),
       productRef.collection("site_targets").get(),
       getRequiredFieldKeys(firestore),
       getLaunchWindowDays(firestore),
+      firestore.collection("site_registry").where("is_active", "==", true).get(),
+      getStalenessThresholdDays(stalenessCache),
     ]);
 
     // Build attribute_values map
@@ -439,6 +444,90 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
     // Serialize timestamps
     const serializeTs = (ts: any) => ts?.toDate?.()?.toISOString() || null;
 
+    // ── Build site_verification response map (§7.1.6) ──────────────────
+    const storedSv: Record<string, any> = data.site_verification || {};
+    const productSiteOwner: string | null =
+      typeof data.site_owner === "string" && data.site_owner.trim()
+        ? data.site_owner.trim()
+        : null;
+
+    // Build registry lookup indexed by site_key
+    const registryBySiteKey: Record<string, { display_name: string; domain: string; priority: number }> = {};
+    activeRegistrySnap.docs.forEach((rDoc) => {
+      const rd = rDoc.data();
+      registryBySiteKey[rDoc.id] = {
+        display_name: rd.display_name || rDoc.id,
+        domain: rd.domain || "",
+        priority: typeof rd.priority === "number" ? rd.priority : 999,
+      };
+    });
+
+    // Build per-site entries: real data where present, unverified stubs otherwise
+    const svEntries: Array<{ key: string; entry: Record<string, any> }> = [];
+    for (const siteKey of Object.keys(registryBySiteKey)) {
+      const reg = registryBySiteKey[siteKey];
+      const stored = storedSv[siteKey];
+
+      if (stored) {
+        // Real entry — derive state with staleness helper
+        const derivedState = deriveVerificationState(
+          stored.verification_state,
+          stored.last_verified_at,
+          stalenessThreshold,
+        );
+        svEntries.push({
+          key: siteKey,
+          entry: {
+            site_key: siteKey,
+            site_display_name: reg.display_name,
+            site_domain: reg.domain,
+            verification_state: derivedState,
+            product_url: stored.product_url || null,
+            image_url: stored.image_url || null,
+            additional_image_url_parsed: parseAdditionalImageUrls(stored.additional_image_url),
+            last_verified_at: serializeTs(stored.last_verified_at),
+            verification_date: stored.verification_date || null,
+            mismatch_reason: stored.mismatch_reason || null,
+            reviewer_uid: stored.reviewer_uid || null,
+            reviewer_action_at: serializeTs(stored.reviewer_action_at),
+          },
+        });
+      } else {
+        // Unverified stub
+        svEntries.push({
+          key: siteKey,
+          entry: {
+            site_key: siteKey,
+            site_display_name: reg.display_name,
+            site_domain: reg.domain,
+            verification_state: "unverified",
+            product_url: null,
+            image_url: null,
+            additional_image_url_parsed: [],
+            last_verified_at: null,
+            verification_date: null,
+            mismatch_reason: null,
+            reviewer_uid: null,
+            reviewer_action_at: null,
+          },
+        });
+      }
+    }
+
+    // Sort: primary site first (matches site_owner), then by registry priority asc
+    svEntries.sort((a, b) => {
+      const aIsPrimary = a.key === productSiteOwner ? 0 : 1;
+      const bIsPrimary = b.key === productSiteOwner ? 0 : 1;
+      if (aIsPrimary !== bIsPrimary) return aIsPrimary - bIsPrimary;
+      return (registryBySiteKey[a.key]?.priority ?? 999) - (registryBySiteKey[b.key]?.priority ?? 999);
+    });
+
+    // Convert sorted array to ordered map
+    const site_verification: Record<string, any> = {};
+    for (const { key, entry } of svEntries) {
+      site_verification[key] = entry;
+    }
+
     res.status(200).json({
       mpn: data.mpn || docIdToMpn(docId),
       doc_id: docId,
@@ -476,6 +565,7 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
       attribute_values,
       site_targets,
       source_inputs,
+      site_verification,
     });
   } catch (err: any) {
     console.error("GET /products/:mpn error:", err);
