@@ -109,16 +109,16 @@ const FIXTURES = [
     mpn: "STEP21-AON-001",
     site_verification: {
       shiekh: verifiedLive({
-        image_url: "https://static.shiekh.com/media/catalog/product/seed/tally127/A-shiekh-primary.jpg",
-        product_url: "https://www.shiekh.com/seed/tally127/step21-aon-001.html",
+        image_url: "https://placehold.co/600x600/16a34a/ffffff?text=A+shiekh+primary",
+        product_url: "https://placehold.co/1000x800/166534/ffffff?text=A+shiekh+product+page+(fixture)",
         additional_image_url:
-          "https://static.shiekh.com/media/catalog/product/seed/tally127/A-shiekh-addl-1.jpg," +
-          "https://static.shiekh.com/media/catalog/product/seed/tally127/A-shiekh-addl-2.jpg," +
-          "https://static.shiekh.com/media/catalog/product/seed/tally127/A-shiekh-addl-3.jpg,",
+          "https://placehold.co/600x600/0d9488/ffffff?text=A+shiekh+addl+1," +
+          "https://placehold.co/600x600/0d9488/ffffff?text=A+shiekh+addl+2," +
+          "https://placehold.co/600x600/0d9488/ffffff?text=A+shiekh+addl+3,",
       }),
       karmaloop: verifiedLive({
-        image_url: "https://images.karmaloop.com/seed/tally127/A-karmaloop.jpg",
-        product_url: "https://www.karmaloop.com/seed/tally127/step21-aon-001",
+        image_url: "https://placehold.co/600x600/2563eb/ffffff?text=A+karmaloop",
+        product_url: "https://placehold.co/1000x800/1e3a8a/ffffff?text=A+karmaloop+product+page+(fixture)",
         additional_image_url: null,
       }),
     },
@@ -128,8 +128,8 @@ const FIXTURES = [
     mpn: "STEP21-WIN-002",
     site_verification: {
       shiekh: verifiedLive({
-        image_url: "https://static.shiekh.com/media/catalog/product/seed/tally127/B-shiekh-primary.jpg",
-        product_url: "https://www.shiekh.com/seed/tally127/step21-win-002.html",
+        image_url: "https://placehold.co/600x600/16a34a/ffffff?text=B+shiekh+primary",
+        product_url: "https://placehold.co/1000x800/166534/ffffff?text=B+shiekh+product+page+(fixture)",
         additional_image_url: null,
       }),
     },
@@ -142,8 +142,8 @@ const FIXTURES = [
         reason: "TALLY-127 Task 1b fixture: primary mismatch — fallback available on karmaloop",
       }),
       karmaloop: verifiedLive({
-        image_url: "https://images.karmaloop.com/seed/tally127/C-karmaloop-fallback.jpg",
-        product_url: "https://www.karmaloop.com/seed/tally127/step21-promo-003",
+        image_url: "https://placehold.co/600x600/2563eb/ffffff?text=C+karmaloop+FALLBACK",
+        product_url: "https://placehold.co/1000x800/1e3a8a/ffffff?text=C+karmaloop+product+page+(fixture)",
         additional_image_url: null,
       }),
     },
@@ -155,7 +155,7 @@ const FIXTURES = [
       shiekh: {
         verification_state: "verified_live",
         image_url: null,
-        product_url: "https://www.shiekh.com/seed/tally127/step21-old-004.html",
+        product_url: "https://placehold.co/1000x800/166534/ffffff?text=D+shiekh+product+page+(fixture)",
         additional_image_url: null,
         mismatch_reason: null,
         reviewer_uid: SENTINEL_UID,
@@ -164,8 +164,8 @@ const FIXTURES = [
         last_verified_at: NOW_ISO,
       },
       karmaloop: verifiedLive({
-        image_url: "https://images.karmaloop.com/seed/tally127/D-karmaloop-fallback.jpg",
-        product_url: "https://www.karmaloop.com/seed/tally127/step21-old-004",
+        image_url: "https://placehold.co/600x600/2563eb/ffffff?text=D+karmaloop+FALLBACK",
+        product_url: "https://placehold.co/1000x800/1e3a8a/ffffff?text=D+karmaloop+product+page+(fixture)",
         additional_image_url: null,
       }),
     },
