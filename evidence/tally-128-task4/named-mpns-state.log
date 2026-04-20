@@ -1,0 +1,53 @@
+=== Current state probe — 4 named MPNs ===
+
+206991-6SW:
+  product exists: true
+  data.site_owner:           "shiekh"
+  data.brand:                "PUMA"
+  attribute_values/site_owner exists: true
+    value:              "Shiekh"
+    verification_state: "Human-Verified"
+    origin_type:        "Human"
+    origin_rule:        undefined
+    field_name:         undefined
+    written_at:         "2026-04-19T15:57:53.543Z"
+    updated_at:         undefined
+
+HTG230493wht:
+  product exists: true
+  data.site_owner:           undefined
+  data.brand:                "Honor The Gift"
+  attribute_values/site_owner exists: true
+    value:              "mltd"
+    verification_state: "Human-Verified"
+    origin_type:        "Human"
+    origin_rule:        undefined
+    field_name:         undefined
+    written_at:         "2026-04-20T00:29:04.596Z"
+    updated_at:         undefined
+
+JQ8354:
+  product exists: true
+  data.site_owner:           "shiekh"
+  data.brand:                "ADIDAS"
+  attribute_values/site_owner exists: true
+    value:              "shiekh"
+    verification_state: "Human-Verified"
+    origin_type:        "Human"
+    origin_rule:        undefined
+    field_name:         undefined
+    written_at:         "2026-04-20T02:12:22.083Z"
+    updated_at:         undefined
+
+JS4967:
+  product exists: true
+  data.site_owner:           "shiekh"
+  data.brand:                "ADIDAS"
+  attribute_values/site_owner exists: true
+    value:              "shiekh"
+    verification_state: "Unverified"
+    origin_type:        "Backfill"
+    origin_rule:        "tally-128-task4-attrval-mirror"
+    field_name:         "site_owner"
+    written_at:         "2026-04-20T16:44:55.143Z"
+    updated_at:         "2026-04-20T16:44:55.143Z"
