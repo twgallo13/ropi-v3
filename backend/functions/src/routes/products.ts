@@ -546,6 +546,7 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
       pricing_domain_state: data.pricing_domain_state || "pending",
       product_is_active: data.product_is_active ?? true,
       site_owner: site_targets.length > 0 ? site_targets[0].site_id : "",
+      primary_site_key: data.site_owner || null,
       import_batch_id: data.import_batch_id || null,
       is_map_protected: !!data.is_map_protected,
       map_price: data.map_price ?? null,
