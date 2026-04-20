@@ -1,0 +1,202 @@
+=== TALLY-128 Task 3 EXECUTE ===
+Project: ropi-aoss-dev
+Source sentinel: tally-128-task3
+Timestamp: 2026-04-20T16:19:35.946Z
+
+Brand Registry loaded: 10 active entries
+Aliases registered: 3
+  BRAND JORDAN → Jordan (owner=shiekh)
+  NEW ERA CAPS → New Era (owner=shiekh)
+  NIKE INC. → Nike (owner=shiekh)
+
+Products scanned: 672
+
+=== TALLY-128 Task 3 Execute Pre-Write ===
+Total products scanned:                672
+Category breakdown:
+  Already correct (no-op):             434   (brand maps to current site_owner)
+  Empty site_owner + mapped:           139   (would backfill) ← primary action set
+    Direct matches:                    87
+    Alias matches:                     52
+      NEW ERA CAPS  → New Era              6
+      BRAND JORDAN  → Jordan               23
+      NIKE INC.  → Nike                    23
+  Conflicts (preserve+flag):           0
+    [none — Task 1 diagnostic prediction confirmed]
+  Empty site_owner + unmapped:         98   (gap — no action)
+    Gap by brand (top 20):
+      VANS DISTRIBUTION CNT                8 products
+      FBRK                                 6 products
+      Honor The Gift                       6 products
+      Rebel Minds                          5 products
+      CONVERSE                             5 products
+      BIRKENSTOCK                          4 products
+      Mitchell & Ness                      4 products
+      SMOKE RISE/NEW WORL CREATION INC     4 products
+      LEGEND FOOTWEAR INC                  4 products
+      Sangre Mia                           4 products
+      SHIEKH LLC.                          4 products
+      Field Grade                          3 products
+      BIG WON ENTERPRISE                   3 products
+      PSD UNDERWEAR                        2 products
+      Market                               2 products
+      High Caliber                         2 products
+      CRYSP DENIM                          2 products
+      REASON                               2 products
+      Memory Lane                          2 products
+      SHIEKH                               2 products
+      ... 24 additional unmapped brands not shown
+  Filled + unmapped (informational):   1   (existing owners w/ no registry match)
+
+=== EXECUTE phase ===
+Writes queued: 139
+Conflict writes skipped: 0 (preserve+flag policy per Frink R1 Q3)
+
+Per-product write log (MPN | brand | matched_via | assigned_site_owner):
+  10001-5CI | Crocs | direct | shiekh
+  206990-001 | Crocs | direct | shiekh
+  206990-0DA | Crocs | direct | shiekh
+  206991-001 | Crocs | direct | shiekh
+  206991-100 | Crocs | direct | shiekh
+  206991-6SW | PUMA | direct | shiekh
+  280647 | ADIDAS | direct | shiekh
+  280647-BWH | ADIDAS | direct | shiekh
+  39652001 | PUMA | direct | shiekh
+  62783601 | PUMA | direct | shiekh
+  851-4801BLK | Billionaire Boys Club | direct | karmaloop
+  851-7802NVY | Billionaire Boys Club | direct | karmaloop
+  851-8208-BLK | Billionaire Boys Club | direct | karmaloop
+  851-8208-WHT | Billionaire Boys Club | direct | karmaloop
+  851-8802-BLK | Billionaire Boys Club | direct | karmaloop
+  A2B00193 | ADIDAS | direct | shiekh
+  A49A0018 | ADIDAS | direct | shiekh
+  A49A0019 | ADIDAS | direct | shiekh
+  A49A0019-B | ADIDAS | direct | shiekh
+  A52A8941 | ADIDAS | direct | shiekh
+  ACV8357 | ADIDAS | direct | shiekh
+  AQ3091 | ADIDAS | direct | shiekh
+  AY8133-BLK | ADIDAS | direct | shiekh
+  AY8945-OLICAR | ADIDAS | direct | shiekh
+  AY9267-UTIBLU | ADIDAS | direct | shiekh
+  B94089-BWH | ADIDAS | direct | shiekh
+  BB1101 | ADIDAS | direct | shiekh
+  BB1312-BLK | ADIDAS | direct | shiekh
+  BB9076 | ADIDAS | direct | shiekh
+  BH6428-BLK | ADIDAS | direct | shiekh
+  BH6430-MUI | ADIDAS | direct | shiekh
+  BK0511-WHT | ADIDAS | direct | shiekh
+  BK6025-WHT | ADIDAS | direct | shiekh
+  BQ5369-CRG | ADIDAS | direct | shiekh
+  BQ5753-NVY | ADIDAS | direct | shiekh
+  BY3724 | ADIDAS | direct | shiekh
+  C77153 | ADIDAS | direct | shiekh
+  CE8299-RPK | ADIDAS | direct | shiekh
+  CG6228-BLK | ADIDAS | direct | shiekh
+  CI0914-BLK | ADIDAS | direct | shiekh
+  CQ2118-VNDS | ADIDAS | direct | shiekh
+  DB2961 | ADIDAS | direct | shiekh
+  EA1901 | ADIDAS | direct | shiekh
+  EE5318 | ADIDAS | direct | shiekh
+  EF4842 | ADIDAS | direct | shiekh
+  EF5397 | ADIDAS | direct | shiekh
+  EF5398 | ADIDAS | direct | shiekh
+  F026S455SK-BLK | Smoke Rise | direct | shiekh
+  F026S455SK-CARO | Smoke Rise | direct | shiekh
+  F35242 | ADIDAS | direct | shiekh
+  FU7712 | ADIDAS | direct | shiekh
+  FV3703 | ADIDAS | direct | shiekh
+  FV7261 | ADIDAS | direct | shiekh
+  FV7289 | ADIDAS | direct | shiekh
+  FW0819 | ADIDAS | direct | shiekh
+  FW8293 | ADIDAS | direct | shiekh
+  FX5938 | ADIDAS | direct | shiekh
+  FX8056 | ADIDAS | direct | shiekh
+  FY8970 | ADIDAS | direct | shiekh
+  GC6792 | ADIDAS | direct | shiekh
+  GF0210 | ADIDAS | direct | shiekh
+  GV8746 | ADIDAS | direct | shiekh
+  GZ1664 | ADIDAS | direct | shiekh
+  GZ3741 | ADIDAS | direct | shiekh
+  H04407 | ADIDAS | direct | shiekh
+  HP8739 | ADIDAS | direct | shiekh
+  ID4636 | ADIDAS | direct | shiekh
+  ID9709 | ADIDAS | direct | shiekh
+  IF6513 | ADIDAS | direct | shiekh
+  IG6995 | ADIDAS | direct | shiekh
+  JP26S425SK-KORI | Smoke Rise | direct | shiekh
+  JP26S426SK-DAIS | Smoke Rise | direct | shiekh
+  JR0428 | ADIDAS | direct | shiekh
+  JS24109SK-CBLUE | Smoke Rise | direct | shiekh
+  JS26S453SK-BLK | Smoke Rise | direct | shiekh
+  KD2272 | ADIDAS | direct | shiekh
+  KI0073 | ADIDAS | direct | shiekh
+  KJ0446 | ADIDAS | direct | shiekh
+  KT26S425SK-WHT | Smoke Rise | direct | shiekh
+  KT26S471SK-OY | Smoke Rise | direct | shiekh
+  LLDU315993-EBK | PRO STANDARD | direct | shiekh
+  M20324 | ADIDAS | direct | shiekh
+  TEST-STEP31-HV-CEILING | Nike | direct | shiekh
+  TEST-STEP31-NIKE-LAUNCH | Nike | direct | shiekh
+  TS26S421SK-CRBN | Smoke Rise | direct | shiekh
+  TS26S421SK-SAND | Smoke Rise | direct | shiekh
+  VN0A32QGYUU | Crocs | direct | shiekh
+  11872945 | NEW ERA CAPS | alias:NEW ERA CAPS | shiekh
+  554724 069 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  60113074 | NEW ERA CAPS | alias:NEW ERA CAPS | shiekh
+  60113270 | NEW ERA CAPS | alias:NEW ERA CAPS | shiekh
+  60807906 | NEW ERA CAPS | alias:NEW ERA CAPS | shiekh
+  60918518 | NEW ERA CAPS | alias:NEW ERA CAPS | shiekh
+  687977 111 | NIKE INC. | alias:NIKE INC. | shiekh
+  70234601 | NEW ERA CAPS | alias:NEW ERA CAPS | shiekh
+  CN0149 001 | NIKE INC. | alias:NIKE INC. | shiekh
+  CT8529 001 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  CW2288 001 | NIKE INC. | alias:NIKE INC. | shiekh
+  CW2288 111 | NIKE INC. | alias:NIKE INC. | shiekh
+  DC9651 100 | NIKE INC. | alias:NIKE INC. | shiekh
+  DD1391 100 | NIKE INC. | alias:NIKE INC. | shiekh
+  DD8959 100 | NIKE INC. | alias:NIKE INC. | shiekh
+  DH2920 111 | NIKE INC. | alias:NIKE INC. | shiekh
+  DM0967 080 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  DN3707 202 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  DO0613 007 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  DQ8426 003 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  DZ5485 402 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  FD6757 301 | NIKE INC. | alias:NIKE INC. | shiekh
+  FQ8213 600 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  FQ8249 100 | NIKE INC. | alias:NIKE INC. | shiekh
+  FV5104 100 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  FV5296 010 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  FV5951 001 | NIKE INC. | alias:NIKE INC. | shiekh
+  HQ6998 600 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  HV4089 006 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  HV5060 001 | NIKE INC. | alias:NIKE INC. | shiekh
+  HV5060 002 | NIKE INC. | alias:NIKE INC. | shiekh
+  HV5060 100 | NIKE INC. | alias:NIKE INC. | shiekh
+  HV5060 800 | NIKE INC. | alias:NIKE INC. | shiekh
+  IB3937 010 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IB3937 485 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IB5824 100 | NIKE INC. | alias:NIKE INC. | shiekh
+  IF1024 684 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IF1746 601 | NIKE INC. | alias:NIKE INC. | shiekh
+  IF1961 133 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IF3157 068 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  II0571 001 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IM4002 100 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IQ1275 001 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IQ9706 701 | NIKE INC. | alias:NIKE INC. | shiekh
+  IR1643 010 | NIKE INC. | alias:NIKE INC. | shiekh
+  IR1643 696 | NIKE INC. | alias:NIKE INC. | shiekh
+  IR3985 121 | NIKE INC. | alias:NIKE INC. | shiekh
+  IV2445 010 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IV2628 300 | NIKE INC. | alias:NIKE INC. | shiekh
+  IW6277 001 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IW6279 001 | BRAND JORDAN | alias:BRAND JORDAN | shiekh
+  IZ3164 010 | NIKE INC. | alias:NIKE INC. | shiekh
+  (batch 1: written=139, failed=0)
+
+=== EXECUTE complete ===
+Total writes attempted:  139
+Total writes succeeded:  139
+Total writes failed:     0
+Conflicts preserved:     0
+Gap (no action):         98
