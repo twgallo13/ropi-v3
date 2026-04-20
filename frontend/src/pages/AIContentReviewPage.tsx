@@ -65,11 +65,11 @@ export default function AIContentReviewPage() {
   const [critique, setCritique] = useState("");
 
   // TALLY-124 — source site tabs from site_registry (active-only).
-  // AI content subsystem uses short names (e.g. "shiekh") derived from site_key.
+  // Post TALLY-125 Round 5: site_key is already bare canonical (e.g. "shiekh").
   useEffect(() => {
     fetchSiteRegistry(true)
       .then((entries) => {
-        const keys = entries.map((e) => e.site_key.replace(/_com$/, ""));
+        const keys = entries.map((e) => e.site_key);
         setSiteOwners(keys);
         if (!activeSite && keys.length > 0) setActiveSite(keys[0]);
       })
