@@ -1,0 +1,37 @@
+=== TALLY-128 Task 6 Subtask 6a — Investigation ===
+Now: 2026-04-20T22:52:11.725Z
+
+Step 2 — historical time-bucket counts
+event_type = site_targets.orphaned_reference
+
+  all-time            : 5875
+  last 24h            : 0
+  last 7d             : 5875
+  last 30d            : 5875
+  since Round 5 (4/17): 5875
+  since Task 5 (4/20T22:32:49Z): 0
+
+(per-bucket queries are limit-20000; verify all-time count below matches Task 1 ~5875)
+
+Step 1 follow-up — orphaned_site_key value distribution (all-time, sample of 5875)
+  fetched: 5875
+  "shiekh": 2570
+  "karmaloop": 1840
+  "mltd": 1155
+  "plndr": 235
+  "shiekhshoes": 40
+  "fbrk": 25
+  "trendswap": 10
+
+Step 2 follow-up — last-24h orphaned_site_key distribution
+  count: 0
+
+Step 3 — post-Task-5 events (since 2026-04-20T22:32:49Z)
+  count: 0
+
+Step 2 — created_at range
+  earliest: 2026-04-19T16:34:27.337Z
+  latest:   2026-04-19T21:53:16.227Z
+
+Step 2 — daily counts
+  2026-04-19: 5875

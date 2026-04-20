@@ -1,0 +1,11 @@
+Total audit_log events since Task 5 (2026-04-20T22:32:49Z): 0
+
+Total audit_log events since post-4/19-orphan-burst (2026-04-19T22:00:00Z): 34
+  field_edited: 22
+  ai_describe_generated: 2
+  site_verification.reverified: 2
+  site_verification_mark_live: 2
+  site_verification_import_committed: 2
+  buyer_action: 2
+  ai_content_approved: 1
+  site_verification_flag: 1
