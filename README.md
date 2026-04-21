@@ -199,17 +199,12 @@ Change log and decision tally: V3 Review Session — Change Tally Log (Notion �
 
 ---
 
-## Phase 1 Build Status
+## Build Status
 
-| Step | Description | Status |
-|---|---|---|
-| 1.1 | Firestore Foundation | ✅ Complete |
-| 1.2 | Seed Data | 🔄 In Progress |
-| 1.3 | Full Product Import | ⏳ Pending |
-| 1.4 | Product List + Completion Queue | ⏳ Pending |
-| 1.5 | Pricing Resolution | ⏳ Pending |
-| 1.6 | Basic Buyer Markdown Grid | ⏳ Pending |
-| 1.7 | Daily Export | ⏳ Pending |
+Live build status is tracked in the Change Tally Log in Notion (internal).
+The most recent completed milestone at the time of this README update is TALLY-128 (Phase 5 Cleanup Pass).
+
+For current state, see: V3 Review Session — Change Tally Log.
 
 ---
 

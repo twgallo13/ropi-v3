@@ -3,22 +3,6 @@
     "rules": "firebase/firestore.rules",
     "indexes": "firebase/firestore.indexes.json"
   },
-  "functions": [
-    {
-      "source": "backend/functions",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ],
-      "predeploy": [
-        "npm --prefix backend/functions run build"
-      ]
-    }
-  ],
   "hosting": {
     "site": "ropi-aoss-dev",
     "public": "frontend/dist",
@@ -28,10 +12,6 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-      {
-        "source": "/api/**",
-        "function": "api"
-      },
       {
         "source": "**",
         "destination": "/index.html"
@@ -43,7 +23,6 @@
   },
   "emulators": {
     "auth": { "port": 9099 },
-    "functions": { "port": 5001 },
     "firestore": { "port": 8080 },
     "hosting": { "port": 5000 },
     "storage": { "port": 9199 },
