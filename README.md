@@ -1,233 +1,134 @@
-# ROPI AOSS V3
-**Retail Operations Product Intelligence — AI-Optimized Sourcing System**
-**Shiekh Shoes | Build Phase**
-
----
-
-## What This Is
-
-ROPI AOSS V3 is an internal operational platform for Shiekh Shoes that manages
-the full lifecycle of product data across three ecommerce channels:
-Shiekh.com, Karmaloop.com, and MLTD.com.
-
-The system handles product import and enrichment, AI-assisted content generation,
-pricing cadence and markdown management, MAP enforcement, launch calendar
-coordination, and daily web export — all governed by a role-based access model
-for a named team of buyers, product ops specialists, and operations staff.
-
----
-
-## Architecture
-
-| Layer | Technology |
-|---|---|
-| Frontend | React + Vite (PWA), Firebase Hosting |
-| Backend | Express (Node.js), Google Cloud Run |
-| Database | Firebase Firestore (only — no SQL) |
-| Auth | Firebase Auth (Email/Password) |
-| Storage | Firebase Storage |
-| AI | Anthropic API (`claude-sonnet-4-20250514`) |
-| Email | SendGrid |
-| Secrets | Google Cloud Secret Manager |
-
----
-
-## Environments
-
-| Environment | Firebase Project ID | Purpose |
-|---|---|---|
-| Development | `ropi-aoss-dev` | Feature work — seeded test data only |
-| Staging | `ropi-aoss-staging-v3` | Pre-production UAT — synthetic data |
-| Production | `ropi-aoss-prod` | Live system — real operational data |
-
-**Environments are strictly isolated. Data never crosses between them.**
-
----
-
-## Repo Structure
-
-```
-ropi-v3/
-  backend/             Express app — deploys to Cloud Run
-  frontend/            React + Vite — deploys to Firebase Hosting
-  firebase/            Firestore rules, indexes, project config
-  scripts/
-    seed/              Idempotent seed scripts for dev/staging/prod
-    migrations/        Schema evolution scripts (additive only)
-  SPEC.md              Builder reference — Homer reads this before every task
-  README.md            This file
-```
-
----
-
 ## Local Development Setup
 
-### Prerequisites
+One-time setup:
 
-- Node.js 18+
-- Firebase CLI (`npm install -g firebase-tools`)
-- Google Cloud SDK (`gcloud`)
-- Access to `ropi-aoss-dev` Firebase project
-- Service account key injected as `GCP_SA_KEY_DEV` in Codespace Secrets
-
-### Backend
-
+1. Clone the repo.
+2. Populate `frontend/.env` (copy from `frontend/.env.example`; ask John for values).
+3. Populate `backend/functions/.env` (copy from `backend/functions/.env.example`; ask John for values).
+4. Install dependencies:
 ```bash
-cd backend
-npm install
+   cd backend/functions && npm install && cd ../..
+   cd frontend && npm install && cd ..
+```
+5. Authenticate CLIs:
+```bash
+   firebase login
+   gcloud auth application-default login
+```
+
+## Running Locally
+
+Backend (runs on port 8080):
+```bash
+cd backend/functions
 npm run dev
 ```
 
-Health check: `GET http://localhost:3000/api/v1/health`
-
-Expected response:
-```json
-{
-  "status": "ok",
-  "environment": "development",
-  "project": "ropi-aoss-dev",
-  "timestamp": "..."
-}
-```
-
-### Frontend
-
+Frontend (runs on port 5173 by default):
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
-
----
 
 ## Environment Variables
 
-Never commit secrets. All secrets are managed via Google Cloud Secret Manager
-and injected at deploy time. For local development, use Codespace Secrets.
+### Frontend (`frontend/.env`)
 
-```
-NODE_ENV                  development | staging | production
-FIREBASE_PROJECT_ID       Must match the project for the current NODE_ENV
-FIREBASE_AUTH_DOMAIN
-FIREBASE_STORAGE_BUCKET
-ANTHROPIC_API_KEY
-SENDGRID_API_KEY
-CLOUD_RUN_SERVICE_URL
-```
+Vite inlines these at build time. Missing values produce a broken frontend (Firebase auth will fail).
 
-The app validates environment on startup and **refuses to start** if
-`FIREBASE_PROJECT_ID` doesn't match the expected value for `NODE_ENV`.
+| Variable | Purpose |
+|----------|---------|
+| `VITE_FIREBASE_API_KEY` | Firebase web client API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase Cloud Messaging sender |
+| `VITE_FIREBASE_APP_ID` | Firebase web app ID |
+| `VITE_API_BASE_URL` | Backend API base URL |
 
----
+### Backend (`backend/functions/.env`)
 
-## Scheduled Jobs
+Local-dev only. Production values live in Cloud Run env/secrets.
 
-Four background jobs are run by Cloud Scheduler against the
-`ropi-aoss-api` Cloud Run service, gated by an OIDC verification middleware
-(no human user can call these routes):
+| Variable | Purpose |
+|----------|---------|
+| `ANTHROPIC_API_KEY` | Anthropic API key for AI content features |
+| `SENDGRID_API_KEY` | SendGrid API key for email delivery |
+| `SMTP_PASSWORD` | SMTP password for email fallback |
 
-| Job | Cron (LA) | Purpose |
-|---|---|---|
-| `promote-scheduled-daily` | `55 5 * * *` | Promote scheduled items to active |
-| `daily-staleness-sweep` | `0 6 * * *` | Refresh staleness flags + neglect projection (Option B — no full cadence re-eval) |
-| `neglected-inventory-nightly` | `0 2 * * *` | Recompute the neglected-inventory exec projection |
-| `weekly-snapshots` | `0 3 * * MON` | Write weekly metric snapshots |
-
-All four are deployed in `ropi-aoss-dev` (region `us-central1`) under the
-dedicated invoker SA `scheduler-invoker@ropi-aoss-dev.iam.gserviceaccount.com`.
-Provenance lands in `executive_projections/scheduler_runs.<job_key>`.
-
-For target routes, IAM details, environment variables, common gcloud commands,
-and the failure-mode triage table, see the runbook:
-[docs/scheduled-jobs.md](docs/scheduled-jobs.md).
-
----
-
-## Seed Data
-
-Seeds populate `ropi-aoss-dev` with the canonical starting data.
-All scripts are idempotent — safe to re-run.
-
-```bash
-cd scripts/seed
-
-# Run all seeds against dev
-export NODE_ENV=development
-export FIREBASE_PROJECT_ID=ropi-aoss-dev
-
-node run-all-seeds.js
-```
-
-**Expected counts after a clean seed:**
-
-| Collection | Documents |
-|---|---|
-| `attribute_registry` | 66 |
-| `site_registry` | 7 |
-| `smart_rules` | 3 |
-| `admin_settings` | 21 |
-
-**Never run seed scripts against staging or production
-without explicit authorization from Lisa (Build Supervisor).**
-
----
+**DO NOT** create `.env` at repo root. Only the two locations above are used.
 
 ## Deployment
 
-### Development
+Dev deploys happen via the canonical script:
 
 ```bash
-firebase use development
-
-# Deploy rules and indexes first
-firebase deploy --only firestore:rules,firestore:indexes
-
-# Deploy backend to Cloud Run
-gcloud run deploy ropi-backend \
-  --source ./backend \
-  --project ropi-aoss-dev \
-  --region us-central1
-
-# Deploy frontend
-firebase deploy --only hosting
+./scripts/deploy-dev.sh
 ```
 
-### Always deploy in this order:
-1. Firestore rules
-2. Firestore indexes (wait for READY)
-3. Seed scripts
-4. Backend (Cloud Run)
-5. Frontend (Firebase Hosting)
-6. Verify health check
+This handles backend build + frontend build + Cloud Run deploy + Firebase deploy in one sequence. See `scripts/deploy-dev.sh` for full details.
 
----
+### Prerequisites
+
+- `frontend/.env` and `backend/functions/.env` populated (see above)
+- `firebase` CLI logged in, or `GOOGLE_APPLICATION_CREDENTIALS` set
+- `gcloud` CLI authenticated
+
+### DO NOT use these commands directly
+
+These will fail or produce broken state. Always use `scripts/deploy-dev.sh`.
+
+```bash
+# ✗ Missing backend deploy, and --only functions references a target
+#   that doesn't exist in firebase.json
+firebase deploy
+
+# ✗ Wrong source path (needs ./backend/functions, not repo root)
+gcloud run deploy ropi-aoss-api --source .
+
+# ✗ The "development" alias doesn't exist in .firebaserc
+firebase use development
+```
+
+### What `deploy-dev.sh` deploys
+
+| Component | Deployed |
+|-----------|----------|
+| Cloud Run backend (`ropi-aoss-api`) | ✓ |
+| Firestore rules | ✓ |
+| Firestore indexes | ✓ |
+| Storage rules | ✓ |
+| Firebase Hosting (frontend) | ✓ |
+| Cloud Scheduler jobs | Manual — see `docs/scheduled-jobs.md` |
+
+## Scheduled Jobs
+
+See `docs/scheduled-jobs.md` for the Cloud Scheduler job runbook (promote-scheduled, daily-staleness, neglected-inventory, weekly-snapshots).
+
+## Seed Data
+
+Initial seed data for registries (attributes, brands, departments) lives in `scripts/seed-*.js`. Run from the repo root with:
+```bash
+cd scripts && npm install  # one-time
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json \
+  node scripts/seed-attribute-registry.js
+```
+
+## For AI Assistants
+
+If you are an AI assistant asked to work on this repo, **read `CONTRIBUTING.md` first**. It has specific rules for AI assistants including source-of-truth order, agent roles, deploy discipline, and common pitfalls.
 
 ## Build Supervision
 
-This project is built under active supervision.
+This project operates with a multi-agent AI team. Agent definitions live in `.github/agents/`. The Product Owner (John) retains decision authority on business rules and scope; AI agents execute build tasks under named roles (Lisa = Lead Build Supervisor, Homer = Builder, Frink = Repo Auditor, Matt = Visual QA).
 
-- **Build Supervisor:** Lisa (AI Lead Architect)
-- **Builder:** Homer (AI, GitHub Codespaces)
-- **Product Owner:** John (Shiekh Shoes)
+## Key Rules for Contributors
 
-Homer reads `SPEC.md` before every task.
-When `SPEC.md` doesn't answer a question, Homer stops and asks Lisa.
-Lisa audits all output before it is cleared for the next step.
-
-**The blueprint has 101 locked architectural decisions.
-Nothing in this repo should contradict them.**
-
-Full blueprint: ROPI AOSS V3 Master Blueprint (Notion — internal)
-Change log and decision tally: V3 Review Session — Change Tally Log (Notion — internal)
-
----
-
-## Build Status
-
-Live build status is tracked in the Change Tally Log in Notion (internal).
-The most recent completed milestone at the time of this README update is TALLY-128 (Phase 5 Cleanup Pass).
-
-For current state, see: V3 Review Session — Change Tally Log.
+1. Never commit `.env` files.
+2. Never commit `backend/functions/lib/` or `frontend/dist/`.
+3. Always use `scripts/deploy-dev.sh` for deploys.
+4. If you need to deploy something the script doesn't cover, update the script — don't work around it.
+5. For any non-trivial change, open a PR; don't commit directly to `main`.
 
 ---
 
