@@ -45,6 +45,7 @@ function StatusBar({
   needsAiReview,
   aiReviewReason,
   imageStatus,
+  nextActionHint,
 }: {
   completionState: string;
   completionProgress: CompletionProgress;
@@ -56,6 +57,7 @@ function StatusBar({
   needsAiReview?: boolean;
   aiReviewReason?: string | null;
   imageStatus?: unknown;
+  nextActionHint?: string;
 }) {
   const isComplete = completionState === "complete";
   const cp = completionProgress;
@@ -226,9 +228,9 @@ function StatusBar({
       {/* Completion blockers (kept under the bar) */}
       {cp.blockers.length > 0 ? (
         <div className="mt-3">
-          {p.next_action_hint && (
+          {nextActionHint && (
             <div className="font-semibold text-blue-700 mb-2">
-              👉 Next: {p.next_action_hint}
+              👉 Next: {nextActionHint}
             </div>
           )}
           <p className="text-xs text-gray-500">Completion blockers:</p>
@@ -468,6 +470,7 @@ export default function ProductDetailPage() {
         needsAiReview={p.needs_ai_review}
         aiReviewReason={p.ai_review_reason}
         imageStatus={p.attribute_values?.media_status?.value || p.attribute_values?.image_status?.value || p.image_status}
+        nextActionHint={p.next_action_hint}
       />
 
       {/* MAP auto-populate toast */}
