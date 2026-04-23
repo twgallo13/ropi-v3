@@ -24,6 +24,7 @@ import pricingDiscrepancyRouter from "./routes/pricingDiscrepancy";
 import siteVerificationImportRouter from "./routes/siteVerificationImport";
 import siteVerificationReviewRouter from "./routes/siteVerificationReview";
 import siteRegistryRouter from "./routes/siteRegistry";
+import departmentRegistryRouter from "./routes/departmentRegistry";
 import notificationsRouter from "./routes/notifications";
 import dashboardRouter from "./routes/dashboard";
 import executiveRouter from "./routes/executive";
@@ -101,6 +102,8 @@ app.use("/api/v1/imports/site-verification", siteVerificationImportRouter);
 app.use("/api/v1/site-verification", siteVerificationReviewRouter);
 // Phase 4.4 §8 — canonical site registry endpoint. Legacy GET /api/v1/imports/site-verification/sites was removed in Phase 5 Pass 2 (TALLY-123 Task 8).
 app.use("/api/v1/site-registry", siteRegistryRouter);
+// TALLY-DEPARTMENT-REGISTRY (PO Ruling A 2026-04-23) — canonical department registry, mirrors site_registry pattern.
+app.use("/api/v1/department-registry", departmentRegistryRouter);
 app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 
