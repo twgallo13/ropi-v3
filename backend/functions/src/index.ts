@@ -33,6 +33,7 @@ import adminUsersRouter from "./routes/adminUsers";
 import adminSettingsRouter from "./routes/adminSettings";
 import aiEnrichmentRouter from "./routes/aiEnrichment";
 import queueStatsRouter from "./routes/queueStats";
+import internalJobsRouter from "./routes/internalJobs";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -121,6 +122,11 @@ app.use("/api/v1/ai-enrich", aiEnrichmentRouter);
 
 // ── Queue Stats ──
 app.use("/api/v1/queue", queueStatsRouter);
+
+// ── Internal Jobs (Cloud Scheduler OIDC only — TALLY-DEPLOY-BACKFILL) ──
+// Mounted before the root handler / Express default 404 so scheduler hits
+// resolve here. Gated by requireSchedulerOIDC inside the router.
+app.use("/api/v1/internal/jobs", internalJobsRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {
