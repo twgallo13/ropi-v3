@@ -4,6 +4,10 @@ import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
 import { generateContent, getActiveAdapter } from "../services/aiDescribe";
+import {
+  computeCompletion,
+  stampCompletionOnProduct,
+} from "../services/completionCompute";
 
 const router = Router();
 const db = admin.firestore;
@@ -189,6 +193,14 @@ router.post(
         needs_ai_review: admin.firestore.FieldValue.delete(),
         ai_review_reason: admin.firestore.FieldValue.delete(),
       });
+
+      // TALLY-P1 — stamp 5-field completion projection (best-effort).
+      try {
+        const result = await computeCompletion(mpn);
+        await stampCompletionOnProduct(productRef, result);
+      } catch (stampErr: any) {
+        console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+      }
 
       res.json({ status: "approved", message: "Content approved and written" });
     } catch (err: any) {

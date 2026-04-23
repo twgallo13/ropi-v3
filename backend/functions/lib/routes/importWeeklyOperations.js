@@ -24,6 +24,7 @@ const cadenceEngine_1 = require("../services/cadenceEngine");
 const launchHighPriority_1 = require("../services/launchHighPriority");
 const executiveProjections_1 = require("../services/executiveProjections");
 const buyerPerformanceMatrix_1 = require("../services/buyerPerformanceMatrix");
+const completionCompute_1 = require("../services/completionCompute");
 const aiWeeklyAdvisory_1 = require("../services/aiWeeklyAdvisory");
 const importJobRunner_1 = require("../services/importJobRunner");
 const router = (0, express_1.Router)();
@@ -340,6 +341,28 @@ router.post("/:batch_id/commit", async (req, res) => {
                     }
                     catch (hpErr) {
                         console.error(`checkHighPriorityFlag failed for ${mpn}:`, hpErr.message);
+                    }
+                }
+            }
+            // Step 6d — TALLY-P1 — stamp 5-field completion projection for every
+            // committed MPN. Sequential, non-transactional, best-effort. Stamping
+            // happens at the HTTP handler boundary (per PO Ruling 2026-04-23
+            // architectural rule), after all internal writes — pricing snapshot,
+            // post-import calculations, cadence, high-priority — have completed.
+            if (committedMpns.length > 0) {
+                for (const mpn of committedMpns) {
+                    try {
+                        const productRef = firestore
+                            .collection("products")
+                            .doc((0, mpnUtils_1.mpnToDocId)(mpn));
+                        const result = await (0, completionCompute_1.computeCompletion)(mpn);
+                        await (0, completionCompute_1.stampCompletionOnProduct)(productRef, result);
+                    }
+                    catch (stampErr) {
+                        console.warn("completion_stamp_failed", {
+                            mpn,
+                            err: stampErr?.message,
+                        });
                     }
                 }
             }

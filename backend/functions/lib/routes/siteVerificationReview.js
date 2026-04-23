@@ -28,6 +28,7 @@ const roles_1 = require("../middleware/roles");
 const mpnUtils_1 = require("../services/mpnUtils");
 const staleness_1 = require("../lib/staleness");
 Object.defineProperty(exports, "deriveStaleness", { enumerable: true, get: function () { return staleness_1.deriveStaleness; } });
+const completionCompute_1 = require("../services/completionCompute");
 const router = (0, express_1.Router)();
 const db = () => firebase_admin_1.default.firestore();
 const ts = () => firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
@@ -61,7 +62,6 @@ router.get("/review", auth_1.requireAuth, (0, roles_1.requireRole)(viewRoles), a
             db().collection("products").get(),
         ]);
         const items = [];
-        const orphanedAuditWrites = [];
         for (const doc of productsSnap.docs) {
             const p = doc.data();
             const mpn = p.mpn || doc.id;
@@ -99,11 +99,10 @@ router.get("/review", auth_1.requireAuth, (0, roles_1.requireRole)(viewRoles), a
             // ── Coverage-gap rows ─────────────────────────────────────────────
             // Scope rules (per spec §6.1.1 + PO Round 4 audit):
             // - Inactive registry sites: skip silently; no coverage-gap row emitted.
-            // - Orphaned site_targets values (not in registry): log as
-            //   site_targets.orphaned_reference and continue; no queue row emitted.
-            // Rationale: orphans are data-integrity issues, not verification gaps,
-            // and belong in a separate cleanup pass rather than polluting the
-            // Product Specialist queue.
+            // - Unrecognized site_targets keys: skip silently; cleanup is owned
+            //   by TALLY-128 Task 5 (commit 38ed25e). The orphaned_reference
+            //   audit branch was removed by TALLY-128 Task 6 (6a INV-A:
+            //   historical artifact, not a runtime defect).
             const stSnap = await doc.ref.collection("site_targets").get();
             for (const stDoc of stSnap.docs) {
                 const t = stDoc.data() || {};
@@ -111,17 +110,8 @@ router.get("/review", auth_1.requireAuth, (0, roles_1.requireRole)(viewRoles), a
                     continue;
                 const targetKey = t.site_id || stDoc.id;
                 const reg = registry.get(targetKey);
-                if (!reg) {
-                    // Orphaned reference — log + ignore (do NOT emit a queue row).
-                    orphanedAuditWrites.push(db().collection("audit_log").add({
-                        event_type: "site_targets.orphaned_reference",
-                        product_mpn: mpn,
-                        orphaned_site_key: targetKey,
-                        actor_uid: "system:tally-123",
-                        created_at: ts(),
-                    }));
-                    continue;
-                }
+                if (!reg)
+                    continue; // unrecognized site_target key → silent skip
                 if (!reg.is_active)
                     continue; // inactive registry site → silent skip
                 const svEntry = sv[targetKey];
@@ -146,7 +136,6 @@ router.get("/review", auth_1.requireAuth, (0, roles_1.requireRole)(viewRoles), a
                 });
             }
         }
-        Promise.allSettled(orphanedAuditWrites).catch(() => { });
         const durationMs = Date.now() - startMs;
         console.log(`[review] returned ${items.length} rows (products scanned=${productsSnap.size}, threshold_days=${thresholdDays}) in ${durationMs}ms`);
         res.json({ items, total: items.length });
@@ -205,6 +194,14 @@ router.post("/:mpn/mark-live", auth_1.requireAuth, (0, roles_1.requireRole)(view
             source_type: "human_edit",
             created_at: ts(),
         });
+        // TALLY-P1 — stamp 5-field completion projection (best-effort).
+        try {
+            const result = await (0, completionCompute_1.computeCompletion)(mpn);
+            await (0, completionCompute_1.stampCompletionOnProduct)(ref, result);
+        }
+        catch (stampErr) {
+            console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+        }
         res.json({
             mpn,
             site_key,
@@ -273,6 +270,14 @@ router.post("/:mpn/flag", auth_1.requireAuth, (0, roles_1.requireRole)(viewRoles
             source_type: "human_edit",
             created_at: ts(),
         });
+        // TALLY-P1 — stamp 5-field completion projection (best-effort).
+        try {
+            const result = await (0, completionCompute_1.computeCompletion)(mpn);
+            await (0, completionCompute_1.stampCompletionOnProduct)(ref, result);
+        }
+        catch (stampErr) {
+            console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+        }
         res.json({
             mpn,
             site_key,
@@ -342,6 +347,14 @@ router.post("/:mpn/reverify", auth_1.requireAuth, (0, roles_1.requireRole)(viewR
             source_type: "human_edit",
             created_at: ts(),
         });
+        // TALLY-P1 — stamp 5-field completion projection (best-effort).
+        try {
+            const result = await (0, completionCompute_1.computeCompletion)(mpn);
+            await (0, completionCompute_1.stampCompletionOnProduct)(ref, result);
+        }
+        catch (stampErr) {
+            console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+        }
         res.json({
             mpn,
             site_key,

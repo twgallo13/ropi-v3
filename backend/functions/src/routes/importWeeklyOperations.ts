@@ -23,6 +23,10 @@ import { runCadenceEvaluation } from "../services/cadenceEngine";
 import { checkHighPriorityFlag } from "../services/launchHighPriority";
 import { writeWeeklySnapshots } from "../services/executiveProjections";
 import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
+import {
+  computeCompletion,
+  stampCompletionOnProduct,
+} from "../services/completionCompute";
 import { generateWeeklyAdvisories } from "../services/aiWeeklyAdvisory";
 import {
   respondAsync,
@@ -406,6 +410,28 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           await checkHighPriorityFlag(mpn);
         } catch (hpErr: any) {
           console.error(`checkHighPriorityFlag failed for ${mpn}:`, hpErr.message);
+        }
+      }
+    }
+
+    // Step 6d — TALLY-P1 — stamp 5-field completion projection for every
+    // committed MPN. Sequential, non-transactional, best-effort. Stamping
+    // happens at the HTTP handler boundary (per PO Ruling 2026-04-23
+    // architectural rule), after all internal writes — pricing snapshot,
+    // post-import calculations, cadence, high-priority — have completed.
+    if (committedMpns.length > 0) {
+      for (const mpn of committedMpns) {
+        try {
+          const productRef = firestore
+            .collection("products")
+            .doc(mpnToDocId(mpn));
+          const result = await computeCompletion(mpn);
+          await stampCompletionOnProduct(productRef, result);
+        } catch (stampErr: any) {
+          console.warn("completion_stamp_failed", {
+            mpn,
+            err: stampErr?.message,
+          });
         }
       }
     }

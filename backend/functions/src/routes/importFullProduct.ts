@@ -13,6 +13,10 @@ import {
   finishImportJob,
   updateProgress,
 } from "../services/importJobRunner";
+import {
+  computeCompletion,
+  stampCompletionOnProduct,
+} from "../services/completionCompute";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -210,6 +214,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     let totalRulesFired = 0;
     const errors: Array<{ row: number; mpn: string; error: string }> = [];
     const batchWarnings: string[] = [...(batchData.warnings || [])];
+    const committedMpns: string[] = [];
 
     // Step 5 — Process each row
     for (let i = 0; i < records.length; i++) {
@@ -669,6 +674,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         }
 
         committedRows++;
+        committedMpns.push(mpn);
       } catch (rowErr: any) {
         failedRows++;
         errors.push({
@@ -677,6 +683,28 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           error: "An unexpected error occurred while processing this row. Please verify the data and try again.",
         });
         console.error(`Row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
+      }
+    }
+
+    // TALLY-P1 — stamp 5-field completion projection for every committed
+    // MPN. Sequential, non-transactional, best-effort. Stamping happens at
+    // the HTTP handler boundary (per PO Ruling 2026-04-23 architectural
+    // rule), after the full row loop — every product write, smart-rules
+    // execution, and pricing-state flag has been applied.
+    if (committedMpns.length > 0) {
+      for (const mpn of committedMpns) {
+        try {
+          const productRef = firestore
+            .collection("products")
+            .doc(mpnToDocId(mpn));
+          const result = await computeCompletion(mpn);
+          await stampCompletionOnProduct(productRef, result);
+        } catch (stampErr: any) {
+          console.warn("completion_stamp_failed", {
+            mpn,
+            err: stampErr?.message,
+          });
+        }
       }
     }
 
