@@ -166,7 +166,10 @@ router.post("/:batch_id/commit", auth_1.requireAuth, (0, roles_1.requireRole)(op
                     warnings.push(`Row ${i + 2}: MPN ${mpn} not found in products — skipped`);
                     continue;
                 }
-                const siteKey = site.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+                // Normalize site to bare slug: lowercase, replace non-alphanumerics with _,
+                // trim leading/trailing _, then strip _com suffix (Round 5 canonical desuffix).
+                // Defensive: handles both "shiekh.com" → "shiekh" and "shiekh_com" → "shiekh".
+                const siteKey = site.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").replace(/_com$/, "");
                 const hasProductUrl = !!productUrl;
                 const hasImageUrl = !!imageUrl;
                 let verification_state = "verified_live";

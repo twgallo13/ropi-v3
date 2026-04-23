@@ -29,6 +29,7 @@ const pricingDiscrepancy_1 = __importDefault(require("./routes/pricingDiscrepanc
 const siteVerificationImport_1 = __importDefault(require("./routes/siteVerificationImport"));
 const siteVerificationReview_1 = __importDefault(require("./routes/siteVerificationReview"));
 const siteRegistry_1 = __importDefault(require("./routes/siteRegistry"));
+const departmentRegistry_1 = __importDefault(require("./routes/departmentRegistry"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
 const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const executive_1 = __importDefault(require("./routes/executive"));
@@ -38,6 +39,7 @@ const adminUsers_1 = __importDefault(require("./routes/adminUsers"));
 const adminSettings_1 = __importDefault(require("./routes/adminSettings"));
 const aiEnrichment_1 = __importDefault(require("./routes/aiEnrichment"));
 const queueStats_1 = __importDefault(require("./routes/queueStats"));
+const internalJobs_1 = __importDefault(require("./routes/internalJobs"));
 // ── Firebase Admin Init ──
 firebase_admin_1.default.initializeApp({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -92,6 +94,8 @@ app.use("/api/v1/imports/site-verification", siteVerificationImport_1.default);
 app.use("/api/v1/site-verification", siteVerificationReview_1.default);
 // Phase 4.4 §8 — canonical site registry endpoint. Legacy GET /api/v1/imports/site-verification/sites was removed in Phase 5 Pass 2 (TALLY-123 Task 8).
 app.use("/api/v1/site-registry", siteRegistry_1.default);
+// TALLY-DEPARTMENT-REGISTRY (PO Ruling A 2026-04-23) — canonical department registry, mirrors site_registry pattern.
+app.use("/api/v1/department-registry", departmentRegistry_1.default);
 app.use("/api/v1/notifications", notifications_1.default);
 app.use("/api/v1/dashboard", dashboard_1.default);
 // ── Step 3.2 — Executive ──
@@ -107,6 +111,10 @@ app.use("/api/v1/admin", adminSettings_1.default);
 app.use("/api/v1/ai-enrich", aiEnrichment_1.default);
 // ── Queue Stats ──
 app.use("/api/v1/queue", queueStats_1.default);
+// ── Internal Jobs (Cloud Scheduler OIDC only — TALLY-DEPLOY-BACKFILL) ──
+// Mounted before the root handler / Express default 404 so scheduler hits
+// resolve here. Gated by requireSchedulerOIDC inside the router.
+app.use("/api/v1/internal/jobs", internalJobs_1.default);
 // ── Root ──
 app.get("/", (_req, res) => {
     res.status(200).json({
