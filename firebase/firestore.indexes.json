@@ -406,6 +406,15 @@
         { "fieldPath": "event_type",  "order": "ASCENDING" },
         { "fieldPath": "created_at",  "order": "ASCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 42 — TALLY-P1: products sorted server-side by completion_percent (then first_received_at for stability)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "completion_percent", "order": "ASCENDING" },
+        { "fieldPath": "first_received_at",  "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

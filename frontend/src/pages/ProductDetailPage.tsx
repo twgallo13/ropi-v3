@@ -226,6 +226,11 @@ function StatusBar({
       {/* Completion blockers (kept under the bar) */}
       {cp.blockers.length > 0 ? (
         <div className="mt-3">
+          {p.next_action_hint && (
+            <div className="font-semibold text-blue-700 mb-2">
+              👉 Next: {p.next_action_hint}
+            </div>
+          )}
           <p className="text-xs text-gray-500">Completion blockers:</p>
           <ul className="text-xs text-red-600 list-disc ml-4">
             {cp.blockers.map((b, i) => (

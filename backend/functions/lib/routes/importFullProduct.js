@@ -13,6 +13,7 @@ const mpnUtils_1 = require("../services/mpnUtils");
 const ricsParser_1 = require("../services/ricsParser");
 const searchTokens_1 = require("../services/searchTokens");
 const importJobRunner_1 = require("../services/importJobRunner");
+const completionCompute_1 = require("../services/completionCompute");
 const router = (0, express_1.Router)();
 const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 const db = firebase_admin_1.default.firestore;
@@ -184,6 +185,7 @@ router.post("/:batch_id/commit", async (req, res) => {
             let totalRulesFired = 0;
             const errors = [];
             const batchWarnings = [...(batchData.warnings || [])];
+            const committedMpns = [];
             // Step 5 — Process each row
             for (let i = 0; i < records.length; i++) {
                 // Background progress signal — throttled inside updateProgress.
@@ -562,6 +564,7 @@ router.post("/:batch_id/commit", async (req, res) => {
                         pricingIncomplete++;
                     }
                     committedRows++;
+                    committedMpns.push(mpn);
                 }
                 catch (rowErr) {
                     failedRows++;
@@ -571,6 +574,28 @@ router.post("/:batch_id/commit", async (req, res) => {
                         error: "An unexpected error occurred while processing this row. Please verify the data and try again.",
                     });
                     console.error(`Row ${rowNum} (MPN: ${mpn}) error:`, rowErr);
+                }
+            }
+            // TALLY-P1 — stamp 5-field completion projection for every committed
+            // MPN. Sequential, non-transactional, best-effort. Stamping happens at
+            // the HTTP handler boundary (per PO Ruling 2026-04-23 architectural
+            // rule), after the full row loop — every product write, smart-rules
+            // execution, and pricing-state flag has been applied.
+            if (committedMpns.length > 0) {
+                for (const mpn of committedMpns) {
+                    try {
+                        const productRef = firestore
+                            .collection("products")
+                            .doc((0, mpnUtils_1.mpnToDocId)(mpn));
+                        const result = await (0, completionCompute_1.computeCompletion)(mpn);
+                        await (0, completionCompute_1.stampCompletionOnProduct)(productRef, result);
+                    }
+                    catch (stampErr) {
+                        console.warn("completion_stamp_failed", {
+                            mpn,
+                            err: stampErr?.message,
+                        });
+                    }
                 }
             }
             // Step 6 — Update batch record with final counts

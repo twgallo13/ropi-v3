@@ -12,6 +12,12 @@ import {
   loadDepartmentRegistry,
   isDepartmentValueAllowed,
 } from "./departmentRegistry";
+import {
+  getRequiredFieldKeys,
+  computeCompletionProgress,
+  computeCompletion,
+  stampCompletionOnProduct,
+} from "../services/completionCompute";
 
 const router = Router();
 const db = admin.firestore;
@@ -19,70 +25,9 @@ const db = admin.firestore;
 // ────────────────────────────────────────────────
 //  Helpers
 // ────────────────────────────────────────────────
-
-interface CompletionProgress {
-  total_required: number;
-  completed: number;
-  pct: number;
-  blockers: string[];
-}
-
-/** Cache required field keys from attribute_registry (refreshed per request group). */
-async function getRequiredFieldKeys(
-  firestore: admin.firestore.Firestore
-): Promise<Array<{ field_key: string; display_label: string }>> {
-  const snap = await firestore
-    .collection("attribute_registry")
-    .where("required_for_completion", "==", true)
-    .get();
-  return snap.docs.map((d) => ({
-    field_key: d.id,
-    display_label: d.data().display_label || d.id,
-  }));
-}
-
-/** Compute completion progress for a single product. */
-async function computeCompletionProgress(
-  firestore: admin.firestore.Firestore,
-  docId: string,
-  requiredFields: Array<{ field_key: string; display_label: string }>
-): Promise<CompletionProgress> {
-  const avSnap = await firestore
-    .collection("products")
-    .doc(docId)
-    .collection("attribute_values")
-    .get();
-
-  const attrMap = new Map<string, any>();
-  avSnap.docs.forEach((d) => {
-    if (d.id !== "source_inputs") {
-      attrMap.set(d.id, d.data());
-    }
-  });
-
-  let completed = 0;
-  const blockers: string[] = [];
-
-  for (const rf of requiredFields) {
-    const attr = attrMap.get(rf.field_key);
-    if (attr && attr.value !== undefined && attr.value !== null && attr.value !== "") {
-      const isVerified = attr.verification_state === "Human-Verified"
-        || attr.verification_state === "Rule-Verified";
-      if (isVerified) {
-        completed++;
-      } else {
-        blockers.push(`${rf.display_label} must be verified`);
-      }
-    } else {
-      blockers.push(`${rf.display_label} is required`);
-    }
-  }
-
-  const total_required = requiredFields.length;
-  const pct = total_required > 0 ? Math.round((completed / total_required) * 100) : 100;
-
-  return { total_required, completed, pct, blockers };
-}
+// NOTE — getRequiredFieldKeys + computeCompletionProgress moved to
+// services/completionCompute.ts (TALLY-P1, Ruling M 2026-04-23). The
+// signatures are preserved so existing in-file call sites work unchanged.
 
 /** Compute high-priority launch fields. */
 function computeLaunchPriority(
@@ -297,6 +242,24 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
         is_high_priority,
         launch_days_remaining,
         completion_progress,
+        // TALLY-P1 — 5 pre-computed completion fields. Stored-or-fallback
+        // (PO Ruling N3 2026-04-23): use stamped value when present; fall
+        // back to inline-computed values from completion_progress so the
+        // payload is regression-safe during the deploy/backfill window.
+        completion_percent: data.completion_percent !== undefined
+          ? data.completion_percent
+          : completion_progress.pct,
+        blocker_count: data.blocker_count !== undefined
+          ? data.blocker_count
+          : (completion_progress.total_required - completion_progress.completed),
+        ai_blocker_count: data.ai_blocker_count !== undefined
+          ? data.ai_blocker_count
+          : 0,
+        next_action_hint: data.next_action_hint !== undefined
+          ? data.next_action_hint
+          : "",
+        completion_last_computed_at:
+          data.completion_last_computed_at?.toDate?.()?.toISOString() || null,
       });
 
       if (items.length >= limitNum) break;
@@ -567,6 +530,22 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
       is_high_priority,
       launch_days_remaining,
       completion_progress,
+      // TALLY-P1 — 5 pre-computed completion fields. Stored-or-fallback
+      // (PO Ruling N3 2026-04-23). See list handler for rationale.
+      completion_percent: data.completion_percent !== undefined
+        ? data.completion_percent
+        : completion_progress.pct,
+      blocker_count: data.blocker_count !== undefined
+        ? data.blocker_count
+        : (completion_progress.total_required - completion_progress.completed),
+      ai_blocker_count: data.ai_blocker_count !== undefined
+        ? data.ai_blocker_count
+        : 0,
+      next_action_hint: data.next_action_hint !== undefined
+        ? data.next_action_hint
+        : "",
+      completion_last_computed_at:
+        data.completion_last_computed_at?.toDate?.()?.toISOString() || null,
       attribute_values,
       site_targets,
       source_inputs,
@@ -689,6 +668,14 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
         console.error("operator_throughput write (discrepancy) failed:", tErr.message);
       }
 
+      // TALLY-P1 — stamp 5-field completion projection (best-effort).
+      try {
+        const result = await computeCompletion(mpn);
+        await stampCompletionOnProduct(productRef, result);
+      } catch (stampErr: any) {
+        console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+      }
+
       res.status(200).json({
         mpn,
         doc_id: docId,
@@ -746,6 +733,14 @@ router.post("/:mpn/complete", requireAuth, async (req: AuthenticatedRequest, res
       });
     } catch (tErr: any) {
       console.error("operator_throughput write (export_ready) failed:", tErr.message);
+    }
+
+    // TALLY-P1 — stamp 5-field completion projection (best-effort).
+    try {
+      const result = await computeCompletion(mpn);
+      await stampCompletionOnProduct(productRef, result);
+    } catch (stampErr: any) {
+      console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
     }
 
     res.status(200).json({
@@ -970,6 +965,14 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
     const completion_progress = await computeCompletionProgress(
       firestore, docId, requiredFields
     );
+
+    // TALLY-P1 — stamp 5-field completion projection (best-effort).
+    try {
+      const result = await computeCompletion(mpn);
+      await stampCompletionOnProduct(productRef, result);
+    } catch (stampErr: any) {
+      console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+    }
 
     res.status(200).json({
       field_key: fieldKey,

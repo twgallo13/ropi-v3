@@ -9,6 +9,7 @@ const auth_1 = require("../middleware/auth");
 const roles_1 = require("../middleware/roles");
 const mpnUtils_1 = require("../services/mpnUtils");
 const aiDescribe_1 = require("../services/aiDescribe");
+const completionCompute_1 = require("../services/completionCompute");
 const router = (0, express_1.Router)();
 const db = firebase_admin_1.default.firestore;
 // POST /api/v1/products/:mpn/ai-describe
@@ -150,6 +151,14 @@ router.post("/:mpn/content-versions/:version_id/approve", auth_1.requireAuth, (0
             needs_ai_review: firebase_admin_1.default.firestore.FieldValue.delete(),
             ai_review_reason: firebase_admin_1.default.firestore.FieldValue.delete(),
         });
+        // TALLY-P1 — stamp 5-field completion projection (best-effort).
+        try {
+            const result = await (0, completionCompute_1.computeCompletion)(mpn);
+            await (0, completionCompute_1.stampCompletionOnProduct)(productRef, result);
+        }
+        catch (stampErr) {
+            console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+        }
         res.json({ status: "approved", message: "Content approved and written" });
     }
     catch (err) {

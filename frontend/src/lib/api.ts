@@ -34,6 +34,15 @@ export interface ProductListItem {
     pct: number;
     blockers: string[];
   };
+  // TALLY-P1 — 5 pre-computed completion fields (Blueprint 11.4-R01).
+  // Optional during deploy/backfill window; populated by writer paths and
+  // the one-time backfill script. Reader fallback in the API guarantees
+  // numeric percent / blocker counts even when fields are absent.
+  completion_percent?: number;
+  blocker_count?: number;
+  ai_blocker_count?: number;
+  next_action_hint?: string;
+  completion_last_computed_at?: string | null;
 }
 
 export interface ProductListResponse {

@@ -11,54 +11,18 @@ const mpnUtils_1 = require("../services/mpnUtils");
 const pricingExportQueue_1 = require("../services/pricingExportQueue");
 const launchHighPriority_1 = require("../services/launchHighPriority");
 const executiveProjections_1 = require("../services/executiveProjections");
+const staleness_1 = require("../lib/staleness");
+const parseAdditionalImageUrls_1 = require("../lib/parseAdditionalImageUrls");
+const departmentRegistry_1 = require("./departmentRegistry");
+const completionCompute_1 = require("../services/completionCompute");
 const router = (0, express_1.Router)();
 const db = firebase_admin_1.default.firestore;
-/** Cache required field keys from attribute_registry (refreshed per request group). */
-async function getRequiredFieldKeys(firestore) {
-    const snap = await firestore
-        .collection("attribute_registry")
-        .where("required_for_completion", "==", true)
-        .get();
-    return snap.docs.map((d) => ({
-        field_key: d.id,
-        display_label: d.data().display_label || d.id,
-    }));
-}
-/** Compute completion progress for a single product. */
-async function computeCompletionProgress(firestore, docId, requiredFields) {
-    const avSnap = await firestore
-        .collection("products")
-        .doc(docId)
-        .collection("attribute_values")
-        .get();
-    const attrMap = new Map();
-    avSnap.docs.forEach((d) => {
-        if (d.id !== "source_inputs") {
-            attrMap.set(d.id, d.data());
-        }
-    });
-    let completed = 0;
-    const blockers = [];
-    for (const rf of requiredFields) {
-        const attr = attrMap.get(rf.field_key);
-        if (attr && attr.value !== undefined && attr.value !== null && attr.value !== "") {
-            const isVerified = attr.verification_state === "Human-Verified"
-                || attr.verification_state === "Rule-Verified";
-            if (isVerified) {
-                completed++;
-            }
-            else {
-                blockers.push(`${rf.display_label} must be verified`);
-            }
-        }
-        else {
-            blockers.push(`${rf.display_label} is required`);
-        }
-    }
-    const total_required = requiredFields.length;
-    const pct = total_required > 0 ? Math.round((completed / total_required) * 100) : 100;
-    return { total_required, completed, pct, blockers };
-}
+// ────────────────────────────────────────────────
+//  Helpers
+// ────────────────────────────────────────────────
+// NOTE — getRequiredFieldKeys + computeCompletionProgress moved to
+// services/completionCompute.ts (TALLY-P1, Ruling M 2026-04-23). The
+// signatures are preserved so existing in-file call sites work unchanged.
 /** Compute high-priority launch fields. */
 function computeLaunchPriority(productData, launchWindowDays) {
     // Check linked_launch_date on the product
@@ -164,7 +128,7 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
         const snap = await query.limit(fetchLimit).get();
         // Load required fields + launch window in parallel
         const [requiredFields, launchWindowDays] = await Promise.all([
-            getRequiredFieldKeys(firestore),
+            (0, completionCompute_1.getRequiredFieldKeys)(firestore),
             getLaunchWindowDays(firestore),
         ]);
         // ── Build response items ────────────────────────────────────────────
@@ -199,7 +163,7 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
                 if (!imgVal || String(imgVal).toUpperCase() !== image_status.toUpperCase())
                     continue;
             }
-            const completion_progress = await computeCompletionProgress(firestore, docId, requiredFields);
+            const completion_progress = await (0, completionCompute_1.computeCompletionProgress)(firestore, docId, requiredFields);
             const { is_high_priority, launch_days_remaining } = computeLaunchPriority(data, launchWindowDays);
             const imgSnap = await firestore
                 .collection("products").doc(docId)
@@ -234,6 +198,23 @@ router.get("/", auth_1.requireAuth, async (req, res) => {
                 is_high_priority,
                 launch_days_remaining,
                 completion_progress,
+                // TALLY-P1 — 5 pre-computed completion fields. Stored-or-fallback
+                // (PO Ruling N3 2026-04-23): use stamped value when present; fall
+                // back to inline-computed values from completion_progress so the
+                // payload is regression-safe during the deploy/backfill window.
+                completion_percent: data.completion_percent !== undefined
+                    ? data.completion_percent
+                    : completion_progress.pct,
+                blocker_count: data.blocker_count !== undefined
+                    ? data.blocker_count
+                    : (completion_progress.total_required - completion_progress.completed),
+                ai_blocker_count: data.ai_blocker_count !== undefined
+                    ? data.ai_blocker_count
+                    : 0,
+                next_action_hint: data.next_action_hint !== undefined
+                    ? data.next_action_hint
+                    : "",
+                completion_last_computed_at: data.completion_last_computed_at?.toDate?.()?.toISOString() || null,
             });
             if (items.length >= limitNum)
                 break;
@@ -329,11 +310,14 @@ router.get("/:mpn", auth_1.requireAuth, async (req, res) => {
         }
         const data = productSnap.data();
         // Fetch subcollections in parallel
-        const [avSnap, stSnap, requiredFields, launchWindowDays] = await Promise.all([
+        const stalenessCache = {};
+        const [avSnap, stSnap, requiredFields, launchWindowDays, activeRegistrySnap, stalenessThreshold] = await Promise.all([
             productRef.collection("attribute_values").get(),
             productRef.collection("site_targets").get(),
-            getRequiredFieldKeys(firestore),
+            (0, completionCompute_1.getRequiredFieldKeys)(firestore),
             getLaunchWindowDays(firestore),
+            firestore.collection("site_registry").where("is_active", "==", true).get(),
+            (0, staleness_1.getStalenessThresholdDays)(stalenessCache),
         ]);
         // Build attribute_values map
         const attribute_values = {};
@@ -367,11 +351,86 @@ router.get("/:mpn", auth_1.requireAuth, async (req, res) => {
             active: d.data().active ?? true,
         }));
         // Compute completion progress
-        const completion_progress = await computeCompletionProgress(firestore, docId, requiredFields);
+        const completion_progress = await (0, completionCompute_1.computeCompletionProgress)(firestore, docId, requiredFields);
         // Compute launch priority
         const { is_high_priority, launch_days_remaining } = computeLaunchPriority(data, launchWindowDays);
         // Serialize timestamps
         const serializeTs = (ts) => ts?.toDate?.()?.toISOString() || null;
+        // ── Build site_verification response map (§7.1.6) ──────────────────
+        const storedSv = data.site_verification || {};
+        const productSiteOwner = typeof data.site_owner === "string" && data.site_owner.trim()
+            ? data.site_owner.trim()
+            : null;
+        // Build registry lookup indexed by site_key
+        const registryBySiteKey = {};
+        activeRegistrySnap.docs.forEach((rDoc) => {
+            const rd = rDoc.data();
+            registryBySiteKey[rDoc.id] = {
+                display_name: rd.display_name || rDoc.id,
+                domain: rd.domain || "",
+                priority: typeof rd.priority === "number" ? rd.priority : 999,
+            };
+        });
+        // Build per-site entries: real data where present, unverified stubs otherwise
+        const svEntries = [];
+        for (const siteKey of Object.keys(registryBySiteKey)) {
+            const reg = registryBySiteKey[siteKey];
+            const stored = storedSv[siteKey];
+            if (stored) {
+                // Real entry — derive state with staleness helper
+                const derivedState = (0, staleness_1.deriveVerificationState)(stored.verification_state, stored.last_verified_at, stalenessThreshold);
+                svEntries.push({
+                    key: siteKey,
+                    entry: {
+                        site_key: siteKey,
+                        site_display_name: reg.display_name,
+                        site_domain: reg.domain,
+                        verification_state: derivedState,
+                        product_url: stored.product_url || null,
+                        image_url: stored.image_url || null,
+                        additional_image_url_parsed: (0, parseAdditionalImageUrls_1.parseAdditionalImageUrls)(stored.additional_image_url),
+                        last_verified_at: serializeTs(stored.last_verified_at),
+                        verification_date: stored.verification_date || null,
+                        mismatch_reason: stored.mismatch_reason || null,
+                        reviewer_uid: stored.reviewer_uid || null,
+                        reviewer_action_at: serializeTs(stored.reviewer_action_at),
+                    },
+                });
+            }
+            else {
+                // Unverified stub
+                svEntries.push({
+                    key: siteKey,
+                    entry: {
+                        site_key: siteKey,
+                        site_display_name: reg.display_name,
+                        site_domain: reg.domain,
+                        verification_state: "unverified",
+                        product_url: null,
+                        image_url: null,
+                        additional_image_url_parsed: [],
+                        last_verified_at: null,
+                        verification_date: null,
+                        mismatch_reason: null,
+                        reviewer_uid: null,
+                        reviewer_action_at: null,
+                    },
+                });
+            }
+        }
+        // Sort: primary site first (matches site_owner), then by registry priority asc
+        svEntries.sort((a, b) => {
+            const aIsPrimary = a.key === productSiteOwner ? 0 : 1;
+            const bIsPrimary = b.key === productSiteOwner ? 0 : 1;
+            if (aIsPrimary !== bIsPrimary)
+                return aIsPrimary - bIsPrimary;
+            return (registryBySiteKey[a.key]?.priority ?? 999) - (registryBySiteKey[b.key]?.priority ?? 999);
+        });
+        // Convert sorted array to ordered map
+        const site_verification = {};
+        for (const { key, entry } of svEntries) {
+            site_verification[key] = entry;
+        }
         res.status(200).json({
             mpn: data.mpn || (0, mpnUtils_1.docIdToMpn)(docId),
             doc_id: docId,
@@ -390,6 +449,7 @@ router.get("/:mpn", auth_1.requireAuth, async (req, res) => {
             pricing_domain_state: data.pricing_domain_state || "pending",
             product_is_active: data.product_is_active ?? true,
             site_owner: site_targets.length > 0 ? site_targets[0].site_id : "",
+            primary_site_key: data.site_owner || null,
             import_batch_id: data.import_batch_id || null,
             is_map_protected: !!data.is_map_protected,
             map_price: data.map_price ?? null,
@@ -406,9 +466,25 @@ router.get("/:mpn", auth_1.requireAuth, async (req, res) => {
             is_high_priority,
             launch_days_remaining,
             completion_progress,
+            // TALLY-P1 — 5 pre-computed completion fields. Stored-or-fallback
+            // (PO Ruling N3 2026-04-23). See list handler for rationale.
+            completion_percent: data.completion_percent !== undefined
+                ? data.completion_percent
+                : completion_progress.pct,
+            blocker_count: data.blocker_count !== undefined
+                ? data.blocker_count
+                : (completion_progress.total_required - completion_progress.completed),
+            ai_blocker_count: data.ai_blocker_count !== undefined
+                ? data.ai_blocker_count
+                : 0,
+            next_action_hint: data.next_action_hint !== undefined
+                ? data.next_action_hint
+                : "",
+            completion_last_computed_at: data.completion_last_computed_at?.toDate?.()?.toISOString() || null,
             attribute_values,
             site_targets,
             source_inputs,
+            site_verification,
         });
     }
     catch (err) {
@@ -432,7 +508,7 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
             return;
         }
         // Compute completion progress — server-side enforcement
-        const requiredFields = await getRequiredFieldKeys(firestore);
+        const requiredFields = await (0, completionCompute_1.getRequiredFieldKeys)(firestore);
         // For completion gate: check that all required fields have Human-Verified value
         const avSnap = await productRef.collection("attribute_values").get();
         const attrMap = new Map();
@@ -513,6 +589,14 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
             catch (tErr) {
                 console.error("operator_throughput write (discrepancy) failed:", tErr.message);
             }
+            // TALLY-P1 — stamp 5-field completion projection (best-effort).
+            try {
+                const result = await (0, completionCompute_1.computeCompletion)(mpn);
+                await (0, completionCompute_1.stampCompletionOnProduct)(productRef, result);
+            }
+            catch (stampErr) {
+                console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+            }
             res.status(200).json({
                 mpn,
                 doc_id: docId,
@@ -565,6 +649,14 @@ router.post("/:mpn/complete", auth_1.requireAuth, async (req, res) => {
         catch (tErr) {
             console.error("operator_throughput write (export_ready) failed:", tErr.message);
         }
+        // TALLY-P1 — stamp 5-field completion projection (best-effort).
+        try {
+            const result = await (0, completionCompute_1.computeCompletion)(mpn);
+            await (0, completionCompute_1.stampCompletionOnProduct)(productRef, result);
+        }
+        catch (stampErr) {
+            console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+        }
         res.status(200).json({
             mpn,
             doc_id: docId,
@@ -599,6 +691,32 @@ router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) 
         if (!regDoc.exists || !regDoc.data().active) {
             res.status(400).json({ error: `Field "${fieldKey}" not found in attribute registry` });
             return;
+        }
+        const regData = regDoc.data();
+        // 1b. TALLY-DEPARTMENT-REGISTRY (PO Ruling A + Ruling G):
+        //     Enum-source validation. When attribute_registry doc has
+        //     enum_source set, validate the incoming value against the named
+        //     registry's ACTIVE entries (is_active: true only). Soft-deactivated
+        //     entries reject NEW writes; existing product values are NOT
+        //     re-validated (no batch invocation surface). Fallback to
+        //     dropdown_options array is preserved for forward compatibility but
+        //     is NOT enforced here today (only enum_source path is gated, to
+        //     bound blast radius — other dropdown fields keep prior behavior).
+        //     Skipped for the "verify" action (no value change being introduced).
+        if (action !== "verify" &&
+            value !== undefined &&
+            value !== null &&
+            String(value).trim() !== "") {
+            const enumSource = typeof regData.enum_source === "string" ? regData.enum_source : null;
+            if (enumSource === "department_registry") {
+                const entries = await (0, departmentRegistry_1.loadDepartmentRegistry)();
+                if (!(0, departmentRegistry_1.isDepartmentValueAllowed)(value, entries)) {
+                    res.status(400).json({
+                        error: `Value "${value}" is not an active "${fieldKey}" — must match an active entry in ${enumSource}.`,
+                    });
+                    return;
+                }
+            }
         }
         const docId = (0, mpnUtils_1.mpnToDocId)(mpn);
         // Verify product exists
@@ -724,8 +842,16 @@ router.post("/:mpn/attributes/:field_key", auth_1.requireAuth, async (req, res) 
             created_at: db.FieldValue.serverTimestamp(),
         });
         // 6. Return updated completion_progress
-        const requiredFields = await getRequiredFieldKeys(firestore);
-        const completion_progress = await computeCompletionProgress(firestore, docId, requiredFields);
+        const requiredFields = await (0, completionCompute_1.getRequiredFieldKeys)(firestore);
+        const completion_progress = await (0, completionCompute_1.computeCompletionProgress)(firestore, docId, requiredFields);
+        // TALLY-P1 — stamp 5-field completion projection (best-effort).
+        try {
+            const result = await (0, completionCompute_1.computeCompletion)(mpn);
+            await (0, completionCompute_1.stampCompletionOnProduct)(productRef, result);
+        }
+        catch (stampErr) {
+            console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+        }
         res.status(200).json({
             field_key: fieldKey,
             value: finalValue,

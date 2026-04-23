@@ -26,6 +26,10 @@ import {
   getStalenessThresholdDays,
   StalenessCache,
 } from "../lib/staleness";
+import {
+  computeCompletion,
+  stampCompletionOnProduct,
+} from "../services/completionCompute";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -236,6 +240,13 @@ router.post(
         source_type: "human_edit",
         created_at: ts(),
       });
+      // TALLY-P1 — stamp 5-field completion projection (best-effort).
+      try {
+        const result = await computeCompletion(mpn);
+        await stampCompletionOnProduct(ref, result);
+      } catch (stampErr: any) {
+        console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+      }
       res.json({
         mpn,
         site_key,
@@ -311,6 +322,13 @@ router.post(
         source_type: "human_edit",
         created_at: ts(),
       });
+      // TALLY-P1 — stamp 5-field completion projection (best-effort).
+      try {
+        const result = await computeCompletion(mpn);
+        await stampCompletionOnProduct(ref, result);
+      } catch (stampErr: any) {
+        console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+      }
       res.json({
         mpn,
         site_key,
@@ -393,6 +411,14 @@ router.post(
         source_type: "human_edit",
         created_at: ts(),
       });
+
+      // TALLY-P1 — stamp 5-field completion projection (best-effort).
+      try {
+        const result = await computeCompletion(mpn);
+        await stampCompletionOnProduct(ref, result);
+      } catch (stampErr: any) {
+        console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
+      }
 
       res.json({
         mpn,
