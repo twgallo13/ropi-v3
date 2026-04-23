@@ -120,6 +120,29 @@ The app validates environment on startup and **refuses to start** if
 
 ---
 
+## Scheduled Jobs
+
+Four background jobs are run by Cloud Scheduler against the
+`ropi-aoss-api` Cloud Run service, gated by an OIDC verification middleware
+(no human user can call these routes):
+
+| Job | Cron (LA) | Purpose |
+|---|---|---|
+| `promote-scheduled-daily` | `55 5 * * *` | Promote scheduled items to active |
+| `daily-staleness-sweep` | `0 6 * * *` | Refresh staleness flags + neglect projection (Option B — no full cadence re-eval) |
+| `neglected-inventory-nightly` | `0 2 * * *` | Recompute the neglected-inventory exec projection |
+| `weekly-snapshots` | `0 3 * * MON` | Write weekly metric snapshots |
+
+All four are deployed in `ropi-aoss-dev` (region `us-central1`) under the
+dedicated invoker SA `scheduler-invoker@ropi-aoss-dev.iam.gserviceaccount.com`.
+Provenance lands in `executive_projections/scheduler_runs.<job_key>`.
+
+For target routes, IAM details, environment variables, common gcloud commands,
+and the failure-mode triage table, see the runbook:
+[docs/scheduled-jobs.md](docs/scheduled-jobs.md).
+
+---
+
 ## Seed Data
 
 Seeds populate `ropi-aoss-dev` with the canonical starting data.
