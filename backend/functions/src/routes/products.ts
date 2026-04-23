@@ -8,6 +8,10 @@ import { checkHighPriorityFlag } from "../services/launchHighPriority";
 import { getWeekKey } from "../services/executiveProjections";
 import { deriveVerificationState, getStalenessThresholdDays, StalenessCache } from "../lib/staleness";
 import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
+import {
+  loadDepartmentRegistry,
+  isDepartmentValueAllowed,
+} from "./departmentRegistry";
 
 const router = Router();
 const db = admin.firestore;
@@ -780,6 +784,36 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
     if (!regDoc.exists || !regDoc.data()!.active) {
       res.status(400).json({ error: `Field "${fieldKey}" not found in attribute registry` });
       return;
+    }
+    const regData = regDoc.data()!;
+
+    // 1b. TALLY-DEPARTMENT-REGISTRY (PO Ruling A + Ruling G):
+    //     Enum-source validation. When attribute_registry doc has
+    //     enum_source set, validate the incoming value against the named
+    //     registry's ACTIVE entries (is_active: true only). Soft-deactivated
+    //     entries reject NEW writes; existing product values are NOT
+    //     re-validated (no batch invocation surface). Fallback to
+    //     dropdown_options array is preserved for forward compatibility but
+    //     is NOT enforced here today (only enum_source path is gated, to
+    //     bound blast radius — other dropdown fields keep prior behavior).
+    //     Skipped for the "verify" action (no value change being introduced).
+    if (
+      action !== "verify" &&
+      value !== undefined &&
+      value !== null &&
+      String(value).trim() !== ""
+    ) {
+      const enumSource =
+        typeof regData.enum_source === "string" ? regData.enum_source : null;
+      if (enumSource === "department_registry") {
+        const entries = await loadDepartmentRegistry();
+        if (!isDepartmentValueAllowed(value, entries)) {
+          res.status(400).json({
+            error: `Value "${value}" is not an active "${fieldKey}" — must match an active entry in ${enumSource}.`,
+          });
+          return;
+        }
+      }
     }
 
     const docId = mpnToDocId(mpn);

@@ -1797,6 +1797,33 @@ export async function fetchSiteRegistry(
   return data.sites || [];
 }
 
+// TALLY-DEPARTMENT-REGISTRY (PO Ruling A 2026-04-23) — canonical
+// department registry entry. Mirrors SiteRegistryEntry shape pattern.
+export interface DepartmentRegistryEntry {
+  key: string;
+  display_name: string;
+  aliases: string[];
+  is_active: boolean;
+  priority: number;
+  po_confirmed: boolean;
+}
+/**
+ * Fetch department registry from the canonical TALLY-DEPARTMENT-REGISTRY endpoint.
+ *   activeOnly=true  → only is_active === true entries (use for operator dropdowns).
+ *   activeOnly=false → all entries (use for admin/registry UI).
+ */
+export async function fetchDepartmentRegistry(
+  activeOnly = false
+): Promise<DepartmentRegistryEntry[]> {
+  const url = activeOnly
+    ? `${BASE}/api/v1/department-registry?activeOnly=true`
+    : `${BASE}/api/v1/department-registry`;
+  const res = await fetch(url, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.departments || [];
+}
+
 // ── Site Verification Review ──
 export interface SiteVerificationItem {
   mpn: string;
