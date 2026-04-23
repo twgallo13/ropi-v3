@@ -1,27 +1,18 @@
 #!/usr/bin/env node
 /**
- * TALLY-P1 — backfill-completion-projection.js
+ * Backfill completion projection fields onto all products.
  *
- * One-time (idempotent) backfill of the 5 pre-computed completion fields
- * onto every product document in ropi-aoss-dev:
- *   - completion_percent (number, 0-100)
- *   - blocker_count (integer)
- *   - ai_blocker_count (integer)
- *   - next_action_hint (string)
- *   - completion_last_computed_at (Firestore Timestamp)
+ * Prerequisites:
+ *   cd scripts && npm install  (one-time, per clone)
+ *   GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json
  *
- * Reuses the deployed compute service (computeCompletion +
- * stampCompletionOnProduct from backend/functions/lib/services/completionCompute)
- * so the math is identical to the writer paths.
+ * Usage:
+ *   node scripts/backfill-completion-projection.js [options]
  *
- * Flags:
- *   --dry-run     Compute but do not write. Logs sample values for the
- *                 first 5 products.
- *   --limit N     Stop after N products (useful for canary).
- *   --start-after MPN  Resume from a specific MPN (lexicographic).
- *
- * Batching: 500 stamps per Firestore commit (write batch).
- * Progress: logged every 100 products.
+ * Options:
+ *   --dry-run       Simulate without writing
+ *   --limit N       Process only first N products
+ *   --start-after   Resume from MPN (for paginated runs)
  */
 
 const path = require("path");
