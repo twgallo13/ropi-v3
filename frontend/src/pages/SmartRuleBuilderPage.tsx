@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import {
   fetchAttributeRegistry,
   fetchSmartRule,
@@ -46,6 +47,7 @@ export default function SmartRuleBuilderPage() {
   const { ruleId } = useParams<{ ruleId: string }>();
   const isNew = !ruleId || ruleId === "new";
   const nav = useNavigate();
+  const { role } = useAuth();
 
   const [registry, setRegistry] = useState<AttributeRegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -299,6 +301,8 @@ export default function SmartRuleBuilderPage() {
       setErr(e.error || e.message || String(e));
     }
   }
+
+  if (role !== "admin" && role !== "owner") return <Navigate to="/dashboard" replace />;
 
   if (loading) return <div className="p-6 text-gray-500">Loading…</div>;
 
