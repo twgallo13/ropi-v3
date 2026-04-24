@@ -8,7 +8,7 @@ import {
 } from "../lib/api";
 
 export default function SmartRulesAdminPage() {
-  const { role } = useAuth();
+  const { role, loading: authLoading } = useAuth();
   const [rules, setRules] = useState<SmartRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -26,8 +26,10 @@ export default function SmartRulesAdminPage() {
   }
 
   useEffect(() => {
+    if (authLoading) return;
+    if (role !== "admin" && role !== "owner") return;
     load();
-  }, []);
+  }, [authLoading, role]);
 
   async function handleDeactivate(rule_id: string) {
     if (!confirm(`Deactivate rule "${rule_id}"?`)) return;
@@ -44,6 +46,7 @@ export default function SmartRulesAdminPage() {
     return r.rule_type || "Type 1";
   }
 
+  if (authLoading) return <div className="p-6 text-gray-500">Loading…</div>;
   if (role !== "admin" && role !== "owner") return <Navigate to="/dashboard" replace />;
 
   return (

@@ -474,10 +474,17 @@ export default function CadenceRulesAdminPage() {
     setError("");
     try {
       await deactivateCadenceRule(rule.rule_id);
-      await load();
     } catch (e: any) {
       setError(
         `Failed to deactivate "${rule.rule_name}": ${e?.error || e?.message || "Unknown error"}`
+      );
+      return;
+    }
+    try {
+      await load();
+    } catch (e: any) {
+      setError(
+        `Deactivated, but failed to refresh list: ${e?.error || e?.message || "Unknown error"}`
       );
     }
   }

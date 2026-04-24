@@ -37,10 +37,11 @@ const ROLE_OPTIONS = [
 ];
 
 export default function AdminSettingsPage() {
-  const { role } = useAuth();
+  const { role, loading: authLoading } = useAuth();
   const [params, setParams] = useSearchParams();
   const tab = (params.get("tab") as TabKey) || "users";
 
+  if (authLoading) return <div className="p-6 text-gray-500">Loading…</div>;
   if (role !== "admin" && role !== "owner") return <Navigate to="/dashboard" replace />;
 
   return (
