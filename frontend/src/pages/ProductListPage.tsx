@@ -3,8 +3,12 @@ import { Link } from "react-router-dom";
 import {
   fetchProducts,
   fetchSiteRegistry,
+  fetchBrandRegistry,
+  fetchDepartmentRegistry,
   type ProductListItem,
   type SiteRegistryEntry,
+  type BrandRegistryEntry,
+  type DepartmentRegistryEntry,
 } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -36,6 +40,12 @@ export default function ProductListPage() {
   const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
   const [siteRegistryError, setSiteRegistryError] = useState(false);
   const [siteRegistryLoaded, setSiteRegistryLoaded] = useState(false);
+  const [brandRegistry, setBrandRegistry] = useState<BrandRegistryEntry[]>([]);
+  const [brandRegistryError, setBrandRegistryError] = useState(false);
+  const [brandRegistryLoaded, setBrandRegistryLoaded] = useState(false);
+  const [departmentRegistry, setDepartmentRegistry] = useState<DepartmentRegistryEntry[]>([]);
+  const [departmentRegistryError, setDepartmentRegistryError] = useState(false);
+  const [departmentRegistryLoaded, setDepartmentRegistryLoaded] = useState(false);
 
   useEffect(() => {
     // Phase 4.4 §3.1.1 — dropdown options sourced from site_registry, active-only.
@@ -53,6 +63,36 @@ export default function ProductListPage() {
         setSiteRegistryError(true);
       })
       .finally(() => setSiteRegistryLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    // TALLY-PRODUCT-LIST-UX Phase 1 — brand dropdown options sourced from
+    // brand_registry, active-only. Same failure contract as site dropdown.
+    fetchBrandRegistry(true)
+      .then((rows) => {
+        setBrandRegistry(rows);
+        setBrandRegistryError(false);
+      })
+      .catch(() => {
+        setBrandRegistry([]);
+        setBrandRegistryError(true);
+      })
+      .finally(() => setBrandRegistryLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    // TALLY-PRODUCT-LIST-UX Phase 1 — department dropdown options sourced from
+    // department_registry, active-only. Same failure contract as site dropdown.
+    fetchDepartmentRegistry(true)
+      .then((rows) => {
+        setDepartmentRegistry(rows);
+        setDepartmentRegistryError(false);
+      })
+      .catch(() => {
+        setDepartmentRegistry([]);
+        setDepartmentRegistryError(true);
+      })
+      .finally(() => setDepartmentRegistryLoaded(true));
   }, []);
 
   const buildParams = useCallback(
@@ -158,21 +198,75 @@ export default function ProductListPage() {
           className="border rounded px-3 py-1.5 text-sm w-56"
         />
 
-        <select
-          value={filters.brand}
-          onChange={(e) => setFilters((p) => ({ ...p, brand: e.target.value }))}
-          className="border rounded px-3 py-1.5 text-sm"
-        >
-          <option value="">All Brands</option>
-        </select>
+        <div className="flex flex-col">
+          <select
+            value={filters.brand}
+            onChange={(e) => setFilters((p) => ({ ...p, brand: e.target.value }))}
+            disabled={brandRegistryError || (brandRegistryLoaded && brandRegistry.length === 0)}
+            className="border rounded px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+            title={
+              brandRegistryError
+                ? "Could not load brand list \u2014 brand filter disabled."
+                : brandRegistryLoaded && brandRegistry.length === 0
+                ? "No active brands in registry \u2014 ask an admin to seed brand_registry."
+                : undefined
+            }
+          >
+            <option value="">All Brands</option>
+            {brandRegistry.map((b) => (
+              <option key={b.brand_key} value={b.brand_key}>{b.display_name}</option>
+            ))}
+            {filters.brand &&
+              !brandRegistry.some((b) => b.brand_key === filters.brand) && (
+                <option value={filters.brand}>
+                  {filters.brand} (inactive)
+                </option>
+              )}
+          </select>
+          {brandRegistryError && (
+            <span className="text-xs text-red-600 mt-1">Could not load brand list.</span>
+          )}
+          {!brandRegistryError && brandRegistryLoaded && brandRegistry.length === 0 && (
+            <span className="text-xs text-amber-600 mt-1">
+              No active brands — ask an admin to seed brand_registry.
+            </span>
+          )}
+        </div>
 
-        <select
-          value={filters.department}
-          onChange={(e) => setFilters((p) => ({ ...p, department: e.target.value }))}
-          className="border rounded px-3 py-1.5 text-sm"
-        >
-          <option value="">All Departments</option>
-        </select>
+        <div className="flex flex-col">
+          <select
+            value={filters.department}
+            onChange={(e) => setFilters((p) => ({ ...p, department: e.target.value }))}
+            disabled={departmentRegistryError || (departmentRegistryLoaded && departmentRegistry.length === 0)}
+            className="border rounded px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+            title={
+              departmentRegistryError
+                ? "Could not load department list \u2014 department filter disabled."
+                : departmentRegistryLoaded && departmentRegistry.length === 0
+                ? "No active departments in registry \u2014 ask an admin to seed department_registry."
+                : undefined
+            }
+          >
+            <option value="">All Departments</option>
+            {departmentRegistry.map((d) => (
+              <option key={d.key} value={d.key}>{d.display_name}</option>
+            ))}
+            {filters.department &&
+              !departmentRegistry.some((d) => d.key === filters.department) && (
+                <option value={filters.department}>
+                  {filters.department} (inactive)
+                </option>
+              )}
+          </select>
+          {departmentRegistryError && (
+            <span className="text-xs text-red-600 mt-1">Could not load department list.</span>
+          )}
+          {!departmentRegistryError && departmentRegistryLoaded && departmentRegistry.length === 0 && (
+            <span className="text-xs text-amber-600 mt-1">
+              No active departments — ask an admin to seed department_registry.
+            </span>
+          )}
+        </div>
 
         <div className="flex flex-col">
           <select

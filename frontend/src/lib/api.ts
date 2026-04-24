@@ -1833,6 +1833,36 @@ export async function fetchDepartmentRegistry(
   return data.departments || [];
 }
 
+// TALLY-PRODUCT-LIST-UX Phase 1 — canonical brand registry entry.
+// Mirrors DepartmentRegistryEntry shape pattern. Backed by Phase A
+// commit 198c256: GET /api/v1/brand-registry.
+export interface BrandRegistryEntry {
+  brand_key: string;
+  display_name: string;
+  aliases: string[];
+  default_site_owner: string | null;
+  is_active: boolean;
+  po_confirmed: boolean;
+  notes: string | null;
+  logo_url: string | null;
+}
+/**
+ * Fetch brand registry from the canonical TALLY-PRODUCT-LIST-UX endpoint.
+ *   activeOnly=true  → only is_active === true entries (use for operator dropdowns).
+ *   activeOnly=false → all entries (use for admin/registry UI).
+ */
+export async function fetchBrandRegistry(
+  activeOnly = false
+): Promise<BrandRegistryEntry[]> {
+  const url = activeOnly
+    ? `${BASE}/api/v1/brand-registry?activeOnly=true`
+    : `${BASE}/api/v1/brand-registry`;
+  const res = await fetch(url, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.brands || [];
+}
+
 // ── Site Verification Review ──
 export interface SiteVerificationItem {
   mpn: string;
