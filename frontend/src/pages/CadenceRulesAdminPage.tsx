@@ -480,13 +480,8 @@ export default function CadenceRulesAdminPage() {
       );
       return;
     }
-    try {
-      await load();
-    } catch (e: any) {
-      setError(
-        `Deactivated, but failed to refresh list: ${e?.error || e?.message || "Unknown error"}`
-      );
-    }
+    // load() handles its own errors via setError; no outer catch needed
+    await load();
   }
 
   return (
