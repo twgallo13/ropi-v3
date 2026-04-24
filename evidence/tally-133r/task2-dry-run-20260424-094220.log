@@ -1,0 +1,18 @@
+=== TALLY-133R Dry-Run ===
+Timestamp: 2026-04-24T09:42:20.601Z
+Project:   ropi-aoss-dev
+Mode:      DRY-RUN (zero writes)
+
+Scanning products collection...
+Total products scanned:                          661
+STEP-match set (/step/i):                          0
+Non-match set (preserved):                       661
+
+STOP: classification count mismatch.
+  Expected (Task 1 Gate–verified): 11
+  Got:                             0
+  Delta:                           -11
+  Found MPNs:
+
+Likely cause: new STEP-prefix fixture imported since Task 1 Gate.
+Lisa rules on updated expected count before proceeding. Do NOT execute.
