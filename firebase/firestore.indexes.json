@@ -380,6 +380,44 @@
       ]
     },
     {
+      "__comment__": "Index 38a — TALLY-PRODUCT-LIST-UX Phase 1 hotfix: brand_key + first_received_at (mirrors Index 35 on Phase 0.5 registry-resolved field)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand_key",         "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 38b — TALLY-PRODUCT-LIST-UX Phase 1 hotfix: completion_state + brand_key + first_received_at (mirrors Index 36)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "completion_state",  "order": "ASCENDING" },
+        { "fieldPath": "brand_key",         "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 38c — TALLY-PRODUCT-LIST-UX Phase 1 hotfix: department_key + first_received_at (mirrors Index 37)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "department_key",    "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 38d — TALLY-PRODUCT-LIST-UX Phase 1 hotfix: completion_state + department_key + first_received_at (mirrors Index 38)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "completion_state",  "order": "ASCENDING" },
+        { "fieldPath": "department_key",    "order": "ASCENDING" },
+        { "fieldPath": "first_received_at", "order": "ASCENDING" }
+      ]
+    },
+    {
       "__comment__": "Index 39 — Filter list: site_owner + first_received_at",
       "collectionGroup": "products",
       "queryScope": "COLLECTION",
