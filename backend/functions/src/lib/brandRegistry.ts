@@ -182,3 +182,25 @@ export function deriveSiteTargetKeys(
   }
   return { targetKeys, nonRegistryValues };
 }
+
+/**
+ * Load all brand_registry docs from Firestore.
+ * Mirrors loadDepartmentRegistry pattern (returns all entries, route filters).
+ */
+export async function listBrandRegistry(): Promise<BrandRegistryEntry[]> {
+  const snap = await admin.firestore().collection("brand_registry").get();
+  return snap.docs.map((doc) => {
+    const d = doc.data() || {};
+    const key = (typeof d.brand_key === "string" && d.brand_key) ? d.brand_key : doc.id;
+    return {
+      brand_key: key,
+      display_name: (typeof d.display_name === "string" && d.display_name) ? d.display_name : key,
+      aliases: Array.isArray(d.aliases) ? (d.aliases as string[]) : [],
+      default_site_owner: (d.default_site_owner as string | null) ?? null,
+      is_active: d.is_active !== false,
+      po_confirmed: !!d.po_confirmed,
+      notes: (d.notes as string | null) ?? null,
+      logo_url: (d.logo_url as string | null) ?? null,
+    };
+  });
+}
