@@ -1,0 +1,131 @@
+▶ Preflight checks...
+✓ Preflight checks passed
+
+▶ Building backend TypeScript...
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'ropi-v3-api@3.0.0',
+npm warn EBADENGINE   required: { node: '20' },
+npm warn EBADENGINE   current: { node: 'v24.14.0', npm: '11.9.0' }
+npm warn EBADENGINE }
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated har-validator@5.1.5: this library is no longer supported
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+npm warn deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 431 packages, and audited 432 packages in 4s
+
+69 packages are looking for funding
+  run `npm fund` for details
+
+18 vulnerabilities (2 low, 14 moderate, 2 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> ropi-v3-api@3.0.0 build
+> tsc
+
+✓ Backend build complete
+
+▶ Building frontend...
+
+added 264 packages, and audited 265 packages in 9s
+
+30 packages are looking for funding
+  run `npm fund` for details
+
+12 vulnerabilities (11 moderate, 1 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+> ropi-v3-frontend@1.0.0 build
+> tsc -b && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 808 modules transformed.
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /workspaces/ropi-v3/frontend/src/hooks/useWorkState.ts is dynamically imported by /workspaces/ropi-v3/frontend/src/App.tsx but also statically imported by /workspaces/ropi-v3/frontend/src/pages/DashboardPage.tsx, dynamic import will not move module into another chunk.
+
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.89 kB │ gzip:   0.45 kB
+dist/assets/index-DjTJSSOX.css     36.55 kB │ gzip:   6.40 kB
+dist/assets/index-r2qrD-wI.js   1,026.80 kB │ gzip: 265.34 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.99s
+✓ Frontend build complete
+
+▶ Deploying Cloud Run backend (ropi-aoss-api) to ropi-aoss-dev...
+Building using Dockerfile and deploying container to Cloud Run service [[1mropi-aoss-api[m] in project [[1mropi-aoss-dev[m] region [[1mus-central1[m]
+Building and deploying...
+Validating configuration........done
+Uploading sources..........................................................................................done
+Building Container.........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done
+Creating Revision.................................................................................................................................................................................................................................................................done
+Routing traffic.....done
+Done.
+Service [[1mropi-aoss-api[m] revision [[1mropi-aoss-api-00125-b6w[m] has been deployed and is serving [1m100[m percent of traffic.
+Service URL: [1mhttps://ropi-aoss-api-719351392467.us-central1.run.app[m
+✓ Cloud Run deploy complete
+
+▶ Deploying Firebase (firestore rules + indexes + storage + hosting)...
+Now using project ropi-aoss-dev
+
+=== Deploying to 'ropi-aoss-dev'...
+
+i  deploying storage, firestore, hosting
+i  storage: ensuring required API firebasestorage.googleapis.com is enabled...
+i  firebase.storage: checking firebase/storage.rules for compilation errors...
+✔  firebase.storage: rules file firebase/storage.rules compiled successfully
+i  firestore: ensuring required API firestore.googleapis.com is enabled...
+i  firestore: ensuring required API firestore.googleapis.com is enabled...
+i  firestore: reading indexes from firebase/firestore.indexes.json...
+i  cloud.firestore: checking firebase/firestore.rules for compilation errors...
+✔  cloud.firestore: rules file firebase/firestore.rules compiled successfully
+i  storage: latest version of firebase/storage.rules already up to date, skipping upload...
+i  firestore: latest version of firebase/firestore.rules already up to date, skipping upload...
+i  firestore: deploying indexes...
+✔  firestore: deployed indexes in firebase/firestore.indexes.json successfully for (default) database
+i  hosting[ropi-aoss-dev]: beginning deploy...
+i  hosting[ropi-aoss-dev]: found 7 files in frontend/dist
+✔  hosting[ropi-aoss-dev]: file upload complete
+✔  storage: released rules firebase/storage.rules to firebase.storage
+✔  firestore: released rules firebase/firestore.rules to cloud.firestore
+i  hosting[ropi-aoss-dev]: finalizing version...
+✔  hosting[ropi-aoss-dev]: version finalized
+i  hosting[ropi-aoss-dev]: releasing new version...
+✔  hosting[ropi-aoss-dev]: release complete
+
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/ropi-aoss-dev/overview
+Hosting URL: https://ropi-aoss-dev.web.app
+
+✅ DEV deployment complete.
+   Cloud Run: https://ropi-aoss-api-719351392467.us-central1.run.app
+   Hosting:   https://ropi-aoss-dev.web.app
