@@ -471,7 +471,16 @@ export default function CadenceRulesAdminPage() {
 
   async function deactivate(rule: CadenceRule) {
     if (!confirm(`Deactivate rule "${rule.rule_name}"?`)) return;
-    await deactivateCadenceRule(rule.rule_id);
+    setError("");
+    try {
+      await deactivateCadenceRule(rule.rule_id);
+    } catch (e: any) {
+      setError(
+        `Failed to deactivate "${rule.rule_name}": ${e?.error || e?.message || "Unknown error"}`
+      );
+      return;
+    }
+    // load() handles its own errors via setError; no outer catch needed
     await load();
   }
 
@@ -493,6 +502,19 @@ export default function CadenceRulesAdminPage() {
           </button>
         )}
       </div>
+
+      {!draft && error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded text-sm flex items-start justify-between gap-3">
+          <span>{error}</span>
+          <button
+            onClick={() => setError("")}
+            className="text-red-600 hover:text-red-900 text-xs"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {draft && (
         <div className="mb-6">

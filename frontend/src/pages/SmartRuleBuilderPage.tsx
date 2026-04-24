@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import {
   fetchAttributeRegistry,
   fetchSmartRule,
@@ -46,6 +47,7 @@ export default function SmartRuleBuilderPage() {
   const { ruleId } = useParams<{ ruleId: string }>();
   const isNew = !ruleId || ruleId === "new";
   const nav = useNavigate();
+  const { role, loading: authLoading } = useAuth();
 
   const [registry, setRegistry] = useState<AttributeRegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,8 @@ export default function SmartRuleBuilderPage() {
   const [testResult, setTestResult] = useState<any>(null);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (role !== "admin" && role !== "owner") return;
     (async () => {
       try {
         const reg = await fetchAttributeRegistry();
@@ -89,7 +93,7 @@ export default function SmartRuleBuilderPage() {
         setLoading(false);
       }
     })();
-  }, [ruleId, isNew]);
+  }, [ruleId, isNew, authLoading, role]);
 
   // Fields available for condition.field — registry + raw source inputs
   const conditionFieldOptions = useMemo(() => {
@@ -299,6 +303,9 @@ export default function SmartRuleBuilderPage() {
       setErr(e.error || e.message || String(e));
     }
   }
+
+  if (authLoading) return <div className="p-6 text-gray-500">Loading…</div>;
+  if (role !== "admin" && role !== "owner") return <Navigate to="/dashboard" replace />;
 
   if (loading) return <div className="p-6 text-gray-500">Loading…</div>;
 

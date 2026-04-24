@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   fetchAdminUsers,
@@ -37,19 +37,12 @@ const ROLE_OPTIONS = [
 ];
 
 export default function AdminSettingsPage() {
-  const { role } = useAuth();
+  const { role, loading: authLoading } = useAuth();
   const [params, setParams] = useSearchParams();
   const tab = (params.get("tab") as TabKey) || "users";
 
-  if (role !== "admin" && role !== "owner") {
-    return (
-      <div className="max-w-xl mx-auto px-4 py-12 text-center">
-        <p className="text-red-600 font-medium">
-          Forbidden — admin or owner role required.
-        </p>
-      </div>
-    );
-  }
+  if (authLoading) return <div className="p-6 text-gray-500">Loading…</div>;
+  if (role !== "admin" && role !== "owner") return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">

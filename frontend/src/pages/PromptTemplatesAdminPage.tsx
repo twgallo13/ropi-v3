@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import {
   fetchPromptTemplates,
   createPromptTemplate,
@@ -120,6 +122,7 @@ const emptyForm: TemplateFormData = {
   required_attribute_inclusions: [],
 };
 export default function PromptTemplatesAdminPage() {
+  const { role, loading: authLoading } = useAuth();
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null); // template_id or "new"
@@ -140,8 +143,10 @@ export default function PromptTemplatesAdminPage() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (role !== "admin" && role !== "owner") return;
     load();
-  }, [load]);
+  }, [load, authLoading, role]);
 
   function startNew() {
     setForm(emptyForm);
@@ -208,6 +213,9 @@ export default function PromptTemplatesAdminPage() {
       setError(err.error || "Delete failed");
     }
   }
+
+  if (authLoading) return <div className="p-6 text-gray-500">Loading…</div>;
+  if (role !== "admin" && role !== "owner") return <Navigate to="/dashboard" replace />;
 
   if (editing) {
     return (
