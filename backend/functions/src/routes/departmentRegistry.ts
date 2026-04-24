@@ -51,7 +51,7 @@ export function shapeDepartmentEntry(
   };
 }
 
-function normalize(s: string | null | undefined): string {
+export function normalizeDepartment(s: string | null | undefined): string {
   return (s || "").trim().toLowerCase();
 }
 
@@ -85,12 +85,12 @@ export function resolveAllowedDepartmentValues(
   const out = new Set<string>();
   for (const e of entries) {
     if (!e.is_active) continue;
-    const k = normalize(e.key);
+    const k = normalizeDepartment(e.key);
     if (k) out.add(k);
-    const dn = normalize(e.display_name);
+    const dn = normalizeDepartment(e.display_name);
     if (dn) out.add(dn);
     for (const a of e.aliases) {
-      const na = normalize(a);
+      const na = normalizeDepartment(a);
       if (na) out.add(na);
     }
   }
@@ -106,7 +106,7 @@ export function isDepartmentValueAllowed(
   entries: DepartmentRegistryEntry[]
 ): boolean {
   if (value === null || value === undefined) return false;
-  const v = normalize(String(value));
+  const v = normalizeDepartment(String(value));
   if (!v) return false;
   return resolveAllowedDepartmentValues(entries).has(v);
 }
@@ -143,7 +143,7 @@ router.get(
   requireAuth,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const key = normalize(req.params.key);
+      const key = normalizeDepartment(req.params.key);
       if (!key) {
         res.status(400).json({ error: "key is required" });
         return;

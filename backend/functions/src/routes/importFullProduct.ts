@@ -7,6 +7,8 @@ import { executeSmartRules } from "../services/smartRules";
 import { mpnToDocId } from "../services/mpnUtils";
 import { mapFullProductRow, FULL_PRODUCT_ROW_MAP } from "../services/ricsParser";
 import { buildSearchTokens } from "../services/searchTokens";
+import { matchBrand, loadBrandRegistry, BrandRegistryEntry } from "../lib/brandRegistry";
+import { normalizeDepartment } from "./departmentRegistry";
 import {
   respondAsync,
   runInBackground,
@@ -22,6 +24,19 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 const db = admin.firestore;
+
+// TALLY-PRODUCT-LIST-UX Phase 0.5 — load active department keys from
+// department_registry. Used per-import-run for department_key validation.
+async function getActiveDepartmentKeys(): Promise<Set<string>> {
+  const snap = await admin.firestore().collection("department_registry").get();
+  return new Set(
+    snap.docs
+      .map((d) => d.data())
+      .filter((d) => d.is_active === true)
+      .map((d) => d.key as string)
+      .filter((k) => typeof k === "string" && k.length > 0)
+  );
+}
 
 // TALLY-078 — Required columns for Full Product Import
 const REQUIRED_COLUMNS = [
@@ -204,6 +219,12 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       if (domain) domainToSiteId.set(domain, d.id);
     });
 
+    // TALLY-PRODUCT-LIST-UX Phase 0.5 — load brand + department registries
+    // once for per-row brand_key / department_key stamping. Non-blocking:
+    // unresolved values yield null *_key, product still writes.
+    const loadedBrandRegistry: Map<string, BrandRegistryEntry> = await loadBrandRegistry();
+    const activeDepartmentKeys: Set<string> = await getActiveDepartmentKeys();
+
     // Counters
     let committedRows = 0;
     let failedRows = 0;
@@ -276,6 +297,11 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           last_received_at: db.FieldValue.serverTimestamp(),
           updated_at: db.FieldValue.serverTimestamp(),
         };
+
+        // TALLY-PRODUCT-LIST-UX Phase 0.5 — resolve brand_key from registry.
+        // Non-blocking: unresolved → null, product still writes.
+        const matchedBrand = matchBrand(identity.brand, loadedBrandRegistry);
+        identity.brand_key = matchedBrand ? matchedBrand.brand_key : null;
 
         // Source inputs → source_inputs subcollection
         const sourceInputs: Record<string, any> = {
@@ -486,6 +512,20 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         // Human-Verified attributes are never overwritten.
         try {
           const mapped = mapFullProductRow(row);
+
+          // TALLY-PRODUCT-LIST-UX Phase 0.5 — inject brand_key + department_key
+          // into mapped.top_level so they land on the product doc alongside
+          // their human-readable companions. Non-blocking: unresolved → null.
+          if (mapped.top_level.brand) {
+            mapped.top_level.brand_key = identity.brand_key;
+          }
+          const deptRaw = mapped.top_level.department;
+          if (deptRaw) {
+            const normalizedDept = normalizeDepartment(String(deptRaw));
+            mapped.top_level.department_key = activeDepartmentKeys.has(normalizedDept)
+              ? normalizedDept
+              : null;
+          }
 
           // Stamp top-level fields on the product document (query perf)
           if (Object.keys(mapped.top_level).length > 0) {

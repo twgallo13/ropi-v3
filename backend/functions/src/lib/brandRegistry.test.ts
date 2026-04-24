@@ -40,6 +40,7 @@ function entry(key: string, owner: string, aliases: string[] = []): BrandRegistr
     is_active: true,
     po_confirmed: true,
     notes: null,
+    logo_url: null,
   };
 }
 

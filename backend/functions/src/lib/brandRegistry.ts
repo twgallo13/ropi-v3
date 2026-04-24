@@ -16,6 +16,7 @@ export interface BrandRegistryEntry {
   is_active: boolean;
   po_confirmed: boolean;
   notes: string | null;
+  logo_url: string | null;
 }
 
 /**
@@ -55,6 +56,7 @@ export async function loadBrandRegistry(): Promise<Map<string, BrandRegistryEntr
       is_active: d.is_active !== false,
       po_confirmed: !!d.po_confirmed,
       notes: (d.notes as string | null) ?? null,
+      logo_url: (d.logo_url as string | null) ?? null,
     });
   }
   return out;

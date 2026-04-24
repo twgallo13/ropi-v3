@@ -139,8 +139,10 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
     // index pressure becomes unmanageable; with search they collapse to a
     // small candidate set we can filter in memory).
     if (!useSearch) {
-      if (brand) query = query.where("brand", "==", brand);
-      if (department) query = query.where("department", "==", department);
+      // TALLY-PRODUCT-LIST-UX Phase 0.5 — filter on registry-resolved
+      // brand_key / department_key (frontend now passes brand_key values).
+      if (brand) query = query.where("brand_key", "==", brand);
+      if (department) query = query.where("department_key", "==", department);
       if (site_owner) query = query.where("site_owner", "==", site_owner);
     }
 
@@ -179,8 +181,10 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       // (When search is active, brand/dept/site still need in-memory check
       // because Firestore won't index every combo with array-contains.)
       if (useSearch) {
-        if (brand && (data.brand || "").toLowerCase() !== brand.toLowerCase()) continue;
-        if (department && (data.department || "").toLowerCase() !== department.toLowerCase()) continue;
+        // TALLY-PRODUCT-LIST-UX Phase 0.5 — compare against pre-stamped
+        // brand_key / department_key (frontend params are brand_key values).
+        if (brand && (data.brand_key || "") !== brand) continue;
+        if (department && (data.department_key || "") !== department) continue;
       }
 
       // site_owner & image_status are still in-memory because they live in
@@ -310,8 +314,10 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       countQuery = countQuery.where("completion_state", "==", completion_state);
     }
     if (!useSearch) {
-      if (brand) countQuery = countQuery.where("brand", "==", brand);
-      if (department) countQuery = countQuery.where("department", "==", department);
+      // TALLY-PRODUCT-LIST-UX Phase 0.5 — count must mirror the page query
+      // filter set (brand_key / department_key) or page-vs-total diverges.
+      if (brand) countQuery = countQuery.where("brand_key", "==", brand);
+      if (department) countQuery = countQuery.where("department_key", "==", department);
       if (site_owner) countQuery = countQuery.where("site_owner", "==", site_owner);
     }
 
