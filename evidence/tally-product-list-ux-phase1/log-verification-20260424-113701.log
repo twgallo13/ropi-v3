@@ -1,0 +1,26 @@
+=== Cloud Run log verification — 2026-04-24T11:37:01Z ===
+=== missing-index errors since indexes went READY (~11:33Z) ===
+2026-04-24T11:16:50.125378Z	  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoSCg5kZXBhcnRtZW50X2tleRABGhUKEWZpcnN0X3JlY2VpdmVkX2F0EAEaDAoIX19uYW1lX18QAQ',
+2026-04-24T11:16:50.125185Z	GET /products error: Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoSCg5kZXBhcnRtZW50X2tleRABGhUKEWZpcnN0X3JlY2VpdmVkX2F0EAEaDAoIX19uYW1lX18QAQ
+2026-04-24T11:16:46.242814Z	  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoVChFmaXJzdF9yZWNlaXZlZF9hdBABGgwKCF9fbmFtZV9fEAE',
+2026-04-24T11:16:46.242647Z	GET /products error: Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoVChFmaXJzdF9yZWNlaXZlZF9hdBABGgwKCF9fbmFtZV9fEAE
+2026-04-24T11:16:16.385290Z	  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoVChFmaXJzdF9yZWNlaXZlZF9hdBABGgwKCF9fbmFtZV9fEAE',
+2026-04-24T11:16:16.385144Z	GET /products error: Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoVChFmaXJzdF9yZWNlaXZlZF9hdBABGgwKCF9fbmFtZV9fEAE
+2026-04-24T11:16:09.907920Z	  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoVChFmaXJzdF9yZWNlaXZlZF9hdBABGgwKCF9fbmFtZV9fEAE',
+2026-04-24T11:16:09.907759Z	GET /products error: Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/ropi-aoss-dev/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9yb3BpLWFvc3MtZGV2L2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9wcm9kdWN0cy9pbmRleGVzL18QARoNCglicmFuZF9rZXkQARoVChFmaXJzdF9yZWNlaXZlZF9hdBABGgwKCF9fbmFtZV9fEAE
+
+=== /api/v1/products filter calls with 2xx since 11:33Z ===
+2026-04-24T11:34:51.680781Z	200	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=adidas&department=footwear
+2026-04-24T11:34:51.610929Z	204	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=adidas&department=footwear
+2026-04-24T11:34:49.525362Z	200	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=bamboo&department=footwear
+2026-04-24T11:34:49.443601Z	204	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=bamboo&department=footwear
+2026-04-24T11:34:44.557178Z	200	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&department=footwear
+2026-04-24T11:34:44.492643Z	204	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&department=footwear
+2026-04-24T11:16:50.021396Z	204	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=adidas&department=footwear
+2026-04-24T11:16:46.009532Z	204	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=adidas
+2026-04-24T11:16:16.269287Z	204	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=bamboo
+2026-04-24T11:16:09.769562Z	204	https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=crocs
+
+=== verdict ===
+All FAILED_PRECONDITION timestamps are <=11:16:50Z (BEFORE indexes READY ~11:33Z).
+Zero new missing-index errors since fix. PO UI-verified Brand+Dept dropdowns working.
