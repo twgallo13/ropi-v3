@@ -1,0 +1,10 @@
+=== smoke test 2026-04-24T11:33:33Z ===
+HTTP 401  https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=adidas
+{"error":"Invalid or expired authentication token."}
+---
+HTTP 401  https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&department=footwear
+{"error":"Invalid or expired authentication token."}
+---
+HTTP 401  https://ropi-aoss-api-j4kyg7fb4a-uc.a.run.app/api/v1/products?sort=last_modified&limit=25&brand=adidas&department=footwear
+{"error":"Invalid or expired authentication token."}
+---
