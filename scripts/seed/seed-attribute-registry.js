@@ -210,11 +210,9 @@ const DESCRIPTIONS_SEO = [
 const LAUNCH_MEDIA = [
   attr("primary_image_url", "Primary Image URL",  "text",   "launch_media", { display_group: "Media", display_order: 1 }),
   attr("image_urls",        "Image URLs",          "text",   "launch_media", { display_group: "Media", display_order: 2 }),
-  attr("video_url",         "Video URL",           "text",   "launch_media", { display_group: "Media", display_order: 3 }),
-  attr("thumbnail_url",     "Thumbnail URL",       "text",   "launch_media", { display_group: "Media", display_order: 4 }),
-  attr("media_count",       "Media Count",         "number", "launch_media", { display_group: "Media", display_order: 5 }),
-  attr("is_visible",        "Visible on Storefront","toggle","launch_media", { display_group: "Visibility", display_order: 6 }),
-  attr("is_featured",       "Featured",            "toggle", "launch_media", { display_group: "Visibility", display_order: 7 }),
+  attr("media_count",       "Media Count",         "number", "launch_media", { display_group: "Media", display_order: 3 }),
+  attr("is_visible",        "Visible on Storefront","toggle","launch_media", { display_group: "Visibility", display_order: 4 }),
+  attr("is_featured",       "Featured",            "toggle", "launch_media", { display_group: "Visibility", display_order: 5 }),
 ];
 
 // ────────────────────────────────────────────────
