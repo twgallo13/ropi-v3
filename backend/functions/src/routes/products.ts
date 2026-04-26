@@ -1311,9 +1311,16 @@ router.post(
           });
           return;
         }
-        if (id.includes("/") || /\s/.test(id)) {
+        // Phase 4A.1 hotfix: only '/' is rejected. The Phase 4A whitespace
+        // rejection was overly strict — Firestore doc IDs legitimately
+        // permit whitespace, and real catalog MPNs in dev contain spaces
+        // (e.g. "IB3937 485"). The actual Firestore restrictions are:
+        // '/', exact '.' / '..', /^__.*__$/, and >1500 bytes. We enforce
+        // only '/' here; the others are not in the PO-observed symptom
+        // and out of scope for this hotfix.
+        if (id.includes("/")) {
           res.status(400).json({
-            error: `invalid doc_id "${id}": must not contain '/' or whitespace`,
+            error: `invalid doc_id "${id}": must not contain '/'`,
           });
           return;
         }
