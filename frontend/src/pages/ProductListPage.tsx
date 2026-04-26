@@ -6,6 +6,7 @@ import {
   fetchBrandRegistry,
   fetchDepartmentRegistry,
   bulkDeleteProducts,
+  exportProductsCsv,
   type ProductListItem,
   type SiteRegistryEntry,
   type BrandRegistryEntry,
@@ -135,6 +136,10 @@ export default function ProductListPage() {
   const [bulkBanner, setBulkBanner] = useState<{ kind: "success" | "warn" | "error"; text: string } | null>(null);
   // Header tri-state checkbox needs an imperative .indeterminate.
   const headerCheckboxRef = useRef<HTMLInputElement | null>(null);
+
+  // ── Phase 5B — server-side CSV export state ─────────────────────────
+  const [exportInFlight, setExportInFlight] = useState(false);
+  const [exportBanner, setExportBanner] = useState<{ kind: "warn" | "error"; text: string } | null>(null);
 
   const handleHoverEnter = useCallback((mpn: string) => {
     if (hoverCloseTimerRef.current) {
@@ -440,20 +445,45 @@ export default function ProductListPage() {
     setSearchParams(new URLSearchParams(), { replace: false });
   }
 
-  function exportCsv() {
-    const rows = items.map((p) => [
-      p.mpn, p.brand, p.name, p.department, p.site_owner,
-      p.completion_state, String(p.completion_progress.pct),
-    ]);
-    const header = ["MPN", "Brand", "Name", "Department", "Site", "Status", "Completion%"];
-    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `products-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // TALLY-PRODUCT-LIST-UX Phase 5B — server-side CSV export.
+  // Replaces the prior client-side row-build path, which exported only
+  // the current page (PO Ruling 5B.4 — replace entirely). The new path
+  // hits GET /api/v1/products/export.csv with the same filter/sort
+  // params as the list endpoint, minus page/limit. Server enforces the
+  // 5000-row cap (HTTP 413) and aborts on count() failure (HTTP 500).
+  async function exportCsv() {
+    if (exportInFlight) return;
+    setExportBanner(null);
+    setExportInFlight(true);
+    try {
+      const params = buildParams();
+      const blob = await exportProductsCsv(params);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      // Server's Content-Disposition filename wins; this is the fallback
+      // when the browser falls back to <a download>.
+      a.download = `products-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      if (e?.status === 413) {
+        const matched = typeof e.matched === "number" ? e.matched : "?";
+        setExportBanner({
+          kind: "warn",
+          text: `Export too large: ${matched} products match. Narrow your filter and try again.`,
+        });
+      } else if (e?.status === 500) {
+        setExportBanner({
+          kind: "error",
+          text: "Could not estimate result size; export aborted.",
+        });
+      } else {
+        setExportBanner({ kind: "error", text: "Export failed. Try again." });
+      }
+    } finally {
+      setExportInFlight(false);
+    }
   }
 
   return (
@@ -463,12 +493,35 @@ export default function ProductListPage() {
         {isExport && (
           <button
             onClick={exportCsv}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+            disabled={exportInFlight}
+            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-wait"
           >
-            Export CSV
+            {exportInFlight ? "Exporting..." : "Export CSV"}
           </button>
         )}
       </div>
+
+      {exportBanner && (
+        <div
+          className={
+            "mb-3 px-3 py-2 text-sm rounded border " +
+            (exportBanner.kind === "warn"
+              ? "bg-amber-50 border-amber-300 text-amber-900"
+              : "bg-red-50 border-red-300 text-red-900")
+          }
+          role="alert"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <span>{exportBanner.text}</span>
+            <button
+              onClick={() => setExportBanner(null)}
+              className="text-xs underline shrink-0"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">

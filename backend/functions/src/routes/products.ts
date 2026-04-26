@@ -386,6 +386,235 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
 });
 
 // ────────────────────────────────────────────────
+//  GET /api/v1/products/export.csv — Phase 5B
+//
+//  Filter-respecting bulk CSV export (PO Rulings 5B.1–5B.4 2026-04-25).
+//  - Reuses the same query-param contract as GET / (sort, dir,
+//    completion_state, site_owner, brand, department, image_status, search).
+//    Filter parser is DUPLICATED INLINE here (PO Ruling 5B.1 + Frink C1):
+//    duplication keeps blast radius zero on the live list endpoint; a
+//    future refactor can dedupe once both routes are stable.
+//  - 5000-row hard cap (PO 5B.3). On overflow → HTTP 413
+//    {"error":"Result exceeds 5000 rows. Narrow your filter and re-export.",
+//     "matched": <count>}.
+//  - count() failure aborts with HTTP 500 (Frink D1) — does NOT mirror the
+//    list endpoint's items.length fallback (that pattern is correct for
+//    paginated display, but for unbounded bulk export it would silently
+//    uncap the fetch).
+//  - 15 columns, RFC-4180 inline-quoted (Frink C2 — json2csv is alpha-pinned
+//    in package.json and stays unused; csv-parse is read-side only).
+//  - Mounted BEFORE /:mpn so the path is not shadowed (Phase 4A precedent).
+//  - requireAuth only; FE narrows via existing isExport role gate.
+//  - No firestore.indexes.json change; reuses Phase 3A indexes verbatim.
+// ────────────────────────────────────────────────
+
+const EXPORT_ROW_CAP = 5000;
+const EXPORT_PAGE_SIZE = 100;
+
+const EXPORT_COLUMNS = [
+  "mpn",
+  "brand",
+  "name",
+  "department",
+  "site_owner",
+  "completion_state",
+  "completion_percent",
+  "scom",
+  "scom_sale",
+  "standard_shipping_override",
+  "expedited_shipping_override",
+  "first_received_at",
+  "updated_at",
+  "rics_offer",
+  "rics_retail",
+] as const;
+
+/**
+ * RFC-4180 CSV cell escape. Wraps in double quotes only when the value
+ * contains a comma, double quote, CR, or LF; doubles internal quotes.
+ * null / undefined / empty → empty string (no "null" / "undefined" tokens).
+ */
+function csvEscape(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  const s = typeof v === "string" ? v : String(v);
+  if (s === "") return "";
+  if (/[",\r\n]/.test(s)) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const firestore = admin.firestore();
+    const {
+      completion_state,
+      site_owner,
+      brand,
+      department,
+      image_status,
+      search,
+      sort: sortRaw = "first_received_at",
+      dir: dirRaw,
+    } = req.query as Record<string, string | undefined>;
+
+    // ── Sort + dir resolution (mirror list endpoint discipline) ─────────
+    const sortField = sortRaw;
+    const sortDir: string = dirRaw || "asc";
+    if (!SORT_ALLOWLIST.has(sortField)) {
+      res.status(400).json({
+        error: `Invalid sort field "${sortRaw}". Allowed: ${[...SORT_ALLOWLIST].join(", ")}`,
+      });
+      return;
+    }
+    if (!DIR_ALLOWLIST.has(sortDir)) {
+      res.status(400).json({
+        error: `Invalid sort dir "${sortDir}". Allowed: asc, desc`,
+      });
+      return;
+    }
+
+    const searchTerm = (search || "").toLowerCase().trim();
+    const useSearch = searchTerm.length >= 2;
+
+    // ── Build filtered query (DUPLICATED INLINE — see header note) ──────
+    let query: admin.firestore.Query = firestore.collection("products");
+    if (useSearch) {
+      query = query.where("search_tokens", "array-contains", searchTerm);
+    }
+    if (completion_state && completion_state !== "all") {
+      query = query.where("completion_state", "==", completion_state);
+    }
+    if (!useSearch) {
+      if (brand) query = query.where("brand_key", "==", brand);
+      if (department) query = query.where("department_key", "==", department);
+      if (site_owner) query = query.where("site_owner", "==", site_owner);
+    }
+    query = query.orderBy(sortField, sortDir as "asc" | "desc");
+
+    // ── count() — Frink D1: failure ABORTS, does NOT fall back. ─────────
+    let matched: number;
+    try {
+      const countSnap = await query.count().get();
+      matched = countSnap.data().count;
+    } catch (countErr) {
+      console.error("export.csv count() failed:", countErr);
+      res.status(500).json({ error: "Could not estimate result size; export aborted." });
+      return;
+    }
+
+    if (matched > EXPORT_ROW_CAP) {
+      res.status(413).json({
+        error: `Result exceeds ${EXPORT_ROW_CAP} rows. Narrow your filter and re-export.`,
+        matched,
+      });
+      return;
+    }
+
+    // ── Fetch rows in EXPORT_PAGE_SIZE pages, cap-bounded ───────────────
+    const docs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    let offset = 0;
+    while (offset < matched && docs.length < EXPORT_ROW_CAP) {
+      const pageSnap = await query.offset(offset).limit(EXPORT_PAGE_SIZE).get();
+      if (pageSnap.empty) break;
+      docs.push(...pageSnap.docs);
+      if (pageSnap.size < EXPORT_PAGE_SIZE) break;
+      offset += EXPORT_PAGE_SIZE;
+    }
+
+    // ── In-memory filters (mirror list endpoint, sans pagination cap) ───
+    const requiredFields = await getRequiredFieldKeys(firestore);
+    const rows: string[] = [];
+
+    for (const doc of docs) {
+      const data = doc.data();
+      const docId = doc.id;
+
+      if (useSearch) {
+        if (brand && (data.brand_key || "") !== brand) continue;
+        if (department && (data.department_key || "") !== department) continue;
+      }
+
+      const productSiteOwner = await getSiteOwner(firestore, docId, data);
+      if (useSearch && site_owner) {
+        if ((productSiteOwner || "").toLowerCase() !== site_owner.toLowerCase()) continue;
+      }
+      if (image_status) {
+        const imgAttr = await firestore
+          .collection("products").doc(docId)
+          .collection("attribute_values").doc("image_status").get();
+        const imgVal = imgAttr.exists ? imgAttr.data()?.value : null;
+        if (!imgVal || String(imgVal).toUpperCase() !== image_status.toUpperCase()) continue;
+      }
+
+      // department fallback (mirror list endpoint)
+      let deptVal = typeof data.department === "string" && data.department ? data.department : "";
+      if (!deptVal) {
+        const deptSnap = await firestore
+          .collection("products").doc(docId)
+          .collection("attribute_values").doc("department").get();
+        deptVal = deptSnap.exists ? deptSnap.data()?.value || "" : "";
+      }
+
+      // 4 attribute_values reads in parallel (mirror list endpoint pattern)
+      const attrRef = firestore.collection("products").doc(docId).collection("attribute_values");
+      const [scomSnap, scomSaleSnap, stdShipSnap, expShipSnap] = await Promise.all([
+        attrRef.doc("scom").get(),
+        attrRef.doc("scom_sale").get(),
+        attrRef.doc("standard_shipping_override").get(),
+        attrRef.doc("expedited_shipping_override").get(),
+      ]);
+      const scomVal = scomSnap.exists ? scomSnap.data()?.value : null;
+      const scomSaleVal = scomSaleSnap.exists ? scomSaleSnap.data()?.value : null;
+      const stdShipVal = stdShipSnap.exists ? stdShipSnap.data()?.value : null;
+      const expShipVal = expShipSnap.exists ? expShipSnap.data()?.value : null;
+
+      // completion_percent — stamped-then-computed (Frink C3, parity with list)
+      let completionPct: number;
+      if (data.completion_percent !== undefined) {
+        completionPct = data.completion_percent;
+      } else {
+        const progress = await computeCompletionProgress(firestore, docId, requiredFields);
+        completionPct = progress.pct;
+      }
+
+      const cells = [
+        csvEscape(data.mpn || docIdToMpn(docId)),
+        csvEscape(data.brand || ""),
+        csvEscape(data.name || ""),
+        csvEscape(deptVal),
+        csvEscape(productSiteOwner || ""),
+        csvEscape(data.completion_state || "incomplete"),
+        csvEscape(String(completionPct)),
+        csvEscape(scomVal === null || scomVal === undefined ? "" : String(scomVal)),
+        csvEscape(scomSaleVal === null || scomSaleVal === undefined ? "" : String(scomSaleVal)),
+        csvEscape(stdShipVal === null || stdShipVal === undefined ? "" : String(stdShipVal)),
+        csvEscape(expShipVal === null || expShipVal === undefined ? "" : String(expShipVal)),
+        csvEscape(data.first_received_at?.toDate?.()?.toISOString() || ""),
+        csvEscape(data.updated_at?.toDate?.()?.toISOString() || ""),
+        csvEscape(data.rics_offer === null || data.rics_offer === undefined ? "" : String(data.rics_offer)),
+        csvEscape(data.rics_retail === null || data.rics_retail === undefined ? "" : String(data.rics_retail)),
+      ];
+      rows.push(cells.join(","));
+    }
+
+    // Header row — column names contain no special chars; no escape needed.
+    const header = EXPORT_COLUMNS.join(",");
+    const body = [header, ...rows].join("\r\n") + "\r\n";
+
+    // Filename — server (UTC) date. Content-Disposition wins over the
+    // browser's <a download="…"> string (cosmetic UTC skew documented in PR).
+    const today = new Date().toISOString().slice(0, 10);
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="products-${today}.csv"`);
+    res.status(200).send(body);
+  } catch (err: any) {
+    console.error("GET /products/export.csv error:", err);
+    res.status(500).json({ error: "Export failed." });
+  }
+});
+
+// ────────────────────────────────────────────────
 //  GET /api/v1/products/:mpn
 // ────────────────────────────────────────────────
 router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response) => {

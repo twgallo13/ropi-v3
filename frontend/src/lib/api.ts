@@ -125,6 +125,46 @@ export async function fetchProducts(params?: Record<string, string>): Promise<Pr
   return res.json();
 }
 
+// TALLY-PRODUCT-LIST-UX Phase 5B — server-side CSV export.
+//   - Reuses the list endpoint's filter/sort param contract; strips page/limit.
+//   - 200 → Blob (text/csv). Caller triggers <a download>.
+//   - 413 → throws { status: 413, error, matched }.
+//   - 500 → throws { status: 500, error } (count() abort or other).
+//   - other non-200 → throws { status, error }.
+export interface ExportCsvOverflowError {
+  status: 413;
+  error: string;
+  matched: number;
+}
+export interface ExportCsvGenericError {
+  status: number;
+  error: string;
+}
+export async function exportProductsCsv(
+  params?: Record<string, string>
+): Promise<Blob> {
+  // Strip pagination — export is unbounded within the cap.
+  const filtered: Record<string, string> = {};
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      if (k === "page" || k === "limit") continue;
+      if (v) filtered[k] = v;
+    }
+  }
+  const qs = Object.keys(filtered).length
+    ? "?" + new URLSearchParams(filtered).toString()
+    : "";
+  const res = await fetch(`${BASE}/api/v1/products/export.csv${qs}`, {
+    headers: await headers(),
+  });
+  if (res.status === 200) {
+    return await res.blob();
+  }
+  let body: any = {};
+  try { body = await res.json(); } catch { /* non-JSON */ }
+  throw { status: res.status, error: body?.error || `Export failed (${res.status}).`, matched: body?.matched };
+}
+
 // Phase 4A — bulk-delete (admin/owner only). Server caps at 100 doc_ids per
 // call; callers must chunk client-side.
 export interface BulkDeleteResultItem {
