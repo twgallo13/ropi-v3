@@ -32,7 +32,7 @@ function siteBadge(
   );
 }
 
-type SortKey = "priority" | "first_received_at" | "updated_at" | "completion_percent";
+type SortKey = "first_received_at" | "updated_at" | "completion_percent";
 
 const DEFAULT_FILTERS = {
   completion_state: "incomplete",
@@ -41,7 +41,7 @@ const DEFAULT_FILTERS = {
   department: "",
   search: "",
 };
-const DEFAULT_SORT: SortKey = "priority";
+const DEFAULT_SORT: SortKey = "updated_at";
 const PAGE_SIZE = 25;
 
 export default function CompletionQueuePage() {
@@ -315,7 +315,6 @@ export default function CompletionQueuePage() {
           onChange={(e) => setSort(e.target.value as SortKey)}
           className="border rounded px-3 py-1.5 text-sm"
         >
-          <option value="priority">Priority</option>
           <option value="first_received_at">First Received</option>
           <option value="updated_at">Last Modified</option>
           <option value="completion_percent">Completion %</option>
