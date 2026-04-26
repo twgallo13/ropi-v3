@@ -1,0 +1,36 @@
+ID token acquired (len=2556)
+
+══ TEST 1 — unfiltered export (expect HTTP 413) ══
+status: 413
+body: {"error":"Result exceeds 100 rows. Narrow your filter and re-export.","matched":350}
+
+══ TEST 2 — brand=adidas&completion_state=incomplete (expect 200 if <=100) ══
+status: 500
+content-type: application/json; charset=utf-8
+content-disposition: null
+body: {"error":"Could not estimate result size; export aborted."}
+URL: https://ropi-aoss-api-719351392467.us-central1.run.app/api/v1/products/export.csv?completion_state=ready_for_export
+status: 200
+content-type: text/csv; charset=utf-8
+content-disposition: attachment; filename="products-2026-04-26.csv"
+row count (incl header): 1
+HEADER: mpn,brand,name,department,site_owner,completion_state,completion_percent,scom,scom_sale,standard_shipping_override,expedited_shipping_override,first_received_at,updated_at,rics_offer,rics_retail
+brand=adidas status: 500 body: {"error":"Could not estimate result size; export aborted."}
+sample brand: null state: incomplete
+sample brand: null state: incomplete
+sample brand: null state: incomplete
+sample brand: null state: incomplete
+sample brand: null state: incomplete
+
+completion_state=incomplete status: 500
+body: {"error":"Could not estimate result size; export aborted."}
+completion_state=incomplete (default sort): 413 {"error":"Result exceeds 100 rows. Narrow your filter and re-export.","matched":341}
+
+search=adidas (default sort): 413 ct: application/json; charset=utf-8 cd: null
+body: {"error":"Result exceeds 100 rows. Narrow your filter and re-export.","matched":186}
+search=ib3937 status: 200
+ct: text/csv; charset=utf-8
+cd: attachment; filename="products-2026-04-26.csv"
+rows incl header: 2
+HEADER: mpn,brand,name,department,site_owner,completion_state,completion_percent,scom,scom_sale,standard_shipping_override,expedited_shipping_override,first_received_at,updated_at,rics_offer,rics_retail
+ROW1: IB3937 485,BRAND JORDAN,U J Pro Cap Us Fb Ra,Accessories,shiekh,incomplete,70,,,,,2026-04-17T22:54:33.703Z,2026-04-18T00:05:43.627Z,44.99,44.99
