@@ -22,6 +22,7 @@ export interface ProductListItem {
   site_owner: string;
   completion_state: string;
   image_status: string;
+  primary_image_url: string | null;
   first_received_at: string | null;
   updated_at: string | null;
   is_high_priority: boolean;
