@@ -791,6 +791,167 @@
         { "fieldPath": "completion_state",   "order": "ASCENDING" },
         { "fieldPath": "completion_percent", "order": "ASCENDING" }
       ]
+    },
+
+    {
+      "__comment__": "Index 78 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: search_tokens + updated_at DESC (sibling of Index 74)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "search_tokens", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "updated_at",    "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 79 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: search_tokens + completion_state + updated_at DESC (sibling of Index 75)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "search_tokens",    "arrayConfig": "CONTAINS" },
+        { "fieldPath": "completion_state", "order": "ASCENDING"  },
+        { "fieldPath": "updated_at",       "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 80 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: search_tokens + completion_percent DESC (sibling of Index 76)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "search_tokens",      "arrayConfig": "CONTAINS" },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 81 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: search_tokens + completion_state + completion_percent DESC (sibling of Index 77)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "search_tokens",      "arrayConfig": "CONTAINS" },
+        { "fieldPath": "completion_state",   "order": "ASCENDING"  },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
+    },
+
+    {
+      "__comment__": "Index 82 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: brand_key + department_key + updated_at DESC (sibling of Index 46)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand_key",      "order": "ASCENDING"  },
+        { "fieldPath": "department_key", "order": "ASCENDING"  },
+        { "fieldPath": "updated_at",     "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 83 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: brand_key + site_owner + updated_at DESC (sibling of Index 47)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand_key",  "order": "ASCENDING"  },
+        { "fieldPath": "site_owner", "order": "ASCENDING"  },
+        { "fieldPath": "updated_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 84 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: department_key + site_owner + updated_at DESC (sibling of Index 48)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "department_key", "order": "ASCENDING"  },
+        { "fieldPath": "site_owner",     "order": "ASCENDING"  },
+        { "fieldPath": "updated_at",     "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 85 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: brand_key + completion_state + updated_at DESC (sibling of Index 49)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand_key",        "order": "ASCENDING"  },
+        { "fieldPath": "completion_state", "order": "ASCENDING"  },
+        { "fieldPath": "updated_at",       "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 86 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: department_key + completion_state + updated_at DESC (sibling of Index 50)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "department_key",   "order": "ASCENDING"  },
+        { "fieldPath": "completion_state", "order": "ASCENDING"  },
+        { "fieldPath": "updated_at",       "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 87 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: site_owner + completion_state + updated_at DESC (sibling of Index 51)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "site_owner",       "order": "ASCENDING"  },
+        { "fieldPath": "completion_state", "order": "ASCENDING"  },
+        { "fieldPath": "updated_at",       "order": "DESCENDING" }
+      ]
+    },
+
+    {
+      "__comment__": "Index 88 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: brand_key + department_key + completion_percent DESC (sibling of Index 52)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand_key",          "order": "ASCENDING"  },
+        { "fieldPath": "department_key",     "order": "ASCENDING"  },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 89 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: brand_key + site_owner + completion_percent DESC (sibling of Index 53)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand_key",          "order": "ASCENDING"  },
+        { "fieldPath": "site_owner",         "order": "ASCENDING"  },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 90 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: department_key + site_owner + completion_percent DESC (sibling of Index 54)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "department_key",     "order": "ASCENDING"  },
+        { "fieldPath": "site_owner",         "order": "ASCENDING"  },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 91 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: brand_key + completion_state + completion_percent DESC (sibling of Index 55)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brand_key",          "order": "ASCENDING"  },
+        { "fieldPath": "completion_state",   "order": "ASCENDING"  },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 92 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: department_key + completion_state + completion_percent DESC (sibling of Index 56)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "department_key",     "order": "ASCENDING"  },
+        { "fieldPath": "completion_state",   "order": "ASCENDING"  },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 93 — Phase 3A.1 hotfix — DESC sibling for FE default sort=last_modified: site_owner + completion_state + completion_percent DESC (sibling of Index 57)",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "site_owner",         "order": "ASCENDING"  },
+        { "fieldPath": "completion_state",   "order": "ASCENDING"  },
+        { "fieldPath": "completion_percent", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
