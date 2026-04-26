@@ -210,10 +210,26 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
         data, launchWindowDays
       );
 
-      const imgSnap = await firestore
+      // TALLY-PRODUCT-LIST-UX Phase 2A — fetch image_status and primary_image_url
+      // in parallel from the attribute_values subcollection (single logical read
+      // step; no added serial round-trip / no read amplification). Frink pre-audit
+      // 2026-04-25 + PO Ruling 2A 2026-04-25.
+      const attrValuesRef = firestore
         .collection("products").doc(docId)
-        .collection("attribute_values").doc("image_status").get();
+        .collection("attribute_values");
+      const [imgSnap, primaryImageSnap] = await Promise.all([
+        attrValuesRef.doc("image_status").get(),
+        attrValuesRef.doc("primary_image_url").get(),
+      ]);
       const imageStatusVal = imgSnap.exists ? imgSnap.data()?.value || "NO" : "NO";
+      const primaryImageUrlRaw = primaryImageSnap.exists
+        ? primaryImageSnap.data()?.value
+        : null;
+      // Normalize empty string → null at the backend (cleaner contract for FE).
+      const primaryImageUrlVal: string | null =
+        typeof primaryImageUrlRaw === "string" && primaryImageUrlRaw.trim().length > 0
+          ? primaryImageUrlRaw
+          : null;
 
       let deptVal = typeof data.department === "string" && data.department ? data.department : "";
       if (!deptVal) {
@@ -238,6 +254,7 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
         site_owner: productSiteOwner || "",
         completion_state: data.completion_state || "incomplete",
         image_status: imageStatusVal,
+        primary_image_url: primaryImageUrlVal,
         pricing_domain_state: data.pricing_domain_state || "pending",
         map_conflict_active: !!data.map_conflict_active,
         is_map_protected: !!data.is_map_protected,
