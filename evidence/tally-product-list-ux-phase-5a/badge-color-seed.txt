@@ -1,0 +1,31 @@
+Project: ropi-aoss-dev
+Collection: site_registry
+Targets: shiekh→#2563eb, karmaloop→#16a34a, mltd→#1f2937
+
+=== READ-BEFORE ===
+shiekh: current badge_color="#2563eb"
+  already seeded; no-op
+karmaloop: current badge_color="#16a34a"
+  already seeded; no-op
+mltd: current badge_color="#1f2937"
+  already seeded; no-op
+
+=== WRITE ===
+(no writes — all docs already seeded)
+
+=== READ-AFTER ===
+shiekh: badge_color="#2563eb" expected=#2563eb pass=true
+  full={"site_key":"shiekh","display_name":"Shiekh","domain":"shiekh.com","is_active":true,"priority":10,"platform":"shopify","status":"active","ai_content_strategy":"use_shiekh_default","locale":"en-US","currency":"USD","timezone":"America/Los_Angeles","vertical":"sneakers_streetwear","features":{"ai_descriptions":true,"ai_reviews_summary":true,"dynamic_pricing":false,"smart_rules_enabled":true},"feed_config":{"format":"xml","schedule_cron":"0 */4 * * *"},"created_at":{"_seconds":1776301336,"_nanoseconds":231000000},"updated_at":{"_seconds":1776301336,"_nanoseconds":231000000},"badge_color":"#2563eb"}
+karmaloop: badge_color="#16a34a" expected=#16a34a pass=true
+  full={"site_key":"karmaloop","display_name":"Karmaloop","domain":"karmaloop.com","is_active":true,"priority":20,"platform":"shopify","status":"active","ai_content_strategy":"use_karmaloop_default","locale":"en-US","currency":"USD","timezone":"America/New_York","vertical":"streetwear","features":{"ai_descriptions":true,"ai_reviews_summary":true,"dynamic_pricing":true,"smart_rules_enabled":true},"feed_config":{"format":"xml","schedule_cron":"0 */4 * * *"},"created_at":{"_seconds":1776301336,"_nanoseconds":410000000},"updated_at":{"_seconds":1776301336,"_nanoseconds":410000000},"badge_color":"#16a34a"}
+mltd: badge_color="#1f2937" expected=#1f2937 pass=true
+  full={"site_key":"mltd","display_name":"MLTD","domain":"mltd.com","is_active":true,"priority":30,"platform":"shopify","status":"active","ai_content_strategy":"use_mltd_default","locale":"en-US","currency":"USD","timezone":"America/Los_Angeles","vertical":"streetwear_lifestyle","features":{"ai_descriptions":true,"ai_reviews_summary":false,"dynamic_pricing":false,"smart_rules_enabled":true},"feed_config":{"format":"xml","schedule_cron":"0 */6 * * *"},"created_at":{"_seconds":1776301336,"_nanoseconds":586000000},"updated_at":{"_seconds":1776301336,"_nanoseconds":586000000},"badge_color":"#1f2937"}
+
+=== UNTOUCHED SITES (badge_color expected null per spec) ===
+fbrk: badge_color=null is_active=false
+plndr: badge_color=null is_active=false
+sangremia: badge_color=null is_active=false
+shiekhshoes: badge_color=null is_active=false
+trendswap: badge_color=null is_active=false
+
+All assertions passed.
