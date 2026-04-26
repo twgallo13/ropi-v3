@@ -67,7 +67,7 @@ gcloud run deploy "$SERVICE" \
   --source ./backend/functions \
   --project "$PROJECT" \
   --region "$REGION" \
-  --set-env-vars "FIREBASE_PROJECT_ID=$PROJECT,FIREBASE_STORAGE_BUCKET=${PROJECT}-imports" \
+  --update-env-vars "FIREBASE_PROJECT_ID=$PROJECT,FIREBASE_STORAGE_BUCKET=${PROJECT}-imports" \
   --quiet
 echo "✓ Cloud Run deploy complete"
 echo ""
