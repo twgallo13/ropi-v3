@@ -17,6 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import HoverImagePreview from "../components/HoverImagePreview";
 
 // ── .99 rounding (client-side preview) ──
 function apply99Rounding(price: number): number {
@@ -309,38 +310,10 @@ function badgeLabel(state: string): string {
 }
 
 // Subtask 3c — Hover preview popover.
-// ~300ms open delay; renders absolute over card; auto-dismisses on mouse leave.
-// No-image rows fall back to a tooltip-style label rather than a popover.
-function ImageHoverPreview({
-  url,
-  alt,
-  siteKey,
-}: {
-  url: string;
-  alt: string;
-  siteKey: string | null;
-}) {
-  return (
-    <div
-      className="absolute z-50 left-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-xl p-2"
-      style={{ minWidth: 240 }}
-    >
-      <img
-        src={url}
-        alt={alt}
-        className="block max-w-[240px] max-h-[240px] object-contain rounded"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).style.display = "none";
-        }}
-      />
-      {siteKey && (
-        <div className="mt-1 text-[10px] text-gray-500 text-center">
-          source: {siteKey}
-        </div>
-      )}
-    </div>
-  );
-}
+// TALLY-PRODUCT-LIST-UX Phase 2B (PO 2026-04-25): inline ImageHoverPreview
+// lifted into shared component at components/HoverImagePreview. URL
+// extraction stays here (BuyerReviewItem.site_verification is BuyerReview-
+// specific). Open-delay preserved at 300ms via graceMs.
 
 // ── Product Card ──
 function ProductCard({
@@ -366,28 +339,21 @@ function ProductCard({
   const [error] = useState("");
   const isCompact = density === "compact";
 
-  // Task 3 — image fallback + hover preview state
+  // Task 3 — image fallback + hover preview state.
+  // Phase 2B: simplified to immediate hover/focus toggle; the shared
+  // HoverImagePreview component owns the open-delay (graceMs).
   const primaryImage = resolvePrimaryImage(item);
   const primaryProductUrl = resolvePrimaryProductUrl(item);
   const hasImage = primaryImage.url !== null;
-  const [hoverArmed, setHoverArmed] = useState(false);
-  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const armHover = () => {
     if (!hasImage) return;
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    hoverTimerRef.current = setTimeout(() => setHoverArmed(true), 300);
+    setIsHovered(true);
   };
   const disarmHover = () => {
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-    setHoverArmed(false);
+    setIsHovered(false);
   };
-  useEffect(() => () => {
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-  }, []);
 
   const loadProjection = useCallback(async () => {
     if (projection) return;
@@ -481,11 +447,14 @@ function ProductCard({
               available
             </div>
           )}
-          {hoverArmed && hasImage && primaryImage.url && (
-            <ImageHoverPreview
-              url={primaryImage.url}
-              alt={item.name || item.mpn}
-              siteKey={primaryImage.site_key}
+          {hasImage && primaryImage.url && (
+            <HoverImagePreview
+              imageUrl={primaryImage.url}
+              imageStatus="YES"
+              isVisible={isHovered}
+              graceMs={300}
+              altText={item.name || item.mpn}
+              footerText={primaryImage.site_key ? `source: ${primaryImage.site_key}` : undefined}
             />
           )}
         </div>
