@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   fetchProducts,
@@ -11,6 +11,7 @@ import {
   type DepartmentRegistryEntry,
 } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import HoverImagePreview from "../components/HoverImagePreview";
 
 type SortKey = "first_received" | "last_modified" | "completion_pct";
 
@@ -46,6 +47,31 @@ export default function ProductListPage() {
   const [departmentRegistry, setDepartmentRegistry] = useState<DepartmentRegistryEntry[]>([]);
   const [departmentRegistryError, setDepartmentRegistryError] = useState(false);
   const [departmentRegistryLoaded, setDepartmentRegistryLoaded] = useState(false);
+
+  // TALLY-PRODUCT-LIST-UX Phase 2B — single-active-row hover preview.
+  // Single state at the table level (no per-row independent state).
+  // onMouseEnter/onFocus set hoveredMpn immediately; onMouseLeave/onBlur
+  // start a ~100ms close timer that's cancelled if hover/focus re-enters.
+  const [hoveredMpn, setHoveredMpn] = useState<string | null>(null);
+  const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleHoverEnter = useCallback((mpn: string) => {
+    if (hoverCloseTimerRef.current) {
+      clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+    setHoveredMpn(mpn);
+  }, []);
+  const handleHoverLeave = useCallback(() => {
+    if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current);
+    hoverCloseTimerRef.current = setTimeout(() => {
+      setHoveredMpn(null);
+      hoverCloseTimerRef.current = null;
+    }, 100);
+  }, []);
+  useEffect(() => () => {
+    if (hoverCloseTimerRef.current) clearTimeout(hoverCloseTimerRef.current);
+  }, []);
 
   useEffect(() => {
     // Phase 4.4 §3.1.1 — dropdown options sourced from site_registry, active-only.
@@ -360,13 +386,28 @@ export default function ProductListPage() {
           <tbody className="divide-y">
             {items.map((p) => (
               <tr key={p.doc_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                <td className="px-3 py-2">
+                {/* Phase 2B — MPN cell hosts hover/focus preview. `relative`
+                    anchors the absolutely-positioned HoverImagePreview popup.
+                    Focus handlers mirror mouse handlers for keyboard a11y. */}
+                <td
+                  className="px-3 py-2 relative"
+                  onMouseEnter={() => handleHoverEnter(p.mpn)}
+                  onMouseLeave={handleHoverLeave}
+                  onFocus={() => handleHoverEnter(p.mpn)}
+                  onBlur={handleHoverLeave}
+                >
                   <Link
                     to={`/products/${encodeURIComponent(p.mpn)}`}
                     className="text-blue-600 hover:underline font-mono text-xs"
                   >
                     {p.mpn}
                   </Link>
+                  <HoverImagePreview
+                    imageUrl={p.primary_image_url}
+                    imageStatus={p.image_status}
+                    isVisible={hoveredMpn === p.mpn}
+                    altText={p.name || p.mpn}
+                  />
                 </td>
                 <td className="px-3 py-2">{p.brand}</td>
                 <td className="px-3 py-2 max-w-[200px] truncate">{p.name}</td>
