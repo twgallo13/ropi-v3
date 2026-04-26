@@ -95,6 +95,47 @@ async function getSiteOwner(
 // ────────────────────────────────────────────────
 //  GET /api/v1/products
 // ────────────────────────────────────────────────
+//
+// TALLY-PRODUCT-LIST-UX Phase 3A — dynamic sort + offset pagination.
+//   - Replaces hardcoded orderBy("first_received_at","asc") with allowlisted
+//     ?sort + ?dir params (see SORT_ALLOWLIST / DIR_ALLOWLIST below).
+//   - Replaces ?cursor (Firestore startAfter) with ?page + ?limit offset
+//     pagination. Response now includes total_count + page + limit +
+//     total_pages from a parallel .count() aggregation (1 read regardless
+//     of result set size — cheaper than scanning).
+//   - Removes legacy in-memory re-sorts (priority / first_received /
+//     last_modified / completion_pct). All sorting is now server-side.
+//
+// Transitional alias layer (REMOVE IN PHASE 3B once frontend migrates):
+//   Frontend ProductListPage still emits legacy sort tokens
+//   (first_received, last_modified, completion_pct) and pages via &cursor.
+//   Without translation, Phase 3A's strict allowlist would 400 the very
+//   first list call (default `sort=last_modified`) and break /products on
+//   deploy. Aliases below translate legacy tokens before the allowlist
+//   check; ?cursor is accepted-and-ignored with a deprecation log.
+
+// REMOVE IN PHASE 3B — legacy frontend sort tokens and their default
+// directions. FE will be migrated to send canonical fields directly.
+const SORT_ALIASES: Record<string, { sort: string; defaultDir: "asc" | "desc" }> = {
+  // REMOVE IN PHASE 3B
+  last_modified:  { sort: "updated_at",         defaultDir: "desc" },
+  // REMOVE IN PHASE 3B
+  first_received: { sort: "first_received_at",  defaultDir: "asc"  },
+  // REMOVE IN PHASE 3B
+  completion_pct: { sort: "completion_percent", defaultDir: "asc"  },
+};
+
+const SORT_ALLOWLIST = new Set([
+  "mpn",
+  "brand_key",
+  "department_key",
+  "site_owner",
+  "first_received_at",
+  "updated_at",
+  "completion_percent",
+]);
+const DIR_ALLOWLIST = new Set(["asc", "desc"]);
+
 router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const firestore = admin.firestore();
@@ -105,28 +146,62 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       department,
       image_status,
       search,
-      sort = "priority",
+      sort: sortRaw = "first_received_at",
+      dir: dirRaw,
       limit: limitStr = "25",
+      page: pageStr = "1",
       cursor,
     } = req.query as Record<string, string | undefined>;
 
+    // ── Sort + dir resolution (with REMOVE-IN-PHASE-3B alias layer) ─────
+    let sortField = sortRaw;
+    let sortDir: string | undefined = dirRaw;
+    if (SORT_ALIASES[sortRaw]) {
+      // REMOVE IN PHASE 3B — translate legacy token, FE-supplied dir wins
+      const alias = SORT_ALIASES[sortRaw];
+      sortField = alias.sort;
+      if (!sortDir) sortDir = alias.defaultDir;
+    }
+    if (!sortDir) sortDir = "asc";
+
+    if (!SORT_ALLOWLIST.has(sortField)) {
+      res.status(400).json({
+        error: `Invalid sort field "${sortRaw}". Allowed: ${[...SORT_ALLOWLIST].join(", ")} (or legacy aliases: ${Object.keys(SORT_ALIASES).join(", ")})`,
+      });
+      return;
+    }
+    if (!DIR_ALLOWLIST.has(sortDir)) {
+      res.status(400).json({
+        error: `Invalid sort dir "${sortDir}". Allowed: asc, desc`,
+      });
+      return;
+    }
+
+    // ── Pagination params ───────────────────────────────────────────────
     const limitNum = Math.min(Math.max(parseInt(limitStr || "25", 10) || 25, 1), 100);
+    const pageNum = Math.max(parseInt(pageStr || "1", 10) || 1, 1);
+    const offset = (pageNum - 1) * limitNum;
+
+    // REMOVE IN PHASE 3B — accept ?cursor for FE back-compat, ignore it,
+    // log once per request. Response always returns next_cursor: null so
+    // FE's hasMore evaluates false → "Load more" hides itself cleanly.
+    if (cursor) {
+      console.warn(
+        `[products] DEPRECATED: ?cursor=${cursor} ignored — use ?page= instead. (Phase 3A alias layer; remove in 3B.)`
+      );
+    }
+
     const searchTerm = (search || "").toLowerCase().trim();
     const useSearch = searchTerm.length >= 2;
 
     // ── Build the Firestore query ───────────────────────────────────────
     //
     // All filters are applied database-side via where() clauses against
-    // pre-stamped fields (search_tokens, brand, department, completion_state,
-    // site_owner). The route returns exactly limitNum items per page and
-    // a real .count() total for the same filter set.
-    //
-    // Firestore restriction: array-contains can be combined with equality
-    // filters but we keep brand/department/site_owner as in-memory predicates
-    // when search is active so we don't need an explosion of composite
-    // indexes covering every combination. Brand/dept/site filtering only
-    // ever happens against the search-token-narrowed candidate set, so
-    // it's bounded.
+    // pre-stamped fields (search_tokens, brand_key, department_key,
+    // completion_state, site_owner). When search is active, brand/dept/
+    // site_owner equality filters run in-memory because the array-contains
+    // + equality combinatoric explosion would require unbounded indexes;
+    // search narrows the candidate set enough that this is bounded.
     let query: admin.firestore.Query = firestore.collection("products");
 
     if (useSearch) {
@@ -135,9 +210,6 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
     if (completion_state && completion_state !== "all") {
       query = query.where("completion_state", "==", completion_state);
     }
-    // Database-side filters when search is NOT active (otherwise composite
-    // index pressure becomes unmanageable; with search they collapse to a
-    // small candidate set we can filter in memory).
     if (!useSearch) {
       // TALLY-PRODUCT-LIST-UX Phase 0.5 — filter on registry-resolved
       // brand_key / department_key (frontend now passes brand_key values).
@@ -146,21 +218,16 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       if (site_owner) query = query.where("site_owner", "==", site_owner);
     }
 
-    query = query.orderBy("first_received_at", "asc");
+    // Phase 3A — dynamic server-side sort. Indexes covering every
+    // (filter set × sort field) combination shipped in commit c0ae5e4.
+    query = query.orderBy(sortField, sortDir as "asc" | "desc");
 
-    if (cursor) {
-      const cursorDoc = await firestore.collection("products").doc(cursor).get();
-      if (cursorDoc.exists) {
-        query = query.startAfter(cursorDoc);
-      }
-    }
-
-    // Fetch limitNum + 1 to detect if there's a next page.
-    // When search is active we may need to oversample because brand/dept/
-    // site filters still run in-memory; in practice the search narrows the
-    // candidate set enough that limitNum * 2 + 25 is plenty.
-    const fetchLimit = useSearch ? limitNum * 2 + 25 : limitNum + 1;
-    const snap = await query.limit(fetchLimit).get();
+    // Phase 3A — offset pagination. Search path still oversamples because
+    // in-memory brand/dept/site filters can drop items post-fetch; a single
+    // page may return fewer than limitNum items when search + filters
+    // combine. (Inherited behavior; not worse than pre-3A cursor path.)
+    const fetchLimit = useSearch ? limitNum * 2 + 25 : limitNum;
+    const snap = await query.offset(offset).limit(fetchLimit).get();
 
     // Load required fields + launch window in parallel
     const [requiredFields, launchWindowDays] = await Promise.all([
@@ -170,10 +237,8 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
 
     // ── Build response items ────────────────────────────────────────────
     const items: any[] = [];
-    let lastFirestoreDocId: string | null = null;
 
     for (const doc of snap.docs) {
-      lastFirestoreDocId = doc.id;
       const data = doc.data();
       const docId = doc.id;
 
@@ -286,43 +351,16 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       if (items.length >= limitNum) break;
     }
 
-    // Sort logic (within the page only — for stable global ordering, sort
-    // database-side via orderBy)
-    if (sort === "priority") {
-      items.sort((a, b) => {
-        if (a.is_high_priority && !b.is_high_priority) return -1;
-        if (!a.is_high_priority && b.is_high_priority) return 1;
-        if (a.is_high_priority && b.is_high_priority) {
-          return (a.launch_days_remaining ?? 999) - (b.launch_days_remaining ?? 999);
-        }
-        const aTime = a.first_received_at ? new Date(a.first_received_at).getTime() : Infinity;
-        const bTime = b.first_received_at ? new Date(b.first_received_at).getTime() : Infinity;
-        return aTime - bTime;
-      });
-    } else if (sort === "first_received") {
-      items.sort((a, b) => {
-        const aTime = a.first_received_at ? new Date(a.first_received_at).getTime() : Infinity;
-        const bTime = b.first_received_at ? new Date(b.first_received_at).getTime() : Infinity;
-        return aTime - bTime;
-      });
-    } else if (sort === "last_modified") {
-      items.sort((a, b) => {
-        const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-        const bTime = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-        return bTime - aTime;
-      });
-    } else if (sort === "completion_pct") {
-      items.sort((a, b) => a.completion_progress.pct - b.completion_progress.pct);
-    }
-
-    // ── Build next_cursor ───────────────────────────────────────────────
-    // If we filled the page (>= limitNum items) AND there are more
-    // Firestore docs after the last one we processed, there's likely more.
-    const next_cursor =
-      items.length >= limitNum && lastFirestoreDocId ? lastFirestoreDocId : null;
+    // Phase 3A — in-memory re-sorts removed. Sort is now applied
+    // server-side via query.orderBy(sortField, sortDir) above. Legacy
+    // priority/first_received/last_modified/completion_pct branches
+    // deleted.
 
     // ── Total count for the same filter set ────────────────────────────
-    // Use Firestore's aggregation .count() which doesn't pull docs.
+    // Firestore .count() aggregation: 1 read regardless of result-set
+    // size, dramatically cheaper than scanning. Mirrors the page query's
+    // filter set exactly so total_count and items align (search-path
+    // in-memory filters are NOT mirrored — see search-path note below).
     let countQuery: admin.firestore.Query = firestore.collection("products");
     if (useSearch) {
       countQuery = countQuery.where("search_tokens", "array-contains", searchTerm);
@@ -347,10 +385,21 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       console.warn("count() failed, falling back to items.length:", countErr);
     }
 
+    const totalPages = limitNum > 0 ? Math.ceil(total / limitNum) : 0;
+
     res.status(200).json({
       items,
+      // Phase 3A canonical pagination contract.
+      total_count: total,
+      page: pageNum,
+      limit: limitNum,
+      total_pages: totalPages,
+      // REMOVE IN PHASE 3B — `total` mirrors total_count for FE
+      // back-compat (ProductListPage reads data.total). next_cursor is
+      // always null now (offset pagination); FE's hasMore evaluates false
+      // → "Load more" hides itself cleanly during the alias window.
       total,
-      next_cursor,
+      next_cursor: null,
     });
   } catch (err: any) {
     console.error("GET /products error:", err);
