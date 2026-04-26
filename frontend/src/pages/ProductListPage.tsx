@@ -15,6 +15,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import HoverImagePreview from "../components/HoverImagePreview";
 import QuickEditPanel from "../components/QuickEditPanel";
+import { SiteBadge } from "../components/SiteBadge";
 
 // TALLY-PRODUCT-LIST-UX Phase 3B — temporal-only sort (PO Ruling Option 1,
 // 2026-04-25). Three sortable columns: First Received, Last Modified,
@@ -756,7 +757,7 @@ export default function ProductListPage() {
                 <td className="px-3 py-2">{p.brand}</td>
                 <td className="px-3 py-2 max-w-[200px] truncate">{p.name}</td>
                 <td className="px-3 py-2">{p.department}</td>
-                <td className="px-3 py-2">{p.site_owner}</td>
+                <td className="px-3 py-2"><SiteBadge siteKey={p.site_owner} registry={siteRegistry} /></td>
                 <td className="px-3 py-2 text-xs text-gray-600">
                   {p.first_received_at ? new Date(p.first_received_at).toLocaleDateString() : "—"}
                 </td>
