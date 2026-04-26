@@ -125,6 +125,46 @@ export async function fetchProducts(params?: Record<string, string>): Promise<Pr
   return res.json();
 }
 
+// Phase 4A — bulk-delete (admin/owner only). Server caps at 100 doc_ids per
+// call; callers must chunk client-side.
+export interface BulkDeleteResultItem {
+  doc_id: string;
+  ok: boolean;
+  mpn?: string;
+  subcollection_counts?: Record<string, number>;
+  error?: string;
+}
+
+export interface BulkDeleteResponse {
+  ok: boolean;
+  bulk_operation_id: string;
+  results: BulkDeleteResultItem[];
+  summary: {
+    total: number;
+    succeeded: number;
+    failed: number;
+  };
+}
+
+export async function bulkDeleteProducts(docIds: string[]): Promise<BulkDeleteResponse> {
+  const res = await fetch(`${BASE}/api/v1/products/bulk-delete`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ doc_ids: docIds }),
+  });
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const j = await res.json();
+      detail = j?.error || JSON.stringify(j);
+    } catch {
+      // ignore
+    }
+    throw new Error(`API ${res.status}${detail ? `: ${detail}` : ""}`);
+  }
+  return res.json();
+}
+
 export interface QueueStats {
   total_incomplete: number;
   completed_today: number;

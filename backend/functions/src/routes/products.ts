@@ -1,5 +1,6 @@
 import { Router, Response } from "express";
 import admin from "firebase-admin";
+import { randomUUID } from "crypto";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
@@ -18,6 +19,10 @@ import {
   computeCompletion,
   stampCompletionOnProduct,
 } from "../services/completionCompute";
+import {
+  cascadeDeleteProduct,
+  PRODUCT_SUBCOLLECTIONS,
+} from "../services/productCascadeDelete";
 
 const router = Router();
 const db = admin.firestore;
@@ -1263,19 +1268,125 @@ router.delete(
 );
 
 // ────────────────────────────────────────────────
-//  DELETE /:mpn — Step 4.2 Amendment B
+//  DELETE /:mpn — Step 4.2 Amendment B (4A: delegates to shared helper).
 //  Cascade-delete a product and all its subcollections.
 //  admin / owner only.
+//  Wire shape preserved verbatim: { ok, mpn, deleted_subcollections }.
+//  PRODUCT_SUBCOLLECTIONS now lives in services/productCascadeDelete.
 // ────────────────────────────────────────────────
-const PRODUCT_SUBCOLLECTIONS = [
-  "attribute_values",
-  "pricing_snapshots",
-  "site_targets",
-  "comments",
-  "site_verification",
-  "content_versions",
-  "audit_log",
-];
+
+// ────────────────────────────────────────────────
+//  POST /bulk-delete — Phase 4A.
+//  Cascade-delete up to 100 products in a single request. Each per-doc
+//  delete reuses the shared cascadeDeleteProduct helper and stamps
+//  bulk_operation_id on its audit_log entry.
+//  Mounted BEFORE /:mpn so the path does not get shadowed.
+//  admin / owner only.
+// ────────────────────────────────────────────────
+router.post(
+  "/bulk-delete",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const body = req.body as { doc_ids?: unknown };
+      const docIds = body?.doc_ids;
+
+      if (!Array.isArray(docIds) || docIds.length === 0) {
+        res.status(400).json({
+          error: "doc_ids must be a non-empty array of strings",
+        });
+        return;
+      }
+      if (docIds.length > 100) {
+        res.status(400).json({
+          error: "bulk-delete cap is 100 doc_ids; chunk the request client-side",
+        });
+        return;
+      }
+      for (const id of docIds) {
+        if (typeof id !== "string" || id.length === 0) {
+          res.status(400).json({
+            error: "each doc_id must be a non-empty string",
+          });
+          return;
+        }
+        if (id.includes("/") || /\s/.test(id)) {
+          res.status(400).json({
+            error: `invalid doc_id "${id}": must not contain '/' or whitespace`,
+          });
+          return;
+        }
+      }
+
+      const bulkOperationId = randomUUID();
+      const actingUser = req.user?.uid || "";
+      const actingRole = (req.user as any)?.role || "";
+
+      const results: Array<{
+        doc_id: string;
+        ok: boolean;
+        mpn?: string;
+        subcollection_counts?: Record<string, number>;
+        error?: string;
+      }> = [];
+      let succeeded = 0;
+      let failed = 0;
+
+      for (const docId of docIds as string[]) {
+        try {
+          const r = await cascadeDeleteProduct(
+            docId,
+            actingUser,
+            actingRole,
+            bulkOperationId
+          );
+          if (r.ok) {
+            succeeded++;
+            results.push({
+              doc_id: docId,
+              ok: true,
+              mpn: r.mpn,
+              subcollection_counts: r.subcollection_counts,
+            });
+          } else {
+            failed++;
+            results.push({
+              doc_id: docId,
+              ok: false,
+              error: "product not found",
+            });
+          }
+        } catch (e: any) {
+          failed++;
+          console.error(
+            `[bulk-delete] error on docId=${docId} bulk=${bulkOperationId}:`,
+            e
+          );
+          results.push({
+            doc_id: docId,
+            ok: false,
+            error: e?.message || "cascade delete failed",
+          });
+        }
+      }
+
+      res.status(200).json({
+        ok: true,
+        bulk_operation_id: bulkOperationId,
+        results,
+        summary: {
+          total: docIds.length,
+          succeeded,
+          failed,
+        },
+      });
+    } catch (err: any) {
+      console.error("POST /products/bulk-delete error:", err);
+      res.status(500).json({ error: err?.message || "bulk-delete failed" });
+    }
+  }
+);
 
 router.delete(
   "/:mpn",
@@ -1285,51 +1396,21 @@ router.delete(
     try {
       const { mpn } = req.params;
       const docId = mpnToDocId(mpn);
-      const productRef = admin.firestore().collection("products").doc(docId);
-      const snap = await productRef.get();
-      if (!snap.exists) {
+      const actingUser = req.user?.uid || "";
+      const actingRole = (req.user as any)?.role || "";
+
+      const result = await cascadeDeleteProduct(docId, actingUser, actingRole);
+      if (!result.ok) {
         res.status(404).json({ error: "Product not found" });
         return;
       }
 
-      for (const subcol of PRODUCT_SUBCOLLECTIONS) {
-        const subSnap = await productRef.collection(subcol).get();
-        if (!subSnap.empty) {
-          // Firestore batch limit is 500 writes
-          const chunks: FirebaseFirestore.QueryDocumentSnapshot[][] = [];
-          for (let i = 0; i < subSnap.docs.length; i += 400) {
-            chunks.push(subSnap.docs.slice(i, i + 400));
-          }
-          for (const chunk of chunks) {
-            const batch = admin.firestore().batch();
-            chunk.forEach((d) => batch.delete(d.ref));
-            await batch.commit();
-          }
-          console.log(
-            `[product-delete] purged ${subSnap.size} from ${docId}/${subcol}`
-          );
-        }
-      }
-
-      await productRef.delete();
-
-      await admin
-        .firestore()
-        .collection("audit_log")
-        .add({
-          event_type: "product_deleted",
-          product_mpn: mpn,
-          product_doc_id: docId,
-          acting_user: req.user?.uid || null,
-          acting_role: (req.user as any)?.role || null,
-          created_at: admin.firestore.FieldValue.serverTimestamp(),
-          note: "Hard delete — all subcollections purged",
-        });
-
+      // Wire shape preserved verbatim from pre-4A:
+      //   { ok: true, mpn, deleted_subcollections: string[] }
       res.json({
         ok: true,
         mpn,
-        deleted_subcollections: PRODUCT_SUBCOLLECTIONS,
+        deleted_subcollections: PRODUCT_SUBCOLLECTIONS as unknown as string[],
       });
     } catch (err: any) {
       console.error("DELETE /products/:mpn error:", err);
