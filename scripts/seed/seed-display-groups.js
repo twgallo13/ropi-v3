@@ -113,9 +113,7 @@ const DISPLAY_GROUPS = {
   "Media": [
     ["primary_image_url", 1],
     ["image_urls",        2, true],
-    ["video_url",         3],
-    ["thumbnail_url",     4],
-    ["media_count",       5],
+    ["media_count",       3],
   ],
   "Visibility": [
     ["is_visible",   1],
