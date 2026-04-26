@@ -106,24 +106,12 @@ async function getSiteOwner(
 //   - Removes legacy in-memory re-sorts (priority / first_received /
 //     last_modified / completion_pct). All sorting is now server-side.
 //
-// Transitional alias layer (REMOVE IN PHASE 3B once frontend migrates):
-//   Frontend ProductListPage still emits legacy sort tokens
-//   (first_received, last_modified, completion_pct) and pages via &cursor.
-//   Without translation, Phase 3A's strict allowlist would 400 the very
-//   first list call (default `sort=last_modified`) and break /products on
-//   deploy. Aliases below translate legacy tokens before the allowlist
-//   check; ?cursor is accepted-and-ignored with a deprecation log.
-
-// REMOVE IN PHASE 3B — legacy frontend sort tokens and their default
-// directions. FE will be migrated to send canonical fields directly.
-const SORT_ALIASES: Record<string, { sort: string; defaultDir: "asc" | "desc" }> = {
-  // REMOVE IN PHASE 3B
-  last_modified:  { sort: "updated_at",         defaultDir: "desc" },
-  // REMOVE IN PHASE 3B
-  first_received: { sort: "first_received_at",  defaultDir: "asc"  },
-  // REMOVE IN PHASE 3B
-  completion_pct: { sort: "completion_percent", defaultDir: "asc"  },
-};
+// TALLY-PRODUCT-LIST-UX Phase 3B (2026-04-26) — the transitional alias
+// layer that translated legacy FE tokens (last_modified / first_received /
+// completion_pct) and accepted-and-ignored ?cursor has been removed. FE
+// (ProductListPage + CompletionQueuePage) now emits canonical sort fields
+// (updated_at / first_received_at / completion_percent) and pages via
+// ?page= offsets.
 
 const SORT_ALLOWLIST = new Set([
   "mpn",
@@ -150,23 +138,15 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       dir: dirRaw,
       limit: limitStr = "25",
       page: pageStr = "1",
-      cursor,
     } = req.query as Record<string, string | undefined>;
 
-    // ── Sort + dir resolution (with REMOVE-IN-PHASE-3B alias layer) ─────
-    let sortField = sortRaw;
-    let sortDir: string | undefined = dirRaw;
-    if (SORT_ALIASES[sortRaw]) {
-      // REMOVE IN PHASE 3B — translate legacy token, FE-supplied dir wins
-      const alias = SORT_ALIASES[sortRaw];
-      sortField = alias.sort;
-      if (!sortDir) sortDir = alias.defaultDir;
-    }
-    if (!sortDir) sortDir = "asc";
+    // ── Sort + dir resolution (Phase 3B — strict allowlist, no aliases) ─
+    const sortField = sortRaw;
+    const sortDir: string = dirRaw || "asc";
 
     if (!SORT_ALLOWLIST.has(sortField)) {
       res.status(400).json({
-        error: `Invalid sort field "${sortRaw}". Allowed: ${[...SORT_ALLOWLIST].join(", ")} (or legacy aliases: ${Object.keys(SORT_ALIASES).join(", ")})`,
+        error: `Invalid sort field "${sortRaw}". Allowed: ${[...SORT_ALLOWLIST].join(", ")}`,
       });
       return;
     }
@@ -181,15 +161,6 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
     const limitNum = Math.min(Math.max(parseInt(limitStr || "25", 10) || 25, 1), 100);
     const pageNum = Math.max(parseInt(pageStr || "1", 10) || 1, 1);
     const offset = (pageNum - 1) * limitNum;
-
-    // REMOVE IN PHASE 3B — accept ?cursor for FE back-compat, ignore it,
-    // log once per request. Response always returns next_cursor: null so
-    // FE's hasMore evaluates false → "Load more" hides itself cleanly.
-    if (cursor) {
-      console.warn(
-        `[products] DEPRECATED: ?cursor=${cursor} ignored — use ?page= instead. (Phase 3A alias layer; remove in 3B.)`
-      );
-    }
 
     const searchTerm = (search || "").toLowerCase().trim();
     const useSearch = searchTerm.length >= 2;
@@ -394,12 +365,6 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       page: pageNum,
       limit: limitNum,
       total_pages: totalPages,
-      // REMOVE IN PHASE 3B — `total` mirrors total_count for FE
-      // back-compat (ProductListPage reads data.total). next_cursor is
-      // always null now (offset pagination); FE's hasMore evaluates false
-      // → "Load more" hides itself cleanly during the alias window.
-      total,
-      next_cursor: null,
     });
   } catch (err: any) {
     console.error("GET /products error:", err);
