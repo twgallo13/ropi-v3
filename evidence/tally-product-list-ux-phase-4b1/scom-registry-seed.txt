@@ -1,0 +1,21 @@
+Project: ropi-aoss-dev
+Collection: attribute_registry
+Targets: scom, scom_sale
+
+=== READ-BEFORE ===
+scom: exists=false
+scom_sale: exists=false
+
+=== WRITE ===
+scom: written
+scom_sale: written
+
+=== READ-AFTER ===
+scom: pass=true
+  checks={"exists":true,"field_type_number":true,"active_true":true,"destination_tab_product_attributes":true}
+  data={"display_order":19,"active":true,"created_at":{"_seconds":1777230190,"_nanoseconds":571000000},"display_group":"Pricing","dropdown_options":[],"required_for_completion":false,"display_label":"Web Regular Price (SCOM)","destination_tab":"product_attributes","field_key":"scom","export_enabled":true,"include_in_ai_prompt":false,"field_type":"number","include_in_cadence_targeting":false}
+scom_sale: pass=true
+  checks={"exists":true,"field_type_number":true,"active_true":true,"destination_tab_product_attributes":true}
+  data={"display_order":20,"active":true,"created_at":{"_seconds":1777230190,"_nanoseconds":713000000},"display_group":"Pricing","dropdown_options":[],"required_for_completion":false,"display_label":"Web Sale Price (SCOM Sale)","destination_tab":"product_attributes","field_key":"scom_sale","export_enabled":true,"include_in_ai_prompt":false,"field_type":"number","include_in_cadence_targeting":false}
+
+All assertions passed.

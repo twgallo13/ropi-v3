@@ -8,35 +8,70 @@ import {
   type SiteRegistryEntry,
 } from "../lib/api";
 
-// TALLY-PRODUCT-LIST-UX Phase 4B — Quick Edit per-row side panel.
+// TALLY-PRODUCT-LIST-UX Phase 4B.1 — Quick Edit per-row side panel.
 //
-// Six fields, in order:
-//   1. product_name    (text)
-//   2. brand           (dropdown: brand_registry active)
-//   3. department      (dropdown: department_registry active)
-//   4. site_owner      (dropdown: site_registry active)
-//   5. short_description (textarea ~3 rows)
-//   6. long_description  (textarea ~8 rows)
+// PO Ruling 4B.1 (2026-04-25): supersedes the original 4B field set.
+// short_description + long_description REMOVED; SCOM/SCOM Sale +
+// standard/expedited shipping overrides ADDED. RICS Price was dropped
+// (moved to TALLY-RICS-PRICE-EDIT-GOVERNANCE).
+//
+// Eight fields, in render order, grouped by section divider:
+//   Identity:
+//     1. product_name              (text)
+//     2. brand                     (dropdown: brand_registry active)
+//     3. department                (dropdown: department_registry active)
+//     4. site_owner                (dropdown: site_registry active)
+//   Pricing:
+//     5. scom                      (number, $ prefix)
+//     6. scom_sale                 (number, $ prefix)
+//   Shipping:
+//     7. standard_shipping_override  (number, $ prefix)
+//     8. expedited_shipping_override (number, $ prefix)
 //
 // Pre-populates from a single GET /api/v1/products/:mpn — the response's
 // attribute_values map already contains every field's current value.
+// Numeric stored values come back as numbers; readAttrValue coerces to
+// String() for the input; saveField re-coerces on the way out (see below).
 //
 // Save semantics (Frink defect 4): SEQUENTIAL await per dirty field, NOT
 // Promise.all. The backend's per-field POST writes attribute_values +
 // root mirror + audit_log; running concurrently would race the audit log
 // and could double-fire the search_tokens reindex.
+//
+// Empty-input handling on save (4B.1):
+//   * scom / scom_sale empty             → 0 (number)
+//       — matches existing handler's `Number(finalValue) || 0` pattern
+//         and keeps the root.scom mirror + queueForPricingExport semantics
+//         well-defined (TALLY-107 era).
+//   * shipping_override empty            → null
+//       — semantically "no override", and there is no root mirror /
+//         downstream consumer to break.
+//   * non-empty                          → parseFloat → number
+
+type SectionLabel = "Identity" | "Pricing" | "Shipping";
 
 const FIELDS: Array<{
-  key: "product_name" | "brand" | "department" | "site_owner" | "short_description" | "long_description";
+  key:
+    | "product_name"
+    | "brand"
+    | "department"
+    | "site_owner"
+    | "scom"
+    | "scom_sale"
+    | "standard_shipping_override"
+    | "expedited_shipping_override";
   label: string;
-  kind: "text" | "brand" | "department" | "site" | "textarea-short" | "textarea-long";
+  kind: "text" | "brand" | "department" | "site" | "number";
+  section: SectionLabel;
 }> = [
-  { key: "product_name", label: "Name", kind: "text" },
-  { key: "brand", label: "Brand", kind: "brand" },
-  { key: "department", label: "Department", kind: "department" },
-  { key: "site_owner", label: "Site Owner", kind: "site" },
-  { key: "short_description", label: "Short Description", kind: "textarea-short" },
-  { key: "long_description", label: "Long Description", kind: "textarea-long" },
+  { key: "product_name", label: "Name", kind: "text", section: "Identity" },
+  { key: "brand", label: "Brand", kind: "brand", section: "Identity" },
+  { key: "department", label: "Department", kind: "department", section: "Identity" },
+  { key: "site_owner", label: "Site Owner", kind: "site", section: "Identity" },
+  { key: "scom", label: "SCOM Price", kind: "number", section: "Pricing" },
+  { key: "scom_sale", label: "SCOM Sale Price", kind: "number", section: "Pricing" },
+  { key: "standard_shipping_override", label: "Standard Shipping Override", kind: "number", section: "Shipping" },
+  { key: "expedited_shipping_override", label: "Expedited Shipping Override", kind: "number", section: "Shipping" },
 ];
 
 type FieldKey = (typeof FIELDS)[number]["key"];
@@ -48,9 +83,29 @@ const EMPTY_VALUES: Values = {
   brand: "",
   department: "",
   site_owner: "",
-  short_description: "",
-  long_description: "",
+  scom: "",
+  scom_sale: "",
+  standard_shipping_override: "",
+  expedited_shipping_override: "",
 };
+
+// Coerce a Quick Edit string value into the wire payload for saveField.
+// See "Empty-input handling" comment above.
+function coerceForSave(key: FieldKey, raw: string): unknown {
+  if (key === "scom" || key === "scom_sale") {
+    const t = (raw || "").trim();
+    if (t === "") return 0;
+    const n = parseFloat(t);
+    return Number.isFinite(n) ? n : 0;
+  }
+  if (key === "standard_shipping_override" || key === "expedited_shipping_override") {
+    const t = (raw || "").trim();
+    if (t === "") return null;
+    const n = parseFloat(t);
+    return Number.isFinite(n) ? n : null;
+  }
+  return raw;
+}
 
 function readAttrValue(detail: ProductDetail, key: FieldKey): string {
   const av = detail.attribute_values?.[key];
@@ -102,8 +157,10 @@ export default function QuickEditPanel({
           brand: readAttrValue(detail, "brand"),
           department: readAttrValue(detail, "department"),
           site_owner: readAttrValue(detail, "site_owner"),
-          short_description: readAttrValue(detail, "short_description"),
-          long_description: readAttrValue(detail, "long_description"),
+          scom: readAttrValue(detail, "scom"),
+          scom_sale: readAttrValue(detail, "scom_sale"),
+          standard_shipping_override: readAttrValue(detail, "standard_shipping_override"),
+          expedited_shipping_override: readAttrValue(detail, "expedited_shipping_override"),
         };
         setOriginal(next);
         setValues(next);
@@ -156,7 +213,7 @@ export default function QuickEditPanel({
       const key = dirtyKeys[i];
       setSaveProgress({ idx: i + 1, of: dirtyKeys.length });
       try {
-        await saveField(mpn, key, values[key]);
+        await saveField(mpn, key, coerceForSave(key, values[key]));
         succeeded += 1;
       } catch (err: any) {
         if (err?.status === 404 || /not found/i.test(err?.error || "")) {
@@ -217,26 +274,24 @@ export default function QuickEditPanel({
         />
       );
     }
-    if (field.kind === "textarea-short") {
+    if (field.kind === "number") {
+      // HTML min="0" prevents negative entry in-browser. Backend has no
+      // negative-value enforcement on these fields today; accepted risk for 4B.1.
       return (
-        <textarea
-          className={baseCls}
-          rows={3}
-          value={v}
-          onChange={(e) => setField(field.key, e.target.value)}
-          disabled={saving}
-        />
-      );
-    }
-    if (field.kind === "textarea-long") {
-      return (
-        <textarea
-          className={baseCls}
-          rows={8}
-          value={v}
-          onChange={(e) => setField(field.key, e.target.value)}
-          disabled={saving}
-        />
+        <div className="relative">
+          <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-sm text-gray-500">$</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            className={`${baseCls} pl-5`}
+            value={v}
+            placeholder="0.00"
+            onChange={(e) => setField(field.key, e.target.value)}
+            disabled={saving}
+          />
+        </div>
       );
     }
     if (field.kind === "brand") {
@@ -350,20 +405,32 @@ export default function QuickEditPanel({
           )}
           {!loading && !loadError && !productGone && (
             <>
-              {FIELDS.map((f) => (
-                <label key={f.key} className="block">
-                  <span className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {f.label}
-                    {dirtyKeys.includes(f.key) && (
-                      <span className="ml-2 text-yellow-600">• unsaved</span>
+              {FIELDS.map((f, i) => {
+                const showSectionHeader = i === 0 || FIELDS[i - 1].section !== f.section;
+                return (
+                  <div key={f.key}>
+                    {showSectionHeader && (
+                      <div className={i === 0 ? "mb-2" : "mt-4 mb-2 pt-3 border-t border-gray-200 dark:border-gray-700"}>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          {f.section}
+                        </div>
+                      </div>
                     )}
-                  </span>
-                  {renderInput(f)}
-                  {fieldErrors[f.key] && (
-                    <span className="block text-xs text-red-600 mt-1">{fieldErrors[f.key]}</span>
-                  )}
-                </label>
-              ))}
+                    <label className="block">
+                      <span className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {f.label}
+                        {dirtyKeys.includes(f.key) && (
+                          <span className="ml-2 text-yellow-600">• unsaved</span>
+                        )}
+                      </span>
+                      {renderInput(f)}
+                      {fieldErrors[f.key] && (
+                        <span className="block text-xs text-red-600 mt-1">{fieldErrors[f.key]}</span>
+                      )}
+                    </label>
+                  </div>
+                );
+              })}
             </>
           )}
         </div>
