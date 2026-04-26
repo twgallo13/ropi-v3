@@ -48,8 +48,11 @@ export interface ProductListItem {
 
 export interface ProductListResponse {
   items: ProductListItem[];
-  total: number;
-  next_cursor: string | null;
+  // Phase 3B canonical pagination contract (3A alias layer removed):
+  total_count: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
 export interface ProductDetail extends ProductListItem {

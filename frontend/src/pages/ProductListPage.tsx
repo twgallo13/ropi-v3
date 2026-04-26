@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   fetchProducts,
   fetchSiteRegistry,
@@ -13,31 +13,91 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import HoverImagePreview from "../components/HoverImagePreview";
 
-type SortKey = "first_received" | "last_modified" | "completion_pct";
+// TALLY-PRODUCT-LIST-UX Phase 3B — temporal-only sort (PO Ruling Option 1,
+// 2026-04-25). Three sortable columns: First Received, Last Modified,
+// Completion %. MPN/Brand/Department/Site render as plain text headers.
+// Sort tokens are now canonical (3A backend alias layer removed in 3B).
+type SortKey = "first_received_at" | "updated_at" | "completion_percent";
+type SortDir = "asc" | "desc";
+
+const SORT_DEFAULT_DIR: Record<SortKey, SortDir> = {
+  first_received_at: "asc",
+  updated_at: "desc",
+  completion_percent: "desc",
+};
+const SORT_LABEL: Record<SortKey, string> = {
+  first_received_at: "First Received",
+  updated_at: "Last Modified",
+  completion_percent: "Completion %",
+};
+const SORTABLE_KEYS: SortKey[] = ["first_received_at", "updated_at", "completion_percent"];
 
 const DEFAULT_FILTERS = {
   completion_state: "",
   site_owner: "",
-  brand: "",
-  department: "",
+  brand_key: "",
+  department_key: "",
   search: "",
 };
-const DEFAULT_SORT: SortKey = "last_modified";
-const PAGE_SIZE = 25;
+const DEFAULT_SORT: SortKey = "updated_at";
+const DEFAULT_DIR: SortDir = SORT_DEFAULT_DIR[DEFAULT_SORT];
+const DEFAULT_PAGE_SIZE = 25;
+const PAGE_SIZE_OPTIONS = [25, 50, 100];
 
 export default function ProductListPage() {
   const { role } = useAuth();
   const isExport = role === "admin" || role === "owner" || role === "head_buyer";
 
+  // ── URL state (Phase 3B) ────────────────────────────────────────────
+  // page, sort, dir, brand_key, department_key, completion_state,
+  // site_owner, search live in the URL via useSearchParams. Browser
+  // back/forward + bookmarking now naturally restore list state.
+  // Mirrors AdminSettingsPage pattern.
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const sort: SortKey = (() => {
+    const v = searchParams.get("sort");
+    return SORTABLE_KEYS.includes(v as SortKey) ? (v as SortKey) : DEFAULT_SORT;
+  })();
+  const dir: SortDir = searchParams.get("dir") === "asc" ? "asc" : searchParams.get("dir") === "desc" ? "desc" : DEFAULT_DIR;
+  const page: number = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
+  const pageSize: number = (() => {
+    const v = parseInt(searchParams.get("page_size") || "", 10);
+    return PAGE_SIZE_OPTIONS.includes(v) ? v : DEFAULT_PAGE_SIZE;
+  })();
+  const filters = useMemo(
+    () => ({
+      completion_state: searchParams.get("completion_state") || "",
+      site_owner: searchParams.get("site_owner") || "",
+      brand_key: searchParams.get("brand_key") || "",
+      department_key: searchParams.get("department_key") || "",
+      search: searchParams.get("search") || "",
+    }),
+    [searchParams]
+  );
+
+  // updateParams: merge URL param patch; resetPage=true bumps to page=1.
+  // Empty/null values strip the key. Single source of state mutation.
+  const updateParams = useCallback(
+    (patch: Record<string, string | number | null | undefined>, resetPage = false) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v === null || v === undefined || v === "") next.delete(k);
+          else next.set(k, String(v));
+        }
+        if (resetPage) next.delete("page");
+        return next;
+      }, { replace: false });
+    },
+    [setSearchParams]
+  );
+
   const [items, setItems] = useState<ProductListItem[]>([]);
-  const [total, setTotal] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
-  const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
   const [siteRegistryError, setSiteRegistryError] = useState(false);
   const [siteRegistryLoaded, setSiteRegistryLoaded] = useState(false);
@@ -121,19 +181,22 @@ export default function ProductListPage() {
       .finally(() => setDepartmentRegistryLoaded(true));
   }, []);
 
-  const buildParams = useCallback(
-    (pageCursor?: string | null): Record<string, string> => {
-      const params: Record<string, string> = { sort, limit: String(PAGE_SIZE) };
-      if (filters.completion_state) params.completion_state = filters.completion_state;
-      if (filters.site_owner) params.site_owner = filters.site_owner;
-      if (filters.brand) params.brand = filters.brand;
-      if (filters.department) params.department = filters.department;
-      if (filters.search) params.search = filters.search;
-      if (pageCursor) params.cursor = pageCursor;
-      return params;
-    },
-    [sort, filters]
-  );
+  const buildParams = useCallback((): Record<string, string> => {
+    const params: Record<string, string> = {
+      sort,
+      dir,
+      limit: String(pageSize),
+      page: String(page),
+    };
+    if (filters.completion_state) params.completion_state = filters.completion_state;
+    if (filters.site_owner) params.site_owner = filters.site_owner;
+    // Backend still accepts the wire-level keys `brand` / `department`
+    // (canonical fields are brand_key/department_key on the document).
+    if (filters.brand_key) params.brand = filters.brand_key;
+    if (filters.department_key) params.department = filters.department_key;
+    if (filters.search) params.search = filters.search;
+    return params;
+  }, [sort, dir, page, pageSize, filters]);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,9 +206,8 @@ export default function ProductListPage() {
       .then((data) => {
         if (cancelled) return;
         setItems(data.items);
-        setTotal(data.total);
-        setCursor(data.next_cursor || null);
-        setHasMore(!!data.next_cursor);
+        setTotalCount(data.total_count);
+        setTotalPages(data.total_pages);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -157,31 +219,28 @@ export default function ProductListPage() {
     return () => { cancelled = true; };
   }, [buildParams]);
 
-  async function loadMore() {
-    if (!cursor || loadingMore) return;
-    setLoadingMore(true);
-    setError("");
-    try {
-      const data = await fetchProducts(buildParams(cursor));
-      setItems((prev) => [...prev, ...data.items]);
-      setCursor(data.next_cursor || null);
-      setHasMore(!!data.next_cursor);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load more");
-    } finally {
-      setLoadingMore(false);
+  // ── Sort header click handler (Phase 3B) ────────────────────────────
+  // Same column → flip dir. Different column → set to that column's
+  // configured default dir. Always resets to page 1.
+  const handleSortClick = useCallback((key: SortKey) => {
+    if (key === sort) {
+      updateParams({ dir: dir === "asc" ? "desc" : "asc" }, true);
+    } else {
+      updateParams({ sort: key, dir: SORT_DEFAULT_DIR[key] }, true);
     }
-  }
+  }, [sort, dir, updateParams]);
 
   const filtersDirty =
     sort !== DEFAULT_SORT ||
+    dir !== DEFAULT_DIR ||
+    page !== 1 ||
+    pageSize !== DEFAULT_PAGE_SIZE ||
     (Object.keys(DEFAULT_FILTERS) as Array<keyof typeof DEFAULT_FILTERS>).some(
       (k) => filters[k] !== DEFAULT_FILTERS[k]
     );
 
   function resetFilters() {
-    setSort(DEFAULT_SORT);
-    setFilters(DEFAULT_FILTERS);
+    setSearchParams(new URLSearchParams(), { replace: false });
   }
 
   function exportCsv() {
@@ -220,14 +279,14 @@ export default function ProductListPage() {
           type="text"
           placeholder="Search MPN / name / brand…"
           value={filters.search}
-          onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+          onChange={(e) => updateParams({ search: e.target.value }, true)}
           className="border rounded px-3 py-1.5 text-sm w-56"
         />
 
         <div className="flex flex-col">
           <select
-            value={filters.brand}
-            onChange={(e) => setFilters((p) => ({ ...p, brand: e.target.value }))}
+            value={filters.brand_key}
+            onChange={(e) => updateParams({ brand_key: e.target.value }, true)}
             disabled={brandRegistryError || (brandRegistryLoaded && brandRegistry.length === 0)}
             className="border rounded px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
             title={
@@ -242,10 +301,10 @@ export default function ProductListPage() {
             {brandRegistry.map((b) => (
               <option key={b.brand_key} value={b.brand_key}>{b.display_name}</option>
             ))}
-            {filters.brand &&
-              !brandRegistry.some((b) => b.brand_key === filters.brand) && (
-                <option value={filters.brand}>
-                  {filters.brand} (inactive)
+            {filters.brand_key &&
+              !brandRegistry.some((b) => b.brand_key === filters.brand_key) && (
+                <option value={filters.brand_key}>
+                  {filters.brand_key} (inactive)
                 </option>
               )}
           </select>
@@ -261,8 +320,8 @@ export default function ProductListPage() {
 
         <div className="flex flex-col">
           <select
-            value={filters.department}
-            onChange={(e) => setFilters((p) => ({ ...p, department: e.target.value }))}
+            value={filters.department_key}
+            onChange={(e) => updateParams({ department_key: e.target.value }, true)}
             disabled={departmentRegistryError || (departmentRegistryLoaded && departmentRegistry.length === 0)}
             className="border rounded px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
             title={
@@ -277,10 +336,10 @@ export default function ProductListPage() {
             {departmentRegistry.map((d) => (
               <option key={d.key} value={d.key}>{d.display_name}</option>
             ))}
-            {filters.department &&
-              !departmentRegistry.some((d) => d.key === filters.department) && (
-                <option value={filters.department}>
-                  {filters.department} (inactive)
+            {filters.department_key &&
+              !departmentRegistry.some((d) => d.key === filters.department_key) && (
+                <option value={filters.department_key}>
+                  {filters.department_key} (inactive)
                 </option>
               )}
           </select>
@@ -297,7 +356,7 @@ export default function ProductListPage() {
         <div className="flex flex-col">
           <select
             value={filters.site_owner}
-            onChange={(e) => setFilters((p) => ({ ...p, site_owner: e.target.value }))}
+            onChange={(e) => updateParams({ site_owner: e.target.value }, true)}
             disabled={siteRegistryError || (siteRegistryLoaded && siteRegistry.length === 0)}
             className="border rounded px-3 py-1.5 text-sm disabled:bg-gray-100 disabled:text-gray-400"
             title={
@@ -331,7 +390,7 @@ export default function ProductListPage() {
 
         <select
           value={filters.completion_state}
-          onChange={(e) => setFilters((p) => ({ ...p, completion_state: e.target.value }))}
+          onChange={(e) => updateParams({ completion_state: e.target.value }, true)}
           className="border rounded px-3 py-1.5 text-sm"
         >
           <option value="">All Statuses</option>
@@ -339,15 +398,8 @@ export default function ProductListPage() {
           <option value="complete">Complete</option>
         </select>
 
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          className="border rounded px-3 py-1.5 text-sm"
-        >
-          <option value="last_modified">Last Modified</option>
-          <option value="first_received">First Received</option>
-          <option value="completion_pct">Completion %</option>
-        </select>
+        {/* Phase 3B \u2014 sort dropdown removed; sort is now header-driven
+            (temporal-only per PO Ruling Option 1, 2026-04-25). */}
 
         {filtersDirty && (
           <button
@@ -364,7 +416,9 @@ export default function ProductListPage() {
       <p className="text-sm text-gray-500 mb-3">
         {loading
           ? "Loading…"
-          : `Showing ${items.length} of ${total} product${total === 1 ? "" : "s"}`}
+          : totalCount === 0
+            ? "Showing 0 products"
+            : `Showing ${(page - 1) * pageSize + 1}-${(page - 1) * pageSize + items.length} of ${totalCount} product${totalCount === 1 ? "" : "s"}`}
       </p>
 
       {error && <p className="text-red-600 mb-3">{error}</p>}
@@ -372,14 +426,24 @@ export default function ProductListPage() {
       {/* Table */}
       <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-800 text-left">
+          {/* Phase 3B \u2014 sticky header (z-10). HoverImagePreview is z-50
+              so the popup still renders above the sticky row. */}
+          <thead className="bg-gray-50 dark:bg-gray-800 text-left sticky top-0 z-10">
             <tr>
               <th className="px-3 py-2 font-medium">MPN</th>
               <th className="px-3 py-2 font-medium">Brand</th>
               <th className="px-3 py-2 font-medium">Name</th>
               <th className="px-3 py-2 font-medium">Department</th>
               <th className="px-3 py-2 font-medium">Site</th>
-              <th className="px-3 py-2 font-medium">Completion</th>
+              <SortableHeader sortKey="first_received_at" activeSort={sort} activeDir={dir} onClick={handleSortClick}>
+                First Received
+              </SortableHeader>
+              <SortableHeader sortKey="updated_at" activeSort={sort} activeDir={dir} onClick={handleSortClick}>
+                Last Modified
+              </SortableHeader>
+              <SortableHeader sortKey="completion_percent" activeSort={sort} activeDir={dir} onClick={handleSortClick}>
+                Completion %
+              </SortableHeader>
               <th className="px-3 py-2 font-medium">Image</th>
             </tr>
           </thead>
@@ -413,6 +477,12 @@ export default function ProductListPage() {
                 <td className="px-3 py-2 max-w-[200px] truncate">{p.name}</td>
                 <td className="px-3 py-2">{p.department}</td>
                 <td className="px-3 py-2">{p.site_owner}</td>
+                <td className="px-3 py-2 text-xs text-gray-600">
+                  {p.first_received_at ? new Date(p.first_received_at).toLocaleDateString() : "—"}
+                </td>
+                <td className="px-3 py-2 text-xs text-gray-600">
+                  {p.updated_at ? new Date(p.updated_at).toLocaleDateString() : "—"}
+                </td>
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -443,17 +513,99 @@ export default function ProductListPage() {
         </table>
       </div>
 
-      {/* Load more */}
-      {hasMore && (
-        <button
-          type="button"
-          onClick={loadMore}
-          disabled={loadingMore}
-          className="mt-4 w-full py-2 border rounded text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-        >
-          {loadingMore ? "Loading…" : "Load more products"}
-        </button>
-      )}
+      {/* Pagination (Phase 3B) */}
+      <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600">Rows per page:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => updateParams({ page_size: e.target.value }, true)}
+            className="border rounded px-2 py-1 text-sm"
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => updateParams({ page: 1 })}
+            disabled={page <= 1 || loading}
+            className="px-2 py-1 border rounded text-sm disabled:opacity-40"
+          >
+            «
+          </button>
+          <button
+            type="button"
+            onClick={() => updateParams({ page: Math.max(1, page - 1) })}
+            disabled={page <= 1 || loading}
+            className="px-2 py-1 border rounded text-sm disabled:opacity-40"
+          >
+            ‹ Prev
+          </button>
+          <span className="px-2 text-gray-600">
+            Page {page} of {Math.max(1, totalPages)}
+          </span>
+          <button
+            type="button"
+            onClick={() => updateParams({ page: page + 1 })}
+            disabled={page >= totalPages || loading}
+            className="px-2 py-1 border rounded text-sm disabled:opacity-40"
+          >
+            Next ›
+          </button>
+          <button
+            type="button"
+            onClick={() => updateParams({ page: totalPages })}
+            disabled={page >= totalPages || loading}
+            className="px-2 py-1 border rounded text-sm disabled:opacity-40"
+          >
+            »
+          </button>
+        </div>
+      </div>
     </div>
+  );
+}
+
+// ── SortableHeader (Phase 3B) ──────────────────────────────────────────
+// Temporal-only sortable column header (PO Ruling Option 1, 2026-04-25).
+// Renders as a button-styled <th> with arrow indicator when active.
+function SortableHeader({
+  sortKey,
+  activeSort,
+  activeDir,
+  onClick,
+  children,
+}: {
+  sortKey: SortKey;
+  activeSort: SortKey;
+  activeDir: SortDir;
+  onClick: (key: SortKey) => void;
+  children: React.ReactNode;
+}) {
+  const isActive = activeSort === sortKey;
+  const arrow = isActive ? (activeDir === "asc" ? "↑" : "↓") : "↕";
+  return (
+    <th
+      role="button"
+      tabIndex={0}
+      aria-sort={isActive ? (activeDir === "asc" ? "ascending" : "descending") : "none"}
+      onClick={() => onClick(sortKey)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(sortKey);
+        }
+      }}
+      className="px-3 py-2 font-medium cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700"
+      title={`Sort by ${SORT_LABEL[sortKey]}`}
+    >
+      <span className="inline-flex items-center gap-1">
+        {children}
+        <span className={`text-xs ${isActive ? "text-blue-600" : "text-gray-300"}`}>{arrow}</span>
+      </span>
+    </th>
   );
 }

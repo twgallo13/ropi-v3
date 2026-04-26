@@ -32,7 +32,7 @@ function siteBadge(
   );
 }
 
-type SortKey = "priority" | "first_received" | "last_modified" | "completion_pct";
+type SortKey = "priority" | "first_received_at" | "updated_at" | "completion_percent";
 
 const DEFAULT_FILTERS = {
   completion_state: "incomplete",
@@ -50,12 +50,9 @@ export default function CompletionQueuePage() {
   const [items, setItems] = useState<ProductListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [sort, setSort] = useState<SortKey>(DEFAULT_SORT);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [activeTab, setActiveTab] = useState<"queue" | "history">("queue");
   const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
@@ -90,14 +87,13 @@ export default function CompletionQueuePage() {
   }, []);
 
   const buildParams = useCallback(
-    (pageCursor?: string | null): Record<string, string> => {
+    (): Record<string, string> => {
       const params: Record<string, string> = { sort, limit: String(PAGE_SIZE) };
       if (filters.completion_state) params.completion_state = filters.completion_state;
       if (filters.site_owner) params.site_owner = filters.site_owner;
       if (filters.brand) params.brand = filters.brand;
       if (filters.department) params.department = filters.department;
       if (filters.search) params.search = filters.search;
-      if (pageCursor) params.cursor = pageCursor;
       return params;
     },
     [sort, filters]
@@ -112,9 +108,7 @@ export default function CompletionQueuePage() {
       .then((data) => {
         if (cancelled) return;
         setItems(data.items);
-        setTotal(data.total);
-        setCursor(data.next_cursor || null);
-        setHasMore(!!data.next_cursor);
+        setTotal(data.total_count);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -127,22 +121,6 @@ export default function CompletionQueuePage() {
       cancelled = true;
     };
   }, [buildParams]);
-
-  async function loadMore() {
-    if (!cursor || loadingMore) return;
-    setLoadingMore(true);
-    setError("");
-    try {
-      const data = await fetchProducts(buildParams(cursor));
-      setItems((prev) => [...prev, ...data.items]);
-      setCursor(data.next_cursor || null);
-      setHasMore(!!data.next_cursor);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load more");
-    } finally {
-      setLoadingMore(false);
-    }
-  }
 
   const filtersDirty =
     sort !== DEFAULT_SORT ||
@@ -338,9 +316,9 @@ export default function CompletionQueuePage() {
           className="border rounded px-3 py-1.5 text-sm"
         >
           <option value="priority">Priority</option>
-          <option value="first_received">First Received</option>
-          <option value="last_modified">Last Modified</option>
-          <option value="completion_pct">Completion %</option>
+          <option value="first_received_at">First Received</option>
+          <option value="updated_at">Last Modified</option>
+          <option value="completion_percent">Completion %</option>
         </select>
 
         {filtersDirty && (
@@ -466,17 +444,8 @@ export default function CompletionQueuePage() {
         </table>
       </div>
 
-      {/* Load more */}
-      {hasMore && (
-        <button
-          type="button"
-          onClick={loadMore}
-          disabled={loadingMore}
-          className="mt-4 w-full py-2 border rounded text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-        >
-          {loadingMore ? "Loading…" : "Load more products"}
-        </button>
-      )}
+      {/* Phase 3B — cursor-based "Load more" removed; queue page is
+          first-page only until migrated to offset pagination. */}
 
       </>
       )}
