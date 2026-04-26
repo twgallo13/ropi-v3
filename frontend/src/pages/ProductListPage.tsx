@@ -5,10 +5,12 @@ import {
   fetchSiteRegistry,
   fetchBrandRegistry,
   fetchDepartmentRegistry,
+  bulkDeleteProducts,
   type ProductListItem,
   type SiteRegistryEntry,
   type BrandRegistryEntry,
   type DepartmentRegistryEntry,
+  type BulkDeleteResponse,
 } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import HoverImagePreview from "../components/HoverImagePreview";
@@ -47,6 +49,9 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100];
 export default function ProductListPage() {
   const { role } = useAuth();
   const isExport = role === "admin" || role === "owner" || role === "head_buyer";
+  // Phase 4A — bulk-delete is admin/owner only (matches backend
+  // requireRole(["admin","owner"]) on POST /products/bulk-delete).
+  const canBulkDelete = role === "admin" || role === "owner";
 
   // ── URL state (Phase 3B) ────────────────────────────────────────────
   // page, sort, dir, brand_key, department_key, completion_state,
@@ -114,6 +119,20 @@ export default function ProductListPage() {
   // start a ~100ms close timer that's cancelled if hover/focus re-enters.
   const [hoveredMpn, setHoveredMpn] = useState<string | null>(null);
   const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Phase 4A — Bulk-select state ────────────────────────────────────
+  // Selection persists across page navigation (PO Ruling 4A.1) but is
+  // auto-cleared when filters / sort / page-size change (see effect
+  // below). Held in component state, NOT URL — selection is ephemeral.
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+  // Typed-DELETE confirmation modal (PO Ruling 4A.2).
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [bulkInFlight, setBulkInFlight] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ batch: number; of: number } | null>(null);
+  const [bulkBanner, setBulkBanner] = useState<{ kind: "success" | "warn" | "error"; text: string } | null>(null);
+  // Header tri-state checkbox needs an imperative .indeterminate.
+  const headerCheckboxRef = useRef<HTMLInputElement | null>(null);
 
   const handleHoverEnter = useCallback((mpn: string) => {
     if (hoverCloseTimerRef.current) {
@@ -229,6 +248,161 @@ export default function ProductListPage() {
       updateParams({ sort: key, dir: SORT_DEFAULT_DIR[key] }, true);
     }
   }, [sort, dir, updateParams]);
+
+  // ── Phase 4A — auto-clear selection on filter/sort/page-size change ──
+  // PO Ruling 4A.1: selection persists across page navigation but
+  // clears whenever the result set itself changes meaning. Page
+  // changes (within the same query) are intentionally NOT in the deps.
+  useEffect(() => {
+    setSelectedDocIds((prev) => (prev.size === 0 ? prev : new Set()));
+  }, [
+    sort,
+    dir,
+    pageSize,
+    filters.search,
+    filters.brand_key,
+    filters.department_key,
+    filters.site_owner,
+    filters.completion_state,
+  ]);
+
+  // ── Phase 4A — header tri-state checkbox sync ────────────────────────
+  // Drives the imperative `indeterminate` flag based on how many of the
+  // current page's items are selected.
+  const currentPageDocIds = useMemo(() => items.map((p) => p.doc_id), [items]);
+  const currentPageSelectedCount = useMemo(
+    () => currentPageDocIds.filter((id) => selectedDocIds.has(id)).length,
+    [currentPageDocIds, selectedDocIds]
+  );
+  const headerChecked =
+    currentPageDocIds.length > 0 &&
+    currentPageSelectedCount === currentPageDocIds.length;
+  const headerIndeterminate =
+    currentPageSelectedCount > 0 && currentPageSelectedCount < currentPageDocIds.length;
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = headerIndeterminate;
+    }
+  }, [headerIndeterminate]);
+
+  const toggleRow = useCallback((docId: string) => {
+    setSelectedDocIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(docId)) next.delete(docId);
+      else next.add(docId);
+      return next;
+    });
+  }, []);
+
+  const togglePageSelection = useCallback(() => {
+    setSelectedDocIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = currentPageDocIds.every((id) => next.has(id));
+      if (allSelected) {
+        for (const id of currentPageDocIds) next.delete(id);
+      } else {
+        for (const id of currentPageDocIds) next.add(id);
+      }
+      return next;
+    });
+  }, [currentPageDocIds]);
+
+  const clearSelection = useCallback(() => setSelectedDocIds(new Set()), []);
+
+  // ── Phase 4A — typed-DELETE confirm flow ─────────────────────────────
+  // Chunks the selection into batches of 100 (server cap), POSTs sequentially,
+  // shows progress, and reports success / partial-fail / error via banner.
+  const runBulkDelete = useCallback(async () => {
+    const ids = Array.from(selectedDocIds);
+    if (ids.length === 0) return;
+    const BATCH = 100;
+    const totalBatches = Math.ceil(ids.length / BATCH);
+    setBulkInFlight(true);
+    setBulkBanner(null);
+    setBulkProgress({ batch: 0, of: totalBatches });
+
+    const allFailedDocIds = new Set<string>();
+    let totalSucceeded = 0;
+    let totalFailed = 0;
+    let networkError = false;
+    const opIds: string[] = [];
+
+    for (let i = 0; i < totalBatches; i++) {
+      setBulkProgress({ batch: i + 1, of: totalBatches });
+      const slice = ids.slice(i * BATCH, (i + 1) * BATCH);
+      try {
+        const resp: BulkDeleteResponse = await bulkDeleteProducts(slice);
+        opIds.push(resp.bulk_operation_id);
+        totalSucceeded += resp.summary.succeeded;
+        totalFailed += resp.summary.failed;
+        for (const r of resp.results) {
+          if (!r.ok) allFailedDocIds.add(r.doc_id);
+        }
+      } catch (e) {
+        // Total network failure on this batch — mark slice as failed and
+        // bail out so we don't keep hammering a broken endpoint.
+        networkError = true;
+        totalFailed += slice.length;
+        for (const id of slice) allFailedDocIds.add(id);
+        console.error("[bulk-delete] batch network error:", e);
+        break;
+      }
+    }
+
+    setBulkProgress(null);
+    setBulkInFlight(false);
+
+    if (networkError) {
+      // PO Ruling 4A.2: total network failure → leave selection intact,
+      // close modal, error banner.
+      setConfirmOpen(false);
+      setConfirmText("");
+      setBulkBanner({
+        kind: "error",
+        text: `Bulk delete failed (network error). Selection preserved. Try again.`,
+      });
+      return;
+    }
+
+    if (totalFailed === 0) {
+      // Full success → clear selection, close modal, refetch, success banner.
+      setSelectedDocIds(new Set());
+      setConfirmOpen(false);
+      setConfirmText("");
+      setBulkBanner({
+        kind: "success",
+        text: `Deleted ${totalSucceeded} product${totalSucceeded === 1 ? "" : "s"}.`,
+      });
+    } else {
+      // Partial failure → keep failed in selection, close modal, refetch, warn.
+      setSelectedDocIds(new Set(allFailedDocIds));
+      setConfirmOpen(false);
+      setConfirmText("");
+      setBulkBanner({
+        kind: "warn",
+        text: `Deleted ${totalSucceeded} of ${totalSucceeded + totalFailed}; ${totalFailed} failed (still selected).`,
+      });
+    }
+
+    // Refetch by bumping a URL no-op — but updateParams won't trigger a
+    // refetch on identical params. Use a timestamp param? Simpler: just
+    // re-run the fetch by clearing items and forcing the effect via a
+    // small trick — toggle page if we deleted everything on this page,
+    // otherwise rely on the navigation user will do. To be deterministic,
+    // we manually re-run fetchProducts here.
+    try {
+      const data = await fetchProducts(buildParams());
+      setItems(data.items);
+      setTotalCount(data.total_count);
+      setTotalPages(data.total_pages);
+    } catch {
+      // Refetch failure is non-fatal; user can manually refresh.
+    }
+
+    if (opIds.length > 0) {
+      console.log(`[bulk-delete] bulk_operation_ids: ${opIds.join(", ")}`);
+    }
+  }, [selectedDocIds, buildParams]);
 
   const filtersDirty =
     sort !== DEFAULT_SORT ||
@@ -412,6 +586,60 @@ export default function ProductListPage() {
         )}
       </div>
 
+      {/* Phase 4A — bulk-delete result banner. */}
+      {bulkBanner && (
+        <div
+          className={`mb-3 px-3 py-2 rounded text-sm flex items-center justify-between ${
+            bulkBanner.kind === "success"
+              ? "bg-green-50 text-green-800 border border-green-200"
+              : bulkBanner.kind === "warn"
+              ? "bg-amber-50 text-amber-800 border border-amber-200"
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}
+        >
+          <span>{bulkBanner.text}</span>
+          <button
+            type="button"
+            onClick={() => setBulkBanner(null)}
+            className="text-xs underline ml-3"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Phase 4A — bulk action toolbar. Renders only when at least one
+          row is selected. z-index intentionally low (default stacking)
+          so HoverImagePreview (z-50) renders on top. Admin/owner only;
+          non-admins see the checkboxes disabled (defense-in-depth — the
+          backend is the real gate). */}
+      {canBulkDelete && selectedDocIds.size > 0 && (
+        <div className="mb-3 px-3 py-2 rounded bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 flex items-center justify-between text-sm">
+          <span className="text-blue-900 dark:text-blue-200">
+            <strong>{selectedDocIds.size}</strong> selected
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Clear selection
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmText("");
+                setConfirmOpen(true);
+              }}
+              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Delete selected
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Summary */}
       <p className="text-sm text-gray-500 mb-3">
         {loading
@@ -430,6 +658,19 @@ export default function ProductListPage() {
               so the popup still renders above the sticky row. */}
           <thead className="bg-gray-50 dark:bg-gray-800 text-left sticky top-0 z-10">
             <tr>
+              {/* Phase 4A — leftmost selection column (admin/owner only). */}
+              {canBulkDelete && (
+                <th className="px-3 py-2 font-medium w-8">
+                  <input
+                    ref={headerCheckboxRef}
+                    type="checkbox"
+                    aria-label="Select all on current page"
+                    checked={headerChecked}
+                    onChange={togglePageSelection}
+                    disabled={items.length === 0}
+                  />
+                </th>
+              )}
               <th className="px-3 py-2 font-medium">MPN</th>
               <th className="px-3 py-2 font-medium">Brand</th>
               <th className="px-3 py-2 font-medium">Name</th>
@@ -450,6 +691,20 @@ export default function ProductListPage() {
           <tbody className="divide-y">
             {items.map((p) => (
               <tr key={p.doc_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                {/* Phase 4A — per-row selection checkbox. stopPropagation
+                    so clicking the checkbox does NOT trigger the MPN
+                    link nav or the row hover preview. */}
+                {canBulkDelete && (
+                  <td className="px-3 py-2 w-8" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${p.mpn}`}
+                      checked={selectedDocIds.has(p.doc_id)}
+                      onChange={() => toggleRow(p.doc_id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </td>
+                )}
                 {/* Phase 2B — MPN cell hosts hover/focus preview. `relative`
                     anchors the absolutely-positioned HoverImagePreview popup.
                     Focus handlers mirror mouse handlers for keyboard a11y. */}
@@ -565,6 +820,68 @@ export default function ProductListPage() {
           </button>
         </div>
       </div>
+
+      {/* Phase 4A — typed-DELETE confirm modal (PO Ruling 4A.2).
+          z-60 sits above HoverImagePreview (z-50) and the sticky header (z-10). */}
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bulk-delete-title"
+        >
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h2 id="bulk-delete-title" className="text-lg font-bold text-red-700 mb-2">
+              Delete {selectedDocIds.size} product{selectedDocIds.size === 1 ? "" : "s"}?
+            </h2>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              This action is <strong>irreversible</strong>. Each product and all
+              of its subcollections (attribute_values, pricing_snapshots,
+              site_targets, comments, site_verification, content_versions,
+              audit_log) will be permanently deleted. An audit_log entry will
+              be written for each deletion.
+            </p>
+            <label className="block text-sm font-medium mb-1">
+              Type <code className="px-1 bg-gray-100 dark:bg-gray-800 rounded">DELETE</code> to confirm:
+            </label>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              autoFocus
+              disabled={bulkInFlight}
+              className="border rounded px-3 py-1.5 text-sm w-full mb-3 dark:bg-gray-800"
+              placeholder="DELETE"
+            />
+            {bulkProgress && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Deleting batch {bulkProgress.batch} of {bulkProgress.of}…
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmOpen(false);
+                  setConfirmText("");
+                }}
+                disabled={bulkInFlight}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={runBulkDelete}
+                disabled={confirmText !== "DELETE" || bulkInFlight}
+                className="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {bulkInFlight ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
