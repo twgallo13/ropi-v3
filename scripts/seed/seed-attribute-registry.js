@@ -19,7 +19,7 @@ const COLLECTION = "attribute_registry";
  * destination_tab: "core_information" | "product_attributes" | "descriptions_seo" | "launch_media" | "system"
  */
 function attr(field_key, display_label, field_type, destination_tab, opts = {}) {
-  return {
+  const out = {
     field_key,
     display_label,
     field_type,
@@ -33,6 +33,17 @@ function attr(field_key, display_label, field_type, destination_tab, opts = {}) 
     export_enabled: opts.export_disabled ? false : true,
     dropdown_options: opts.options || [],
   };
+  // TALLY-PRODUCT-LIST-UX Phase 4B — governance fields. Only emit when
+  // explicitly opted in so existing entries don't get a null enum_source
+  // they don't need (the handler treats undefined/null/non-string as "no
+  // enum_source enforcement" — see products.ts POST /:mpn/attributes/:fk).
+  if (typeof opts.enum_source === "string" && opts.enum_source) {
+    out.enum_source = opts.enum_source;
+  }
+  if (typeof opts.dropdown_source === "string" && opts.dropdown_source) {
+    out.dropdown_source = opts.dropdown_source;
+  }
+  return out;
 }
 
 // ────────────────────────────────────────────────
@@ -43,7 +54,7 @@ const CORE_INFORMATION = [
   attr("product_name",     "Name",                 "text",     "core_information", { required: true,  ai_prompt: true, cadence: false, display_group: "Identity", display_order: 1 }),
   attr("sku",              "SKU",                  "text",     "core_information", { required: true, display_group: "Identity", display_order: 2 }),
   attr("upc",              "UPC / Barcode",        "text",     "core_information", { display_group: "Identity", display_order: 3 }),
-  attr("brand",            "Brand",                "text",     "core_information", { required: true,  ai_prompt: true, cadence: true, display_group: "Identity", display_order: 4 }),
+  attr("brand",            "Brand",                "text",     "core_information", { required: true,  ai_prompt: true, cadence: true, display_group: "Identity", display_order: 4, enum_source: "brand_registry" }),
   attr("category",         "Category",             "dropdown", "core_information", {
     required: true,  ai_prompt: true, cadence: true, display_group: "Classification", display_order: 5,
     options: ["Basketball", "Bootcut", "Fitted Hat", "Flat", "Jersey",
@@ -60,6 +71,15 @@ const CORE_INFORMATION = [
   attr("department",        "Department",           "dropdown", "core_information", {
     required: true, ai_prompt: true, display_group: "Classification", display_order: 7,
     options: ["Footwear", "Clothing", "Accessories", "Home & Tech"],
+    enum_source: "department_registry",
+  }),
+  // TALLY-PRODUCT-LIST-UX Phase 4B — site_owner is a dropdown sourced from
+  // site_registry. dropdown_source preserves the legacy TALLY-125 hint
+  // (UI lookup); enum_source is the new POST-time validator gate.
+  attr("site_owner",        "Site Owner",           "dropdown", "core_information", {
+    display_group: "Identity", display_order: 99,
+    enum_source: "site_registry",
+    dropdown_source: "site_registry",
   }),
   attr("gender",           "Gender",               "dropdown", "core_information", {
     required: true, ai_prompt: true, cadence: true, display_group: "Classification", display_order: 8,
