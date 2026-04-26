@@ -12,7 +12,15 @@ import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
 import {
   loadDepartmentRegistry,
   isDepartmentValueAllowed,
+  normalizeDepartment,
+  type DepartmentRegistryEntry,
 } from "./departmentRegistry";
+import {
+  loadBrandRegistry,
+  matchBrand,
+  type BrandRegistryEntry,
+} from "../lib/brandRegistry";
+import { buildSearchTokens } from "../services/searchTokens";
 import {
   getRequiredFieldKeys,
   computeCompletionProgress,
@@ -834,6 +842,13 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
     //     is NOT enforced here today (only enum_source path is gated, to
     //     bound blast radius — other dropdown fields keep prior behavior).
     //     Skipped for the "verify" action (no value change being introduced).
+    // 4B captures the matched registry entries here so they can be reused
+    // for canonicalization + root mirroring below without re-loading the
+    // registries. Stays null for fields whose attribute_registry doc has no
+    // enum_source set (e.g., short_description / long_description).
+    let matchedBrandEntry: BrandRegistryEntry | null = null;
+    let matchedDeptEntry: DepartmentRegistryEntry | null = null;
+    let matchedSiteOwnerKey: string | null = null;
     if (
       action !== "verify" &&
       value !== undefined &&
@@ -850,6 +865,53 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
           });
           return;
         }
+        // 4B — locate the matched active entry so we can mirror display_name
+        // + canonical key to the root product doc. Match logic mirrors
+        // resolveAllowedDepartmentValues: key | display_name | aliases,
+        // case-insensitive, whitespace-trimmed.
+        const v = normalizeDepartment(String(value));
+        matchedDeptEntry = entries.find((e) => {
+          if (!e.is_active) return false;
+          if (normalizeDepartment(e.key) === v) return true;
+          if (normalizeDepartment(e.display_name) === v) return true;
+          for (const a of e.aliases || []) {
+            if (normalizeDepartment(a) === v) return true;
+          }
+          return false;
+        }) || null;
+      } else if (enumSource === "brand_registry") {
+        const registry = await loadBrandRegistry();
+        const entry = matchBrand(String(value), registry);
+        if (!entry) {
+          res.status(400).json({
+            error: `Value "${value}" is not an active "${fieldKey}" — must match an active entry in ${enumSource}.`,
+          });
+          return;
+        }
+        matchedBrandEntry = entry;
+      } else if (enumSource === "site_registry") {
+        // Match against active site_registry doc IDs (case-insensitive,
+        // whitespace-trimmed). Doc ID IS the canonical site_owner key.
+        const norm = String(value).trim().toLowerCase();
+        if (!norm) {
+          res.status(400).json({
+            error: `Value "${value}" is not an active "${fieldKey}" — must match an active entry in ${enumSource}.`,
+          });
+          return;
+        }
+        const sitesSnap = await firestore
+          .collection("site_registry")
+          .where("is_active", "==", true)
+          .get();
+        const activeIds = sitesSnap.docs.map((d) => d.id);
+        const matched = activeIds.find((id) => id.toLowerCase() === norm) || null;
+        if (!matched) {
+          res.status(400).json({
+            error: `Value "${value}" is not an active "${fieldKey}" — must match an active entry in ${enumSource}.`,
+          });
+          return;
+        }
+        matchedSiteOwnerKey = matched;
       }
     }
 
@@ -888,6 +950,15 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
         res.status(400).json({ error: "value is required in request body" });
         return;
       }
+      // 4B — canonicalize finalValue when enum_source matched. Brand persists
+      // entry.display_name (display-cased). Site_owner persists matched doc
+      // ID. Department leaves attribute_values value as user-input (root
+      // mirror still uses entry.display_name).
+      if (matchedBrandEntry) {
+        finalValue = matchedBrandEntry.display_name;
+      } else if (matchedSiteOwnerKey) {
+        finalValue = matchedSiteOwnerKey;
+      }
     }
 
     // 3. Write to attribute_values with full provenance stamp (TALLY-044)
@@ -910,6 +981,52 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
       await productRef.set(
         {
           name: finalValue,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    // 4a. TALLY-PRODUCT-LIST-UX Phase 4B — root mirroring extensions.
+    //     List filters and sorts read root.<key> fields, so any field that
+    //     contributes to filter/search/display must be mirrored here.
+    //     - brand: mirror display_name to root.brand AND brand_key to
+    //       root.brand_key. Both are required because list filters use
+    //       brand_key, while UI cells display root.brand.
+    //     - department: mirror display_name to root.department AND key to
+    //       root.department_key. Same reason.
+    //     - sku: mirror to root.sku.
+    //     - site_owner: mirror canonical doc ID to root.site_owner.
+    if (fieldKey === "brand" && matchedBrandEntry) {
+      await productRef.set(
+        {
+          brand: matchedBrandEntry.display_name,
+          brand_key: matchedBrandEntry.brand_key,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } else if (fieldKey === "department" && matchedDeptEntry) {
+      await productRef.set(
+        {
+          department: matchedDeptEntry.display_name,
+          department_key: matchedDeptEntry.key,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } else if (fieldKey === "sku") {
+      await productRef.set(
+        {
+          sku: finalValue,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } else if (fieldKey === "site_owner") {
+      await productRef.set(
+        {
+          site_owner: finalValue,
           updated_at: db.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -984,6 +1101,41 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
           );
           mapAutoPopulate = { triggered: true, rics_retail: ricsRetail };
         }
+      }
+    }
+
+    // 4d. TALLY-PRODUCT-LIST-UX Phase 4B — search_tokens reindex.
+    //     buildSearchTokens reads {mpn, name, brand, sku, department} from
+    //     the product root. After mirroring above, refresh the post-write
+    //     root doc and rebuild the token set so list search picks up the
+    //     edit immediately. Skip for fields that don't contribute to tokens
+    //     (short_description / long_description / site_owner).
+    const SEARCH_TOKEN_FIELDS = new Set([
+      "mpn",
+      "name",
+      "product_name",
+      "brand",
+      "sku",
+      "department",
+    ]);
+    if (SEARCH_TOKEN_FIELDS.has(fieldKey)) {
+      try {
+        const refreshed = await productRef.get();
+        const rdata = refreshed.data() || {};
+        await productRef.set(
+          {
+            search_tokens: buildSearchTokens({
+              mpn: rdata.mpn || mpn,
+              name: rdata.name || null,
+              brand: rdata.brand || null,
+              sku: rdata.sku || null,
+              department: rdata.department || null,
+            }),
+          },
+          { merge: true }
+        );
+      } catch (tokErr: any) {
+        console.warn("search_tokens_reindex_failed", { mpn, err: tokErr?.message });
       }
     }
 

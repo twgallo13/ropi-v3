@@ -1,0 +1,26 @@
+
+[before] attribute_registry/brand: {
+  enum_source: 'brand_registry',
+  dropdown_source: null,
+  field_type: 'text',
+  active: true
+}
+[noop] attribute_registry/brand: enum_source already "brand_registry"
+
+[before] attribute_registry/site_owner: {
+  enum_source: 'site_registry',
+  dropdown_source: 'site_registry',
+  field_type: 'dropdown',
+  active: true
+}
+[noop] attribute_registry/site_owner: enum_source already "site_registry"
+
+[before] attribute_registry/department: {
+  enum_source: 'department_registry',
+  dropdown_source: null,
+  field_type: 'dropdown',
+  active: true
+}
+[noop] attribute_registry/department: enum_source already "department_registry"
+
+Done.

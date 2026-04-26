@@ -14,6 +14,7 @@ import {
 } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import HoverImagePreview from "../components/HoverImagePreview";
+import QuickEditPanel from "../components/QuickEditPanel";
 
 // TALLY-PRODUCT-LIST-UX Phase 3B — temporal-only sort (PO Ruling Option 1,
 // 2026-04-25). Three sortable columns: First Received, Last Modified,
@@ -216,6 +217,27 @@ export default function ProductListPage() {
     if (filters.search) params.search = filters.search;
     return params;
   }, [sort, dir, page, pageSize, filters]);
+
+  // ── Phase 4B — Quick Edit per-row side panel ────────────────────────
+  // Single-instance panel keyed by MPN. Open via pencil button on a row;
+  // close via Close button, backdrop click, or successful Save. Filter /
+  // sort / page-size / page changes leave the panel open (PO ruling — the
+  // panel is operating on the explicitly-chosen MPN, not the result set).
+  const [editMpn, setEditMpn] = useState<string | null>(null);
+  const [editToast, setEditToast] = useState<string | null>(null);
+
+  const refetchAfterEdit = useCallback(async (mpn: string) => {
+    try {
+      const data = await fetchProducts(buildParams());
+      setItems(data.items);
+      setTotalCount(data.total_count);
+      setTotalPages(data.total_pages);
+      setEditToast(`Saved ${mpn}.`);
+      setTimeout(() => setEditToast(null), 3000);
+    } catch {
+      // Refetch failure is non-fatal; user can manually refresh.
+    }
+  }, [buildParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -686,6 +708,9 @@ export default function ProductListPage() {
                 Completion %
               </SortableHeader>
               <th className="px-3 py-2 font-medium">Image</th>
+              {/* Phase 4B — Quick Edit pencil column. Rightmost so it's
+                  always visible without horizontal scroll on narrow viewports. */}
+              <th className="px-3 py-2 font-medium w-10" aria-label="Quick edit"></th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -761,6 +786,32 @@ export default function ProductListPage() {
                   <span className={p.image_status === "YES" ? "text-green-600" : "text-red-500"}>
                     {p.image_status}
                   </span>
+                </td>
+                {/* Phase 4B — pencil button. stopPropagation so the click
+                    does NOT toggle the row checkbox or trigger the MPN
+                    link / hover preview. */}
+                <td className="px-3 py-2 w-10" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    aria-label={`Quick edit ${p.mpn}`}
+                    title="Quick edit"
+                    className="text-gray-500 hover:text-blue-600 px-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditMpn(p.mpn);
+                    }}
+                  >
+                    {/* Inline pencil glyph (no extra icon library dep). */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="w-4 h-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM12.379 4.793l2.828 2.828L6.95 15.879a2 2 0 01-.879.515l-3.235.83.83-3.235a2 2 0 01.515-.879l8.198-8.317z"/>
+                    </svg>
+                  </button>
                 </td>
               </tr>
             ))}
@@ -881,6 +932,29 @@ export default function ProductListPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Phase 4B — Quick Edit toast (success notification after panel close) */}
+      {editToast && (
+        <div className="fixed bottom-4 right-4 z-[70] bg-green-600 text-white px-4 py-2 rounded shadow-lg text-sm">
+          {editToast}
+        </div>
+      )}
+
+      {/* Phase 4B — Quick Edit side panel. Single-instance, keyed by MPN.
+          z-60 so it sits above the sticky thead (z-10) and HoverImagePreview
+          (z-50). Backdrop click + Close button + successful save all close
+          the panel; partial-fail leaves it open with inline field errors. */}
+      {editMpn && (
+        <QuickEditPanel
+          key={editMpn}
+          mpn={editMpn}
+          brandRegistry={brandRegistry}
+          departmentRegistry={departmentRegistry}
+          siteRegistry={siteRegistry}
+          onClose={() => setEditMpn(null)}
+          onSaved={refetchAfterEdit}
+        />
       )}
     </div>
   );
