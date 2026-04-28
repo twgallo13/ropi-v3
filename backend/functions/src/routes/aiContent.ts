@@ -3,7 +3,8 @@ import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
-import { generateContent, getActiveAdapter } from "../services/aiDescribe";
+import { generateContent } from "../services/aiDescribe";
+import { resolveAdapter, getAiConfigForWorkflow } from "../lib/aiConfig";
 import {
   computeCompletion,
   stampCompletionOnProduct,
@@ -32,7 +33,13 @@ router.post(
 
       const results = await Promise.all(
         site_owners.map((siteOwner: string) =>
-          generateContent(mpn, siteOwner, userId, observations_note)
+          generateContent(
+            "content_generation",
+            mpn,
+            siteOwner,
+            userId,
+            observations_note
+          )
         )
       );
 
@@ -419,6 +426,7 @@ router.post(
         : undefined;
 
       const result = await generateContent(
+        "content_review_regeneration",
         mpn,
         siteOwner,
         userId,
@@ -470,7 +478,16 @@ router.post(
 Provide vocabulary, terminology, and visual analysis support. 
 IMPORTANT: You are providing suggestions only. Never instruct the user to update any field directly — always phrase suggestions as observations the user can choose to apply.`;
 
-      const adapter = await getActiveAdapter();
+      // R.2: pick chat vs vision workflow based on image_data presence
+      const workflowKey = image_data
+        ? "ai_assistant_vision"
+        : "ai_assistant_chat";
+      const config = await getAiConfigForWorkflow(workflowKey);
+      const adapter = await resolveAdapter(
+        config.provider_key,
+        config.model_key,
+        config.api_key_env_var_name
+      );
       const responseText = await adapter.complete(userMessage, systemPrompt, image_data || undefined);
 
       // Return assistant response — do NOT write to any product fields

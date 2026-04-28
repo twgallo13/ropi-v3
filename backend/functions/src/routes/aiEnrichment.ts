@@ -12,7 +12,7 @@
 import { Router, Request, Response } from "express";
 import admin from "firebase-admin";
 import { mpnToDocId } from "../services/mpnUtils";
-import { getActiveAdapter } from "../services/aiDescribe";
+import { resolveAdapter, getAiConfigForWorkflow } from "../lib/aiConfig";
 import { getNikeIndustryMpn } from "../services/ricsParser";
 
 const router = Router();
@@ -117,7 +117,12 @@ Rules:
 
 Respond with ONLY the product name, nothing else.`;
 
-  const adapter = await getActiveAdapter();
+  const config = await getAiConfigForWorkflow("ai_enrichment_name");
+  const adapter = await resolveAdapter(
+    config.provider_key,
+    config.model_key,
+    config.api_key_env_var_name
+  );
   const raw = await adapter.complete(prompt);
   const cleaned = raw.trim().replace(/^["']|["']$/g, "");
 
@@ -137,7 +142,12 @@ async function enrichColor(mpn: string): Promise<any> {
   if (!ctx) return { error: "not_found" };
   const prompt = `Given the RICS color code '${ctx.rics_color || ""}' for product '${mpn}' from brand '${ctx.brand || ""}', what is the correct consumer-facing color name? Respond with ONLY the color name.`;
 
-  const adapter = await getActiveAdapter();
+  const config = await getAiConfigForWorkflow("ai_enrichment_color");
+  const adapter = await resolveAdapter(
+    config.provider_key,
+    config.model_key,
+    config.api_key_env_var_name
+  );
   const raw = await adapter.complete(prompt);
   const cleaned = raw.trim().replace(/^["']|["']$/g, "");
 

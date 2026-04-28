@@ -1,78 +1,14 @@
 import admin from "firebase-admin";
 import { mpnToDocId } from "./mpnUtils";
 import { selectTemplate, PromptTemplate } from "./templateMatcher";
-import { getAdminSetting } from "./emailService";
+import { resolveAdapter, getAiConfigForWorkflow } from "../lib/aiConfig";
 
 const db = admin.firestore;
 
-// ── Adapter Pattern (TALLY-116) ──
-
-export interface AIProviderAdapter {
-  complete(prompt: string, systemPrompt?: string, imageData?: string): Promise<string>;
-}
-
-class AnthropicAdapter implements AIProviderAdapter {
-  async complete(prompt: string, systemPrompt?: string, imageData?: string): Promise<string> {
-    const messages: any[] = [];
-    if (imageData) {
-      messages.push({
-        role: "user",
-        content: [
-          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageData } },
-          { type: "text", text: prompt },
-        ],
-      });
-    } else {
-      messages.push({ role: "user", content: prompt });
-    }
-    const model =
-      (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
-      "claude-sonnet-4-5";
-    const body: any = { model, max_tokens: 4096, messages };
-    if (systemPrompt) body.system = systemPrompt;
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY!,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(`Anthropic API error: ${res.status} — ${JSON.stringify(data)}`);
-    }
-    return data.content[0].text;
-  }
-}
-
-class GeminiAdapter implements AIProviderAdapter {
-  async complete(): Promise<string> {
-    throw new Error("Gemini adapter not yet configured");
-  }
-}
-
-class OpenAIAdapter implements AIProviderAdapter {
-  async complete(): Promise<string> {
-    throw new Error("OpenAI adapter not yet configured");
-  }
-}
-
-export async function getActiveAdapter(): Promise<AIProviderAdapter> {
-  const settingDoc = await db().collection("admin_settings").doc("active_ai_provider").get();
-  const provider = settingDoc.exists ? settingDoc.data()?.value : "anthropic";
-  switch (provider) {
-    case "gemini":
-      return new GeminiAdapter();
-    case "openai":
-      return new OpenAIAdapter();
-    default:
-      return new AnthropicAdapter();
-  }
-}
-
-// ── End Adapter Pattern ──
+// ── Adapter pattern relocated to lib/aiConfig.ts (TALLY-SETTINGS-UX
+// Phase 3 / A.1). This file now consumes resolveAdapter +
+// getAiConfigForWorkflow; AIProviderAdapter / AnthropicAdapter /
+// OpenAIAdapter / GeminiAdapter / getActiveAdapter all live there.
 
 const EXCLUDED_FIELDS = [
   "rics_category",
@@ -206,6 +142,7 @@ function assembleDescription(
 }
 
 export async function generateContent(
+  workflow_key: string,
   mpn: string,
   siteOwner: string,
   operatorUserId: string,
@@ -269,8 +206,13 @@ export async function generateContent(
     prompt += `\n\nPREVIOUS VERSION (improve on this):\n${critiqueContext.previousOutput}\n\nCRITIQUE FROM SPECIALIST: ${critiqueContext.critique}\nAddress the critique specifically in your new version.`;
   }
 
-  // Call AI via adapter (TALLY-116)
-  const adapter = await getActiveAdapter();
+  // Call AI via aiConfig helper (TALLY-SETTINGS-UX Phase 3 / A.1)
+  const config = await getAiConfigForWorkflow(workflow_key);
+  const adapter = await resolveAdapter(
+    config.provider_key,
+    config.model_key,
+    config.api_key_env_var_name
+  );
   const systemPrompt =
     "You are a world-class SEO copywriter for a retail footwear and apparel brand. Always respond with ONLY valid JSON. No markdown fences, no explanation, no extra text.";
   const rawText = await adapter.complete(prompt, systemPrompt);

@@ -33,6 +33,7 @@ import advisoryRouter from "./routes/advisory";
 import toursRouter from "./routes/tours";
 import adminUsersRouter from "./routes/adminUsers";
 import adminSettingsRouter from "./routes/adminSettings";
+import aiPlaneRouter from "./routes/aiPlane";
 import aiEnrichmentRouter from "./routes/aiEnrichment";
 import queueStatsRouter from "./routes/queueStats";
 import internalJobsRouter from "./routes/internalJobs";
@@ -120,6 +121,9 @@ app.use("/api/v1/tours", toursRouter);
 
 // ── Step 4.2 — Admin Control Center ──
 app.use("/api/v1/admin/users", adminUsersRouter);
+// AI Plane (TALLY-SETTINGS-UX Phase 3 / A.1) — must mount BEFORE the
+// catch-all /api/v1/admin so first-match routes /api/v1/admin/ai/* here.
+app.use("/api/v1/admin/ai", aiPlaneRouter);
 app.use("/api/v1/admin", adminSettingsRouter);
 
 // ── Import Intelligence Layer — AI Enrichment ──
