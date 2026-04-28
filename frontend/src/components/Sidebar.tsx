@@ -81,10 +81,10 @@ const NAV_TREE: NavNode[] = [
         label: "Data Registries",
         icon: "🗂️",
         children: [
-          { label: "Site Registry", comingLabel: "B.2" },
-          { label: "Attribute Registry", comingLabel: "B.2" },
-          { label: "Brand Registry", comingLabel: "B.2" },
-          { label: "Department Registry", comingLabel: "B.2" },
+          { label: "Site Registry", path: "/admin/registries/sites" },
+          { label: "Attribute Registry", path: "/admin/registries/attributes" },
+          { label: "Brand Registry", path: "/admin/registries/brands" },
+          { label: "Department Registry", path: "/admin/registries/departments" },
         ],
       },
       {
