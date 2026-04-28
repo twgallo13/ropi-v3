@@ -20,8 +20,31 @@
 import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
+import { requireRole } from "../middleware/roles";
 
 const COLLECTION = "department_registry";
+const db = () => admin.firestore();
+const ts = () => admin.firestore.FieldValue.serverTimestamp();
+
+async function writeDepartmentAudit(
+  action: string,
+  entityId: string,
+  actorUid: string,
+  details: Record<string, any>
+): Promise<void> {
+  try {
+    await db().collection("audit_log").add({
+      action,
+      entity_type: "department_registry",
+      entity_id: entityId,
+      actor_uid: actorUid,
+      details,
+      timestamp: ts(),
+    });
+  } catch (err: any) {
+    console.error("audit_log write failed:", err.message);
+  }
+}
 
 export interface DepartmentRegistryEntry {
   key: string;
@@ -159,6 +182,232 @@ router.get(
       res.json({ department: shapeDepartmentEntry(snap.data(), snap.id) });
     } catch (err: any) {
       console.error("GET /department-registry/:key error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ────────────────────────────────────────────────
+// POST /api/v1/department-registry — create new department
+// ────────────────────────────────────────────────
+router.post(
+  "/",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const body = req.body || {};
+      const { key, display_name, aliases, is_active, priority, po_confirmed } = body;
+
+      if (typeof key !== "string" || key.trim() === "") {
+        res.status(400).json({ error: "key is required (non-empty string)" });
+        return;
+      }
+      if (typeof display_name !== "string" || display_name.trim() === "") {
+        res.status(400).json({ error: "display_name is required (non-empty string)" });
+        return;
+      }
+
+      const normalizedKey = normalizeDepartment(key);
+      if (!normalizedKey) {
+        res.status(400).json({ error: "key normalized to empty string" });
+        return;
+      }
+
+      const ref = db().collection(COLLECTION).doc(normalizedKey);
+      const existing = await ref.get();
+      if (existing.exists) {
+        res.status(409).json({ error: "key already exists" });
+        return;
+      }
+
+      const inputAliases = Array.isArray(aliases) ? aliases : [];
+      const normalizedAliases = inputAliases.map((a: string) => normalizeDepartment(a));
+      const dedupedAliases = Array.from(new Set(normalizedAliases)).filter((a) => a);
+
+      // Alias uniqueness across ACTIVE departments (E.1).
+      const activeDeptsSnap = await db()
+        .collection(COLLECTION)
+        .where("is_active", "==", true)
+        .get();
+      for (const doc of activeDeptsSnap.docs) {
+        if (doc.id === normalizedKey) continue;
+        const existingAliases = (doc.get("aliases") ?? []).map((a: string) =>
+          normalizeDepartment(a)
+        );
+        for (const inputAlias of dedupedAliases) {
+          if (inputAlias === doc.id || existingAliases.includes(inputAlias)) {
+            res.status(409).json({
+              error: "alias collision",
+              key: doc.id,
+              alias: inputAlias,
+            });
+            return;
+          }
+        }
+        if (existingAliases.includes(normalizedKey)) {
+          res.status(409).json({
+            error: "key collides with existing alias",
+            key: doc.id,
+          });
+          return;
+        }
+      }
+
+      const payload: Record<string, any> = {
+        key: normalizedKey,
+        display_name: display_name.trim(),
+        aliases: dedupedAliases,
+        is_active: typeof is_active === "boolean" ? is_active : true,
+        priority: typeof priority === "number" ? priority : 0,
+        po_confirmed: typeof po_confirmed === "boolean" ? po_confirmed : false,
+        created_at: ts(),
+        created_by: req.user!.uid,
+        updated_at: ts(),
+        updated_by: req.user!.uid,
+      };
+      await ref.set(payload);
+
+      await writeDepartmentAudit(
+        "department_registry_created",
+        normalizedKey,
+        req.user!.uid,
+        { key: normalizedKey, display_name: payload.display_name }
+      );
+
+      const refetched = (await ref.get()).data();
+      res.status(201).json({ department: refetched });
+    } catch (err: any) {
+      console.error("POST /department-registry error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ────────────────────────────────────────────────
+// PUT /api/v1/department-registry/:key — update (key immutable)
+// ────────────────────────────────────────────────
+router.put(
+  "/:key",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const body = req.body || {};
+      const pathKey = normalizeDepartment(req.params.key);
+
+      if (body.key !== undefined && normalizeDepartment(body.key) !== pathKey) {
+        res.status(400).json({ error: "key is immutable" });
+        return;
+      }
+
+      if (body.display_name !== undefined) {
+        if (typeof body.display_name !== "string" || body.display_name.trim() === "") {
+          res.status(400).json({ error: "display_name must be a non-empty string" });
+          return;
+        }
+      }
+
+      const ref = db().collection(COLLECTION).doc(pathKey);
+      const existing = await ref.get();
+      if (!existing.exists) {
+        res.status(404).json({ error: `department "${req.params.key}" not found` });
+        return;
+      }
+
+      let dedupedAliases: string[] | undefined;
+      if (body.aliases !== undefined) {
+        const inputAliases: string[] = Array.isArray(body.aliases) ? body.aliases : [];
+        const normalizedAliases: string[] = inputAliases.map((a) => normalizeDepartment(a));
+        dedupedAliases = Array.from(new Set<string>(normalizedAliases)).filter((a) => a);
+
+        const activeDeptsSnap = await db()
+          .collection(COLLECTION)
+          .where("is_active", "==", true)
+          .get();
+        const aliasesForCheck: string[] = dedupedAliases;
+        for (const doc of activeDeptsSnap.docs) {
+          if (doc.id === pathKey) continue;
+          const existingAliases = (doc.get("aliases") ?? []).map((a: string) =>
+            normalizeDepartment(a)
+          );
+          for (const inputAlias of aliasesForCheck) {
+            if (inputAlias === doc.id || existingAliases.includes(inputAlias)) {
+              res.status(409).json({
+                error: "alias collision",
+                key: doc.id,
+                alias: inputAlias,
+              });
+              return;
+            }
+          }
+        }
+      }
+
+      const patch: Record<string, any> = {};
+      if (body.display_name !== undefined) patch.display_name = body.display_name.trim();
+      if (dedupedAliases !== undefined) patch.aliases = dedupedAliases;
+      if (typeof body.is_active === "boolean") patch.is_active = body.is_active;
+      if (typeof body.priority === "number") patch.priority = body.priority;
+      if (typeof body.po_confirmed === "boolean") patch.po_confirmed = body.po_confirmed;
+      patch.updated_at = ts();
+      patch.updated_by = req.user!.uid;
+
+      await ref.set(patch, { merge: true });
+
+      await writeDepartmentAudit(
+        "department_registry_updated",
+        pathKey,
+        req.user!.uid,
+        { patch_keys: Object.keys(patch) }
+      );
+
+      const refetched = (await ref.get()).data();
+      res.status(200).json({ department: refetched });
+    } catch (err: any) {
+      console.error("PUT /department-registry/:key error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ────────────────────────────────────────────────
+// DELETE /api/v1/department-registry/:key — soft deactivation
+// ────────────────────────────────────────────────
+router.delete(
+  "/:key",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const pathKey = normalizeDepartment(req.params.key);
+      const ref = db().collection(COLLECTION).doc(pathKey);
+      const existing = await ref.get();
+      if (!existing.exists) {
+        res.status(404).json({ error: `department "${req.params.key}" not found` });
+        return;
+      }
+
+      await ref.set(
+        {
+          is_active: false,
+          updated_at: ts(),
+          updated_by: req.user!.uid,
+        },
+        { merge: true }
+      );
+
+      await writeDepartmentAudit(
+        "department_registry_deleted",
+        pathKey,
+        req.user!.uid,
+        { key: pathKey }
+      );
+
+      const refetched = (await ref.get()).data();
+      res.status(200).json({ department: refetched });
+    } catch (err: any) {
+      console.error("DELETE /department-registry/:key error:", err);
       res.status(500).json({ error: err.message });
     }
   }
