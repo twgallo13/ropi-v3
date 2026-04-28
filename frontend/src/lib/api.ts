@@ -275,6 +275,7 @@ export interface SaveFieldResponse {
     pct: number;
     blockers: string[];
   };
+  next_action_hint?: string;
   map_auto_populate?:
     | { triggered: true; rics_retail: number }
     | { triggered: false };

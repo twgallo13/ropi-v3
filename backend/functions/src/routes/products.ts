@@ -1390,8 +1390,13 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
     );
 
     // TALLY-P1 — stamp 5-field completion projection (best-effort).
+    // TALLY-NEXT-ACTION-HINT-HOTFIX (Path 1): capture computeCompletion result so
+    // the freshly-computed next_action_hint can be returned in the response payload
+    // (avoids a second read; falls back to "" if the stamp path failed).
+    let nextActionHint = "";
     try {
       const result = await computeCompletion(mpn);
+      nextActionHint = result.next_action_hint;
       await stampCompletionOnProduct(productRef, result);
     } catch (stampErr: any) {
       console.warn("completion_stamp_failed", { mpn, err: stampErr?.message });
@@ -1402,6 +1407,7 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
       value: finalValue,
       verification_state: "Human-Verified",
       completion_progress,
+      next_action_hint: nextActionHint,
       map_auto_populate: mapAutoPopulate,
     });
   } catch (err: any) {
