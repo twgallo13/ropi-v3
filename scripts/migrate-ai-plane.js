@@ -129,7 +129,6 @@ async function main() {
 
     const payload = {
       workflow_key: wfKey,
-      display_name: wfKey,
       provider_key: legacyProvider,
       model_key: legacyModel,
       fallback_provider_key: null,

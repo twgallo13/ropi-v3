@@ -38,15 +38,59 @@ const { initApp } = require("./utils");
 const COLLECTION = "ai_workflow_routing";
 
 const WORKFLOWS = [
-  { workflow_key: "content_generation",            display_name: "Content Generation" },
-  { workflow_key: "content_review_regeneration",   display_name: "Content Review / Regeneration" },
-  { workflow_key: "ai_assistant_chat",             display_name: "AI Assistant — Chat" },
-  { workflow_key: "ai_assistant_vision",           display_name: "AI Assistant — Vision" },
-  { workflow_key: "smart_rule_inference",          display_name: "Smart Rule Inference" },
-  { workflow_key: "weekly_advisory_report",        display_name: "Weekly Advisory Report" },
-  { workflow_key: "anomaly_detection",             display_name: "Anomaly Detection" },
-  { workflow_key: "ai_enrichment_name",            display_name: "AI Enrichment — Product Name" },
-  { workflow_key: "ai_enrichment_color",           display_name: "AI Enrichment — Descriptive Color" },
+  {
+    workflow_key: "content_generation",
+    display_name: "Content Generation",
+    description:
+      "AI Describe Engine — generates product descriptions from attributes (TALLY-042)",
+  },
+  {
+    workflow_key: "content_review_regeneration",
+    display_name: "Content Review / Regeneration",
+    description:
+      "Regenerate action on Full Review; re-runs content generation with critique context (TALLY-046)",
+  },
+  {
+    workflow_key: "ai_assistant_chat",
+    display_name: "AI Assistant — Chat",
+    description: "Conversational helper in Product Editor (text-only)",
+  },
+  {
+    workflow_key: "ai_assistant_vision",
+    display_name: "AI Assistant — Vision",
+    description:
+      "Product photo analysis in Product Editor (image input) (TALLY-049)",
+  },
+  {
+    workflow_key: "smart_rule_inference",
+    display_name: "Smart Rule Inference",
+    description:
+      "Type 2 pattern-based attribute inference from product context (TALLY-047). Pre-provisioned; no consumer at A.1 ship.",
+  },
+  {
+    workflow_key: "weekly_advisory_report",
+    display_name: "Weekly Advisory Report",
+    description:
+      "AI Portfolio Health Advisory — weekly buyer + global rollup reports (TALLY-092)",
+  },
+  {
+    workflow_key: "anomaly_detection",
+    display_name: "Anomaly Detection",
+    description:
+      "Outlier pricing / inventory anomaly identification (TALLY-092). Pre-provisioned; no consumer at A.1 ship.",
+  },
+  {
+    workflow_key: "ai_enrichment_name",
+    display_name: "AI Enrichment — Product Name",
+    description:
+      "AI-enriched product name suggestions (POST /api/v1/ai-enrich/name/:mpn)",
+  },
+  {
+    workflow_key: "ai_enrichment_color",
+    display_name: "AI Enrichment — Descriptive Color",
+    description:
+      "AI-enriched product color suggestions (POST /api/v1/ai-enrich/color/:mpn)",
+  },
 ];
 
 const DEFAULT_PROVIDER_KEY = "anthropic";
@@ -66,6 +110,7 @@ async function main() {
     const payload = {
       workflow_key: w.workflow_key,
       display_name: w.display_name,
+      description: w.description,
       provider_key: DEFAULT_PROVIDER_KEY,
       model_key: DEFAULT_MODEL_KEY,
       fallback_provider_key: null,
@@ -79,7 +124,8 @@ async function main() {
       const existing = snap.data() || {};
       const merged = {
         workflow_key: w.workflow_key,
-        display_name: existing.display_name || w.display_name,
+        display_name: w.display_name, // seed wins for display metadata; D.11 fix
+        description: w.description, // seed wins for display metadata; D.11 fix
         provider_key: existing.provider_key || DEFAULT_PROVIDER_KEY,
         model_key: existing.model_key || DEFAULT_MODEL_KEY,
         fallback_provider_key:
