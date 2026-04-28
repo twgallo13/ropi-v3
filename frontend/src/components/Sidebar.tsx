@@ -1,11 +1,14 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface NavItem {
   label: string;
-  path: string;
+  path?: string;          // optional: absent for pillar group parents (expandable, non-clickable header)
+  icon?: string;          // optional: pillar group emoji
   roles?: string[];
+  children?: NavItem[];   // optional: presence indicates 2nd-level expandable group
+  comingLabel?: string;   // optional: short suffix like "B.2" rendered as "(B.2)" muted
 }
 
 interface NavNode {
@@ -15,6 +18,8 @@ interface NavNode {
   children?: NavItem[];
   roles?: string[];
 }
+
+const SIDEBAR_STORAGE_KEY = "ropi-sidebar-collapsed";
 
 const NAV_TREE: NavNode[] = [
   { label: "Dashboard", icon: "🏠", path: "/dashboard" },
@@ -71,15 +76,64 @@ const NAV_TREE: NavNode[] = [
     icon: "🔧",
     roles: ["admin", "owner"],
     children: [
-      { label: "Overview", path: "/admin" },
-      { label: "Settings", path: "/admin/settings" },
-      { label: "Users", path: "/admin/settings?tab=users" },
-      { label: "Smart Rules", path: "/admin/smart-rules" },
-      { label: "Prompt Templates", path: "/admin/prompt-templates" },
-      { label: "Cadence Rules", path: "/admin/cadence-rules" },
-      { label: "Pricing Guardrails", path: "/admin/pricing-guardrails" },
-      { label: "Export Profiles", path: "/admin/export-profiles" },
-      { label: "Permissions", path: "/admin/permissions" },
+      { label: "Overview", path: "/admin/overview" },
+      {
+        label: "Data Registries",
+        icon: "🗂️",
+        children: [
+          { label: "Site Registry", comingLabel: "B.2" },
+          { label: "Attribute Registry", comingLabel: "B.2" },
+          { label: "Brand Registry", comingLabel: "B.2" },
+          { label: "Department Registry", comingLabel: "B.2" },
+        ],
+      },
+      {
+        label: "AI & Automation",
+        icon: "🤖",
+        children: [
+          { label: "AI Provider Registry", comingLabel: "B.3" },
+          { label: "Prompt Templates", path: "/admin/ai-automation/prompt-templates" },
+          { label: "Smart Rule Engine", path: "/admin/ai-automation/smart-rules" },
+          { label: "Completion Rules", comingLabel: "B.3" },
+        ],
+      },
+      {
+        label: "Data Pipeline & Workflow",
+        icon: "🔄",
+        children: [
+          { label: "Import Mapping Templates", comingLabel: "B.4" },
+          { label: "Export Profiles", comingLabel: "B.4" },
+          { label: "Cadence Policies", path: "/admin/pipeline/cadence" },
+        ],
+      },
+      {
+        label: "Access & Governance",
+        icon: "🛡️",
+        children: [
+          { label: "User Management", comingLabel: "B.5" },
+          { label: "Permissions Matrix", comingLabel: "B.5" },
+        ],
+      },
+      {
+        label: "App Experience",
+        icon: "✨",
+        children: [
+          { label: "Comment Thread Settings", comingLabel: "B.6" },
+          { label: "Guided Tour Management", comingLabel: "B.6" },
+          { label: "SOP Panel Content", comingLabel: "B.6" },
+        ],
+      },
+      {
+        label: "System & Infrastructure",
+        icon: "⚙️",
+        children: [
+          { label: "SMTP", comingLabel: "B.7" },
+          { label: "Pricing Guardrails", comingLabel: "B.7" },
+          { label: "Launch Settings", comingLabel: "B.7" },
+          { label: "Search Settings", comingLabel: "B.7" },
+          { label: "Feature Toggles", comingLabel: "B.7" },
+        ],
+      },
     ],
   },
 ];
@@ -92,7 +146,33 @@ interface SidebarProps {
 export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const { role } = useAuth();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = sessionStorage.getItem(SIDEBAR_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // corrupt JSON, private browsing, quota exceeded — fall through to default
+    }
+    // Default seed (Ruling L Option 2): Admin expanded, all 6 pillar groups collapsed.
+    // Admin's expand state is keyed by "Admin" (top-level NavNode.label) — absent from seed → defaults expanded.
+    // Pillar groups keyed by "Admin > {pillar.label}" — seeded true (collapsed).
+    return {
+      "Admin > Data Registries": true,
+      "Admin > AI & Automation": true,
+      "Admin > Data Pipeline & Workflow": true,
+      "Admin > Access & Governance": true,
+      "Admin > App Experience": true,
+      "Admin > System & Infrastructure": true,
+    };
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(collapsed));
+    } catch {
+      // ignore: quota exceeded or private browsing
+    }
+  }, [collapsed]);
 
   const canSee = (roles?: string[]) => !roles || (role ? roles.includes(role) : false);
 
@@ -172,23 +252,94 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                 <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-700 pl-2">
                   {node.children
                     ?.filter((c) => canSee(c.roles))
-                    .map((child) => (
-                      <NavLink
-                        key={child.path}
-                        to={child.path}
-                        onClick={onNavClick}
-                        end={child.path.includes("?")}
-                        className={({ isActive }) =>
-                          `block px-3 py-1.5 rounded text-sm ${
-                            isActive
-                              ? "text-blue-400 font-medium bg-gray-800/60"
-                              : "text-gray-400 hover:text-white hover:bg-gray-800"
-                          }`
-                        }
-                      >
-                        {child.label}
-                      </NavLink>
-                    ))}
+                    .map((child) => {
+                      // Pillar group (NavItem with children)
+                      if (child.children) {
+                        const pillarKey = `${node.label} > ${child.label}`;
+                        const isPillarOpen = !collapsed[pillarKey];
+                        const hasSurfaceActive = child.children.some(
+                          (s) => s.path && location.pathname.startsWith(s.path)
+                        );
+                        return (
+                          <div key={child.path ?? child.label}>
+                            <button
+                              onClick={() =>
+                                setCollapsed((p) => ({ ...p, [pillarKey]: !p[pillarKey] }))
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-1.5 rounded text-sm ${
+                                hasSurfaceActive
+                                  ? "text-white bg-gray-800/60"
+                                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+                              }`}
+                            >
+                              <span>
+                                {child.icon ? <span className="mr-2">{child.icon}</span> : null}
+                                {child.label}
+                              </span>
+                              <span className="text-xs text-gray-600">{isPillarOpen ? "▾" : "▸"}</span>
+                            </button>
+                            {isPillarOpen && (
+                              <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-700 pl-2">
+                                {child.children
+                                  .filter((s) => canSee(s.roles))
+                                  .map((surface) => {
+                                    if (!surface.path) {
+                                      // Coming surface — non-clickable
+                                      return (
+                                        <span
+                                          key={surface.path ?? surface.label}
+                                          className="block px-3 py-1.5 rounded text-sm text-gray-500 opacity-60 cursor-default select-none"
+                                        >
+                                          {surface.label}
+                                          {surface.comingLabel && (
+                                            <span className="ml-1 text-xs text-gray-600">
+                                              ({surface.comingLabel})
+                                            </span>
+                                          )}
+                                        </span>
+                                      );
+                                    }
+                                    // Live surface — NavLink
+                                    return (
+                                      <NavLink
+                                        key={surface.path}
+                                        to={surface.path}
+                                        onClick={onNavClick}
+                                        className={({ isActive }) =>
+                                          `block px-3 py-1.5 rounded text-sm ${
+                                            isActive
+                                              ? "text-blue-400 font-medium bg-gray-800/60"
+                                              : "text-gray-400 hover:text-white hover:bg-gray-800"
+                                          }`
+                                        }
+                                      >
+                                        {surface.label}
+                                      </NavLink>
+                                    );
+                                  })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      // Leaf NavItem (e.g., Overview link, plus all children of non-Admin top-level groups)
+                      return (
+                        <NavLink
+                          key={child.path ?? child.label}
+                          to={child.path!}
+                          onClick={onNavClick}
+                          className={({ isActive }) =>
+                            `block px-3 py-1.5 rounded text-sm ${
+                              isActive
+                                ? "text-blue-400 font-medium bg-gray-800/60"
+                                : "text-gray-400 hover:text-white hover:bg-gray-800"
+                            }`
+                          }
+                        >
+                          {child.label}
+                        </NavLink>
+                      );
+                    })}
                 </div>
               )}
             </div>
