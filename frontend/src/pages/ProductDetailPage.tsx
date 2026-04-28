@@ -301,6 +301,11 @@ export default function ProductDetailPage() {
         };
         // Update completion_progress
         updated.completion_progress = resp.completion_progress;
+        // TALLY-NEXT-ACTION-HINT-HOTFIX — refresh stale banner with freshly computed hint.
+        // Defensive guard: preserve prev value if BE response is from older shape.
+        if (resp.next_action_hint !== undefined) {
+          updated.next_action_hint = resp.next_action_hint;
+        }
         // If name field, update the product name
         if (fieldKey === "name" || fieldKey === "product_name") {
           updated.name = typeof value === "string" ? value : updated.name;
