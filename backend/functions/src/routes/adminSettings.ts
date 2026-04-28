@@ -3,13 +3,17 @@
  *   GET  /api/v1/admin/settings          — all admin_settings docs
  *   PUT  /api/v1/admin/settings/:key     — upsert a single setting
  *   POST /api/v1/admin/smtp/test         — send test email to current user
- *   POST /api/v1/admin/ai/test           — minimal ping of active AI provider
+ *
+ * NOTE: POST /api/v1/admin/ai/test was REMOVED in TALLY-SETTINGS-UX
+ * Phase 3 / A.1 — the AI ping endpoint now lives at
+ * POST /api/v1/admin/ai/test (mounted via routes/aiPlane.ts) and uses
+ * the new XOR provider_key / workflow_key contract.
  */
 import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
-import { sendEmail, getAdminSetting } from "../services/emailService";
+import { sendEmail } from "../services/emailService";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -30,6 +34,7 @@ router.get(
           category: data.category || "general",
           label: data.label || d.id,
           description: data.description || null,
+          deprecated: data.deprecated || false,
           updated_at: data.updated_at?.toDate?.().toISOString() || null,
         };
       });
@@ -101,69 +106,8 @@ router.post(
   }
 );
 
-router.post(
-  "/ai/test",
-  requireAuth,
-  requireRole(["admin", "owner"]),
-  async (_req: AuthenticatedRequest, res: Response) => {
-    try {
-      const provider =
-        (await getAdminSetting<string>("active_ai_provider", "anthropic")) ||
-        "anthropic";
-      const model =
-        (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
-        "claude-sonnet-4-5";
-
-      if (provider !== "anthropic") {
-        res.json({
-          ok: false,
-          provider,
-          model,
-          error: `Provider '${provider}' test not implemented`,
-        });
-        return;
-      }
-
-      const apiKey = process.env.ANTHROPIC_API_KEY || "";
-      if (!apiKey) {
-        res.json({
-          ok: false,
-          provider,
-          model,
-          error: "ANTHROPIC_API_KEY env var not configured",
-        });
-        return;
-      }
-
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 8,
-          messages: [{ role: "user", content: "ping" }],
-        }),
-      });
-      if (!r.ok) {
-        const text = await r.text();
-        res.json({
-          ok: false,
-          provider,
-          model,
-          error: `HTTP ${r.status}: ${text.slice(0, 200)}`,
-        });
-        return;
-      }
-      res.json({ ok: true, provider, model });
-    } catch (err: any) {
-      console.error("POST /admin/ai/test error:", err);
-      res.status(500).json({ ok: false, error: err.message || String(err) });
-    }
-  }
-);
+// POST /api/v1/admin/ai/test was removed in TALLY-SETTINGS-UX Phase 3 /
+// A.1. The replacement lives at routes/aiPlane.ts and supports XOR
+// provider_key / workflow_key bodies.
 
 export default router;
