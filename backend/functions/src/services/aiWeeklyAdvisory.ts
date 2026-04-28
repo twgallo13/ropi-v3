@@ -11,8 +11,7 @@
 import admin from "firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { mpnToDocId } from "./mpnUtils";
-import { getActiveAdapter } from "./aiDescribe";
-import { getAdminSetting } from "./emailService";
+import { resolveAdapter, getAiConfigForWorkflow } from "../lib/aiConfig";
 
 const db = () => admin.firestore();
 
@@ -285,8 +284,13 @@ async function generateBuyerReport(
     inventory_warning_list: warningList,
   });
 
-  // ── AI call via adapter (TALLY-116) ──
-  const adapter = await getActiveAdapter();
+  // ── AI call via aiConfig helper (TALLY-SETTINGS-UX Phase 3 / A.1) ──
+  const advisoryConfig = await getAiConfigForWorkflow("weekly_advisory_report");
+  const adapter = await resolveAdapter(
+    advisoryConfig.provider_key,
+    advisoryConfig.model_key,
+    advisoryConfig.api_key_env_var_name
+  );
   const systemPrompt = `You are a retail buying advisor for Shiekh Shoes. Be direct, specific, and actionable. Use exact product names and numbers. No filler language.`;
   let rawResponse = "";
   try {
@@ -305,9 +309,7 @@ async function generateBuyerReport(
     inventory_warning: { summary: "" },
   });
 
-  const modelUsed =
-    (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
-    "claude-sonnet-4-5";
+  const modelUsed = advisoryConfig.model_key;
 
   // ── Write report ──
   const reportRef = db().collection("weekly_advisory_reports").doc();
@@ -435,7 +437,12 @@ async function generateGlobalReport(
     warning_sample: warnSample || "None.",
   });
 
-  const adapter = await getActiveAdapter();
+  const globalConfig = await getAiConfigForWorkflow("weekly_advisory_report");
+  const adapter = await resolveAdapter(
+    globalConfig.provider_key,
+    globalConfig.model_key,
+    globalConfig.api_key_env_var_name
+  );
   let raw = "";
   try {
     raw = await adapter.complete(prompt);
@@ -449,9 +456,7 @@ async function generateGlobalReport(
     global_health_summary: raw || "",
   });
 
-  const globalModelUsed =
-    (await getAdminSetting<string>("active_ai_model", "claude-sonnet-4-5")) ||
-    "claude-sonnet-4-5";
+  const globalModelUsed = globalConfig.model_key;
 
   const reportRef = db().collection("weekly_advisory_reports").doc();
   await reportRef.set({
