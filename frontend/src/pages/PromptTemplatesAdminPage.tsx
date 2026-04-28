@@ -9,6 +9,7 @@ import {
   PromptTemplate,
   ContentSection,
 } from "../lib/api";
+import { ConfirmModal } from "../components/admin";
 
 const TONE_OPTIONS = ["standard_retail", "streetwear", "contemporary", "luxury", "casual"];
 
@@ -129,6 +130,9 @@ export default function PromptTemplatesAdminPage() {
   const [form, setForm] = useState<TemplateFormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration (was confirm())
+  const [deleteTarget, setDeleteTarget] = useState<PromptTemplate | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -204,14 +208,13 @@ export default function PromptTemplatesAdminPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Deactivate this template?")) return;
-    try {
-      await deletePromptTemplate(id);
-      await load();
-    } catch (err: any) {
-      setError(err.error || "Delete failed");
-    }
+  async function handleDelete(template: PromptTemplate) {
+    setDeleteTarget(template);
+  }
+
+  async function runDelete(id: string) {
+    await deletePromptTemplate(id);
+    await load();
   }
 
   if (authLoading) return <div className="p-6 text-gray-500">Loading…</div>;
@@ -541,7 +544,7 @@ export default function PromptTemplatesAdminPage() {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(t.template_id)}
+                  onClick={() => handleDelete(t)}
                   className="text-red-500 text-sm hover:underline"
                 >
                   Deactivate
@@ -551,6 +554,27 @@ export default function PromptTemplatesAdminPage() {
           ))}
         </div>
       )}
+      <ConfirmModal
+        open={deleteTarget !== null}
+        title="Delete prompt template?"
+        body={`Are you sure you want to delete "${deleteTarget?.template_name ?? ""}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        onConfirm={async () => {
+          try {
+            await runDelete(deleteTarget!.template_id);
+            setDeleteTarget(null);
+            setDeleteError(null);
+          } catch (e: any) {
+            setDeleteError(e?.error ?? e?.message ?? String(e) ?? "Delete failed");
+          }
+        }}
+        onCancel={() => {
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+        errorSlot={deleteError}
+      />
     </div>
   );
 }

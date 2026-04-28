@@ -39,6 +39,8 @@ import AdminOverviewPage from "./pages/AdminOverviewPage";
 import PricingGuardrailsPage from "./pages/PricingGuardrailsPage";
 import ExportProfilesPage from "./pages/ExportProfilesPage";
 import PermissionsPage from "./pages/PermissionsPage";
+import { ComponentDemoPage } from "./pages/ComponentDemoPage";
+import { SettingsToastHost, RoleGate } from "./components/admin";
 
 export default function App() {
   return (
@@ -81,6 +83,7 @@ function AppInner() {
 
   return (
     <>
+      <SettingsToastHost />
       <CommandBar open={cmdOpen} onClose={() => setCmdOpen(false)} />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -120,6 +123,14 @@ function AppInner() {
             <Route path="/admin/pricing-guardrails" element={<PricingGuardrailsPage />} />
             <Route path="/admin/export-profiles" element={<ExportProfilesPage />} />
             <Route path="/admin/permissions" element={<PermissionsPage />} />
+            <Route
+              path="/admin/component-demo"
+              element={
+                <RoleGate>
+                  <ComponentDemoPage />
+                </RoleGate>
+              }
+            />
             <Route path="/products" element={<ProductListPage />} />
             <Route path="/more" element={<MorePage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

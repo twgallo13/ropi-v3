@@ -12,6 +12,7 @@ import {
   type LaunchReadiness,
   type LaunchComment,
 } from "../lib/api";
+import { ConfirmModal } from "../components/admin";
 
 export default function LaunchAdminDetailPage() {
   const { launchId } = useParams<{ launchId: string }>();
@@ -24,6 +25,9 @@ export default function LaunchAdminDetailPage() {
   const [editing, setEditing] = useState<Partial<LaunchRecord> & { reason?: string }>({});
   const [comment, setComment] = useState("");
   const [blocked, setBlocked] = useState<string[] | null>(null);
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration (was native confirm())
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
   async function load() {
     if (!launchId) return;
@@ -118,14 +122,14 @@ export default function LaunchAdminDetailPage() {
 
   async function onArchive() {
     if (!launchId) return;
-    if (!confirm("Archive this launch?")) return;
-    try {
-      await archiveLaunch(launchId);
-      setMsg("Archived");
-      await load();
-    } catch (e: any) {
-      setError(e?.error || "Archive failed");
-    }
+    setArchiveOpen(true);
+  }
+
+  async function runArchive() {
+    if (!launchId) throw new Error("Missing launchId");
+    await archiveLaunch(launchId);
+    setMsg("Archived");
+    await load();
   }
 
   const get = <K extends keyof LaunchRecord>(k: K): LaunchRecord[K] =>
@@ -176,6 +180,28 @@ export default function LaunchAdminDetailPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={archiveOpen}
+        title="Archive launch?"
+        body="This will archive the launch. This action cannot be undone."
+        confirmLabel="Archive"
+        confirmVariant="destructive"
+        onConfirm={async () => {
+          try {
+            await runArchive();
+            setArchiveOpen(false);
+            setArchiveError(null);
+          } catch (e: any) {
+            setArchiveError(e?.message ?? e?.error ?? String(e) ?? "Action failed");
+          }
+        }}
+        onCancel={() => {
+          setArchiveOpen(false);
+          setArchiveError(null);
+        }}
+        errorSlot={archiveError}
+      />
 
       {msg && (
         <div className="p-3 bg-green-100 text-green-700 rounded">{msg}</div>

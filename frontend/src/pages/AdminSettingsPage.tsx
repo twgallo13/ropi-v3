@@ -15,6 +15,7 @@ import {
   type AdminSetting,
   type SiteRegistryEntry,
 } from "../lib/api";
+import { ConfirmModal } from "../components/admin";
 
 type TabKey = "users" | "variables" | "smtp" | "ai";
 
@@ -89,6 +90,9 @@ function UsersTab() {
   const [error, setError] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(null);
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration (was confirm())
+  const [disableTarget, setDisableTarget] = useState<AdminUser | null>(null);
+  const [disableError, setDisableError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -159,11 +163,7 @@ function UsersTab() {
                   </button>
                   {!u.disabled && (
                     <button
-                      onClick={async () => {
-                        if (!confirm(`Disable ${u.email}?`)) return;
-                        await disableAdminUser(u.uid);
-                        load();
-                      }}
+                      onClick={() => setDisableTarget(u)}
                       className="text-xs text-red-600 hover:underline"
                     >
                       Disable
@@ -195,6 +195,28 @@ function UsersTab() {
           }}
         />
       )}
+      <ConfirmModal
+        open={disableTarget !== null}
+        title="Disable user?"
+        body={`Disable ${disableTarget?.email ?? ""}?`}
+        confirmLabel="Disable"
+        confirmVariant="primary"
+        onConfirm={async () => {
+          try {
+            await disableAdminUser(disableTarget!.uid);
+            await load();
+            setDisableTarget(null);
+            setDisableError(null);
+          } catch (e: any) {
+            setDisableError(e?.error ?? e?.message ?? String(e) ?? "Disable failed");
+          }
+        }}
+        onCancel={() => {
+          setDisableTarget(null);
+          setDisableError(null);
+        }}
+        errorSlot={disableError}
+      />
     </div>
   );
 }

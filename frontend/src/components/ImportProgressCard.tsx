@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchImportStatus, cancelImportJob, type ImportStatus } from "../lib/api";
+import { ConfirmModal } from "./admin";
 
 interface Props {
   batchId: string;
@@ -15,6 +16,9 @@ export function ImportProgressCard({ batchId, onComplete }: Props) {
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!batchId) return;
@@ -46,12 +50,13 @@ export function ImportProgressCard({ batchId, onComplete }: Props) {
 
   async function handleCancel() {
     if (cancelling) return;
-    if (!confirm("Cancel this import? Already-committed rows will remain.")) return;
+    setCancelOpen(true);
+  }
+
+  async function runCancel() {
     setCancelling(true);
     try {
       await cancelImportJob(batchId);
-    } catch (err: any) {
-      setError(err?.error || err?.message || "Cancel failed");
     } finally {
       setCancelling(false);
     }
@@ -102,6 +107,27 @@ export function ImportProgressCard({ batchId, onComplete }: Props) {
             </button>
           </div>
         </div>
+        <ConfirmModal
+          open={cancelOpen}
+          title="Cancel import?"
+          body="This will stop the in-progress import. Already-committed rows will remain."
+          confirmLabel="Cancel import"
+          confirmVariant="destructive"
+          onConfirm={async () => {
+            try {
+              await runCancel();
+              setCancelOpen(false);
+              setCancelError(null);
+            } catch (e: any) {
+              setCancelError(e?.message ?? e?.error ?? String(e) ?? "Action failed");
+            }
+          }}
+          onCancel={() => {
+            setCancelOpen(false);
+            setCancelError(null);
+          }}
+          errorSlot={cancelError}
+        />
       </div>
     );
   }

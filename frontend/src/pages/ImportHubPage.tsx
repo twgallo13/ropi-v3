@@ -26,6 +26,7 @@ import {
   type SalesStatusResponse,
 } from "../lib/api";
 import ImportProgressCard from "../components/ImportProgressCard";
+import { ConfirmModal } from "../components/admin";
 
 type Family = "full-product" | "weekly-operations";
 
@@ -248,6 +249,9 @@ function ImportCard({
 
 export default function ImportHubPage() {
   const [activeJobs, setActiveJobs] = useState<ImportStatus[]>([]);
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration (was confirm())
+  const [cancelAllOpen, setCancelAllOpen] = useState(false);
+  const [cancelAllError, setCancelAllError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -278,17 +282,7 @@ export default function ImportHubPage() {
               Active import jobs ({activeJobs.length})
             </h2>
             <button
-              onClick={async () => {
-                if (!confirm(`Cancel all ${activeJobs.length} processing job(s)?`)) return;
-                for (const j of activeJobs) {
-                  try {
-                    await cancelImportJob(j.batch_id);
-                  } catch {
-                    /* ignore */
-                  }
-                }
-                setActiveJobs([]);
-              }}
+              onClick={() => setCancelAllOpen(true)}
               className="text-xs text-red-600 hover:text-red-800 underline"
             >
               Clear stuck jobs
@@ -327,6 +321,34 @@ export default function ImportHubPage() {
           <SalesImportCard />
         </div>
       </div>
+      <ConfirmModal
+        open={cancelAllOpen}
+        title={`Cancel ${activeJobs.length} active job(s)?`}
+        body="Already-committed rows will remain."
+        confirmLabel="Cancel jobs"
+        confirmVariant="destructive"
+        onConfirm={async () => {
+          try {
+            for (const j of activeJobs) {
+              try {
+                await cancelImportJob(j.batch_id);
+              } catch {
+                /* ignore individual failures */
+              }
+            }
+            setActiveJobs([]);
+            setCancelAllOpen(false);
+            setCancelAllError(null);
+          } catch (e: any) {
+            setCancelAllError(e?.error ?? e?.message ?? String(e) ?? "Cancel failed");
+          }
+        }}
+        onCancel={() => {
+          setCancelAllOpen(false);
+          setCancelAllError(null);
+        }}
+        errorSlot={cancelAllError}
+      />
     </div>
   );
 }
