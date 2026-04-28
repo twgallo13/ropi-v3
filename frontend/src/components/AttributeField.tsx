@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { useAttributeField } from "../hooks/useAttributeField";
-import { saveField, fetchSiteRegistry } from "../lib/api";
-import type { SaveFieldResponse, SiteRegistryEntry } from "../lib/api";
+import {
+  saveField,
+  fetchSiteRegistry,
+  fetchBrandRegistry,
+  fetchDepartmentRegistry,
+} from "../lib/api";
+import type {
+  SaveFieldResponse,
+  SiteRegistryEntry,
+  BrandRegistryEntry,
+  DepartmentRegistryEntry,
+} from "../lib/api";
 
 /** Resolved option for dropdowns — label shown to user, value submitted on save. */
 interface ResolvedOption {
@@ -45,27 +55,44 @@ export function AttributeField({
     onSaved
   );
 
-  // ── Registry-driven dropdown support (dropdown_source: "site_registry") ──
-  // Three failure contracts from TALLY-123 Task 7:
+  // ── Registry-driven dropdown support ──
+  // TALLY-PRODUCT-EDITOR-REGISTRY-DROPDOWNS: extended from 1 → 3 sources.
+  //   - dropdown_source === "site_registry"       → fetchSiteRegistry       (TALLY-123 Task 7, original)
+  //   - dropdown_source === "brand_registry"      → fetchBrandRegistry      (NEW)
+  //   - dropdown_source === "department_registry" → fetchDepartmentRegistry (NEW)
+  // Three failure contracts from TALLY-123 Task 7 apply identically across all three:
   //   1. fetch-fails  → disabled + red border
   //   2. empty-registry → disabled + amber border
   //   3. orphaned-value → preserved with "(inactive)" suffix
+  // Three explicit branches by design — no generic dispatcher abstraction.
   const [registryOptions, setRegistryOptions] = useState<ResolvedOption[] | null>(null);
   const [registryError, setRegistryError] = useState<"fetch-fail" | "empty" | null>(null);
 
   useEffect(() => {
-    if (dropdownSource !== "site_registry") return;
     let cancelled = false;
-    fetchSiteRegistry(true)
-      .then((sites: SiteRegistryEntry[]) => {
+    let p: Promise<ResolvedOption[]> | null = null;
+    if (dropdownSource === "site_registry") {
+      p = fetchSiteRegistry(true).then((sites: SiteRegistryEntry[]) =>
+        sites.map((s) => ({ label: s.display_name, value: s.site_key }))
+      );
+    } else if (dropdownSource === "brand_registry") {
+      p = fetchBrandRegistry(true).then((brands: BrandRegistryEntry[]) =>
+        brands.map((b) => ({ label: b.display_name, value: b.brand_key }))
+      );
+    } else if (dropdownSource === "department_registry") {
+      p = fetchDepartmentRegistry(true).then((depts: DepartmentRegistryEntry[]) =>
+        depts.map((d) => ({ label: d.display_name, value: d.key }))
+      );
+    } else {
+      return;
+    }
+    p.then((resolved) => {
         if (cancelled) return;
-        if (sites.length === 0) {
+        if (resolved.length === 0) {
           setRegistryError("empty");
           setRegistryOptions([]);
         } else {
-          setRegistryOptions(
-            sites.map((s) => ({ label: s.display_name, value: s.site_key }))
-          );
+          setRegistryOptions(resolved);
           setRegistryError(null);
         }
       })
@@ -86,7 +113,11 @@ export function AttributeField({
 
   // ── Resolve effective options ──
   // Registry-driven fields override the static options prop.
-  const isRegistryDriven = dropdownSource === "site_registry";
+  // TALLY-PRODUCT-EDITOR-REGISTRY-DROPDOWNS: extended from 1 → 3 sources.
+  const isRegistryDriven =
+    dropdownSource === "site_registry" ||
+    dropdownSource === "brand_registry" ||
+    dropdownSource === "department_registry";
   let resolvedOptions: ResolvedOption[] = [];
   const registryDisabled = isRegistryDriven && (registryError === "fetch-fail" || registryError === "empty");
 
@@ -275,10 +306,10 @@ export function AttributeField({
       )}
 
       {registryError === "fetch-fail" && (
-        <p className="text-xs text-red-500 mt-0.5">⚠ Could not load site registry — field disabled</p>
+        <p className="text-xs text-red-500 mt-0.5">⚠ Could not load registry — field disabled</p>
       )}
       {registryError === "empty" && (
-        <p className="text-xs text-amber-600 mt-0.5">⚠ No active sites in registry — field disabled</p>
+        <p className="text-xs text-amber-600 mt-0.5">⚠ No active entries in registry — field disabled</p>
       )}
     </div>
   );
