@@ -239,17 +239,34 @@ export interface AttributeRegistryEntry {
   active: boolean;
   export_enabled: boolean;
   dropdown_options: string[];
-  dropdown_source?: string;
+  dropdown_source?: string | null;
   display_group?: string;
   display_order?: number;
   tab_group_order?: number;
   full_width?: boolean;
   is_editable?: boolean;
   depends_on?: { field: string; value: string } | null;
+  // TALLY-SETTINGS-UX Phase 3 / B.2 — admin metadata (round-trip preservation).
+  created_at?: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
+  include_in_ai_prompt?: boolean;
 }
 
-export async function fetchAttributeRegistry(): Promise<AttributeRegistryEntry[]> {
-  const res = await fetch(`${BASE}/api/v1/attribute_registry`, { headers: await headers() });
+/**
+ * Fetch attribute registry. Operator callsites pass no args (active-only).
+ * Admin callsites pass { admin: true, includeInactive: true } to bypass the
+ * BE active filter and surface inactive attributes for management.
+ */
+export async function fetchAttributeRegistry(
+  opts?: { admin?: boolean; includeInactive?: boolean }
+): Promise<AttributeRegistryEntry[]> {
+  const params: string[] = [];
+  if (opts?.admin) params.push("admin=true");
+  if (opts?.includeInactive) params.push("includeInactive=true");
+  const qs = params.length ? `?${params.join("&")}` : "";
+  const res = await fetch(`${BASE}/api/v1/attribute_registry${qs}`, { headers: await headers() });
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = await res.json();
   return data.attributes as AttributeRegistryEntry[];
@@ -2645,4 +2662,211 @@ export async function cancelImportJob(
   const data = await res.json();
   if (!res.ok) throw data;
   return data;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// TALLY-SETTINGS-UX Phase 3 / B.2 — Data Registries write wrappers.
+// 16 wrappers (4 registries × create / update / deactivate / reactivate).
+// Path conventions per A.2 dispatch (DO NOT symmetry-fix):
+//   site / brand / department  → kebab-case mount
+//   attribute                   → /api/v1/attribute_registry (UNDERSCORE)
+// Active-flag field:
+//   site / brand / department  → is_active
+//   attribute                   → active (NO is_ prefix)
+// ──────────────────────────────────────────────────────────────────────
+
+// ── Site Registry ──
+export async function createSiteRegistry(
+  payload: Omit<SiteRegistryEntry, "created_at" | "created_by" | "updated_at" | "updated_by">
+): Promise<SiteRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/site-registry`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.site;
+}
+
+export async function updateSiteRegistry(
+  site_key: string,
+  patch: Partial<SiteRegistryEntry>
+): Promise<SiteRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/site-registry/${encodeURIComponent(site_key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.site;
+}
+
+export async function deactivateSiteRegistry(site_key: string): Promise<SiteRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/site-registry/${encodeURIComponent(site_key)}`, {
+    method: "DELETE",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.site;
+}
+
+export async function reactivateSiteRegistry(site_key: string): Promise<SiteRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/site-registry/${encodeURIComponent(site_key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify({ is_active: true }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.site;
+}
+
+// ── Brand Registry ──
+export async function createBrandRegistry(
+  payload: Partial<BrandRegistryEntry>
+): Promise<BrandRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/brand-registry`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.brand;
+}
+
+export async function updateBrandRegistry(
+  brand_key: string,
+  patch: Partial<BrandRegistryEntry>
+): Promise<BrandRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/brand-registry/${encodeURIComponent(brand_key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.brand;
+}
+
+export async function deactivateBrandRegistry(brand_key: string): Promise<BrandRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/brand-registry/${encodeURIComponent(brand_key)}`, {
+    method: "DELETE",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.brand;
+}
+
+export async function reactivateBrandRegistry(brand_key: string): Promise<BrandRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/brand-registry/${encodeURIComponent(brand_key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify({ is_active: true }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.brand;
+}
+
+// ── Department Registry ──
+export async function createDepartmentRegistry(
+  payload: Partial<DepartmentRegistryEntry>
+): Promise<DepartmentRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/department-registry`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.department;
+}
+
+export async function updateDepartmentRegistry(
+  key: string,
+  patch: Partial<DepartmentRegistryEntry>
+): Promise<DepartmentRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/department-registry/${encodeURIComponent(key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.department;
+}
+
+export async function deactivateDepartmentRegistry(key: string): Promise<DepartmentRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/department-registry/${encodeURIComponent(key)}`, {
+    method: "DELETE",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.department;
+}
+
+export async function reactivateDepartmentRegistry(key: string): Promise<DepartmentRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/department-registry/${encodeURIComponent(key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify({ is_active: true }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.department;
+}
+
+// ── Attribute Registry ──
+export async function createAttributeRegistry(
+  payload: Partial<AttributeRegistryEntry>
+): Promise<AttributeRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/attribute_registry`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.attribute;
+}
+
+export async function updateAttributeRegistry(
+  field_key: string,
+  patch: Partial<AttributeRegistryEntry>
+): Promise<AttributeRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/attribute_registry/${encodeURIComponent(field_key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.attribute;
+}
+
+export async function deactivateAttributeRegistry(field_key: string): Promise<AttributeRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/attribute_registry/${encodeURIComponent(field_key)}`, {
+    method: "DELETE",
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.attribute;
+}
+
+export async function reactivateAttributeRegistry(field_key: string): Promise<AttributeRegistryEntry> {
+  const res = await fetch(`${BASE}/api/v1/attribute_registry/${encodeURIComponent(field_key)}`, {
+    method: "PUT",
+    headers: await headers(),
+    body: JSON.stringify({ active: true }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.attribute;
 }
