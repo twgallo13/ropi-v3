@@ -1,0 +1,190 @@
+
+========================================================
+TALLY-PRODUCT-EDITOR-REGISTRY-DROPDOWNS — Step 1 seed
+Project: ropi-aoss-dev
+Started: 2026-04-28T01:32:56.504Z
+========================================================
+
+─── READ-BEFORE ───
+
+attribute_registry/brand (pre):
+{
+  "label": "Brand",
+  "data_type": "string",
+  "group": "core",
+  "is_required": true,
+  "is_searchable": true,
+  "is_filterable": true,
+  "is_ai_generated": false,
+  "allowed_values": null,
+  "default_value": null,
+  "sort_order": 5,
+  "status": "active",
+  "created_at": {
+    "_seconds": 1776301282,
+    "_nanoseconds": 485000000
+  },
+  "display_label": "Brand",
+  "destination_tab": "core_information",
+  "export_enabled": true,
+  "include_in_ai_prompt": true,
+  "active": true,
+  "dropdown_options": [],
+  "required_for_completion": true,
+  "field_type": "text",
+  "include_in_cadence_targeting": true,
+  "full_width": false,
+  "display_order": 4,
+  "updated_at": {
+    "_seconds": 1776432722,
+    "_nanoseconds": 387000000
+  },
+  "display_group": "Identity",
+  "enum_source": "brand_registry"
+}
+
+attribute_registry/department (pre):
+{
+  "allowed_values": [
+    "footwear",
+    "apparel",
+    "accessory",
+    "equipment"
+  ],
+  "is_searchable": false,
+  "active": true,
+  "created_at": {
+    "_seconds": 1776301283,
+    "_nanoseconds": 449000000
+  },
+  "default_value": null,
+  "label": "Product Type",
+  "required_for_completion": true,
+  "display_label": "Department",
+  "destination_tab": "core_information",
+  "export_enabled": true,
+  "is_ai_generated": false,
+  "is_required": false,
+  "data_type": "enum",
+  "is_filterable": true,
+  "field_type": "dropdown",
+  "include_in_cadence_targeting": false,
+  "sort_order": 8,
+  "group": "core",
+  "status": "active",
+  "include_in_ai_prompt": true,
+  "full_width": false,
+  "display_order": 7,
+  "display_group": "Classification",
+  "updated_by": "tally-department-registry",
+  "enum_source": "department_registry",
+  "dropdown_options": [],
+  "updated_at": {
+    "_seconds": 1776940900,
+    "_nanoseconds": 539000000
+  }
+}
+
+─── DECISION + WRITE ───
+
+[brand] first-run pre-state detected. Writing payload via merge:true:
+{
+  "field_type": "dropdown",
+  "dropdown_source": "brand_registry"
+}
+[brand] write complete.
+
+[department] first-run pre-state detected. Writing payload via merge:true:
+{
+  "dropdown_source": "department_registry"
+}
+[department] write complete.
+
+─── READ-AFTER ───
+
+attribute_registry/brand (post):
+{
+  "label": "Brand",
+  "data_type": "string",
+  "group": "core",
+  "is_required": true,
+  "is_searchable": true,
+  "is_filterable": true,
+  "is_ai_generated": false,
+  "allowed_values": null,
+  "default_value": null,
+  "sort_order": 5,
+  "status": "active",
+  "created_at": {
+    "_seconds": 1776301282,
+    "_nanoseconds": 485000000
+  },
+  "display_label": "Brand",
+  "destination_tab": "core_information",
+  "export_enabled": true,
+  "include_in_ai_prompt": true,
+  "active": true,
+  "dropdown_options": [],
+  "required_for_completion": true,
+  "include_in_cadence_targeting": true,
+  "full_width": false,
+  "display_order": 4,
+  "updated_at": {
+    "_seconds": 1776432722,
+    "_nanoseconds": 387000000
+  },
+  "display_group": "Identity",
+  "enum_source": "brand_registry",
+  "dropdown_source": "brand_registry",
+  "field_type": "dropdown"
+}
+
+attribute_registry/department (post):
+{
+  "allowed_values": [
+    "footwear",
+    "apparel",
+    "accessory",
+    "equipment"
+  ],
+  "is_searchable": false,
+  "active": true,
+  "created_at": {
+    "_seconds": 1776301283,
+    "_nanoseconds": 449000000
+  },
+  "default_value": null,
+  "label": "Product Type",
+  "required_for_completion": true,
+  "display_label": "Department",
+  "destination_tab": "core_information",
+  "export_enabled": true,
+  "is_ai_generated": false,
+  "is_required": false,
+  "data_type": "enum",
+  "is_filterable": true,
+  "field_type": "dropdown",
+  "include_in_cadence_targeting": false,
+  "sort_order": 8,
+  "group": "core",
+  "status": "active",
+  "include_in_ai_prompt": true,
+  "full_width": false,
+  "display_order": 7,
+  "display_group": "Classification",
+  "updated_by": "tally-department-registry",
+  "enum_source": "department_registry",
+  "dropdown_options": [],
+  "updated_at": {
+    "_seconds": 1776940900,
+    "_nanoseconds": 539000000
+  },
+  "dropdown_source": "department_registry"
+}
+
+─── SUMMARY ───
+  brand: wrote-first-run
+  department: wrote-first-run
+
+✅  Seed complete. Both docs in expected post-fix state.
+Finished: 2026-04-28T01:32:58.178Z
