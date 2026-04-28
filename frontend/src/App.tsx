@@ -36,6 +36,10 @@ import MorePage from "./pages/MorePage";
 import ProductListPage from "./pages/ProductListPage";
 import AdminOverviewPage from "./pages/AdminOverviewPage";
 import RegistriesPillarPage from "./pages/RegistriesPillarPage";
+import SiteRegistryAdminPage from "./pages/SiteRegistryAdminPage";
+import AttributeRegistryAdminPage from "./pages/AttributeRegistryAdminPage";
+import BrandRegistryAdminPage from "./pages/BrandRegistryAdminPage";
+import DepartmentRegistryAdminPage from "./pages/DepartmentRegistryAdminPage";
 import AIAutomationPillarPage from "./pages/AIAutomationPillarPage";
 import PipelinePillarPage from "./pages/PipelinePillarPage";
 import GovernancePillarPage from "./pages/GovernancePillarPage";
@@ -156,6 +160,11 @@ function AppInner() {
             <Route path="/admin/overview" element={<AdminOverviewPage />} />
             {/* TALLY-SETTINGS-UX Phase 3 / B.1 / PR 2 — 6 pillar detail pages */}
             <Route path="/admin/registries" element={<RegistriesPillarPage />} />
+            {/* TALLY-SETTINGS-UX Phase 3 / B.2 — 4 Data Registries admin pages */}
+            <Route path="/admin/registries/sites" element={<SiteRegistryAdminPage />} />
+            <Route path="/admin/registries/attributes" element={<AttributeRegistryAdminPage />} />
+            <Route path="/admin/registries/brands" element={<BrandRegistryAdminPage />} />
+            <Route path="/admin/registries/departments" element={<DepartmentRegistryAdminPage />} />
             <Route path="/admin/ai-automation" element={<AIAutomationPillarPage />} />
             <Route path="/admin/pipeline" element={<PipelinePillarPage />} />
             <Route path="/admin/governance" element={<GovernancePillarPage />} />

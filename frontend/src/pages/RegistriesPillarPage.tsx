@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import { AdminNavCard, RoleGate } from "../components/admin";
 
 const SURFACES = [
-  { title: "Site Registry", description: "Manage canonical e-commerce sites.", href: "/admin/registries/sites", status: "coming" as const, comingLabel: "Coming in B.2" },
-  { title: "Attribute Registry", description: "Manage 66+ active product fields.", href: "/admin/registries/attributes", status: "coming" as const, comingLabel: "Coming in B.2" },
-  { title: "Brand Registry", description: "Map brand aliases to canonical owners.", href: "/admin/registries/brands", status: "coming" as const, comingLabel: "Coming in B.2" },
-  { title: "Department Registry", description: "Manage category hierarchies.", href: "/admin/registries/departments", status: "coming" as const, comingLabel: "Coming in B.2" },
+  { title: "Site Registry", description: "Manage canonical e-commerce sites.", href: "/admin/registries/sites", status: "live" as const },
+  { title: "Attribute Registry", description: "Manage 66+ active product fields.", href: "/admin/registries/attributes", status: "live" as const },
+  { title: "Brand Registry", description: "Map brand aliases to canonical owners.", href: "/admin/registries/brands", status: "live" as const },
+  { title: "Department Registry", description: "Manage category hierarchies.", href: "/admin/registries/departments", status: "live" as const },
 ];
 
 export default function RegistriesPillarPage() {
