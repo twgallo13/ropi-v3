@@ -9,6 +9,7 @@ import {
   type CadenceTriggerCondition,
   type CadenceMarkdownStep,
 } from "../lib/api";
+import { ConfirmModal } from "../components/admin";
 
 const TARGET_FIELDS = [
   "department",
@@ -424,6 +425,9 @@ export default function CadenceRulesAdminPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration
+  const [deactivateTarget, setDeactivateTarget] = useState<CadenceRule | null>(null);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -470,17 +474,11 @@ export default function CadenceRulesAdminPage() {
   }
 
   async function deactivate(rule: CadenceRule) {
-    if (!confirm(`Deactivate rule "${rule.rule_name}"?`)) return;
-    setError("");
-    try {
-      await deactivateCadenceRule(rule.rule_id);
-    } catch (e: any) {
-      setError(
-        `Failed to deactivate "${rule.rule_name}": ${e?.error || e?.message || "Unknown error"}`
-      );
-      return;
-    }
-    // load() handles its own errors via setError; no outer catch needed
+    setDeactivateTarget(rule);
+  }
+
+  async function runDeactivate(rule: CadenceRule) {
+    await deactivateCadenceRule(rule.rule_id);
     await load();
   }
 
@@ -586,6 +584,27 @@ export default function CadenceRulesAdminPage() {
           </div>
         ))}
       </div>
+      <ConfirmModal
+        open={deactivateTarget !== null}
+        title="Deactivate cadence rule?"
+        body={`Are you sure you want to deactivate "${deactivateTarget?.rule_name ?? ""}"? It can be reactivated later.`}
+        confirmLabel="Deactivate"
+        confirmVariant="primary"
+        onConfirm={async () => {
+          try {
+            await runDeactivate(deactivateTarget!);
+            setDeactivateTarget(null);
+            setDeactivateError(null);
+          } catch (e: any) {
+            setDeactivateError(e?.error ?? e?.message ?? String(e) ?? "Failed to deactivate");
+          }
+        }}
+        onCancel={() => {
+          setDeactivateTarget(null);
+          setDeactivateError(null);
+        }}
+        errorSlot={deactivateError}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   type UserRosterEntry,
 } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import { ConfirmModal } from "./admin";
 
 // Module-level cache for users (populated on first load in session)
 let USER_CACHE: UserRosterEntry[] | null = null;
@@ -43,6 +44,9 @@ export default function ProductCommentThread({ mpn }: { mpn: string }) {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteQuery, setAutocompleteQuery] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -119,13 +123,12 @@ export default function ProductCommentThread({ mpn }: { mpn: string }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this comment?")) return;
-    try {
-      await deleteComment(mpn, id);
-      await load();
-    } catch (e: any) {
-      setError(e?.error || e?.message || "Failed to delete");
-    }
+    setDeleteTargetId(id);
+  }
+
+  async function runDelete(id: string) {
+    await deleteComment(mpn, id);
+    await load();
   }
 
   const filteredUsers = autocompleteQuery
@@ -218,6 +221,27 @@ export default function ProductCommentThread({ mpn }: { mpn: string }) {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={deleteTargetId !== null}
+        title="Delete comment?"
+        body="This will permanently delete the comment. This action cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        onConfirm={async () => {
+          try {
+            await runDelete(deleteTargetId!);
+            setDeleteTargetId(null);
+            setDeleteError(null);
+          } catch (e: any) {
+            setDeleteError(e?.error ?? e?.message ?? String(e) ?? "Failed to delete");
+          }
+        }}
+        onCancel={() => {
+          setDeleteTargetId(null);
+          setDeleteError(null);
+        }}
+        errorSlot={deleteError}
+      />
     </div>
   );
 }

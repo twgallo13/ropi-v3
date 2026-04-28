@@ -6,6 +6,7 @@ import {
   deactivateSmartRule,
   SmartRule,
 } from "../lib/api";
+import { ConfirmModal } from "../components/admin";
 
 export default function SmartRulesAdminPage() {
   const { role, loading: authLoading } = useAuth();
@@ -13,6 +14,9 @@ export default function SmartRulesAdminPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const nav = useNavigate();
+  // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration (was confirm() + alert())
+  const [deactivateTargetId, setDeactivateTargetId] = useState<string | null>(null);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -32,13 +36,12 @@ export default function SmartRulesAdminPage() {
   }, [authLoading, role]);
 
   async function handleDeactivate(rule_id: string) {
-    if (!confirm(`Deactivate rule "${rule_id}"?`)) return;
-    try {
-      await deactivateSmartRule(rule_id);
-      await load();
-    } catch (e: any) {
-      alert("Failed: " + (e.error || e.message || String(e)));
-    }
+    setDeactivateTargetId(rule_id);
+  }
+
+  async function runDeactivate(rule_id: string) {
+    await deactivateSmartRule(rule_id);
+    await load();
   }
 
   function ruleTypeLabel(r: SmartRule): string {
@@ -151,6 +154,27 @@ export default function SmartRulesAdminPage() {
           </tbody>
         </table>
       )}
+      <ConfirmModal
+        open={deactivateTargetId !== null}
+        title={`Deactivate "${deactivateTargetId ?? ""}"?`}
+        body="This will deactivate the smart rule. It can be reactivated later."
+        confirmLabel="Deactivate"
+        confirmVariant="primary"
+        onConfirm={async () => {
+          try {
+            await runDeactivate(deactivateTargetId!);
+            setDeactivateTargetId(null);
+            setDeactivateError(null);
+          } catch (e: any) {
+            setDeactivateError("Failed: " + (e?.error || e?.message || String(e)));
+          }
+        }}
+        onCancel={() => {
+          setDeactivateTargetId(null);
+          setDeactivateError(null);
+        }}
+        errorSlot={deactivateError}
+      />
     </div>
   );
 }
