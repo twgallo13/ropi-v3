@@ -23,3 +23,6 @@ export type { AdminCrudColumn, AdminCrudTableProps } from "./AdminCrudTable";
 
 export { RichTextEditor } from "./RichTextEditor";
 export type { RichTextEditorProps } from "./RichTextEditor";
+
+export { AdminNavCard } from "./AdminNavCard";
+export type { AdminNavCardProps } from "./AdminNavCard";

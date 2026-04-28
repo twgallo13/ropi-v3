@@ -1,36 +1,72 @@
-import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { AdminNavCard, RoleGate } from "../components/admin";
+
+const PILLARS: Array<{
+  href: string;
+  icon: string;
+  title: string;
+  description: string;
+}> = [
+  {
+    href: "/admin/registries",
+    icon: "🗂️",
+    title: "Data Registries",
+    description: "The building blocks.",
+  },
+  {
+    href: "/admin/ai-automation",
+    icon: "🤖",
+    title: "AI & Automation",
+    description: "The engine.",
+  },
+  {
+    href: "/admin/pipeline",
+    icon: "🔄",
+    title: "Data Pipeline & Workflow",
+    description: "The data movers.",
+  },
+  {
+    href: "/admin/governance",
+    icon: "🛡️",
+    title: "Access & Governance",
+    description: "The people.",
+  },
+  {
+    href: "/admin/experience",
+    icon: "✨",
+    title: "App Experience",
+    description: "The operator interface.",
+  },
+  {
+    href: "/admin/infrastructure",
+    icon: "⚙️",
+    title: "System & Infrastructure",
+    description: "The plumbing.",
+  },
+];
 
 export default function AdminOverviewPage() {
-  const { role } = useAuth();
-  if (role !== "admin" && role !== "owner") return <Navigate to="/dashboard" replace />;
-
-  const sections = [
-    { to: "/admin/settings", label: "Settings", desc: "Users, variables, SMTP, AI providers" },
-    { to: "/admin/smart-rules", label: "Smart Rules", desc: "Automated field population rules" },
-    { to: "/admin/prompt-templates", label: "Prompt Templates", desc: "AI prompt configuration" },
-    { to: "/admin/cadence-rules", label: "Cadence Rules", desc: "Review cadence configuration" },
-    { to: "/admin/pricing-guardrails", label: "Pricing Guardrails", desc: "Price validation rules" },
-    { to: "/admin/export-profiles", label: "Export Profiles", desc: "Export format configuration" },
-    { to: "/admin/permissions", label: "Permissions", desc: "Role-based access control" },
-  ];
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6">Admin</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {sections.map((s) => (
-          <Link
-            key={s.to}
-            to={s.to}
-            className="block p-4 bg-white dark:bg-gray-800 border rounded-lg hover:border-blue-400 transition-colors"
-          >
-            <h3 className="font-semibold text-sm">{s.label}</h3>
-            <p className="text-xs text-gray-500 mt-1">{s.desc}</p>
-          </Link>
-        ))}
+    <RoleGate>
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">Admin Overview</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Configure ROPI V3 across 6 operational pillars.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {PILLARS.map((p) => (
+            <AdminNavCard
+              key={p.href}
+              href={p.href}
+              icon={p.icon}
+              title={p.title}
+              description={p.description}
+              status="live"
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </RoleGate>
   );
 }
