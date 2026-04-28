@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -32,10 +32,15 @@ import NeglectedInventoryPage from "./pages/NeglectedInventoryPage";
 import ChannelDisparityPage from "./pages/ChannelDisparityPage";
 import BuyerPerformancePage from "./pages/BuyerPerformancePage";
 import AdvisoryPage from "./pages/AdvisoryPage";
-import AdminSettingsPage from "./pages/AdminSettingsPage";
 import MorePage from "./pages/MorePage";
 import ProductListPage from "./pages/ProductListPage";
 import AdminOverviewPage from "./pages/AdminOverviewPage";
+import RegistriesPillarPage from "./pages/RegistriesPillarPage";
+import AIAutomationPillarPage from "./pages/AIAutomationPillarPage";
+import PipelinePillarPage from "./pages/PipelinePillarPage";
+import GovernancePillarPage from "./pages/GovernancePillarPage";
+import ExperiencePillarPage from "./pages/ExperiencePillarPage";
+import InfrastructurePillarPage from "./pages/InfrastructurePillarPage";
 import PricingGuardrailsPage from "./pages/PricingGuardrailsPage";
 import ExportProfilesPage from "./pages/ExportProfilesPage";
 import PermissionsPage from "./pages/PermissionsPage";
@@ -51,6 +56,23 @@ import { SettingsToastHost, RoleGate } from "./components/admin";
 function SmartRuleRedirect() {
   const { ruleId } = useParams<{ ruleId: string }>();
   return <Navigate to={`/admin/ai-automation/smart-rules/${ruleId}`} replace />;
+}
+
+/**
+ * TALLY-SETTINGS-UX Phase 3 / B.1 / PR 2 — SettingsTabRedirect.
+ * Maps the legacy /admin/settings?tab=<x> URLs to their owning pillar hubs.
+ * Unrecognized or missing tab → /admin/overview.
+ */
+function SettingsTabRedirect() {
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get("tab");
+  const tabMap: Record<string, string> = {
+    users: "/admin/governance",
+    smtp: "/admin/infrastructure",
+    ai: "/admin/ai-automation",
+    variables: "/admin/infrastructure",
+  };
+  return <Navigate to={tabMap[tab ?? ""] ?? "/admin/overview"} replace />;
 }
 
 export default function App() {
@@ -129,9 +151,16 @@ function AppInner() {
             <Route path="/buyer-performance" element={<BuyerPerformancePage />} />
             <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
             <Route path="/advisory" element={<AdvisoryPage />} />
-            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            <Route path="/admin/settings" element={<SettingsTabRedirect />} />
             <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
             <Route path="/admin/overview" element={<AdminOverviewPage />} />
+            {/* TALLY-SETTINGS-UX Phase 3 / B.1 / PR 2 — 6 pillar detail pages */}
+            <Route path="/admin/registries" element={<RegistriesPillarPage />} />
+            <Route path="/admin/ai-automation" element={<AIAutomationPillarPage />} />
+            <Route path="/admin/pipeline" element={<PipelinePillarPage />} />
+            <Route path="/admin/governance" element={<GovernancePillarPage />} />
+            <Route path="/admin/experience" element={<ExperiencePillarPage />} />
+            <Route path="/admin/infrastructure" element={<InfrastructurePillarPage />} />
             <Route path="/admin/pricing-guardrails" element={<Navigate to="/admin/infrastructure/pricing-guardrails" replace />} />
             <Route path="/admin/export-profiles" element={<Navigate to="/admin/pipeline/export-profiles" replace />} />
             <Route path="/admin/permissions" element={<Navigate to="/admin/governance/permissions" replace />} />
