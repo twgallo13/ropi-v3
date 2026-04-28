@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -41,6 +41,17 @@ import ExportProfilesPage from "./pages/ExportProfilesPage";
 import PermissionsPage from "./pages/PermissionsPage";
 import { ComponentDemoPage } from "./pages/ComponentDemoPage";
 import { SettingsToastHost, RoleGate } from "./components/admin";
+
+/**
+ * TALLY-SETTINGS-UX Phase 3 / B.1 / PR 1 — Defect D1 fix.
+ * Static <Navigate to="/admin/ai-automation/smart-rules/:ruleId" /> would forward
+ * the literal `:ruleId` string. This component reads the dynamic segment via
+ * useParams() and forwards the actual ID.
+ */
+function SmartRuleRedirect() {
+  const { ruleId } = useParams<{ ruleId: string }>();
+  return <Navigate to={`/admin/ai-automation/smart-rules/${ruleId}`} replace />;
+}
 
 export default function App() {
   return (
@@ -96,11 +107,11 @@ function AppInner() {
             <Route path="/buyer-review" element={<BuyerReviewPage />} />
             <Route path="/cadence-review" element={<CadenceReviewPage />} />
             <Route path="/cadence-unassigned" element={<CadenceUnassignedPage />} />
-            <Route path="/admin/cadence-rules" element={<CadenceRulesAdminPage />} />
-            <Route path="/admin/prompt-templates" element={<PromptTemplatesAdminPage />} />
-            <Route path="/admin/smart-rules" element={<SmartRulesAdminPage />} />
-            <Route path="/admin/smart-rules/new" element={<SmartRuleBuilderPage />} />
-            <Route path="/admin/smart-rules/:ruleId" element={<SmartRuleBuilderPage />} />
+            <Route path="/admin/cadence-rules" element={<Navigate to="/admin/pipeline/cadence" replace />} />
+            <Route path="/admin/prompt-templates" element={<Navigate to="/admin/ai-automation/prompt-templates" replace />} />
+            <Route path="/admin/smart-rules" element={<Navigate to="/admin/ai-automation/smart-rules" replace />} />
+            <Route path="/admin/smart-rules/new" element={<Navigate to="/admin/ai-automation/smart-rules/new" replace />} />
+            <Route path="/admin/smart-rules/:ruleId" element={<SmartRuleRedirect />} />
             <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
             <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
             <Route path="/export-center" element={<ExportCenterPage />} />
@@ -119,10 +130,20 @@ function AppInner() {
             <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
             <Route path="/advisory" element={<AdvisoryPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
-            <Route path="/admin" element={<AdminOverviewPage />} />
-            <Route path="/admin/pricing-guardrails" element={<PricingGuardrailsPage />} />
-            <Route path="/admin/export-profiles" element={<ExportProfilesPage />} />
-            <Route path="/admin/permissions" element={<PermissionsPage />} />
+            <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
+            <Route path="/admin/overview" element={<AdminOverviewPage />} />
+            <Route path="/admin/pricing-guardrails" element={<Navigate to="/admin/infrastructure/pricing-guardrails" replace />} />
+            <Route path="/admin/export-profiles" element={<Navigate to="/admin/pipeline/export-profiles" replace />} />
+            <Route path="/admin/permissions" element={<Navigate to="/admin/governance/permissions" replace />} />
+            {/* TALLY-SETTINGS-UX Phase 3 / B.1 / PR 1 — new canonical mounts (existing components at new URLs) */}
+            <Route path="/admin/ai-automation/smart-rules" element={<SmartRulesAdminPage />} />
+            <Route path="/admin/ai-automation/smart-rules/new" element={<SmartRuleBuilderPage />} />
+            <Route path="/admin/ai-automation/smart-rules/:ruleId" element={<SmartRuleBuilderPage />} />
+            <Route path="/admin/ai-automation/prompt-templates" element={<PromptTemplatesAdminPage />} />
+            <Route path="/admin/pipeline/cadence" element={<CadenceRulesAdminPage />} />
+            <Route path="/admin/pipeline/export-profiles" element={<ExportProfilesPage />} />
+            <Route path="/admin/infrastructure/pricing-guardrails" element={<PricingGuardrailsPage />} />
+            <Route path="/admin/governance/permissions" element={<PermissionsPage />} />
             <Route
               path="/admin/component-demo"
               element={
