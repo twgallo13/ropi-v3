@@ -135,6 +135,34 @@ export default function AttributeRegistryAdminPage() {
     { key: "destination_tab", header: "Tab", sortable: true, render: (r) => r.destination_tab },
     { key: "display_order", header: "Order", sortable: true, render: (r) => r.display_order ?? 0 },
     {
+      key: "severity",
+      header: "Severity",
+      sortable: true,
+      render: (r) => {
+        if (!r.severity) return <span className="text-gray-400">—</span>;
+        const cls =
+          r.severity === "error"
+            ? "bg-red-100 text-red-800"
+            : r.severity === "warn"
+              ? "bg-amber-100 text-amber-800"
+              : "bg-blue-100 text-blue-800";
+        return <span className={`text-xs px-2 py-0.5 rounded-full ${cls}`}>{r.severity}</span>;
+      },
+    },
+    {
+      key: "why_it_matters",
+      header: "Why It Matters",
+      render: (r) => {
+        if (!r.why_it_matters) return <span className="text-gray-400">—</span>;
+        const text = r.why_it_matters;
+        return (
+          <span className="text-xs" title={text}>
+            {text.length > 60 ? `${text.slice(0, 60)}…` : text}
+          </span>
+        );
+      },
+    },
+    {
       key: "active",
       header: "Active",
       sortable: true,
@@ -342,6 +370,11 @@ function AttributeEditor({ mode, initial, onSaved, onCancel }: AttributeEditorPr
   const dependsHydrated = useMemo(() => hydrateDependsOn(initial?.depends_on), [initial]);
   const [dependsOnField, setDependsOnField] = useState<string>(dependsHydrated.field);
   const [dependsOnValue, setDependsOnValue] = useState<string>(dependsHydrated.value);
+  // TALLY-SETTINGS-UX Phase 3 / A.3 PR5 — enrichment fields.
+  const [severity, setSeverity] = useState<"" | "error" | "warn" | "info">(
+    (initial?.severity as "error" | "warn" | "info" | undefined) ?? ""
+  );
+  const [whyItMatters, setWhyItMatters] = useState<string>(initial?.why_it_matters ?? "");
 
   const [isSaving, setIsSaving] = useState(false);
   const [editorError, setEditorError] = useState<string | null>(null);
@@ -413,6 +446,9 @@ function AttributeEditor({ mode, initial, onSaved, onCancel }: AttributeEditorPr
         full_width: fullWidth,
         is_editable: isEditable,
         depends_on: dependsOnPayload,
+        // PR5 enrichment — blank persists as null (clean removal); no backfill.
+        severity: severity ? severity : null,
+        why_it_matters: whyItMatters.trim() ? whyItMatters.trim() : null,
       };
       if (mode === "create") {
         const created = await createAttributeRegistry({
@@ -626,6 +662,35 @@ function AttributeEditor({ mode, initial, onSaved, onCancel }: AttributeEditorPr
                 placeholder="Value (e.g. true)"
                 className="border rounded px-3 py-2 text-sm"
               />
+            </div>
+          </div>
+
+          {/* TALLY-SETTINGS-UX Phase 3 / A.3 PR5 — severity + why_it_matters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-1 flex flex-col gap-1">
+              <label className="text-sm font-medium">severity</label>
+              <select
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value as "" | "error" | "warn" | "info")}
+                className="border rounded px-3 py-2 text-sm"
+              >
+                <option value="">(none)</option>
+                <option value="error">error</option>
+                <option value="warn">warn</option>
+                <option value="info">info</option>
+              </select>
+              <span className="text-xs text-gray-500">Empty persists as null.</span>
+            </div>
+            <div className="md:col-span-2 flex flex-col gap-1">
+              <label className="text-sm font-medium">why_it_matters</label>
+              <textarea
+                value={whyItMatters}
+                onChange={(e) => setWhyItMatters(e.target.value)}
+                rows={3}
+                placeholder="Free-form explanation of why this attribute matters."
+                className="border rounded px-3 py-2 text-sm"
+              />
+              <span className="text-xs text-gray-500">Empty persists as null.</span>
             </div>
           </div>
 

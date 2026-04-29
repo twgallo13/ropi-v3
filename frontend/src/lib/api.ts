@@ -252,6 +252,9 @@ export interface AttributeRegistryEntry {
   updated_at?: string;
   updated_by?: string;
   include_in_ai_prompt?: boolean;
+  // TALLY-SETTINGS-UX Phase 3 / A.3 PR5 — enrichment (no backfill per C.2).
+  severity?: "error" | "warn" | "info" | null;
+  why_it_matters?: string | null;
 }
 
 /**
@@ -3270,4 +3273,19 @@ export async function deactivateExportProfile(profile_key: string): Promise<Expo
 }
 export async function reactivateExportProfile(profile_key: string): Promise<ExportProfileEntry> {
   return updateExportProfile(profile_key, { is_active: true });
+}
+
+// ── TALLY-SETTINGS-UX Phase 3 / A.3 PR5 — Role permissions (read-only matrix) ──
+export interface CanonicalRoleEntry {
+  role: string;
+  source: "direct" | "launch_editor";
+  representative_ref: string;
+}
+export async function fetchRolePermissions(): Promise<{ roles: CanonicalRoleEntry[] }> {
+  const res = await fetch(`${BASE}/api/v1/admin/role-permissions`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
 }
