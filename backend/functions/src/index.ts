@@ -35,6 +35,7 @@ import adminUsersRouter from "./routes/adminUsers";
 import adminSettingsRouter from "./routes/adminSettings";
 import aiPlaneRouter from "./routes/aiPlane";
 import guidedToursRouter from "./routes/guidedTours";
+import rolePermissionsRouter from "./routes/rolePermissions";
 import aiEnrichmentRouter from "./routes/aiEnrichment";
 import queueStatsRouter from "./routes/queueStats";
 import internalJobsRouter from "./routes/internalJobs";
@@ -128,6 +129,9 @@ app.use("/api/v1/admin/ai", aiPlaneRouter);
 // Guided Tours admin CRUD (TALLY-SETTINGS-UX Phase 3 / A.3) — must mount BEFORE
 // the catch-all /api/v1/admin so first-match routes /api/v1/admin/guided-tours/* here.
 app.use("/api/v1/admin/guided-tours", guidedToursRouter);
+// Role Permissions read-only matrix (TALLY-SETTINGS-UX Phase 3 / A.3 PR3) — must
+// mount BEFORE the catch-all /api/v1/admin so first-match routes /admin/role-permissions/* here.
+app.use("/api/v1/admin/role-permissions", rolePermissionsRouter);
 app.use("/api/v1/admin", adminSettingsRouter);
 
 // ── Import Intelligence Layer — AI Enrichment ──

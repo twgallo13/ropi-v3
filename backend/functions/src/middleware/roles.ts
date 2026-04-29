@@ -5,7 +5,10 @@
  *   - If neither is set, the request is DENIED (403).
  * Known roles (Section 4): map_analyst, head_buyer, operations_operator,
  *                          buyer, completion_specialist, admin, owner,
- *                          product_ops
+ *                          product_ops, content_manager, launch_lead
+ *   (content_manager + launch_lead surface only via LAUNCH_EDITOR_ROLES
+ *    indirection in launches.ts; A.3 D.3 inventory — see
+ *    backend/functions/src/lib/rolePermissions.ts)
  */
 import { Response, NextFunction } from "express";
 import admin from "firebase-admin";
