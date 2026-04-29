@@ -101,8 +101,8 @@ const NAV_TREE: NavNode[] = [
         label: "Data Pipeline & Workflow",
         icon: "🔄",
         children: [
-          { label: "Import Mapping Templates", comingLabel: "B.4" },
-          { label: "Export Profiles", comingLabel: "B.4" },
+          { label: "Import Mapping Templates", path: "/admin/pipeline/import-templates" },
+          { label: "Export Profiles", path: "/admin/pipeline/export-profiles" },
           { label: "Cadence Policies", path: "/admin/pipeline/cadence" },
         ],
       },
@@ -111,16 +111,16 @@ const NAV_TREE: NavNode[] = [
         icon: "🛡️",
         children: [
           { label: "User Management", comingLabel: "B.5" },
-          { label: "Permissions Matrix", comingLabel: "B.5" },
+          { label: "Permissions Matrix", path: "/admin/governance/permissions" },
         ],
       },
       {
         label: "App Experience",
         icon: "✨",
         children: [
-          { label: "Comment Thread Settings", comingLabel: "B.6" },
-          { label: "Guided Tour Management", comingLabel: "B.6" },
-          { label: "SOP Panel Content", comingLabel: "B.6" },
+          { label: "Comment Thread Settings", path: "/admin/governance/comment-threads" },
+          { label: "Guided Tour Management", path: "/admin/experience/guided-tours" },
+          { label: "SOP Panel Content", path: "/admin/experience/sop-panels" },
         ],
       },
       {
@@ -128,10 +128,10 @@ const NAV_TREE: NavNode[] = [
         icon: "⚙️",
         children: [
           { label: "SMTP", comingLabel: "B.7" },
-          { label: "Pricing Guardrails", comingLabel: "B.7" },
-          { label: "Launch Settings", comingLabel: "B.7" },
-          { label: "Search Settings", comingLabel: "B.7" },
-          { label: "Feature Toggles", comingLabel: "B.7" },
+          { label: "Pricing Guardrails", path: "/admin/infrastructure/pricing-guardrails" },
+          { label: "Launch Settings", path: "/admin/experience/launch-settings" },
+          { label: "Search Settings", path: "/admin/infrastructure/search" },
+          { label: "Feature Toggles", path: "/admin/governance/feature-toggles" },
         ],
       },
     ],
