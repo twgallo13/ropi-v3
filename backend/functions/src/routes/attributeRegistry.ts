@@ -15,6 +15,13 @@ const ALLOWED_TABS = [
   "system",
 ];
 
+// A.3 PR3 — optional enrichment fields on attribute_registry docs.
+// `severity` is one of "error" | "warn" | "info" (or absent => null).
+// `why_it_matters` is a free-form admin-authored string (or absent => null).
+// Existing docs without these fields render null/undefined; admin UI shows em-dash.
+const ALLOWED_SEVERITIES = ["error", "warn", "info"] as const;
+type AttributeSeverity = (typeof ALLOWED_SEVERITIES)[number];
+
 async function writeAttributeAudit(
   action: string,
   entityId: string,
@@ -115,6 +122,26 @@ router.post(
         return;
       }
 
+      // A.3 PR3 — optional severity / why_it_matters validation.
+      let severity: AttributeSeverity | null = null;
+      if (body.severity !== undefined && body.severity !== null) {
+        if (!ALLOWED_SEVERITIES.includes(body.severity)) {
+          res.status(400).json({
+            error: `severity must be one of: ${ALLOWED_SEVERITIES.join(", ")}`,
+          });
+          return;
+        }
+        severity = body.severity;
+      }
+      let whyItMatters: string | null = null;
+      if (body.why_it_matters !== undefined && body.why_it_matters !== null) {
+        if (typeof body.why_it_matters !== "string") {
+          res.status(400).json({ error: "why_it_matters must be a string" });
+          return;
+        }
+        whyItMatters = body.why_it_matters;
+      }
+
       const key = field_key.trim();
       const ref = db().collection("attribute_registry").doc(key);
       const existing = await ref.get();
@@ -142,6 +169,8 @@ router.post(
         full_width: typeof body.full_width === "boolean" ? body.full_width : false,
         is_editable: typeof body.is_editable === "boolean" ? body.is_editable : true,
         depends_on: body.depends_on ?? null,
+        severity,
+        why_it_matters: whyItMatters,
         created_at: ts(),
         created_by: req.user!.uid,
         updated_at: ts(),
@@ -153,6 +182,9 @@ router.post(
         field_key: key,
         display_label: payload.display_label,
         destination_tab: payload.destination_tab,
+        // A.3 PR3 — D.10 before/after for new fields (creation: before=null).
+        before: { severity: null, why_it_matters: null },
+        after: { severity, why_it_matters: whyItMatters },
       });
 
       const refetched = (await ref.get()).data();
@@ -206,12 +238,31 @@ router.put(
         }
       }
 
+      // A.3 PR3 — optional severity / why_it_matters validation on PUT.
+      if (body.severity !== undefined && body.severity !== null) {
+        if (!ALLOWED_SEVERITIES.includes(body.severity)) {
+          res.status(400).json({
+            error: `severity must be one of: ${ALLOWED_SEVERITIES.join(", ")}`,
+          });
+          return;
+        }
+      }
+      if (
+        body.why_it_matters !== undefined &&
+        body.why_it_matters !== null &&
+        typeof body.why_it_matters !== "string"
+      ) {
+        res.status(400).json({ error: "why_it_matters must be a string" });
+        return;
+      }
+
       const ref = db().collection("attribute_registry").doc(pathKey);
       const existing = await ref.get();
       if (!existing.exists) {
         res.status(404).json({ error: `attribute "${pathKey}" not found` });
         return;
       }
+      const beforeData = existing.data() || {};
 
       const patch: Record<string, any> = {};
       if (body.display_label !== undefined) patch.display_label = body.display_label.trim();
@@ -231,17 +282,33 @@ router.put(
       if (typeof body.full_width === "boolean") patch.full_width = body.full_width;
       if (typeof body.is_editable === "boolean") patch.is_editable = body.is_editable;
       if (body.depends_on !== undefined) patch.depends_on = body.depends_on;
+      // A.3 PR3 — severity / why_it_matters (null clears the field).
+      if (body.severity !== undefined) patch.severity = body.severity ?? null;
+      if (body.why_it_matters !== undefined)
+        patch.why_it_matters = body.why_it_matters ?? null;
       patch.updated_at = ts();
       patch.updated_by = req.user!.uid;
 
       await ref.set(patch, { merge: true });
 
+      const afterSnap = await ref.get();
+      const afterData = afterSnap.data() || {};
+
       await writeAttributeAudit("attribute_registry_updated", pathKey, req.user!.uid, {
         patch_keys: Object.keys(patch),
+        // A.3 PR3 — D.10 before/after for the new fields only (existing-field
+        // before/after deferred per STOP-trigger #4 — don't reshape legacy audit).
+        before: {
+          severity: beforeData.severity ?? null,
+          why_it_matters: beforeData.why_it_matters ?? null,
+        },
+        after: {
+          severity: afterData.severity ?? null,
+          why_it_matters: afterData.why_it_matters ?? null,
+        },
       });
 
-      const refetched = (await ref.get()).data();
-      res.status(200).json({ attribute: refetched });
+      res.status(200).json({ attribute: afterData });
     } catch (err: any) {
       console.error("PUT /attribute_registry/:field_key error:", err);
       res.status(500).json({ error: err.message });
