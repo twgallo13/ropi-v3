@@ -952,6 +952,53 @@
         { "fieldPath": "completion_state",   "order": "ASCENDING"  },
         { "fieldPath": "completion_percent", "order": "DESCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 94 — A.3 PR1 — audit_log: entity_type + timestamp DESC (per-entity-type history feed)",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "entity_type", "order": "ASCENDING"  },
+        { "fieldPath": "timestamp",   "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 95 — A.3 PR1 — audit_log: entity_type + entity_id + timestamp DESC (per-doc audit trail)",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "entity_type", "order": "ASCENDING"  },
+        { "fieldPath": "entity_id",   "order": "ASCENDING"  },
+        { "fieldPath": "timestamp",   "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 96 — A.3 PR1 — audit_log: actor_uid + timestamp DESC (per-user activity feed)",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "actor_uid", "order": "ASCENDING"  },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 97 — A.3 PR1 — audit_log: action + timestamp DESC (per-action-type history)",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "action",    "order": "ASCENDING"  },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 98 — A.3 PR1 — audit_log: entity_type + action + timestamp DESC (per-entity-type per-action history)",
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "entity_type", "order": "ASCENDING"  },
+        { "fieldPath": "action",      "order": "ASCENDING"  },
+        { "fieldPath": "timestamp",   "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backfill + maintenance scripts for ROPI V3",
   "private": true,
+  "scripts": {
+    "migrate:admin-tours-to-guided-tours": "npx tsx migrate-admin-tours-to-guided-tours.ts"
+  },
   "dependencies": {
     "firebase-admin": "^12.0.0"
   }
