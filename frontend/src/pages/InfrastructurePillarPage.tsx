@@ -3,10 +3,8 @@ import { AdminNavCard, RoleGate } from "../components/admin";
 
 const SURFACES = [
   { title: "SMTP", description: "Email transport configuration.", href: "/admin/infrastructure/smtp", status: "coming" as const, comingLabel: "Coming in B.7" },
-  { title: "Pricing Guardrails", description: "Max markdowns + cost estimates.", href: "/admin/infrastructure/pricing-guardrails", status: "coming" as const, comingLabel: "Coming in B.7" },
-  { title: "Launch Settings", description: "Priority window + retention defaults.", href: "/admin/infrastructure/launch-settings", status: "coming" as const, comingLabel: "Coming in B.7" },
-  { title: "Search Settings", description: "Scope and fuzzy-match toggles.", href: "/admin/infrastructure/search-settings", status: "coming" as const, comingLabel: "Coming in B.7" },
-  { title: "Feature Toggles", description: "Global kill-switches for WIP features.", href: "/admin/infrastructure/feature-toggles", status: "coming" as const, comingLabel: "Coming in B.7" },
+  { title: "Pricing Guardrails", description: "Max markdowns + cost estimates.", href: "/admin/infrastructure/pricing-guardrails", status: "live" as const },
+  { title: "Search Settings", description: "Scope and fuzzy-match toggles.", href: "/admin/infrastructure/search", status: "live" as const },
 ];
 
 export default function InfrastructurePillarPage() {

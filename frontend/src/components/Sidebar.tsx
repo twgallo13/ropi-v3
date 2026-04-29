@@ -112,15 +112,17 @@ const NAV_TREE: NavNode[] = [
         children: [
           { label: "User Management", comingLabel: "B.5" },
           { label: "Permissions Matrix", path: "/admin/governance/permissions" },
+          { label: "Comment Thread Settings", path: "/admin/governance/comment-threads" },
+          { label: "Feature Toggles", path: "/admin/governance/feature-toggles" },
         ],
       },
       {
         label: "App Experience",
         icon: "✨",
         children: [
-          { label: "Comment Thread Settings", path: "/admin/governance/comment-threads" },
           { label: "Guided Tour Management", path: "/admin/experience/guided-tours" },
           { label: "SOP Panel Content", path: "/admin/experience/sop-panels" },
+          { label: "Launch Settings", path: "/admin/experience/launch-settings" },
         ],
       },
       {
@@ -129,9 +131,7 @@ const NAV_TREE: NavNode[] = [
         children: [
           { label: "SMTP", comingLabel: "B.7" },
           { label: "Pricing Guardrails", path: "/admin/infrastructure/pricing-guardrails" },
-          { label: "Launch Settings", path: "/admin/experience/launch-settings" },
           { label: "Search Settings", path: "/admin/infrastructure/search" },
-          { label: "Feature Toggles", path: "/admin/governance/feature-toggles" },
         ],
       },
     ],
