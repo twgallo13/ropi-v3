@@ -2,7 +2,7 @@
  * Guided Tours — Step 3.5
  *   GET /api/v1/tours/:hub   — fetch active tour for a hub
  *
- * Reads from `admin_tours` collection. Seeded via scripts/seed/seed-tours.js.
+ * Reads from `guided_tours` collection. Seeded via scripts/seed/seed-guided-tours.js.
  */
 import { Router, Response } from "express";
 import admin from "firebase-admin";
@@ -18,7 +18,7 @@ router.get(
     try {
       const hub = req.params.hub;
       const snap = await db()
-        .collection("admin_tours")
+        .collection("guided_tours")
         .where("hub", "==", hub)
         .where("is_active", "==", true)
         .limit(1)

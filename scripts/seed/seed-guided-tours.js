@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Seed: admin_tours — Step 3.5 Guided Tours
+ * Seed: guided_tours — Step 3.5 Guided Tours
  * Seeds default tours for 5 hubs. Idempotent (upsert by tour_id).
  */
 "use strict";
 const admin = require("firebase-admin");
 const { initApp } = require("./utils");
 
-const COLLECTION = "admin_tours";
+const COLLECTION = "guided_tours";
 
 const TOURS = [
   {
