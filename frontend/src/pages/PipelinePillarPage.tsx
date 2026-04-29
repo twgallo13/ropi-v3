@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { AdminNavCard, RoleGate } from "../components/admin";
 
 const SURFACES = [
-  { title: "Import Mapping Templates", description: "Audit, edit, and delete saved vendor mappings.", href: "/admin/pipeline/import-templates", status: "coming" as const, comingLabel: "Coming in B.4" },
-  { title: "Export Profiles", description: "Configure downstream payload formats.", href: "/admin/pipeline/export-profiles", status: "coming" as const, comingLabel: "Coming in B.4" },
+  { title: "Import Mapping Templates", description: "Audit, edit, and delete saved vendor mappings.", href: "/admin/pipeline/import-templates", status: "live" as const },
+  { title: "Export Profiles", description: "Configure downstream payload formats.", href: "/admin/pipeline/export-profiles", status: "live" as const },
   { title: "Cadence Policies", description: "Review cadence configuration.", href: "/admin/pipeline/cadence", status: "live" as const },
 ];
 

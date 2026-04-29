@@ -3,7 +3,9 @@ import { AdminNavCard, RoleGate } from "../components/admin";
 
 const SURFACES = [
   { title: "User Management", description: "Manage admin users.", href: "/admin/governance/users", status: "coming" as const, comingLabel: "Coming in B.5" },
-  { title: "Permissions Matrix", description: "Role-based access control + approval workflows.", href: "/admin/governance/permissions", status: "coming" as const, comingLabel: "Coming in B.5" },
+  { title: "Permissions Matrix", description: "Role-based access control + approval workflows.", href: "/admin/governance/permissions", status: "live" as const },
+  { title: "Comment Thread Settings", description: "Org-wide @mention + visibility rules.", href: "/admin/governance/comment-threads", status: "live" as const },
+  { title: "Feature Toggles", description: "Global kill-switches for WIP features.", href: "/admin/governance/feature-toggles", status: "live" as const },
 ];
 
 export default function GovernancePillarPage() {

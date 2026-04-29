@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { AdminNavCard, RoleGate } from "../components/admin";
 
 const SURFACES = [
-  { title: "Comment Thread Settings", description: "Org-wide @mention + visibility rules.", href: "/admin/experience/comments", status: "coming" as const, comingLabel: "Coming in B.6" },
-  { title: "Guided Tour Management", description: "Per-Hub tour copy + reset states.", href: "/admin/experience/tours", status: "coming" as const, comingLabel: "Coming in B.6" },
-  { title: "SOP Panel Content", description: "Per-Hub SOP copy.", href: "/admin/experience/sop", status: "coming" as const, comingLabel: "Coming in B.6" },
+  { title: "Guided Tour Management", description: "Per-Hub tour copy + reset states.", href: "/admin/experience/guided-tours", status: "live" as const },
+  { title: "SOP Panel Content", description: "Per-Hub SOP copy.", href: "/admin/experience/sop-panels", status: "live" as const },
+  { title: "Launch Settings", description: "Priority window + retention defaults.", href: "/admin/experience/launch-settings", status: "live" as const },
 ];
 
 export default function ExperiencePillarPage() {
