@@ -36,6 +36,14 @@ import adminSettingsRouter from "./routes/adminSettings";
 import aiPlaneRouter from "./routes/aiPlane";
 import guidedToursRouter from "./routes/guidedTours";
 import rolePermissionsRouter from "./routes/rolePermissions";
+// TALLY-SETTINGS-UX Phase 3 / A.3 PR2 — 7 admin collection routers.
+import commentThreadsRouter from "./routes/commentThreads";
+import exportProfilesRouter from "./routes/exportProfiles";
+import featureTogglesRouter from "./routes/featureToggles";
+import importTemplatesRouter from "./routes/importTemplates";
+import launchSettingsRouter from "./routes/launchSettings";
+import searchSettingsRouter from "./routes/searchSettings";
+import sopPanelsRouter from "./routes/sopPanels";
 import aiEnrichmentRouter from "./routes/aiEnrichment";
 import queueStatsRouter from "./routes/queueStats";
 import internalJobsRouter from "./routes/internalJobs";
@@ -132,6 +140,16 @@ app.use("/api/v1/admin/guided-tours", guidedToursRouter);
 // Role Permissions read-only matrix (TALLY-SETTINGS-UX Phase 3 / A.3 PR3) — must
 // mount BEFORE the catch-all /api/v1/admin so first-match routes /admin/role-permissions/* here.
 app.use("/api/v1/admin/role-permissions", rolePermissionsRouter);
+// TALLY-SETTINGS-UX Phase 3 / A.3 PR2 — 7 admin collection routers. All MUST
+// mount BEFORE the catch-all /api/v1/admin so first-match wins for their
+// specific sub-paths. Listed alphabetically for predictability.
+app.use("/api/v1/admin/comment-threads", commentThreadsRouter);
+app.use("/api/v1/admin/export-profiles", exportProfilesRouter);
+app.use("/api/v1/admin/feature-toggles", featureTogglesRouter);
+app.use("/api/v1/admin/import-templates", importTemplatesRouter);
+app.use("/api/v1/admin/launch-settings", launchSettingsRouter);
+app.use("/api/v1/admin/search-settings", searchSettingsRouter);
+app.use("/api/v1/admin/sop-panels", sopPanelsRouter);
 app.use("/api/v1/admin", adminSettingsRouter);
 
 // ── Import Intelligence Layer — AI Enrichment ──
