@@ -48,6 +48,14 @@ import InfrastructurePillarPage from "./pages/InfrastructurePillarPage";
 import PricingGuardrailsPage from "./pages/PricingGuardrailsPage";
 import ExportProfilesPage from "./pages/ExportProfilesPage";
 import PermissionsPage from "./pages/PermissionsPage";
+// TALLY-SETTINGS-UX Phase 3 / A.3 PR4 — 7 new collection-backed admin pages
+import ImportTemplatesPage from "./pages/ImportTemplatesPage";
+import LaunchSettingsPage from "./pages/LaunchSettingsPage";
+import SearchSettingsPage from "./pages/SearchSettingsPage";
+import CommentThreadsPage from "./pages/CommentThreadsPage";
+import GuidedToursAdminPage from "./pages/GuidedToursAdminPage";
+import SopPanelsPage from "./pages/SopPanelsPage";
+import FeatureTogglesPage from "./pages/FeatureTogglesPage";
 import { ComponentDemoPage } from "./pages/ComponentDemoPage";
 import { SettingsToastHost, RoleGate } from "./components/admin";
 
@@ -182,6 +190,14 @@ function AppInner() {
             <Route path="/admin/pipeline/export-profiles" element={<ExportProfilesPage />} />
             <Route path="/admin/infrastructure/pricing-guardrails" element={<PricingGuardrailsPage />} />
             <Route path="/admin/governance/permissions" element={<PermissionsPage />} />
+            {/* TALLY-SETTINGS-UX Phase 3 / A.3 PR4 — 7 new collection-backed admin routes */}
+            <Route path="/admin/pipeline/import-templates" element={<ImportTemplatesPage />} />
+            <Route path="/admin/experience/launch-settings" element={<LaunchSettingsPage />} />
+            <Route path="/admin/infrastructure/search" element={<SearchSettingsPage />} />
+            <Route path="/admin/governance/comment-threads" element={<CommentThreadsPage />} />
+            <Route path="/admin/experience/guided-tours" element={<GuidedToursAdminPage />} />
+            <Route path="/admin/experience/sop-panels" element={<SopPanelsPage />} />
+            <Route path="/admin/governance/feature-toggles" element={<FeatureTogglesPage />} />
             <Route
               path="/admin/component-demo"
               element={

@@ -2870,3 +2870,404 @@ export async function reactivateAttributeRegistry(field_key: string): Promise<At
   if (!res.ok) throw data;
   return data.attribute;
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// TALLY-SETTINGS-UX Phase 3 / A.3 PR4 — 7 admin collection wrappers + 1
+// fill (ExportProfilesPage). 5 wrappers per collection × 8 collections =
+// 40 wrappers. Pattern mirrors B.2 site-registry exactly: each fetch
+// accepts a `showInactive` arg for ergonomic parity (BE returns all docs;
+// callers filter client-side). Reactivation goes through PUT with the
+// active-flag set true (is_active=true for most; is_enabled=true for
+// feature_toggles; is_archived=false for comment_threads).
+// ══════════════════════════════════════════════════════════════════════
+
+// ── 1. import_templates ──────────────────────────────────────────────
+export interface ImportTemplateEntry {
+  template_key: string;
+  display_label: string;
+  description: string;
+  target_collection: string;
+  schema_json: Record<string, any>;
+  is_active: boolean;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchImportTemplates(_showInactive = false): Promise<ImportTemplateEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/import-templates`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.templates || [];
+}
+export async function createImportTemplate(payload: Partial<ImportTemplateEntry>): Promise<ImportTemplateEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/import-templates`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.template;
+}
+export async function updateImportTemplate(template_key: string, patch: Partial<ImportTemplateEntry>): Promise<ImportTemplateEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/import-templates/${encodeURIComponent(template_key)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.template;
+}
+export async function deactivateImportTemplate(template_key: string): Promise<ImportTemplateEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/import-templates/${encodeURIComponent(template_key)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.template;
+}
+export async function reactivateImportTemplate(template_key: string): Promise<ImportTemplateEntry> {
+  return updateImportTemplate(template_key, { is_active: true });
+}
+
+// ── 2. launch_settings ───────────────────────────────────────────────
+export interface LaunchSettingEntry {
+  setting_key: string;
+  display_label: string;
+  value: string | number | boolean;
+  value_type: "string" | "number" | "boolean";
+  description: string;
+  is_active: boolean;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchLaunchSettings(_showInactive = false): Promise<LaunchSettingEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/launch-settings`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.settings || [];
+}
+export async function createLaunchSetting(payload: Partial<LaunchSettingEntry>): Promise<LaunchSettingEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/launch-settings`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.setting;
+}
+export async function updateLaunchSetting(setting_key: string, patch: Partial<LaunchSettingEntry>): Promise<LaunchSettingEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/launch-settings/${encodeURIComponent(setting_key)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.setting;
+}
+export async function deactivateLaunchSetting(setting_key: string): Promise<LaunchSettingEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/launch-settings/${encodeURIComponent(setting_key)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.setting;
+}
+export async function reactivateLaunchSetting(setting_key: string): Promise<LaunchSettingEntry> {
+  return updateLaunchSetting(setting_key, { is_active: true });
+}
+
+// ── 3. search_settings ───────────────────────────────────────────────
+export interface SearchSettingEntry {
+  setting_key: string;
+  display_label: string;
+  value: string | number | boolean;
+  value_type: "string" | "number" | "boolean";
+  description: string;
+  is_active: boolean;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchSearchSettings(_showInactive = false): Promise<SearchSettingEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/search-settings`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.settings || [];
+}
+export async function createSearchSetting(payload: Partial<SearchSettingEntry>): Promise<SearchSettingEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/search-settings`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.setting;
+}
+export async function updateSearchSetting(setting_key: string, patch: Partial<SearchSettingEntry>): Promise<SearchSettingEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/search-settings/${encodeURIComponent(setting_key)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.setting;
+}
+export async function deactivateSearchSetting(setting_key: string): Promise<SearchSettingEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/search-settings/${encodeURIComponent(setting_key)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.setting;
+}
+export async function reactivateSearchSetting(setting_key: string): Promise<SearchSettingEntry> {
+  return updateSearchSetting(setting_key, { is_active: true });
+}
+
+// ── 4. comment_threads ───────────────────────────────────────────────
+// Note: doc-id is auto-allocated by BE (createCommentThread omits the id).
+// "Deactivate" sets is_archived=true; "reactivate" sets is_archived=false.
+export interface CommentThreadEntry {
+  thread_id: string;
+  entity_type: string;
+  entity_id: string;
+  title: string;
+  body_md: string;
+  is_resolved: boolean;
+  is_archived: boolean;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchCommentThreads(_showInactive = false): Promise<CommentThreadEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/comment-threads`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.threads || [];
+}
+export async function createCommentThread(payload: Partial<CommentThreadEntry>): Promise<CommentThreadEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/comment-threads`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.thread;
+}
+export async function updateCommentThread(thread_id: string, patch: Partial<CommentThreadEntry>): Promise<CommentThreadEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/comment-threads/${encodeURIComponent(thread_id)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.thread;
+}
+export async function deactivateCommentThread(thread_id: string): Promise<CommentThreadEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/comment-threads/${encodeURIComponent(thread_id)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.thread;
+}
+export async function reactivateCommentThread(thread_id: string): Promise<CommentThreadEntry> {
+  return updateCommentThread(thread_id, { is_archived: false });
+}
+
+// ── 5. guided_tours (PR1) ────────────────────────────────────────────
+export interface GuidedTourStep {
+  target_selector: string;
+  title: string;
+  content: string;
+  position?: "top" | "bottom" | "left" | "right";
+}
+export interface GuidedTourEntry {
+  tour_id: string;
+  hub: "import_hub" | "completion_queue" | "cadence_review" | "launch_admin" | "export_center";
+  title: string;
+  steps: GuidedTourStep[];
+  is_active: boolean;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchGuidedTours(_showInactive = false): Promise<GuidedTourEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/guided-tours`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.tours || [];
+}
+export async function createGuidedTour(payload: Partial<GuidedTourEntry>): Promise<GuidedTourEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/guided-tours`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.tour;
+}
+export async function updateGuidedTour(tour_id: string, patch: Partial<GuidedTourEntry>): Promise<GuidedTourEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/guided-tours/${encodeURIComponent(tour_id)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.tour;
+}
+export async function deactivateGuidedTour(tour_id: string): Promise<GuidedTourEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/guided-tours/${encodeURIComponent(tour_id)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.tour;
+}
+export async function reactivateGuidedTour(tour_id: string): Promise<GuidedTourEntry> {
+  return updateGuidedTour(tour_id, { is_active: true });
+}
+
+// ── 6. sop_panels ────────────────────────────────────────────────────
+export interface SopPanelEntry {
+  panel_key: string;
+  hub: "import_hub" | "completion_queue" | "cadence_review" | "launch_admin" | "export_center";
+  title: string;
+  content_md: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchSopPanels(_showInactive = false): Promise<SopPanelEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/sop-panels`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.panels || [];
+}
+export async function createSopPanel(payload: Partial<SopPanelEntry>): Promise<SopPanelEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/sop-panels`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.panel;
+}
+export async function updateSopPanel(panel_key: string, patch: Partial<SopPanelEntry>): Promise<SopPanelEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/sop-panels/${encodeURIComponent(panel_key)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.panel;
+}
+export async function deactivateSopPanel(panel_key: string): Promise<SopPanelEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/sop-panels/${encodeURIComponent(panel_key)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.panel;
+}
+export async function reactivateSopPanel(panel_key: string): Promise<SopPanelEntry> {
+  return updateSopPanel(panel_key, { is_active: true });
+}
+
+// ── 7. feature_toggles ───────────────────────────────────────────────
+// Note: schema has no is_active; "deactivate" sets is_enabled=false (E.4).
+export interface FeatureToggleEntry {
+  toggle_key: string;
+  display_label: string;
+  is_enabled: boolean;
+  description: string;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchFeatureToggles(_showInactive = false): Promise<FeatureToggleEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/feature-toggles`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.toggles || [];
+}
+export async function createFeatureToggle(payload: Partial<FeatureToggleEntry>): Promise<FeatureToggleEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/feature-toggles`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.toggle;
+}
+export async function updateFeatureToggle(toggle_key: string, patch: Partial<FeatureToggleEntry>): Promise<FeatureToggleEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/feature-toggles/${encodeURIComponent(toggle_key)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.toggle;
+}
+export async function deactivateFeatureToggle(toggle_key: string): Promise<FeatureToggleEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/feature-toggles/${encodeURIComponent(toggle_key)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.toggle;
+}
+export async function reactivateFeatureToggle(toggle_key: string): Promise<FeatureToggleEntry> {
+  return updateFeatureToggle(toggle_key, { is_enabled: true });
+}
+
+// ── 8. export_profiles ───────────────────────────────────────────────
+// E.5: filter_query is METADATA ONLY in A.3; NOT evaluated as a query.
+// FE renders it as a plain textarea (no execution-suggestive UI).
+export interface ExportProfileFieldMapEntry {
+  source_field: string;
+  target_field: string;
+  transform?: string;
+}
+export interface ExportProfileEntry {
+  profile_key: string;
+  display_label: string;
+  description: string;
+  target_format: "csv" | "json" | "xml";
+  field_map: ExportProfileFieldMapEntry[];
+  filter_query: string;
+  is_active: boolean;
+  created_at?: string | null;
+  created_by?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+}
+export async function fetchExportProfiles(_showInactive = false): Promise<ExportProfileEntry[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/export-profiles`, { headers: await headers() });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.profiles || [];
+}
+export async function createExportProfile(payload: Partial<ExportProfileEntry>): Promise<ExportProfileEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/export-profiles`, {
+    method: "POST", headers: await headers(), body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.profile;
+}
+export async function updateExportProfile(profile_key: string, patch: Partial<ExportProfileEntry>): Promise<ExportProfileEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/export-profiles/${encodeURIComponent(profile_key)}`, {
+    method: "PUT", headers: await headers(), body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.profile;
+}
+export async function deactivateExportProfile(profile_key: string): Promise<ExportProfileEntry> {
+  const res = await fetch(`${BASE}/api/v1/admin/export-profiles/${encodeURIComponent(profile_key)}`, {
+    method: "DELETE", headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.profile;
+}
+export async function reactivateExportProfile(profile_key: string): Promise<ExportProfileEntry> {
+  return updateExportProfile(profile_key, { is_active: true });
+}
