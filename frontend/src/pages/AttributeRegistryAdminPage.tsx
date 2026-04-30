@@ -17,6 +17,7 @@ import {
   AdminSelect,
   showToast,
 } from "../components/admin";
+import { ModalTabBar } from "../components/admin/ModalTabBar";
 import {
   fetchAttributeRegistry,
   createAttributeRegistry,
@@ -404,6 +405,12 @@ function AttributeEditor({ mode, initial, onSaved, onCancel }: AttributeEditorPr
   const [isSaving, setIsSaving] = useState(false);
   const [editorError, setEditorError] = useState<string | null>(null);
 
+  // Phase 3.1 PR #6 — modal tab state. Three tabs: Identity / Behavior / AI Logic.
+  const [activeTab, setActiveTab] = useState<"identity" | "behavior" | "ai-logic">("identity");
+  // Phase 3.1 PR #6 — show advanced reveals field_key input on create.
+  // Component-local; not persisted (matches outer page Show advanced pattern).
+  const [showAdvancedFields, setShowAdvancedFields] = useState<boolean>(false);
+
   // R.8 hydrate: if loaded row has unknown field_type, prepend disabled option
   // preserving the legacy value until the user explicitly picks a canonical one.
   const isUnknownType =
@@ -504,220 +511,279 @@ function AttributeEditor({ mode, initial, onSaved, onCancel }: AttributeEditorPr
           {mode === "create" ? "New Attribute" : `Edit Attribute: ${initial?.display_label ?? initial?.field_key ?? ""}`}
         </h2>
 
+        {/* Phase 3.1 PR #6 — ModalTabBar (Identity / Behavior / AI Logic) */}
+        <ModalTabBar
+          tabs={[
+            { id: "identity", label: "Identity" },
+            { id: "behavior", label: "Behavior" },
+            { id: "ai-logic", label: "AI Logic" },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as "identity" | "behavior" | "ai-logic")}
+          className="mb-4"
+        />
+
         <div className="space-y-3">
-          {/* Required */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">field_key *</label>
-              <input
-                type="text"
-                value={fieldKey}
-                onChange={(e) => setFieldKey(e.target.value)}
-                disabled={mode === "edit"}
-                className="border rounded px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-500"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">display_label *</label>
-              <input
-                type="text"
-                value={displayLabel}
-                onChange={(e) => setDisplayLabel(e.target.value)}
-                className="border rounded px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">field_type *</label>
-              <AdminSelect value={fieldType} onChange={setFieldType} options={fieldTypeOptions} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">destination_tab *</label>
-              <AdminSelect
-                value={destinationTab}
-                onChange={setDestinationTab}
-                options={DESTINATION_TAB_OPTIONS}
-              />
-            </div>
-          </div>
-
-          {/* Optional layout/order */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">display_group</label>
-              <input
-                type="text"
-                value={displayGroup}
-                onChange={(e) => setDisplayGroup(e.target.value)}
-                className="border rounded px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">display_order</label>
-              <input
-                type="number"
-                value={displayOrder}
-                onChange={(e) => setDisplayOrder(parseInt(e.target.value, 10) || 0)}
-                className="border rounded px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium">tab_group_order</label>
-              <input
-                type="number"
-                value={tabGroupOrder}
-                onChange={(e) => setTabGroupOrder(parseInt(e.target.value, 10) || 0)}
-                className="border rounded px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Booleans */}
-          <div className="grid grid-cols-2 gap-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={requiredForCompletion}
-                onChange={(e) => setRequiredForCompletion(e.target.checked)}
-              />
-              required_for_completion
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={includeInAiPrompt}
-                onChange={(e) => setIncludeInAiPrompt(e.target.checked)}
-              />
-              include_in_ai_prompt
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={(e) => setActive(e.target.checked)}
-              />
-              active
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={exportEnabled}
-                onChange={(e) => setExportEnabled(e.target.checked)}
-              />
-              export_enabled
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={fullWidth}
-                onChange={(e) => setFullWidth(e.target.checked)}
-              />
-              full_width
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={isEditable}
-                onChange={(e) => setIsEditable(e.target.checked)}
-              />
-              is_editable
-            </label>
-          </div>
-
-          {/* dropdown_options array editor */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">dropdown_options</label>
-            <div className="space-y-1">
-              {dropdownOptions.map((o, i) => (
-                <div key={i} className="flex gap-2">
+          {/* ──────────── Tab 1: Identity ──────────── */}
+          {activeTab === "identity" && (
+            <div className="space-y-3" role="tabpanel" aria-label="Identity">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Display Name *</label>
                   <input
                     type="text"
-                    value={o}
-                    onChange={(e) => {
-                      const next = [...dropdownOptions];
-                      next[i] = e.target.value;
-                      setDropdownOptions(next);
-                    }}
-                    className="flex-1 border rounded px-3 py-1.5 text-sm"
+                    value={displayLabel}
+                    onChange={(e) => setDisplayLabel(e.target.value)}
+                    className="border rounded px-3 py-2 text-sm"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOptions(dropdownOptions.filter((_, j) => j !== i))}
-                    className="text-xs text-red-600 hover:underline"
-                  >
-                    Remove
-                  </button>
                 </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setDropdownOptions([...dropdownOptions, ""])}
-                className="text-xs text-blue-600 hover:underline"
-              >
-                + Add option
-              </button>
-            </div>
-          </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Tab *</label>
+                  <AdminSelect
+                    value={destinationTab}
+                    onChange={setDestinationTab}
+                    options={DESTINATION_TAB_OPTIONS}
+                  />
+                </div>
+              </div>
 
-          {/* dropdown_source select */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">dropdown_source</label>
-            <AdminSelect
-              value={dropdownSource}
-              onChange={setDropdownSource}
-              options={DROPDOWN_SOURCE_OPTIONS}
-            />
-          </div>
+              {/* Field Key — behind Show Advanced on create; visible (disabled) on edit */}
+              {mode === "edit" ? (
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Field Key</label>
+                  <input
+                    type="text"
+                    value={fieldKey}
+                    disabled
+                    className="border rounded px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                  <span className="text-xs text-gray-500">Unique identifier; immutable after creation.</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={showAdvancedFields}
+                      onChange={(e) => setShowAdvancedFields(e.target.checked)}
+                    />
+                    Show Advanced
+                  </label>
+                  {showAdvancedFields && (
+                    <div className="flex flex-col gap-1 mt-1">
+                      <label className="text-sm font-medium">Field Key *</label>
+                      <input
+                        type="text"
+                        value={fieldKey}
+                        onChange={(e) => setFieldKey(e.target.value)}
+                        className="border rounded px-3 py-2 text-sm"
+                      />
+                      <span className="text-xs text-gray-500">Unique identifier; immutable after creation.</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
-          {/* depends_on two-input pair (R.10) */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Depends on (optional)</label>
-            <span className="text-xs text-gray-500">Both fields required, or both empty.</span>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={dependsOnField}
-                onChange={(e) => setDependsOnField(e.target.value)}
-                placeholder="Field key (e.g. is_fast_fashion)"
-                className="border rounded px-3 py-2 text-sm"
-              />
-              <input
-                type="text"
-                value={dependsOnValue}
-                onChange={(e) => setDependsOnValue(e.target.value)}
-                placeholder="Value (e.g. true)"
-                className="border rounded px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Group</label>
+                  <input
+                    type="text"
+                    value={displayGroup}
+                    onChange={(e) => setDisplayGroup(e.target.value)}
+                    className="border rounded px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Display Order</label>
+                  <input
+                    type="number"
+                    value={displayOrder}
+                    onChange={(e) => setDisplayOrder(parseInt(e.target.value, 10) || 0)}
+                    className="border rounded px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Group Order Within Tab</label>
+                  <input
+                    type="number"
+                    value={tabGroupOrder}
+                    onChange={(e) => setTabGroupOrder(parseInt(e.target.value, 10) || 0)}
+                    className="border rounded px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
 
-          {/* TALLY-SETTINGS-UX Phase 3 / A.3 PR5 — severity + why_it_matters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-1 flex flex-col gap-1">
-              <label className="text-sm font-medium">severity</label>
-              <select
-                value={severity}
-                onChange={(e) => setSeverity(e.target.value as "" | "error" | "warn" | "info")}
-                className="border rounded px-3 py-2 text-sm"
-              >
-                <option value="">(none)</option>
-                <option value="error">error</option>
-                <option value="warn">warn</option>
-                <option value="info">info</option>
-              </select>
-              <span className="text-xs text-gray-500">Empty persists as null.</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-1 flex flex-col gap-1">
+                  <label className="text-sm font-medium">Severity Level</label>
+                  <select
+                    value={severity}
+                    onChange={(e) => setSeverity(e.target.value as "" | "error" | "warn" | "info")}
+                    className="border rounded px-3 py-2 text-sm"
+                  >
+                    <option value="">(none)</option>
+                    <option value="error">error</option>
+                    <option value="warn">warn</option>
+                    <option value="info">info</option>
+                  </select>
+                  <span className="text-xs text-gray-500">Empty persists as null.</span>
+                </div>
+                <div className="md:col-span-2 flex flex-col gap-1">
+                  <label className="text-sm font-medium">Why It Matters</label>
+                  <textarea
+                    value={whyItMatters}
+                    onChange={(e) => setWhyItMatters(e.target.value)}
+                    rows={3}
+                    placeholder="Free-form explanation of why this attribute matters."
+                    className="border rounded px-3 py-2 text-sm"
+                  />
+                  <span className="text-xs text-gray-500">Empty persists as null.</span>
+                </div>
+              </div>
             </div>
-            <div className="md:col-span-2 flex flex-col gap-1">
-              <label className="text-sm font-medium">why_it_matters</label>
-              <textarea
-                value={whyItMatters}
-                onChange={(e) => setWhyItMatters(e.target.value)}
-                rows={3}
-                placeholder="Free-form explanation of why this attribute matters."
-                className="border rounded px-3 py-2 text-sm"
-              />
-              <span className="text-xs text-gray-500">Empty persists as null.</span>
+          )}
+
+          {/* ──────────── Tab 2: Behavior ──────────── */}
+          {activeTab === "behavior" && (
+            <div className="space-y-3" role="tabpanel" aria-label="Behavior">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Field Type *</label>
+                <AdminSelect value={fieldType} onChange={setFieldType} options={fieldTypeOptions} />
+              </div>
+
+              {/* dropdown_options — visible only when field_type is dropdown or multi_select */}
+              {(fieldType === "dropdown" || fieldType === "multi_select") && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Dropdown Options</label>
+                  <div className="space-y-1">
+                    {dropdownOptions.map((o, i) => (
+                      <div key={i} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={o}
+                          onChange={(e) => {
+                            const next = [...dropdownOptions];
+                            next[i] = e.target.value;
+                            setDropdownOptions(next);
+                          }}
+                          className="flex-1 border rounded px-3 py-1.5 text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setDropdownOptions(dropdownOptions.filter((_, j) => j !== i))}
+                          className="text-xs text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setDropdownOptions([...dropdownOptions, ""])}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      + Add option
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* dropdown_source — visible only when field_type === "dropdown" */}
+              {fieldType === "dropdown" && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium">Dropdown Source</label>
+                  <AdminSelect
+                    value={dropdownSource}
+                    onChange={setDropdownSource}
+                    options={DROPDOWN_SOURCE_OPTIONS}
+                  />
+                </div>
+              )}
+
+              {/* depends_on two-input pair (R.10) */}
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Depends On</label>
+                <span className="text-xs text-gray-500">Field must equal value to display. Both fields required, or both empty.</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={dependsOnField}
+                    onChange={(e) => setDependsOnField(e.target.value)}
+                    placeholder="Field key (e.g. is_fast_fashion)"
+                    className="border rounded px-3 py-2 text-sm"
+                  />
+                  <input
+                    type="text"
+                    value={dependsOnValue}
+                    onChange={(e) => setDependsOnValue(e.target.value)}
+                    placeholder="Value (e.g. true)"
+                    className="border rounded px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={(e) => setActive(e.target.checked)}
+                  />
+                  Active
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={requiredForCompletion}
+                    onChange={(e) => setRequiredForCompletion(e.target.checked)}
+                  />
+                  Required for Completion
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={exportEnabled}
+                    onChange={(e) => setExportEnabled(e.target.checked)}
+                  />
+                  Include in Exports
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={fullWidth}
+                    onChange={(e) => setFullWidth(e.target.checked)}
+                  />
+                  Full Width Display
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isEditable}
+                    onChange={(e) => setIsEditable(e.target.checked)}
+                  />
+                  User-Editable
+                </label>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* ──────────── Tab 3: AI Logic ──────────── */}
+          {activeTab === "ai-logic" && (
+            <div className="space-y-3" role="tabpanel" aria-label="AI Logic">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={includeInAiPrompt}
+                  onChange={(e) => setIncludeInAiPrompt(e.target.checked)}
+                />
+                Include in AI Prompts
+              </label>
+              <p className="text-xs text-gray-500">
+                Future AI hints, generation rules, and prompt templates will appear here.
+              </p>
+            </div>
+          )}
 
           <ErrorBanner message={editorError} onDismiss={() => setEditorError(null)} />
         </div>
