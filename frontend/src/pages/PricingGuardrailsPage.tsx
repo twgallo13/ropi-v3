@@ -77,6 +77,9 @@ export default function PricingGuardrailsPage() {
   const [originals, setOriginals] = useState<Record<string, string | number | boolean>>({});
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  // Phase 3.1 PR #7 — 'Show advanced' reveals parenthetical tech keys beside
+  // each human label. Component-local state only; not persisted across reload.
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   async function load() {
     setLoading(true); setError(null);
@@ -155,8 +158,13 @@ export default function PricingGuardrailsPage() {
     return (
       <div className="flex flex-col gap-1">
         <label htmlFor={id} className="text-sm font-medium">
-          {labels[def.key] ?? def.label}{" "}
-          <code className="text-xs text-gray-500">({def.key})</code>
+          {labels[def.key] ?? def.label}
+          {showAdvanced && (
+            <>
+              {" "}
+              <code className="text-xs text-gray-500">({def.key})</code>
+            </>
+          )}
         </label>
         {def.value_type === "number" ? (
           <input
@@ -193,6 +201,18 @@ export default function PricingGuardrailsPage() {
         <p className="text-gray-600 mb-6">
           Margin thresholds, below-cost gates, export rounding, and cadence/analytics parameters.
         </p>
+
+        {/* Phase 3.1 PR #7 — 'Show advanced' toggle (mirrors AttributeRegistry PR #5 pattern). */}
+        <div className="flex justify-end mb-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showAdvanced}
+              onChange={(e) => setShowAdvanced(e.target.checked)}
+            />
+            Show advanced
+          </label>
+        </div>
 
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
