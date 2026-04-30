@@ -6,6 +6,7 @@ import {
   createAdminUser,
   updateAdminUser,
   disableAdminUser,
+  reenableAdminUser,
   fetchAdminSettings,
   updateAdminSetting,
   testSmtp,
@@ -88,6 +89,9 @@ function UsersTab() {
   // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration (was confirm())
   const [disableTarget, setDisableTarget] = useState<AdminUser | null>(null);
   const [disableError, setDisableError] = useState<string | null>(null);
+  // A.4 PR 5 (Tier 2.2) — re-enable button state
+  const [reenablingUid, setReenablingUid] = useState<string | null>(null);
+  const [reenableError, setReenableError] = useState<string | null>(null);
   // A.4 Tier 1 (§1.3): role options sourced from BE
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
   const [roleOptionsLoading, setRoleOptionsLoading] = useState(true);
@@ -137,6 +141,9 @@ function UsersTab() {
       </div>
 
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+      {reenableError && (
+        <p className="text-red-600 text-sm mb-3">{reenableError}</p>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <table className="min-w-full text-sm">
@@ -173,7 +180,28 @@ function UsersTab() {
                   >
                     Edit
                   </button>
-                  {!u.disabled && (
+                  {u.disabled ? (
+                    <button
+                      disabled={reenablingUid === u.uid}
+                      onClick={async () => {
+                        setReenableError(null);
+                        setReenablingUid(u.uid);
+                        try {
+                          await reenableAdminUser(u.uid);
+                          await load();
+                        } catch (e: any) {
+                          setReenableError(
+                            e?.error || e?.message || "Re-enable failed"
+                          );
+                        } finally {
+                          setReenablingUid(null);
+                        }
+                      }}
+                      className="text-xs text-green-700 hover:underline disabled:opacity-50"
+                    >
+                      {reenablingUid === u.uid ? "Re-enabling…" : "Re-enable"}
+                    </button>
+                  ) : (
                     <button
                       onClick={() => setDisableTarget(u)}
                       className="text-xs text-red-600 hover:underline"

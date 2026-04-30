@@ -2550,6 +2550,19 @@ export async function disableAdminUser(uid: string): Promise<{ ok: boolean }> {
   return data;
 }
 
+// A.4 PR 5 (Tier 2.2) — re-enable a disabled user.
+export async function reenableAdminUser(
+  uid: string
+): Promise<{ uid: string; disabled: false }> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/users/${encodeURIComponent(uid)}/enable`,
+    { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
 // A.4 Tier 1 (§1.3): canonical role-options source. FE no longer hard-codes
 // the list; the BE owns it (adminUsers.ts ALLOWED_ROLES) and exposes via
 // GET /api/v1/admin/users/role-options.

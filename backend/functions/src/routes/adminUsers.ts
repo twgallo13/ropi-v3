@@ -307,4 +307,51 @@ router.delete(
   }
 );
 
+// A.4 PR 5 (Tier 2.2) — re-enable a disabled user. Inverse of DELETE.
+//   POST /api/v1/admin/users/:uid/enable
+router.post(
+  "/:uid/enable",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { uid } = req.params;
+      const docRef = admin.firestore().collection("users").doc(uid);
+      const snap = await docRef.get();
+      if (!snap.exists) {
+        res.status(404).json({ error: "user_not_found" });
+        return;
+      }
+      const data = snap.data() || {};
+      if (data.disabled !== true) {
+        res.status(409).json({ error: "user_not_disabled" });
+        return;
+      }
+      await admin.auth().updateUser(uid, { disabled: false });
+      await docRef.set(
+        {
+          disabled: false,
+          disabled_at: null,
+          disabled_by: null,
+          reenabled_at: admin.firestore.FieldValue.serverTimestamp(),
+          reenabled_by: req.user?.uid || null,
+        },
+        { merge: true }
+      );
+      await emitUserAudit({
+        event_type: "user_reenabled",
+        target_user_id: uid,
+        acting_user_id: req.user?.uid || null,
+        extra: {},
+      });
+      res.json({ uid, disabled: false });
+    } catch (err: any) {
+      console.error("POST /admin/users/:uid/enable error:", err);
+      res
+        .status(500)
+        .json({ error: err.message || "Failed to re-enable user" });
+    }
+  }
+);
+
 export default router;
