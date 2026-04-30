@@ -441,19 +441,76 @@ function EditUserModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  // A.4 Tier 2.1 — per Q6 live shape (PR #43), departments + site_scope
+  // can be undefined / null / array. Normalize to array for state init.
+  const initialDepartments = Array.isArray(user.departments)
+    ? user.departments.join(", ")
+    : "";
+  const initialSiteScope = Array.isArray(user.site_scope) ? user.site_scope : [];
+
   const [displayName, setDisplayName] = useState(user.display_name || "");
   const [role, setRole] = useState(user.role || "buyer");
+  const [departments, setDepartments] = useState(initialDepartments);
+  const [siteScope, setSiteScope] = useState<string[]>(initialSiteScope);
+  const [siteOptions, setSiteOptions] = useState<SiteRegistryEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchSiteRegistry(true).then(setSiteOptions).catch(() => {});
+  }, []);
+
+  // A.4 Tier 2.1 — split-trim-filter on submit; matches AddUserModal exactly.
+  function parseDepartments(raw: string): string[] {
+    return raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  // Helper: detect array-vs-array equality regardless of order? Spec says
+  // send if changed. We use JSON-stringify of sorted copy for stable diff.
+  function arrayEqual(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false;
+    const sa = [...a].sort();
+    const sb = [...b].sort();
+    return sa.every((v, i) => v === sb[i]);
+  }
 
   async function submit() {
     setSaving(true);
     setError("");
     try {
-      await updateAdminUser(user.uid, {
-        display_name: displayName.trim(),
-        role,
-      });
+      const body: Partial<{
+        display_name: string;
+        role: string;
+        departments: string[] | null;
+        site_scope: string[] | null;
+      }> = {};
+
+      const trimmedName = displayName.trim();
+      if (trimmedName !== (user.display_name || "")) {
+        body.display_name = trimmedName;
+      }
+      if (role !== (user.role || "")) {
+        body.role = role;
+      }
+
+      // A.4 Tier 2.1 — departments diff. Send array if non-empty; send null
+      // to explicitly clear; omit if unchanged.
+      const newDepartments = parseDepartments(departments);
+      const oldDepartments = Array.isArray(user.departments) ? user.departments : [];
+      if (!arrayEqual(newDepartments, oldDepartments)) {
+        body.departments = newDepartments.length > 0 ? newDepartments : null;
+      }
+
+      // A.4 Tier 2.1 — site_scope diff. Same rules.
+      const oldSiteScope = Array.isArray(user.site_scope) ? user.site_scope : [];
+      if (!arrayEqual(siteScope, oldSiteScope)) {
+        body.site_scope = siteScope.length > 0 ? siteScope : null;
+      }
+
+      await updateAdminUser(user.uid, body);
       onSaved();
     } catch (e: any) {
       setError(e?.error || e?.message || "Update failed");
@@ -503,6 +560,34 @@ function EditUserModal({
               </button>
             </div>
           )}
+        </Field>
+        <Field label="Departments (comma separated)">
+          <input
+            value={departments}
+            onChange={(e) => setDepartments(e.target.value)}
+            placeholder="footwear, accessories"
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Site Scope">
+          <div className="flex gap-3 text-sm">
+            {siteOptions.map((s) => (
+              <label key={s.site_key} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={siteScope.includes(s.site_key)}
+                  onChange={(e) =>
+                    setSiteScope((prev) =>
+                      e.target.checked
+                        ? [...prev, s.site_key]
+                        : prev.filter((x) => x !== s.site_key)
+                    )
+                  }
+                />
+                {s.display_name}
+              </label>
+            ))}
+          </div>
         </Field>
         <div className="flex justify-end gap-2 pt-3">
           <button
