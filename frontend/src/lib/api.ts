@@ -1757,13 +1757,14 @@ export async function testSmartRule(
 // ═══════════════════════════════════════════════════════════════
 
 // ── Users roster (Correction 2) ──
+// A.4 Path A: `active` field removed (BE projection no longer includes it;
+// sole consumer ProductCommentThread.tsx never read it).
 export interface UserRosterEntry {
   uid: string;
   display_name: string;
   email: string | null;
   role: string | null;
   avatar_initials: string;
-  active: boolean;
 }
 export async function fetchUsers(): Promise<UserRosterEntry[]> {
   const res = await fetch(`${BASE}/api/v1/users`, { headers: await headers() });

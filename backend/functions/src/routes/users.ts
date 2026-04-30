@@ -25,13 +25,16 @@ router.get("/", requireAuth, async (_req: AuthenticatedRequest, res: Response) =
     const users = snap.docs.map((d) => {
       const data = d.data() || {};
       const display_name = data.display_name || data.name || data.email || d.id;
+      // A.4 Path A: `active` removed from projection. Field is dead state on
+      // user docs (never written; only consumer was the FE roster type, which
+      // never read it — see Frink B-pass Area B). Future cleanup tally will
+      // delete the field from existing user docs.
       return {
         uid: d.id,
         display_name,
         email: data.email || null,
         role: data.role || null,
         avatar_initials: initials(display_name),
-        active: data.active !== false,
       };
     });
     res.json({ users });
