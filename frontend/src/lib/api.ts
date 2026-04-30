@@ -2563,6 +2563,20 @@ export async function reenableAdminUser(
   return data;
 }
 
+// A.4 PR 6 (Tier 2.3) — admin-initiated password reset. Returns one-shot
+// temp password that must NOT be persisted client-side outside the reveal modal.
+export async function resetAdminUserPassword(
+  uid: string
+): Promise<{ uid: string; temp_password: string }> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/users/${encodeURIComponent(uid)}/reset-password`,
+    { method: "POST", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
 // A.4 Tier 1 (§1.3): canonical role-options source. FE no longer hard-codes
 // the list; the BE owns it (adminUsers.ts ALLOWED_ROLES) and exposes via
 // GET /api/v1/admin/users/role-options.

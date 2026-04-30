@@ -354,4 +354,56 @@ router.post(
   }
 );
 
+// A.4 PR 6 (Tier 2.3) — admin-initiated password reset. Generates a one-shot
+// temp password using the SAME generator as POST create handler:
+//   `${displayNameNoSpaces}${4DigitRandom}@Ropi`
+// The temp password is returned to the caller exactly once and is NEVER
+// included in the audit_log payload.
+//   POST /api/v1/admin/users/:uid/reset-password
+router.post(
+  "/:uid/reset-password",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { uid } = req.params;
+      const docRef = admin.firestore().collection("users").doc(uid);
+      const snap = await docRef.get();
+      if (!snap.exists) {
+        res.status(404).json({ error: "user_not_found" });
+        return;
+      }
+      const data = snap.data() || {};
+      const displayName = data.display_name || data.name || "User";
+
+      const rand = Math.floor(1000 + Math.random() * 9000);
+      const tempPassword = `${String(displayName).replace(/\s+/g, "")}${rand}@Ropi`;
+
+      await admin.auth().updateUser(uid, { password: tempPassword });
+      await docRef.set(
+        {
+          password_reset_at: admin.firestore.FieldValue.serverTimestamp(),
+          password_reset_by: req.user?.uid || null,
+        },
+        { merge: true }
+      );
+
+      // A.4 PR 3/PR 6 — audit emission. Temp password intentionally OMITTED.
+      await emitUserAudit({
+        event_type: "user_password_reset",
+        target_user_id: uid,
+        acting_user_id: req.user?.uid || null,
+        extra: {},
+      });
+
+      res.json({ uid, temp_password: tempPassword });
+    } catch (err: any) {
+      console.error("POST /admin/users/:uid/reset-password error:", err);
+      res
+        .status(500)
+        .json({ error: err.message || "Failed to reset password" });
+    }
+  }
+);
+
 export default router;
