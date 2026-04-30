@@ -110,7 +110,7 @@ const NAV_TREE: NavNode[] = [
         label: "Access & Governance",
         icon: "🛡️",
         children: [
-          { label: "User Management", comingLabel: "B.5" },
+          { label: "User Management", path: "/admin/governance/users" },
           { label: "Permissions Matrix", path: "/admin/governance/permissions" },
           { label: "Comment Thread Settings", path: "/admin/governance/comment-threads" },
           { label: "Feature Toggles", path: "/admin/governance/feature-toggles" },

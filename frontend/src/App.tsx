@@ -35,6 +35,7 @@ import AdvisoryPage from "./pages/AdvisoryPage";
 import MorePage from "./pages/MorePage";
 import ProductListPage from "./pages/ProductListPage";
 import AdminOverviewPage from "./pages/AdminOverviewPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage";
 import RegistriesPillarPage from "./pages/RegistriesPillarPage";
 import SiteRegistryAdminPage from "./pages/SiteRegistryAdminPage";
 import AttributeRegistryAdminPage from "./pages/AttributeRegistryAdminPage";
@@ -164,6 +165,8 @@ function AppInner() {
             <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
             <Route path="/advisory" element={<AdvisoryPage />} />
             <Route path="/admin/settings" element={<SettingsTabRedirect />} />
+            {/* A.4 Phase 2 NAV HOTFIX (Option A) — bridge mount of existing AdminSettingsPage at canonical Governance URL */}
+            <Route path="/admin/governance/users" element={<AdminSettingsPage />} />
             <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
             <Route path="/admin/overview" element={<AdminOverviewPage />} />
             {/* TALLY-SETTINGS-UX Phase 3 / B.1 / PR 2 — 6 pillar detail pages */}
