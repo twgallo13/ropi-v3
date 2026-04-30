@@ -90,6 +90,9 @@ export default function AttributeRegistryAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInactive, setShowInactive] = useState(false);
+  // Phase 3.1 PR #5 — 'Show advanced' reveals the field_key column.
+  // Component-local state only; not persisted across reload (out of scope).
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [sortState, setSortState] = useState<{ key: string; dir: "asc" | "desc" }>({
     key: "display_order",
@@ -129,7 +132,6 @@ export default function AttributeRegistryAdminPage() {
   }, [rows, showInactive, sortState]);
 
   const baseColumns: AdminCrudColumn<AttributeRegistryEntry>[] = [
-    { key: "field_key", header: "Field Key", sortable: true, render: (r) => <code className="text-xs">{r.field_key}</code> },
     { key: "display_label", header: "Display Label", sortable: true, render: (r) => r.display_label },
     { key: "field_type", header: "Type", sortable: true, render: (r) => r.field_type },
     { key: "destination_tab", header: "Tab", sortable: true, render: (r) => r.destination_tab },
@@ -190,7 +192,20 @@ export default function AttributeRegistryAdminPage() {
       ) : null,
   };
 
-  const columns = showInactive ? [...baseColumns, reactivateColumn] : baseColumns;
+  // Phase 3.1 PR #5 — field_key column shown only when 'Show advanced' is on.
+  // Mirrors exact shape of original col 1 (Tailwind, render, sortable preserved).
+  const fieldKeyColumn: AdminCrudColumn<AttributeRegistryEntry> = {
+    key: "field_key",
+    header: "Field Key",
+    sortable: true,
+    render: (r) => <code className="text-xs">{r.field_key}</code>,
+  };
+
+  const columns = [
+    ...(showAdvanced ? [fieldKeyColumn] : []),
+    ...baseColumns,
+    ...(showInactive ? [reactivateColumn] : []),
+  ];
 
   return (
     <RoleGate>
@@ -212,14 +227,24 @@ export default function AttributeRegistryAdminPage() {
           >
             + New Attribute
           </button>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
-            />
-            Show inactive
-          </label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+              />
+              Show inactive
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showAdvanced}
+                onChange={(e) => setShowAdvanced(e.target.checked)}
+              />
+              Show advanced
+            </label>
+          </div>
         </div>
 
         <div className="mb-4">
@@ -476,7 +501,7 @@ function AttributeEditor({ mode, initial, onSaved, onCancel }: AttributeEditorPr
     >
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-semibold mb-4">
-          {mode === "create" ? "New Attribute" : `Edit Attribute: ${initial?.field_key ?? ""}`}
+          {mode === "create" ? "New Attribute" : `Edit Attribute: ${initial?.display_label ?? initial?.field_key ?? ""}`}
         </h2>
 
         <div className="space-y-3">
