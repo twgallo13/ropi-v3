@@ -12,6 +12,7 @@ import {
   fetchSearchSettings, createSearchSetting, updateSearchSetting,
   deactivateSearchSetting, reactivateSearchSetting, SearchSettingEntry,
 } from "../lib/api";
+import { safeRenderValue } from "../lib/safeRenderValue";
 
 function formatError(err: any): string {
   if (!err) return "Unknown error.";
@@ -60,7 +61,7 @@ export default function SearchSettingsPage() {
     { key: "setting_key", header: "Key", sortable: true, render: (r) => <code className="text-xs">{r.setting_key}</code> },
     { key: "display_label", header: "Label", sortable: true, render: (r) => r.display_label },
     { key: "value_type", header: "Type", sortable: true, render: (r) => <span className="text-xs">{r.value_type}</span> },
-    { key: "value", header: "Value", render: (r) => <code className="text-xs">{String(r.value)}</code> },
+    { key: "value", header: "Value", render: (r) => <code className="text-xs">{safeRenderValue(r.value)}</code> },
     {
       key: "is_active", header: "Active", sortable: true,
       render: (r) => r.is_active
