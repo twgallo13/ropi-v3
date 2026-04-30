@@ -18,6 +18,7 @@ import {
   RoleGate, ErrorBanner, SaveButton, showToast,
 } from "../components/admin";
 import { fetchAdminSettings, updateAdminSetting, AdminSetting } from "../lib/api";
+import { safeRenderValue } from "../lib/safeRenderValue";
 
 type ValueType = "number" | "boolean" | "string";
 
@@ -66,7 +67,7 @@ function coerceFromBE(raw: any, type: ValueType): string | number | boolean {
     const n = parseFloat(String(raw));
     return Number.isFinite(n) ? n : 0;
   }
-  return String(raw);
+  return safeRenderValue(raw);
 }
 
 export default function PricingGuardrailsPage() {
@@ -173,7 +174,7 @@ export default function PricingGuardrailsPage() {
           <input
             id={id}
             type="text"
-            value={typeof v === "string" ? v : String(v ?? "")}
+            value={safeRenderValue(v)}
             onChange={(e) => setVal(def.key, e.target.value)}
             className="border rounded px-3 py-2 text-sm w-full max-w-md"
           />
