@@ -22,6 +22,28 @@ const ALLOWED_TABS = [
 const ALLOWED_SEVERITIES = ["error", "warn", "info"] as const;
 type AttributeSeverity = (typeof ALLOWED_SEVERITIES)[number];
 
+// Phase 3.1 PR #4 — enum + shape guards for R.8/R.9/R.10. Applied to POST only.
+// PUT handler intentionally accepts legacy values (e.g., field_type values
+// outside ALLOWED_FIELD_TYPES) to avoid breaking edits on existing legacy
+// attribute docs. Future cleanup tally will identify + remap legacy values,
+// then tighten PUT.
+export const ALLOWED_FIELD_TYPES: string[] = [
+  "text",
+  "textarea",
+  "dropdown",
+  "multi_select",
+  "number",
+  "toggle",
+  "boolean",
+  "date",
+];
+
+export const ALLOWED_DROPDOWN_SOURCES: string[] = [
+  "site_registry",
+  "brand_registry",
+  "department_registry",
+];
+
 async function writeAttributeAudit(
   action: string,
   entityId: string,
@@ -120,6 +142,53 @@ router.post(
           error: `destination_tab must be one of: ${ALLOWED_TABS.join(", ")}`,
         });
         return;
+      }
+
+      // Phase 3.1 PR #4: enum + shape guards apply to POST only.
+      // PUT handler intentionally accepts legacy values (e.g., field_type values
+      // outside ALLOWED_FIELD_TYPES) to avoid breaking edits on existing legacy
+      // attribute docs. Future cleanup tally will identify + remap legacy values,
+      // then tighten PUT.
+
+      // R.8 — field_type enum guard (POST only; PUT accepts legacy values)
+      if (
+        field_type !== undefined &&
+        !ALLOWED_FIELD_TYPES.includes(field_type)
+      ) {
+        res.status(400).json({
+          error: `Invalid field_type. Allowed: ${ALLOWED_FIELD_TYPES.join(", ")}`,
+        });
+        return;
+      }
+
+      // R.9 — dropdown_source enum guard (POST only; null is valid)
+      const dropdown_source = body.dropdown_source;
+      if (
+        dropdown_source !== undefined &&
+        dropdown_source !== null &&
+        !ALLOWED_DROPDOWN_SOURCES.includes(dropdown_source)
+      ) {
+        res.status(400).json({
+          error: `Invalid dropdown_source. Allowed: ${ALLOWED_DROPDOWN_SOURCES.join(", ")}, or null`,
+        });
+        return;
+      }
+
+      // R.10 — depends_on shape guard (POST only; strict: value must be string)
+      const depends_on = body.depends_on;
+      if (depends_on !== undefined && depends_on !== null) {
+        if (
+          typeof depends_on !== "object" ||
+          Array.isArray(depends_on) ||
+          typeof depends_on.field !== "string" ||
+          typeof depends_on.value !== "string"
+        ) {
+          res.status(400).json({
+            error:
+              "Invalid depends_on shape. Expected {field: string, value: string} or null",
+          });
+          return;
+        }
       }
 
       // A.3 PR3 — optional severity / why_it_matters validation.
