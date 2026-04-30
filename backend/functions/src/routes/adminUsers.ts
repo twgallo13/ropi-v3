@@ -37,6 +37,42 @@ function humanizeRole(value: string): string {
     .join(" ");
 }
 
+// A.4 PR 3 — audit emission helper (file-local, NOT a shared module per
+// PO Interpretation 1). New shape variant for user-mutation writes:
+// `target_user_id` replaces `product_mpn` (target axis swap; same
+// cardinality as dominant convention from B-pass Area A).
+//
+// NEVER include temp_password in the payload.
+type UserAuditEventType =
+  | "user_created"
+  | "user_role_changed"
+  | "user_disabled"
+  | "user_reenabled"
+  | "user_password_reset"
+  | "user_profile_updated";
+
+async function emitUserAudit(params: {
+  event_type: UserAuditEventType;
+  target_user_id: string;
+  acting_user_id: string | null;
+  extra?: Record<string, unknown>;
+}): Promise<void> {
+  await admin
+    .firestore()
+    .collection("audit_log")
+    .add({
+      event_type: params.event_type,
+      target_user_id: params.target_user_id,
+      acting_user_id: params.acting_user_id,
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      ...(params.extra || {}),
+    });
+}
+
+function arrayLen(v: unknown): number {
+  return Array.isArray(v) ? v.length : 0;
+}
+
 // A.4 Tier 1 (§1.2): canonical role-options endpoint for FE dropdowns.
 // Mounted via existing adminUsersRouter at /api/v1/admin/users (index.ts:133),
 // so the public URL is GET /api/v1/admin/users/role-options.
@@ -127,6 +163,17 @@ router.post(
           created_at: admin.firestore.FieldValue.serverTimestamp(),
           created_by: req.user?.uid || null,
         });
+      // A.4 PR 3 — audit emission. Temp password is intentionally NOT included.
+      await emitUserAudit({
+        event_type: "user_created",
+        target_user_id: authUser.uid,
+        acting_user_id: req.user?.uid || null,
+        extra: {
+          role,
+          departments_count: arrayLen(departments),
+          site_scope_count: arrayLen(site_scope),
+        },
+      });
       res.json({ uid: authUser.uid, temp_password: tempPassword });
     } catch (err: any) {
       console.error("POST /admin/users error:", err);
@@ -143,6 +190,11 @@ router.put(
     try {
       const { uid } = req.params;
       const { display_name, role, departments, site_scope } = req.body || {};
+
+      // A.4 PR 3 — read current doc to diff for audit emission.
+      const oldSnap = await admin.firestore().collection("users").doc(uid).get();
+      const oldData = oldSnap.data() || {};
+
       const update: Record<string, any> = {
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
         updated_by: req.user?.uid || null,
@@ -164,6 +216,54 @@ router.put(
       await admin.firestore().collection("users").doc(uid).set(update, {
         merge: true,
       });
+
+      // A.4 PR 3 — audit emission. Diff old vs new per axis. May emit BOTH
+      // user_role_changed and user_profile_updated in a single request.
+      // Emit nothing if no actual diff.
+      const acting = req.user?.uid || null;
+      const roleChanged =
+        role !== undefined && role !== oldData.role;
+      if (roleChanged) {
+        await emitUserAudit({
+          event_type: "user_role_changed",
+          target_user_id: uid,
+          acting_user_id: acting,
+          extra: {
+            old_role: oldData.role ?? null,
+            new_role: role,
+          },
+        });
+      }
+      const fieldsChanged: string[] = [];
+      if (
+        display_name !== undefined &&
+        display_name !== oldData.display_name
+      ) {
+        fieldsChanged.push("display_name");
+      }
+      if (
+        departments !== undefined &&
+        JSON.stringify(departments ?? null) !==
+          JSON.stringify(oldData.departments ?? null)
+      ) {
+        fieldsChanged.push("departments");
+      }
+      if (
+        site_scope !== undefined &&
+        JSON.stringify(site_scope ?? null) !==
+          JSON.stringify(oldData.site_scope ?? null)
+      ) {
+        fieldsChanged.push("site_scope");
+      }
+      if (fieldsChanged.length > 0) {
+        await emitUserAudit({
+          event_type: "user_profile_updated",
+          target_user_id: uid,
+          acting_user_id: acting,
+          extra: { fields_changed: fieldsChanged },
+        });
+      }
+
       res.json({ ok: true, uid });
     } catch (err: any) {
       console.error("PUT /admin/users/:uid error:", err);
@@ -192,6 +292,13 @@ router.delete(
           },
           { merge: true }
         );
+      // A.4 PR 3 — audit emission.
+      await emitUserAudit({
+        event_type: "user_disabled",
+        target_user_id: uid,
+        acting_user_id: req.user?.uid || null,
+        extra: {},
+      });
       res.json({ ok: true, uid });
     } catch (err: any) {
       console.error("DELETE /admin/users/:uid error:", err);
