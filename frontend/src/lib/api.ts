@@ -2549,6 +2549,23 @@ export async function disableAdminUser(uid: string): Promise<{ ok: boolean }> {
   return data;
 }
 
+// A.4 Tier 1 (§1.3): canonical role-options source. FE no longer hard-codes
+// the list; the BE owns it (adminUsers.ts ALLOWED_ROLES) and exposes via
+// GET /api/v1/admin/users/role-options.
+export interface RoleOption {
+  value: string;
+  label: string;
+}
+
+export async function fetchRoleOptions(): Promise<RoleOption[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/users/role-options`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.role_options || [];
+}
+
 export interface AdminSetting {
   key: string;
   value: any;

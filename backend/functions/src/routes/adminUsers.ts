@@ -13,7 +13,10 @@ import { requireRole } from "../middleware/roles";
 
 const router = Router();
 
-const ALLOWED_ROLES = [
+// A.4 Tier 1 (Ruling C.3): expanded from 8 → 10 to surface content_manager
+// and launch_lead in the Admin Users UI. Exported so the role-options
+// endpoint (and any future shared consumer) can import the canonical list.
+export const ALLOWED_ROLES = [
   "buyer",
   "head_buyer",
   "product_ops",
@@ -22,7 +25,35 @@ const ALLOWED_ROLES = [
   "operations_operator",
   "admin",
   "owner",
-];
+  "content_manager",
+  "launch_lead",
+] as const;
+
+// Title-case humanizer for role values: "head_buyer" → "Head Buyer"
+function humanizeRole(value: string): string {
+  return value
+    .split("_")
+    .map((part) => (part.length === 0 ? part : part[0].toUpperCase() + part.slice(1)))
+    .join(" ");
+}
+
+// A.4 Tier 1 (§1.2): canonical role-options endpoint for FE dropdowns.
+// Mounted via existing adminUsersRouter at /api/v1/admin/users (index.ts:133),
+// so the public URL is GET /api/v1/admin/users/role-options.
+// (Spec §1.2 names /api/v1/admin/role-options; reconciled to existing-router
+// mount per dispatch STOP trigger "no new mount line in server.ts.")
+router.get(
+  "/role-options",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (_req: AuthenticatedRequest, res: Response) => {
+    const role_options = ALLOWED_ROLES.map((value) => ({
+      value,
+      label: humanizeRole(value),
+    }));
+    res.json({ role_options });
+  }
+);
 
 router.get(
   "/",

@@ -4,15 +4,14 @@
  * Source-of-truth for the role_permissions admin UI (read-only matrix).
  * Hand-maintained per A.3 ruling R.2 (codegen DROPPED — see D.3 Frink correction).
  *
- * 8 roles surfaced via direct requireRole(...) calls.
- * 2 roles surfaced ONLY via LAUNCH_EDITOR_ROLES indirection.
- * Total unique: 10.
+ * 10 roles surfaced via direct requireRole(...) calls or LAUNCH_EDITOR_ROLES indirection.
+ * Total unique: 10 (was 8 + 2 indirect; A.4 brought all 10 into ALLOWED_ROLES).
  *
- * KNOWN GAP (deferred to A.4 User Management track per Ruling C.3):
- *   `content_manager` and `launch_lead` are not present in adminUsers.ts
- *   ALLOWED_ROLES (lines 16-24). Users can be granted these roles via direct
- *   Firebase custom-claim manipulation but NOT through the Admin Users UI.
- *   A.4 should add both to ALLOWED_ROLES to close the gap.
+ * GAP CLOSED in A.4 (per Ruling C.3):
+ *   `content_manager` and `launch_lead` were previously absent from
+ *   adminUsers.ts ALLOWED_ROLES (read-only via direct Firebase custom-claim
+ *   manipulation). A.4 added both to the array; both are now grantable
+ *   through the Admin Users UI.
  */
 export const CANONICAL_ROLES = [
   // Direct requireRole(...) callers:

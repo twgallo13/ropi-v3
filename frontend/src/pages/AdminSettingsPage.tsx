@@ -11,9 +11,11 @@ import {
   testSmtp,
   testAI,
   fetchSiteRegistry,
+  fetchRoleOptions,
   type AdminUser,
   type AdminSetting,
   type SiteRegistryEntry,
+  type RoleOption,
 } from "../lib/api";
 import { ConfirmModal } from "../components/admin";
 
@@ -26,16 +28,9 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "ai", label: "AI Provider" },
 ];
 
-const ROLE_OPTIONS = [
-  "buyer",
-  "head_buyer",
-  "product_ops",
-  "map_analyst",
-  "completion_specialist",
-  "operations_operator",
-  "admin",
-  "owner",
-];
+// A.4 Tier 1 (§1.3): role list is fetched from BE
+// (GET /api/v1/admin/users/role-options) and threaded down to the modals.
+// Hard-coded ROLE_OPTIONS removed to eliminate FE/BE drift.
 
 export default function AdminSettingsPage() {
   const { role, loading: authLoading } = useAuth();
@@ -93,6 +88,10 @@ function UsersTab() {
   // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration (was confirm())
   const [disableTarget, setDisableTarget] = useState<AdminUser | null>(null);
   const [disableError, setDisableError] = useState<string | null>(null);
+  // A.4 Tier 1 (§1.3): role options sourced from BE
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
+  const [roleOptionsLoading, setRoleOptionsLoading] = useState(true);
+  const [roleOptionsError, setRoleOptionsError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -106,8 +105,21 @@ function UsersTab() {
     }
   }
 
+  async function loadRoleOptions() {
+    setRoleOptionsLoading(true);
+    setRoleOptionsError(null);
+    try {
+      setRoleOptions(await fetchRoleOptions());
+    } catch (e: any) {
+      setRoleOptionsError(e?.error || e?.message || "Failed to load roles");
+    } finally {
+      setRoleOptionsLoading(false);
+    }
+  }
+
   useEffect(() => {
     load();
+    loadRoleOptions();
   }, []);
 
   return (
@@ -178,6 +190,10 @@ function UsersTab() {
 
       {showAdd && (
         <AddUserModal
+          roleOptions={roleOptions}
+          roleOptionsLoading={roleOptionsLoading}
+          roleOptionsError={roleOptionsError}
+          onRetryRoleOptions={loadRoleOptions}
           onClose={() => setShowAdd(false)}
           onCreated={() => {
             setShowAdd(false);
@@ -188,6 +204,10 @@ function UsersTab() {
       {editing && (
         <EditUserModal
           user={editing}
+          roleOptions={roleOptions}
+          roleOptionsLoading={roleOptionsLoading}
+          roleOptionsError={roleOptionsError}
+          onRetryRoleOptions={loadRoleOptions}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -222,9 +242,17 @@ function UsersTab() {
 }
 
 function AddUserModal({
+  roleOptions,
+  roleOptionsLoading,
+  roleOptionsError,
+  onRetryRoleOptions,
   onClose,
   onCreated,
 }: {
+  roleOptions: RoleOption[];
+  roleOptionsLoading: boolean;
+  roleOptionsError: string | null;
+  onRetryRoleOptions: () => void;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -314,11 +342,32 @@ function AddUserModal({
               value={role}
               onChange={(e) => setRole(e.target.value)}
               className={inputClass}
+              disabled={roleOptionsLoading || !!roleOptionsError}
             >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
+              {roleOptionsLoading ? (
+                <option>Loading roles…</option>
+              ) : roleOptionsError ? (
+                <option>Failed to load roles</option>
+              ) : (
+                roleOptions.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))
+              )}
             </select>
+            {roleOptionsError && (
+              <div className="mt-1 text-xs text-red-600">
+                {roleOptionsError}{" "}
+                <button
+                  type="button"
+                  onClick={onRetryRoleOptions}
+                  className="underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </Field>
           <Field label="Departments (comma separated)">
             <input
@@ -357,7 +406,13 @@ function AddUserModal({
             </button>
             <button
               onClick={submit}
-              disabled={submitting || !email || !displayName}
+              disabled={
+                submitting ||
+                !email ||
+                !displayName ||
+                roleOptionsLoading ||
+                !!roleOptionsError
+              }
               className="bg-blue-600 text-white text-sm rounded px-3 py-1.5 disabled:opacity-50"
             >
               {submitting ? "Creating…" : "Create User"}
@@ -371,10 +426,18 @@ function AddUserModal({
 
 function EditUserModal({
   user,
+  roleOptions,
+  roleOptionsLoading,
+  roleOptionsError,
+  onRetryRoleOptions,
   onClose,
   onSaved,
 }: {
   user: AdminUser;
+  roleOptions: RoleOption[];
+  roleOptionsLoading: boolean;
+  roleOptionsError: string | null;
+  onRetryRoleOptions: () => void;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -414,11 +477,32 @@ function EditUserModal({
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className={inputClass}
+            disabled={roleOptionsLoading || !!roleOptionsError}
           >
-            {ROLE_OPTIONS.map((r) => (
-              <option key={r}>{r}</option>
-            ))}
+            {roleOptionsLoading ? (
+              <option>Loading roles…</option>
+            ) : roleOptionsError ? (
+              <option>Failed to load roles</option>
+            ) : (
+              roleOptions.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))
+            )}
           </select>
+          {roleOptionsError && (
+            <div className="mt-1 text-xs text-red-600">
+              {roleOptionsError}{" "}
+              <button
+                type="button"
+                onClick={onRetryRoleOptions}
+                className="underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
         </Field>
         <div className="flex justify-end gap-2 pt-3">
           <button
@@ -429,7 +513,7 @@ function EditUserModal({
           </button>
           <button
             onClick={submit}
-            disabled={saving}
+            disabled={saving || roleOptionsLoading || !!roleOptionsError}
             className="bg-blue-600 text-white text-sm rounded px-3 py-1.5 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
