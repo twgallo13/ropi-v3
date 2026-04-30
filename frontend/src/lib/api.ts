@@ -2523,8 +2523,8 @@ export async function updateAdminUser(
   body: Partial<{
     display_name: string;
     role: string;
-    departments: string[];
-    site_scope: string[];
+    departments: string[] | null;
+    site_scope: string[] | null;
   }>
 ): Promise<{ ok: boolean }> {
   const res = await fetch(
