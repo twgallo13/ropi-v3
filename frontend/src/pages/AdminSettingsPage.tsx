@@ -7,6 +7,7 @@ import {
   updateAdminUser,
   disableAdminUser,
   reenableAdminUser,
+  resetAdminUserPassword,
   fetchAdminSettings,
   updateAdminSetting,
   testSmtp,
@@ -92,6 +93,17 @@ function UsersTab() {
   // A.4 PR 5 (Tier 2.2) — re-enable button state
   const [reenablingUid, setReenablingUid] = useState<string | null>(null);
   const [reenableError, setReenableError] = useState<string | null>(null);
+  // A.4 PR 6 (Tier 2.3) — password-reset state. revealedPassword is held in
+  // memory only for the lifetime of the reveal modal; never persisted.
+  const [resetConfirmTarget, setResetConfirmTarget] =
+    useState<AdminUser | null>(null);
+  const [resettingUid, setResettingUid] = useState<string | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [revealedPassword, setRevealedPassword] = useState<{
+    uid: string;
+    email: string | null;
+    temp_password: string;
+  } | null>(null);
   // A.4 Tier 1 (§1.3): role options sourced from BE
   const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
   const [roleOptionsLoading, setRoleOptionsLoading] = useState(true);
@@ -144,6 +156,9 @@ function UsersTab() {
       {reenableError && (
         <p className="text-red-600 text-sm mb-3">{reenableError}</p>
       )}
+      {resetError && (
+        <p className="text-red-600 text-sm mb-3">{resetError}</p>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <table className="min-w-full text-sm">
@@ -179,6 +194,15 @@ function UsersTab() {
                     className="text-xs text-blue-600 hover:underline mr-3"
                   >
                     Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setResetError(null);
+                      setResetConfirmTarget(u);
+                    }}
+                    className="text-xs text-amber-700 hover:underline mr-3"
+                  >
+                    Reset Password
                   </button>
                   {u.disabled ? (
                     <button
@@ -265,6 +289,69 @@ function UsersTab() {
         }}
         errorSlot={disableError}
       />
+      {/* A.4 PR 6 (Tier 2.3) — password-reset confirm + one-shot reveal */}
+      <ConfirmModal
+        open={resetConfirmTarget !== null}
+        title="Reset password?"
+        body={`This will invalidate the current password for ${resetConfirmTarget?.email ?? ""} and generate a new temporary password to share with the user. Continue?`}
+        confirmLabel={
+          resettingUid === resetConfirmTarget?.uid ? "Resetting…" : "Reset Password"
+        }
+        confirmVariant="primary"
+        onConfirm={async () => {
+          if (!resetConfirmTarget) return;
+          setResetError(null);
+          setResettingUid(resetConfirmTarget.uid);
+          try {
+            const r = await resetAdminUserPassword(resetConfirmTarget.uid);
+            setRevealedPassword({
+              uid: resetConfirmTarget.uid,
+              email: resetConfirmTarget.email,
+              temp_password: r.temp_password,
+            });
+            setResetConfirmTarget(null);
+          } catch (e: any) {
+            setResetError(
+              e?.error ?? e?.message ?? String(e) ?? "Reset failed"
+            );
+            setResetConfirmTarget(null);
+          } finally {
+            setResettingUid(null);
+          }
+        }}
+        onCancel={() => {
+          setResetConfirmTarget(null);
+        }}
+      />
+      {revealedPassword && (
+        <ModalShell
+          title={`Temporary Password — ${revealedPassword.email ?? ""}`}
+          onClose={() => setRevealedPassword(null)}
+        >
+          <div className="space-y-3">
+            <div className="rounded border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm">
+              <p className="font-medium text-yellow-900 dark:text-yellow-200 mb-1">
+                Temporary Password (shown once):
+              </p>
+              <code className="block text-xs font-mono bg-white dark:bg-gray-900 px-2 py-1 rounded border break-all">
+                {revealedPassword.temp_password}
+              </code>
+              <p className="text-xs text-yellow-800 dark:text-yellow-300 mt-2">
+                Copy this and share securely with the user. It will not be
+                shown again. The user should sign in and change it.
+              </p>
+            </div>
+            <div className="text-right">
+              <button
+                onClick={() => setRevealedPassword(null)}
+                className="bg-blue-600 text-white text-sm rounded px-3 py-1.5"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </ModalShell>
+      )}
     </div>
   );
 }
