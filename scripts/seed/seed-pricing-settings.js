@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Seed: pricing-related admin_settings
- * Seeds the 11 pricing/calculation settings from SPEC.md Section 19.7.
+ * Seeds the 12 pricing/calculation settings from SPEC.md Section 19.7.
  * Idempotent (set-with-merge).
  */
 "use strict";
@@ -11,18 +11,18 @@ const { initApp } = require("./utils");
 const COLLECTION = "admin_settings";
 
 const SETTINGS = [
-  { key: "gross_margin_safe_threshold", value: 10, type: "number" },
-  { key: "estimated_cost_multiplier", value: 0.50, type: "number" },
-  { key: "below_cost_acknowledgment_required", value: true, type: "boolean" },
-  { key: "below_cost_reason_min_chars", value: 20, type: "number" },
-  { key: "master_veto_window", value: 2, type: "number" },
-  { key: "export_price_rounding_enabled", value: true, type: "boolean" },
-  { key: "export_price_rounding_mode", value: "floor_minus_one_cent", type: "string" },
-  { key: "export_site_separator", value: "|", type: "string" },
-  { key: "slow_moving_str_threshold", value: 15, type: "number" },
-  { key: "slow_moving_wos_threshold", value: 12, type: "number" },
-  { key: "str_calculation_window_days", value: 30, type: "number" },
-  { key: "wos_trailing_average_days", value: 30, type: "number" },
+  { key: "gross_margin_safe_threshold",        value: 10,                          type: "number",  label: "Gross Margin Safe Threshold",          category: "pricing" },
+  { key: "estimated_cost_multiplier",          value: 0.50,                        type: "number",  label: "Estimated Cost Multiplier",            category: "pricing" },
+  { key: "below_cost_acknowledgment_required", value: true,                        type: "boolean", label: "Below-Cost Acknowledgment Required",   category: "pricing" },
+  { key: "below_cost_reason_min_chars",        value: 20,                          type: "number",  label: "Below-Cost Reason Minimum Characters", category: "pricing" },
+  { key: "master_veto_window",                 value: 2,                           type: "number",  label: "Master Veto Window (hours)",           category: "pricing" },
+  { key: "export_price_rounding_enabled",      value: true,                        type: "boolean", label: "Export Price Rounding Enabled",        category: "pricing" },
+  { key: "export_price_rounding_mode",         value: "floor_minus_one_cent",      type: "string",  label: "Export Price Rounding Mode",           category: "pricing" },
+  { key: "export_site_separator",              value: "|",                         type: "string",  label: "Export Site Separator",                category: "pricing" },
+  { key: "slow_moving_str_threshold",          value: 15,                          type: "number",  label: "Slow-Moving STR Threshold",            category: "pricing" },
+  { key: "slow_moving_wos_threshold",          value: 12,                          type: "number",  label: "Slow-Moving WoS Threshold",            category: "pricing" },
+  { key: "str_calculation_window_days",        value: 30,                          type: "number",  label: "STR Calculation Window (days)",        category: "pricing" },
+  { key: "wos_trailing_average_days",          value: 30,                          type: "number",  label: "WoS Trailing Average (days)",          category: "pricing" },
 ];
 
 async function main() {
@@ -37,6 +37,8 @@ async function main() {
         key: s.key,
         value: s.value,
         type: s.type,
+        label: s.label,
+        category: s.category,
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
