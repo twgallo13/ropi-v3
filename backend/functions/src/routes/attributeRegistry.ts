@@ -44,6 +44,17 @@ export const ALLOWED_DROPDOWN_SOURCES: string[] = [
   "department_registry",
 ];
 
+/**
+ * Phase 3.1 PR #8 — humanize a snake_case doc id into a Title Case fallback
+ * display label. Used when an attribute_registry doc has no stored
+ * display_label, in place of the raw doc id (which leaks snake_case to UI).
+ */
+function humanizeKey(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 async function writeAttributeAudit(
   action: string,
   entityId: string,
@@ -85,7 +96,7 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       })
       .map((d) => ({
       field_key: d.id,
-      display_label: d.data().display_label || d.id,
+      display_label: d.data().display_label || humanizeKey(d.id),
       field_type: d.data().field_type || "text",
       destination_tab: d.data().destination_tab ?? null,
       display_group: d.data().display_group || "",
