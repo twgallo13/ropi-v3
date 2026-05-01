@@ -2,8 +2,9 @@ import { Link } from "react-router-dom";
 import { AdminNavCard, RoleGate } from "../components/admin";
 
 const SURFACES = [
-  { title: "SMTP", description: "Email transport configuration.", href: "/admin/infrastructure/smtp", status: "coming" as const, comingLabel: "Coming in B.7" },
+  { title: "SMTP", description: "Email transport configuration.", href: "/admin/infrastructure/smtp", status: "live" as const },
   { title: "Pricing Guardrails", description: "Max markdowns + cost estimates.", href: "/admin/infrastructure/pricing-guardrails", status: "live" as const },
+  { title: "System Variables", description: "Admin reference editor for application-wide settings.", href: "/admin/infrastructure/system-variables", status: "live" as const },
   { title: "Search Settings", description: "Scope and fuzzy-match toggles.", href: "/admin/infrastructure/search", status: "live" as const },
 ];
 

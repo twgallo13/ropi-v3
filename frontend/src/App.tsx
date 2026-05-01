@@ -48,6 +48,8 @@ import GovernancePillarPage from "./pages/GovernancePillarPage";
 import ExperiencePillarPage from "./pages/ExperiencePillarPage";
 import InfrastructurePillarPage from "./pages/InfrastructurePillarPage";
 import PricingGuardrailsPage from "./pages/PricingGuardrailsPage";
+import SmtpSettingsPage from "./pages/SmtpSettingsPage";
+import SystemVariablesPage from "./pages/SystemVariablesPage";
 import ExportProfilesPage from "./pages/ExportProfilesPage";
 import PermissionsPage from "./pages/PermissionsPage";
 // TALLY-SETTINGS-UX Phase 3 / A.3 PR4 — 7 new collection-backed admin pages
@@ -194,6 +196,8 @@ function AppInner() {
             <Route path="/admin/pipeline/cadence" element={<CadenceRulesAdminPage />} />
             <Route path="/admin/pipeline/export-profiles" element={<ExportProfilesPage />} />
             <Route path="/admin/infrastructure/pricing-guardrails" element={<PricingGuardrailsPage />} />
+            <Route path="/admin/infrastructure/smtp" element={<SmtpSettingsPage />} />
+            <Route path="/admin/infrastructure/system-variables" element={<SystemVariablesPage />} />
             <Route path="/admin/governance/permissions" element={<PermissionsPage />} />
             {/* TALLY-SETTINGS-UX Phase 3 / A.3 PR4 — 7 new collection-backed admin routes */}
             <Route path="/admin/pipeline/import-templates" element={<ImportTemplatesPage />} />
