@@ -91,7 +91,7 @@ const NAV_TREE: NavNode[] = [
         label: "AI & Automation",
         icon: "🤖",
         children: [
-          { label: "AI Provider Registry", comingLabel: "B.3" },
+          { label: "AI Provider Registry", path: "/admin/ai-automation/providers" },
           { label: "Prompt Templates", path: "/admin/ai-automation/prompt-templates" },
           { label: "Smart Rule Engine", path: "/admin/ai-automation/smart-rules" },
           { label: "Completion Rules", comingLabel: "B.3" },
