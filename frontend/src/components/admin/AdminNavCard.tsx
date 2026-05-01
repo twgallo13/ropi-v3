@@ -7,6 +7,8 @@ export interface AdminNavCardProps {
   href: string;
   status?: "live" | "coming";
   comingLabel?: string;
+  /** Phase 3.1 PR #10 — optional `data-tour` selector for GuidedTour targeting. */
+  dataTour?: string;
 }
 
 export function AdminNavCard({
@@ -16,10 +18,14 @@ export function AdminNavCard({
   href,
   status = "live",
   comingLabel,
+  dataTour,
 }: AdminNavCardProps) {
   if (status === "coming") {
     return (
-      <div className="block p-4 bg-white dark:bg-gray-800 border rounded-lg opacity-60 cursor-default">
+      <div
+        data-tour={dataTour}
+        className="block p-4 bg-white dark:bg-gray-800 border rounded-lg opacity-60 cursor-default"
+      >
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-sm">
             {icon ? <span className="mr-2">{icon}</span> : null}
@@ -41,6 +47,7 @@ export function AdminNavCard({
   return (
     <Link
       to={href}
+      data-tour={dataTour}
       className="block p-4 bg-white dark:bg-gray-800 border rounded-lg hover:border-blue-400 transition-colors"
     >
       <h3 className="font-semibold text-sm">
