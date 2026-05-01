@@ -23,6 +23,7 @@ import {
   updateAdminSetting,
   type AdminSetting,
 } from "../lib/api";
+import { safeRenderValue } from "../lib/safeRenderValue";
 
 // Categories owned by dedicated pages — excluded from the general System
 // Variables editor to prevent double-edit surfaces.
@@ -147,7 +148,16 @@ export default function SystemVariablesPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {s.type === "boolean" ? (
+                            {typeof current === "object" && current !== null ? (
+                              // Phase 3.6 PR #1 — object-shaped values are read-only
+                              // in this Phase 1 surface. Editing them via a text input
+                              // would silently overwrite the object structure with a
+                              // string in saveAll. A future PR will introduce a
+                              // dedicated editor for object/array-shaped settings.
+                              <div className="font-mono text-xs text-gray-600 dark:text-gray-400 break-all max-w-xs">
+                                {safeRenderValue(current)}
+                              </div>
+                            ) : s.type === "boolean" ? (
                               <input
                                 type="checkbox"
                                 checked={Boolean(current)}

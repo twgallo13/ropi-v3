@@ -68,8 +68,8 @@ gcloud run deploy "$SERVICE" \
   --project "$PROJECT" \
   --region "$REGION" \
   --update-env-vars "FIREBASE_PROJECT_ID=$PROJECT,FIREBASE_STORAGE_BUCKET=${PROJECT}-imports" \
-  --remove-env-vars="ANTHROPIC_API_KEY,OPENAI_API_KEY,GEMINI_API_KEY" \
-  --set-secrets "ANTHROPIC_API_KEY=anthropic-api-key:latest,OPENAI_API_KEY=openai-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest" \
+  --remove-env-vars="ANTHROPIC_API_KEY,OPENAI_API_KEY,GEMINI_API_KEY,SMTP_PASSWORD" \
+  --set-secrets "ANTHROPIC_API_KEY=anthropic-api-key:latest,OPENAI_API_KEY=openai-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,SMTP_PASSWORD=smtp-password:latest" \
   --quiet
 echo "✓ Cloud Run deploy complete"
 echo ""
