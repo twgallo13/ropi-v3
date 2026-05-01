@@ -129,8 +129,9 @@ const NAV_TREE: NavNode[] = [
         label: "System & Infrastructure",
         icon: "⚙️",
         children: [
-          { label: "SMTP", comingLabel: "B.7" },
+          { label: "SMTP", path: "/admin/infrastructure/smtp" },
           { label: "Pricing Guardrails", path: "/admin/infrastructure/pricing-guardrails" },
+          { label: "System Variables", path: "/admin/infrastructure/system-variables" },
           { label: "Search Settings", path: "/admin/infrastructure/search" },
         ],
       },

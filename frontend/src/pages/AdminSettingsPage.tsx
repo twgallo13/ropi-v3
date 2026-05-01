@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -8,14 +8,9 @@ import {
   disableAdminUser,
   reenableAdminUser,
   resetAdminUserPassword,
-  fetchAdminSettings,
-  updateAdminSetting,
-  testSmtp,
-  testAI,
   fetchSiteRegistry,
   fetchRoleOptions,
   type AdminUser,
-  type AdminSetting,
   type SiteRegistryEntry,
   type RoleOption,
 } from "../lib/api";
@@ -728,153 +723,27 @@ function EditUserModal({
 //  SYSTEM VARIABLES TAB
 // ─────────────────────────────────────
 function VariablesTab() {
-  const [settings, setSettings] = useState<AdminSetting[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [edits, setEdits] = useState<Record<string, any>>({});
-  const [saving, setSaving] = useState(false);
-  const [savedMsg, setSavedMsg] = useState("");
-
-  async function load() {
-    setLoading(true);
-    setError("");
-    try {
-      const s = await fetchAdminSettings();
-      setSettings(s);
-      setEdits({});
-    } catch (e: any) {
-      setError(e?.error || e?.message || "Failed to load settings");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const grouped = useMemo(() => {
-    const g: Record<string, AdminSetting[]> = {};
-    for (const s of settings) {
-      const cat = s.category || "general";
-      if (!g[cat]) g[cat] = [];
-      g[cat].push(s);
-    }
-    return g;
-  }, [settings]);
-
-  const dirty = Object.keys(edits).length > 0;
-
-  async function saveAll() {
-    setSaving(true);
-    setError("");
-    try {
-      for (const [key, value] of Object.entries(edits)) {
-        const s = settings.find((x) => x.key === key);
-        const coerced =
-          s?.type === "number" && typeof value === "string" && value !== ""
-            ? Number(value)
-            : value;
-        await updateAdminSetting(key, coerced);
-      }
-      setSavedMsg(`Saved ${Object.keys(edits).length} change${Object.keys(edits).length === 1 ? "" : "s"}.`);
-      setTimeout(() => setSavedMsg(""), 3000);
-      load();
-    } catch (e: any) {
-      setError(e?.error || e?.message || "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) return <p className="text-sm text-gray-500">Loading…</p>;
-
+  // Phase 3.5 PR B — body deprecated. Canonical surface is
+  // SystemVariablesPage at /admin/infrastructure/system-variables (Infrastructure pillar).
+  // Full handler removal is a follow-up tally.
   return (
-    <div>
-      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
-      {savedMsg && (
-        <p className="text-sm text-green-600 mb-3">{savedMsg}</p>
-      )}
-
-      {settings.length === 0 && (
-        <p className="text-sm text-gray-500">
-          No admin_settings documents found. Run the seed script first.
-        </p>
-      )}
-
-      <div className="space-y-6">
-        {Object.entries(grouped).map(([cat, rows]) => (
-          <div
-            key={cat}
-            className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+    <div className="p-6 max-w-2xl">
+      <div className="border border-amber-300 bg-amber-50 rounded-md p-4">
+        <h3 className="font-semibold mb-2">System Variables have moved</h3>
+        <p className="mb-3">
+          Application-wide settings are now at{" "}
+          <a
+            href="/admin/infrastructure/system-variables"
+            className="text-blue-700 underline"
           >
-            <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-              {cat.replace(/_/g, " ")}
-            </div>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {rows.map((s) => {
-                const current =
-                  edits[s.key] !== undefined ? edits[s.key] : s.value;
-                return (
-                  <div
-                    key={s.key}
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-2"
-                  >
-                    <div className="flex-1">
-                      <div className="text-sm font-medium">{s.label || s.key}</div>
-                      <div className="text-[11px] text-gray-400 font-mono">
-                        {s.key}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {s.type === "boolean" ? (
-                        <input
-                          type="checkbox"
-                          checked={Boolean(current)}
-                          onChange={(e) =>
-                            setEdits((p) => ({
-                              ...p,
-                              [s.key]: e.target.checked,
-                            }))
-                          }
-                        />
-                      ) : (
-                        <input
-                          type={s.type === "number" ? "number" : "text"}
-                          value={current ?? ""}
-                          onChange={(e) =>
-                            setEdits((p) => ({
-                              ...p,
-                              [s.key]: e.target.value,
-                            }))
-                          }
-                          className="w-48 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 text-sm bg-white dark:bg-gray-900"
-                        />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-5 flex justify-end gap-2">
-        <button
-          disabled={!dirty || saving}
-          onClick={() => setEdits({})}
-          className="text-sm border border-gray-200 dark:border-gray-700 rounded px-3 py-1.5 disabled:opacity-50"
-        >
-          Discard Changes
-        </button>
-        <button
-          disabled={!dirty || saving}
-          onClick={saveAll}
-          className="bg-blue-600 text-white text-sm rounded px-3 py-1.5 disabled:opacity-50"
-        >
-          {saving ? "Saving…" : `Save All Changes${dirty ? ` (${Object.keys(edits).length})` : ""}`}
-        </button>
+            /admin/infrastructure/system-variables
+          </a>{" "}
+          under Infrastructure. SMTP, Pricing, and AI settings have their own
+          dedicated pages.
+        </p>
+        <p className="text-sm text-gray-600">
+          This tab will be removed in a future cleanup. Update your bookmarks.
+        </p>
       </div>
     </div>
   );
@@ -884,225 +753,26 @@ function VariablesTab() {
 //  SMTP TAB
 // ─────────────────────────────────────
 function SmtpTab() {
-  const [settings, setSettings] = useState<AdminSetting[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [err, setErr] = useState("");
-
-  async function load() {
-    setLoading(true);
-    try {
-      setSettings(await fetchAdminSettings());
-    } catch (e: any) {
-      setErr(e?.error || "Failed to load");
-    } finally {
-      setLoading(false);
-    }
-  }
-  useEffect(() => {
-    load();
-  }, []);
-
-  function get(key: string, fallback: any = "") {
-    const s = settings.find((x) => x.key === key);
-    return s?.value ?? fallback;
-  }
-
-  const [provider, setProvider] = useState("sendgrid");
-  const [host, setHost] = useState("");
-  const [port, setPort] = useState<number>(587);
-  const [username, setUsername] = useState("");
-  const [fromAddr, setFromAddr] = useState("");
-  const [fromName, setFromName] = useState("ROPI Operations");
-  const [throttle, setThrottle] = useState<number>(24);
-
-  useEffect(() => {
-    if (!settings.length) return;
-    setProvider(get("email_provider", "sendgrid"));
-    setHost(get("smtp_host", ""));
-    setPort(Number(get("smtp_port", 587)) || 587);
-    setUsername(get("smtp_username", ""));
-    setFromAddr(get("smtp_from_address", ""));
-    setFromName(get("smtp_from_name", "ROPI Operations"));
-    setThrottle(Number(get("smtp_throttle_hours", 24)) || 24);
-  }, [settings.length]);
-
-  async function save() {
-    setSaving(true);
-    setMsg("");
-    setErr("");
-    try {
-      await updateAdminSetting("email_provider", provider, {
-        type: "string",
-        category: "smtp",
-        label: "Email Provider (sendgrid | custom_smtp)",
-      });
-      await updateAdminSetting("smtp_host", host, {
-        type: "string",
-        category: "smtp",
-        label: "Custom SMTP Host",
-      });
-      await updateAdminSetting("smtp_port", Number(port), {
-        type: "number",
-        category: "smtp",
-        label: "Custom SMTP Port",
-      });
-      await updateAdminSetting("smtp_username", username, {
-        type: "string",
-        category: "smtp",
-        label: "Custom SMTP Username",
-      });
-      await updateAdminSetting("smtp_from_address", fromAddr, {
-        type: "string",
-        category: "smtp",
-        label: "From Email Address",
-      });
-      await updateAdminSetting("smtp_from_name", fromName, {
-        type: "string",
-        category: "smtp",
-        label: "From Name",
-      });
-      await updateAdminSetting("smtp_throttle_hours", Number(throttle), {
-        type: "number",
-        category: "smtp",
-        label: "SMTP Throttle Hours",
-      });
-      setMsg("SMTP settings saved.");
-      setTimeout(() => setMsg(""), 3000);
-      load();
-    } catch (e: any) {
-      setErr(e?.error || e?.message || "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function runTest() {
-    setMsg("Sending test email…");
-    setErr("");
-    try {
-      const r = await testSmtp();
-      if (r.ok) setMsg(r.message || "Test email sent.");
-      else setErr(r.error || "Test failed");
-    } catch (e: any) {
-      setErr(e?.error || e?.message || "Test failed");
-    }
-  }
-
-  if (loading) return <p className="text-sm text-gray-500">Loading…</p>;
-
+  // Phase 3.5 PR B — body deprecated. Canonical surface is
+  // SmtpSettingsPage at /admin/infrastructure/smtp (Infrastructure pillar).
+  // Full handler removal is a follow-up tally.
   return (
-    <div className="space-y-5 max-w-2xl">
-      {err && <p className="text-sm text-red-600">{err}</p>}
-      {msg && <p className="text-sm text-green-600">{msg}</p>}
-
-      <Field label="Email Provider">
-        <div className="flex gap-4 text-sm">
-          <label className="flex items-center gap-1">
-            <input
-              type="radio"
-              checked={provider === "sendgrid"}
-              onChange={() => setProvider("sendgrid")}
-            />
-            SendGrid
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="radio"
-              checked={provider === "custom_smtp"}
-              onChange={() => setProvider("custom_smtp")}
-            />
-            Custom SMTP
-          </label>
-        </div>
-      </Field>
-
-      {provider === "sendgrid" ? (
-        <div className="rounded border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 text-sm">
-          <p className="font-medium mb-1">SendGrid API Key</p>
-          <p className="text-xs text-gray-500">
-            The API key is stored as a Cloud Run environment variable
-            (<code className="font-mono">SENDGRID_API_KEY</code>). Update it via
-            the GCP Console.
-          </p>
-        </div>
-      ) : (
-        <div className="rounded border border-gray-200 dark:border-gray-700 p-3 space-y-3">
-          <div className="font-medium text-sm">Custom SMTP</div>
-          <Field label="SMTP Host">
-            <input
-              className={inputClass}
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              placeholder="smtp.example.com"
-            />
-          </Field>
-          <Field label="SMTP Port">
-            <input
-              type="number"
-              className={inputClass}
-              value={port}
-              onChange={(e) => setPort(Number(e.target.value) || 587)}
-            />
-          </Field>
-          <Field label="SMTP Username">
-            <input
-              className={inputClass}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="user@example.com"
-            />
-          </Field>
-          <div className="text-xs text-gray-500">
-            SMTP password is stored as a Cloud Run environment variable
-            (<code className="font-mono">SMTP_PASSWORD</code>). Update it via the
-            GCP Console.
-          </div>
-        </div>
-      )}
-
-      <div className="rounded border border-gray-200 dark:border-gray-700 p-3 space-y-3">
-        <div className="font-medium text-sm">Shared</div>
-        <Field label="From Address">
-          <input
-            className={inputClass}
-            value={fromAddr}
-            onChange={(e) => setFromAddr(e.target.value)}
-            placeholder="noreply@shiekhshoes.com"
-          />
-        </Field>
-        <Field label="From Name">
-          <input
-            className={inputClass}
-            value={fromName}
-            onChange={(e) => setFromName(e.target.value)}
-          />
-        </Field>
-        <Field label="SMTP Throttle Hours">
-          <input
-            type="number"
-            className={inputClass}
-            value={throttle}
-            onChange={(e) => setThrottle(Number(e.target.value) || 24)}
-          />
-        </Field>
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={runTest}
-          className="text-sm border border-gray-200 dark:border-gray-700 rounded px-3 py-1.5"
-        >
-          Test Email
-        </button>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="bg-blue-600 text-white text-sm rounded px-3 py-1.5 disabled:opacity-50"
-        >
-          {saving ? "Saving…" : "Save SMTP Settings"}
-        </button>
+    <div className="p-6 max-w-2xl">
+      <div className="border border-amber-300 bg-amber-50 rounded-md p-4">
+        <h3 className="font-semibold mb-2">SMTP Settings have moved</h3>
+        <p className="mb-3">
+          SMTP configuration is now at{" "}
+          <a
+            href="/admin/infrastructure/smtp"
+            className="text-blue-700 underline"
+          >
+            /admin/infrastructure/smtp
+          </a>{" "}
+          under Infrastructure.
+        </p>
+        <p className="text-sm text-gray-600">
+          This tab will be removed in a future cleanup. Update your bookmarks.
+        </p>
       </div>
     </div>
   );
@@ -1112,150 +782,27 @@ function SmtpTab() {
 //  AI PROVIDER TAB
 // ─────────────────────────────────────
 function AIProviderTab() {
-  const [settings, setSettings] = useState<AdminSetting[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [aiProvider, setAiProvider] = useState("anthropic");
-  const [aiModel, setAiModel] = useState("");
-  const [testResult, setTestResult] = useState<{
-    ok: boolean;
-    message: string;
-  } | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const s = await fetchAdminSettings();
-        setSettings(s);
-      } catch {}
-      setLoading(false);
-    })();
-  }, []);
-
-  useEffect(() => {
-    const modelSetting = settings.find((s) => s.key === "active_ai_model");
-    const providerSetting = settings.find(
-      (s) => s.key === "active_ai_provider"
-    );
-    if (modelSetting && modelSetting.value != null)
-      setAiModel(String(modelSetting.value));
-    if (providerSetting && providerSetting.value != null)
-      setAiProvider(String(providerSetting.value));
-  }, [settings]);
-
-  async function saveSettings() {
-    setSaving(true);
-    setTestResult(null);
-    try {
-      await updateAdminSetting("active_ai_provider", aiProvider, {
-        type: "string",
-        category: "ai",
-        label: "Active AI Provider",
-      });
-      await updateAdminSetting("active_ai_model", aiModel, {
-        type: "string",
-        category: "ai",
-        label: "Active AI Model String",
-      });
-      setTestResult({ ok: true, message: "✅ Saved" });
-    } catch (e: any) {
-      setTestResult({ ok: false, message: e?.error || "Save failed" });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function runTest() {
-    setTesting(true);
-    setTestResult(null);
-    try {
-      const r = await testAI();
-      setTestResult({
-        ok: r.ok,
-        message: r.ok
-          ? `✅ Connected — ${r.model}`
-          : `❌ ${r.error || "Test failed"}`,
-      });
-    } catch (e: any) {
-      setTestResult({ ok: false, message: e?.error || "Test failed" });
-    } finally {
-      setTesting(false);
-    }
-  }
-
-  if (loading) return <p className="text-sm text-gray-500">Loading…</p>;
-
+  // Phase 3.5 PR B — body deprecated. Canonical surface is
+  // AIProvidersListPage at /admin/ai-automation/providers (AI & Automation pillar).
+  // Full handler removal is a follow-up tally.
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div>
-        <label className="text-xs text-gray-600 dark:text-gray-400">
-          Active Provider
-        </label>
-        <select
-          value={aiProvider}
-          onChange={(e) => setAiProvider(e.target.value)}
-          className="mt-1 w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm bg-white dark:bg-gray-900"
-        >
-          <option value="anthropic">Anthropic (Claude)</option>
-          <option value="openai">OpenAI (stub)</option>
-          <option value="gemini">Gemini (stub)</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="text-xs text-gray-600 dark:text-gray-400">
-          Model String
-          <span className="ml-1 text-gray-400">
-            — update when Anthropic releases new models
-          </span>
-        </label>
-        <input
-          type="text"
-          value={aiModel}
-          onChange={(e) => setAiModel(e.target.value)}
-          placeholder="e.g. claude-sonnet-4-5"
-          className="mt-1 w-full border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm font-mono bg-white dark:bg-gray-900"
-        />
-        <p className="text-xs text-gray-400 mt-1">
-          Current Anthropic models: claude-sonnet-4-5, claude-opus-4-5,
-          claude-haiku-4-5
+    <div className="p-6 max-w-2xl">
+      <div className="border border-amber-300 bg-amber-50 rounded-md p-4">
+        <h3 className="font-semibold mb-2">AI Provider has moved</h3>
+        <p className="mb-3">
+          AI provider configuration is now at{" "}
+          <a
+            href="/admin/ai-automation/providers"
+            className="text-blue-700 underline"
+          >
+            /admin/ai-automation/providers
+          </a>{" "}
+          under AI &amp; Automation.
+        </p>
+        <p className="text-sm text-gray-600">
+          This tab will be removed in a future cleanup. Update your bookmarks.
         </p>
       </div>
-
-      <div className="flex items-center gap-3 flex-wrap">
-        <button
-          onClick={saveSettings}
-          disabled={saving}
-          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg disabled:opacity-50"
-        >
-          {saving ? "Saving…" : "Save AI Settings"}
-        </button>
-
-        <button
-          onClick={runTest}
-          disabled={testing}
-          className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
-        >
-          {testing ? "Testing…" : "Test Connection"}
-        </button>
-
-        {testResult && (
-          <span
-            className={`text-sm ${
-              testResult.ok ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {testResult.message}
-          </span>
-        )}
-      </div>
-
-      <p className="text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-800">
-        The API key is stored as a Cloud Run environment variable
-        (<code className="font-mono">ANTHROPIC_API_KEY</code>). Update it via the
-        GCP Console.
-      </p>
     </div>
   );
 }
