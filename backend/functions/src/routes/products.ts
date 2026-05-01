@@ -1310,6 +1310,13 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
         },
         { merge: true }
       );
+      // PR 1.2 — shipping override edits feed the Pricing Export queue with
+      // a distinct reason so RetailOps export pipeline can route correctly.
+      try {
+        await queueForPricingExport(mpn, "shipping_override_edit", userId, null);
+      } catch (qerr: any) {
+        console.error("queueForPricingExport (shipping_override_edit) failed:", qerr);
+      }
     }
 
     // 4c. TALLY-107 — MAP auto-populate:

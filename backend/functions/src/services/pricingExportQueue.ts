@@ -11,7 +11,8 @@ export type PricingExportReason =
   | "scom_edit"
   | "map_change"
   | "cadence"
-  | "map_removal";
+  | "map_removal"
+  | "shipping_override_edit";
 
 export async function queueForPricingExport(
   mpn: string,
