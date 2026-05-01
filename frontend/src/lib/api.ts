@@ -1688,6 +1688,21 @@ export async function fetchSmartRule(ruleId: string): Promise<SmartRule> {
 // BE: GET /api/v1/admin/ai/providers (routes/aiPlane.ts) → { providers: [...] }
 // ────────────────────────────────────────────────────────────────────────
 
+/**
+ * AIProviderModel — verbatim from BE validateProviderModel
+ * (backend/functions/src/routes/aiPlane.ts L66-78).
+ *   - model_key: string (required)
+ *   - display_name: string (required)
+ *   - is_active?: boolean
+ *   - sort_order?: number
+ */
+export interface AIProviderModel {
+  model_key: string;
+  display_name: string;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
 export interface AIProvider {
   provider_key: string;
   display_name: string;
@@ -1695,9 +1710,19 @@ export interface AIProvider {
   api_key_env_var_name?: string;
   is_active: boolean;
   sort_order: number;
-  models?: unknown[];
+  models?: AIProviderModel[];
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface AIProviderPayload {
+  provider_key: string;
+  display_name: string;
+  api_key_source: "env_var" | "admin_settings" | "vault";
+  api_key_env_var_name?: string | null;
+  is_active?: boolean;
+  sort_order?: number;
+  models?: AIProviderModel[];
 }
 
 export async function fetchAIProviders(): Promise<AIProvider[]> {
@@ -1707,6 +1732,51 @@ export async function fetchAIProviders(): Promise<AIProvider[]> {
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = await res.json();
   return (data.providers ?? []) as AIProvider[];
+}
+
+// Phase 3.3 PR 3.3b — provider mutations (Option A: metadata only, no key values).
+// BE: routes/aiPlane.ts POST/PUT/DELETE /providers[/...] — metadata-only;
+// API key values live in GCP Secret Manager + Cloud Run env mounts.
+export async function createAIProvider(
+  payload: AIProviderPayload
+): Promise<AIProvider> {
+  const res = await fetch(`${BASE}/api/v1/admin/ai/providers`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.provider as AIProvider;
+}
+
+export async function updateAIProvider(
+  provider_key: string,
+  payload: Partial<Omit<AIProviderPayload, "provider_key">>
+): Promise<AIProvider> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/ai/providers/${encodeURIComponent(provider_key)}`,
+    {
+      method: "PUT",
+      headers: await headers(),
+      body: JSON.stringify(payload),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.provider as AIProvider;
+}
+
+export async function deactivateAIProvider(
+  provider_key: string
+): Promise<{ ok: boolean; provider_key: string; is_active: boolean }> {
+  const res = await fetch(
+    `${BASE}/api/v1/admin/ai/providers/${encodeURIComponent(provider_key)}`,
+    { method: "DELETE", headers: await headers() }
+  );
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
 }
 
 export async function createSmartRule(body: Partial<SmartRule>): Promise<SmartRule> {

@@ -1,17 +1,27 @@
 /**
- * Phase 3.3 PR 3.3a — AI Provider Registry list page (read-only).
+ * Phase 3.3 PR 3.3a — AI Provider Registry list page.
+ * Phase 3.3 PR 3.3b — Add Create / Edit / Deactivate (Option A: metadata only).
  *
- * Reads the 3 seeded providers from BE GET /api/v1/admin/ai/providers
- * (routes/aiPlane.ts). NO mutations, NO key handling — PR 3.3b will add
- * those. API key VALUES live in GCP Secret Manager and are mounted into
- * Cloud Run via deploy script; this page only shows provider metadata
- * + the env var name mapping.
+ * Reads providers from BE GET /api/v1/admin/ai/providers (routes/aiPlane.ts).
+ * Mutations via POST/PUT/DELETE — metadata-only. API key VALUES live in GCP
+ * Secret Manager and are mounted into Cloud Run via the deploy script; this
+ * page only manages provider metadata + the env var name mapping.
  */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { AdminCrudTable, RoleGate } from "../components/admin";
+import {
+  AdminCrudTable,
+  ConfirmModal,
+  RoleGate,
+  showToast,
+} from "../components/admin";
 import type { AdminCrudColumn } from "../components/admin/AdminCrudTable";
-import { fetchAIProviders, type AIProvider } from "../lib/api";
+import { AIProviderEditor } from "../components/admin/AIProviderEditor";
+import {
+  deactivateAIProvider,
+  fetchAIProviders,
+  type AIProvider,
+} from "../lib/api";
 
 const COLUMNS_BASE: AdminCrudColumn<AIProvider>[] = [
   {
@@ -61,30 +71,42 @@ const ADVANCED_COLUMN: AdminCrudColumn<AIProvider> = {
   render: (p) => <code className="text-xs">{p.provider_key}</code>,
 };
 
+function formatError(err: any): string {
+  if (!err) return "Unknown error.";
+  if (typeof err === "string") return err;
+  return err.error || err.message || JSON.stringify(err);
+}
+
+type EditorState =
+  | { mode: "create"; provider: null }
+  | { mode: "edit"; provider: AIProvider }
+  | null;
+
 export default function AIProvidersListPage() {
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [editorState, setEditorState] = useState<EditorState>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<AIProvider | null>(null);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchAIProviders();
+      setProviders(data);
+    } catch (err: any) {
+      setError(err?.message ?? String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    let cancelled = false;
-    fetchAIProviders()
-      .then((data) => {
-        if (!cancelled) {
-          setProviders(data);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err?.message ?? String(err));
-          setLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
+    void load();
   }, []);
 
   const sorted = [...providers].sort(
@@ -113,12 +135,12 @@ export default function AIProvidersListPage() {
           <div>
             <h1 className="text-2xl font-bold">🤖 AI Provider Registry</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              View configured AI providers used by the automation pipeline.
+              View and manage configured AI providers used by the automation pipeline.
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 max-w-2xl">
               Note: API key values live in GCP Secret Manager and are mounted
-              into Cloud Run via the deploy script. This page shows provider
-              metadata and the env var name mapping. Key rotation requires
+              into Cloud Run via the deploy script. This page manages provider
+              metadata and the env var name mapping only. Key rotation requires
               GCP Console + redeploy.
             </p>
           </div>
@@ -132,6 +154,16 @@ export default function AIProvidersListPage() {
           </label>
         </div>
 
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={() => setEditorState({ mode: "create", provider: null })}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            + New Provider
+          </button>
+        </div>
+
         {error ? (
           <div className="p-4 rounded border border-red-200 bg-red-50 text-red-700 text-sm">
             Error loading providers: {error}
@@ -143,8 +175,67 @@ export default function AIProvidersListPage() {
             rowKey={(p) => p.provider_key}
             isLoading={loading}
             emptyMessage="No AI providers configured."
+            onEdit={(p) => setEditorState({ mode: "edit", provider: p })}
+            onDeactivate={(p) => setDeactivateTarget(p)}
           />
         )}
+
+        {editorState !== null && (
+          <AIProviderEditor
+            mode={editorState.mode}
+            initial={editorState.mode === "edit" ? editorState.provider : null}
+            onSaved={async (saved, action) => {
+              setEditorState(null);
+              try {
+                await load();
+                showToast(`Provider "${saved.display_name}" ${action}.`);
+              } catch {
+                showToast(
+                  `Provider "${saved.display_name}" ${action}. (Reload failed; refresh.)`
+                );
+                setError("Saved, but failed to reload table. Refresh to see latest.");
+              }
+            }}
+            onCancel={() => setEditorState(null)}
+          />
+        )}
+
+        <ConfirmModal
+          open={deactivateTarget !== null}
+          title="Deactivate Provider"
+          body={
+            deactivateTarget
+              ? `Deactivate ${deactivateTarget.display_name}? Provider will become inactive and unavailable for AI workflows. This is reversible via direct Firestore edit (no UI for reactivation in this PR).`
+              : ""
+          }
+          confirmLabel="Deactivate"
+          confirmVariant="destructive"
+          onConfirm={async () => {
+            if (!deactivateTarget) return;
+            const target = deactivateTarget;
+            try {
+              await deactivateAIProvider(target.provider_key);
+              setDeactivateTarget(null);
+              setDeactivateError(null);
+              try {
+                await load();
+                showToast(`Provider "${target.display_name}" deactivated.`);
+              } catch {
+                showToast(
+                  `Provider "${target.display_name}" deactivated. (Reload failed; refresh.)`
+                );
+                setError("Deactivated, but failed to reload table. Refresh to see latest.");
+              }
+            } catch (e: any) {
+              setDeactivateError(formatError(e));
+            }
+          }}
+          onCancel={() => {
+            setDeactivateTarget(null);
+            setDeactivateError(null);
+          }}
+          errorSlot={deactivateError}
+        />
       </div>
     </RoleGate>
   );
