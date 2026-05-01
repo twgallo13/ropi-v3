@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { AdminNavCard, RoleGate } from "../components/admin";
 
 const SURFACES = [
-  { title: "AI Provider Registry", description: "Active API keys + workflow routing.", href: "/admin/ai-automation/providers", status: "coming" as const, comingLabel: "Coming in B.3" },
+  { title: "AI Provider Registry", description: "Active API keys + workflow routing.", href: "/admin/ai-automation/providers", status: "live" as const },
   { title: "Prompt Templates", description: "Configure AI prompts per workflow.", href: "/admin/ai-automation/prompt-templates", status: "live" as const },
   { title: "Smart Rule Engine", description: "Automated field population rules.", href: "/admin/ai-automation/smart-rules", status: "live" as const },
   { title: "Completion Rules", description: "Blocking vs warning rules for publishing.", href: "/admin/ai-automation/completion-rules", status: "coming" as const, comingLabel: "Coming in B.3" },

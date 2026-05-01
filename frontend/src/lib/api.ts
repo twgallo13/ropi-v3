@@ -1683,6 +1683,32 @@ export async function fetchSmartRule(ruleId: string): Promise<SmartRule> {
   return res.json();
 }
 
+// ────────────────────────────────────────────────────────────────────────
+// Phase 3.3 PR 3.3a — AI Provider Registry (read-only list)
+// BE: GET /api/v1/admin/ai/providers (routes/aiPlane.ts) → { providers: [...] }
+// ────────────────────────────────────────────────────────────────────────
+
+export interface AIProvider {
+  provider_key: string;
+  display_name: string;
+  api_key_source: "env_var" | "admin_settings" | "vault";
+  api_key_env_var_name?: string;
+  is_active: boolean;
+  sort_order: number;
+  models?: unknown[];
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export async function fetchAIProviders(): Promise<AIProvider[]> {
+  const res = await fetch(`${BASE}/api/v1/admin/ai/providers`, {
+    headers: await headers(),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = await res.json();
+  return (data.providers ?? []) as AIProvider[];
+}
+
 export async function createSmartRule(body: Partial<SmartRule>): Promise<SmartRule> {
   const res = await fetch(`${BASE}/api/v1/admin/smart-rules`, {
     method: "POST",

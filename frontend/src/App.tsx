@@ -17,6 +17,7 @@ import CadenceReviewPage from "./pages/CadenceReviewPage";
 import CadenceUnassignedPage from "./pages/CadenceUnassignedPage";
 import CadenceRulesAdminPage from "./pages/CadenceRulesAdminPage";
 import PromptTemplatesAdminPage from "./pages/PromptTemplatesAdminPage";
+import AIProvidersListPage from "./pages/AIProvidersListPage";
 import AIContentReviewPage from "./pages/AIContentReviewPage";
 import LaunchAdminListPage from "./pages/LaunchAdminListPage";
 import LaunchAdminDetailPage from "./pages/LaunchAdminDetailPage";
@@ -189,6 +190,7 @@ function AppInner() {
             <Route path="/admin/ai-automation/smart-rules/new" element={<SmartRuleBuilderPage />} />
             <Route path="/admin/ai-automation/smart-rules/:ruleId" element={<SmartRuleBuilderPage />} />
             <Route path="/admin/ai-automation/prompt-templates" element={<PromptTemplatesAdminPage />} />
+            <Route path="/admin/ai-automation/providers" element={<AIProvidersListPage />} />
             <Route path="/admin/pipeline/cadence" element={<CadenceRulesAdminPage />} />
             <Route path="/admin/pipeline/export-profiles" element={<ExportProfilesPage />} />
             <Route path="/admin/infrastructure/pricing-guardrails" element={<PricingGuardrailsPage />} />
