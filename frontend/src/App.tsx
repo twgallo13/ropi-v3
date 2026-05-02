@@ -16,6 +16,7 @@ import MapRemovalReviewPage from "./pages/MapRemovalReviewPage";
 import CadenceReviewPage from "./pages/CadenceReviewPage";
 import CadenceUnassignedPage from "./pages/CadenceUnassignedPage";
 import CadenceRulesAdminPage from "./pages/CadenceRulesAdminPage";
+import ReviewActiveOverridesPage from "./pages/ReviewActiveOverridesPage";
 import PromptTemplatesAdminPage from "./pages/PromptTemplatesAdminPage";
 import AIProvidersListPage from "./pages/AIProvidersListPage";
 import AIContentReviewPage from "./pages/AIContentReviewPage";
@@ -194,6 +195,8 @@ function AppInner() {
             <Route path="/admin/ai-automation/prompt-templates" element={<PromptTemplatesAdminPage />} />
             <Route path="/admin/ai-automation/providers" element={<AIProvidersListPage />} />
             <Route path="/admin/pipeline/cadence" element={<CadenceRulesAdminPage />} />
+            {/* TALLY-SHIPPING-OVERRIDE-CLEANUP PR 2 — Active Override Review */}
+            <Route path="/admin/pipeline/review-active-overrides" element={<ReviewActiveOverridesPage />} />
             <Route path="/admin/pipeline/export-profiles" element={<ExportProfilesPage />} />
             <Route path="/admin/infrastructure/pricing-guardrails" element={<PricingGuardrailsPage />} />
             <Route path="/admin/infrastructure/smtp" element={<SmtpSettingsPage />} />
