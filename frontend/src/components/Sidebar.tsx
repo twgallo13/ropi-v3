@@ -52,6 +52,8 @@ const NAV_TREE: NavNode[] = [
       { label: "MAP Removal", path: "/map-removal-review" },
       { label: "Pricing Discrepancy", path: "/pricing-discrepancy" },
       { label: "Site Verification", path: "/site-verification" },
+      // PHASE-3.7 — Review Active Overrides (moved from Admin > Data Pipeline & Workflow)
+      { label: "Review Active Overrides", path: "/review-active-overrides" },
     ],
   },
   {
@@ -104,7 +106,6 @@ const NAV_TREE: NavNode[] = [
           { label: "Import Mapping Templates", path: "/admin/pipeline/import-templates" },
           { label: "Export Profiles", path: "/admin/pipeline/export-profiles" },
           { label: "Cadence Policies", path: "/admin/pipeline/cadence" },
-          { label: "Review Active Overrides", path: "/admin/pipeline/review-active-overrides" },
         ],
       },
       {
