@@ -111,6 +111,28 @@ export default function BrandRegistryAdminPage() {
     return [...r].sort((a, b) => compareRows(a, b, sortState));
   }, [rows, showInactive, sortState]);
 
+  // PHASE-3.7 sub-PR 1.7 — group rows by default_site_owner; render sticky group headers.
+  // Hardcoded order matches Phase 5A canonical site_registry order: shiekh, karmaloop, mltd.
+  // Null bucket ("Unassigned") catches brands without default_site_owner set.
+  const BRAND_GROUP_ORDER: Array<{ key: string | null; label: string }> = [
+    { key: "shiekh", label: "Shiekh" },
+    { key: "karmaloop", label: "Karmaloop" },
+    { key: "mltd", label: "MLTD" },
+    { key: null, label: "Unassigned" },
+  ];
+
+  const groupedRows = useMemo(() => {
+    const map = new Map<string | null, BrandRegistryEntry[]>();
+    for (const row of visibleRows) {
+      const key = row.default_site_owner ?? null;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(row);
+    }
+    return BRAND_GROUP_ORDER
+      .map((g) => ({ ...g, rows: map.get(g.key) || [] }))
+      .filter((g) => g.rows.length > 0);
+  }, [visibleRows]);
+
   const baseColumns: AdminCrudColumn<BrandRegistryEntry>[] = [
     { key: "brand_key", header: "Brand Key", sortable: true, render: (r) => <code className="text-xs">{r.brand_key}</code> },
     { key: "display_name", header: "Display Name", sortable: true, render: (r) => r.display_name },
@@ -180,20 +202,46 @@ export default function BrandRegistryAdminPage() {
           <ErrorBanner message={error} onDismiss={() => setError(null)} />
         </div>
 
-        <AdminCrudTable
-          rows={visibleRows}
-          columns={columns}
-          rowKey={(r) => r.brand_key}
-          onEdit={(r) => {
-            setEditorMode("edit");
-            setEditorKey(r.brand_key);
-          }}
-          onDeactivate={(r) => setDeactivateTarget(r)}
-          isLoading={loading}
-          emptyMessage="No brands."
-          sortState={sortState}
-          onSortChange={setSortState}
-        />
+        {/* PHASE-3.7 sub-PR 1.7 — sticky-header grouping by default_site_owner. */}
+        {loading || groupedRows.length === 0 ? (
+          <AdminCrudTable
+            rows={visibleRows}
+            columns={columns}
+            rowKey={(r) => r.brand_key}
+            onEdit={(r) => {
+              setEditorMode("edit");
+              setEditorKey(r.brand_key);
+            }}
+            onDeactivate={(r) => setDeactivateTarget(r)}
+            isLoading={loading}
+            emptyMessage="No brands."
+            sortState={sortState}
+            onSortChange={setSortState}
+          />
+        ) : (
+          groupedRows.map((group) => (
+            <div key={group.key ?? "_unassigned"} className="mb-6">
+              <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b px-2 py-2 text-lg font-semibold">
+                {group.label}{" "}
+                <span className="text-sm text-gray-500 font-normal">({group.rows.length})</span>
+              </div>
+              <AdminCrudTable
+                rows={group.rows}
+                columns={columns}
+                rowKey={(r) => r.brand_key}
+                onEdit={(r) => {
+                  setEditorMode("edit");
+                  setEditorKey(r.brand_key);
+                }}
+                onDeactivate={(r) => setDeactivateTarget(r)}
+                isLoading={false}
+                emptyMessage="No brands."
+                sortState={sortState}
+                onSortChange={setSortState}
+              />
+            </div>
+          ))
+        )}
 
         {editorMode !== null && (
           <BrandEditor

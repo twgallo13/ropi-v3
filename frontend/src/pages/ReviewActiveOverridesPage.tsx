@@ -14,7 +14,7 @@
  * page audience is buyer | head_buyer | admin per BE auth gate.
  */
 import { useState, useEffect, useCallback } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   fetchActiveOverrideCandidates,
@@ -154,7 +154,6 @@ function ReviewActiveOverridesPageInner() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <Link to="/admin/pipeline" className="text-sm text-blue-600 hover:underline">← Pipeline</Link>
       <h1 className="text-2xl font-bold mt-2 mb-1">📦 Review Active Overrides</h1>
       <p className="text-gray-600 mb-6">
         Review products with active shipping overrides set by ROPI ops. Adjust or zero out as needed.

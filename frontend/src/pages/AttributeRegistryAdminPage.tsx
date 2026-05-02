@@ -132,6 +132,30 @@ export default function AttributeRegistryAdminPage() {
     return [...r].sort((a, b) => compareRows(a, b, sortState));
   }, [rows, showInactive, sortState]);
 
+  // PHASE-3.7 sub-PR 1.6 — group rows by destination_tab; render sticky group headers.
+  // Group order is the canonical BE enum from attributeRegistry.ts ALLOWED_TABS,
+  // plus an "Uncategorized" bucket for null/undefined values (defensive; expected empty).
+  const ATTR_GROUP_ORDER: Array<{ key: string; label: string }> = [
+    { key: "core_information", label: "Core Information" },
+    { key: "product_attributes", label: "Product Attributes" },
+    { key: "descriptions_seo", label: "Descriptions & SEO" },
+    { key: "launch_media", label: "Launch Media" },
+    { key: "system", label: "System" },
+    { key: "", label: "Uncategorized" },
+  ];
+
+  const groupedRows = useMemo(() => {
+    const map = new Map<string, AttributeRegistryEntry[]>();
+    for (const row of visibleRows) {
+      const key = row.destination_tab || "";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(row);
+    }
+    return ATTR_GROUP_ORDER
+      .map((g) => ({ ...g, rows: map.get(g.key) || [] }))
+      .filter((g) => g.rows.length > 0);
+  }, [visibleRows]);
+
   const baseColumns: AdminCrudColumn<AttributeRegistryEntry>[] = [
     { key: "display_label", header: "Display Label", sortable: true, render: (r) => r.display_label },
     { key: "field_type", header: "Type", sortable: true, render: (r) => r.field_type },
@@ -252,20 +276,49 @@ export default function AttributeRegistryAdminPage() {
           <ErrorBanner message={error} onDismiss={() => setError(null)} />
         </div>
 
-        <AdminCrudTable
-          rows={visibleRows}
-          columns={columns}
-          rowKey={(r) => r.field_key}
-          onEdit={(r) => {
-            setEditorMode("edit");
-            setEditorKey(r.field_key);
-          }}
-          onDeactivate={(r) => setDeactivateTarget(r)}
-          isLoading={loading}
-          emptyMessage="No attributes."
-          sortState={sortState}
-          onSortChange={setSortState}
-        />
+        {/* PHASE-3.7 sub-PR 1.6 — sticky-header grouping by destination_tab.
+            Each group rendered as its own AdminCrudTable; group headers use z-20 to
+            layer above the table thead z-10 (sub-PR 1.5). Loading + empty states
+            still surface from a single AdminCrudTable when there are no groups. */}
+        {loading || groupedRows.length === 0 ? (
+          <AdminCrudTable
+            rows={visibleRows}
+            columns={columns}
+            rowKey={(r) => r.field_key}
+            onEdit={(r) => {
+              setEditorMode("edit");
+              setEditorKey(r.field_key);
+            }}
+            onDeactivate={(r) => setDeactivateTarget(r)}
+            isLoading={loading}
+            emptyMessage="No attributes."
+            sortState={sortState}
+            onSortChange={setSortState}
+          />
+        ) : (
+          groupedRows.map((group) => (
+            <div key={group.key || "_unset"} className="mb-6">
+              <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b px-2 py-2 text-lg font-semibold">
+                {group.label}{" "}
+                <span className="text-sm text-gray-500 font-normal">({group.rows.length})</span>
+              </div>
+              <AdminCrudTable
+                rows={group.rows}
+                columns={columns}
+                rowKey={(r) => r.field_key}
+                onEdit={(r) => {
+                  setEditorMode("edit");
+                  setEditorKey(r.field_key);
+                }}
+                onDeactivate={(r) => setDeactivateTarget(r)}
+                isLoading={false}
+                emptyMessage="No attributes."
+                sortState={sortState}
+                onSortChange={setSortState}
+              />
+            </div>
+          ))
+        )}
 
         {editorMode !== null && (
           <AttributeEditor
