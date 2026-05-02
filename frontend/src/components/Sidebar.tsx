@@ -269,17 +269,17 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                               onClick={() =>
                                 setCollapsed((p) => ({ ...p, [pillarKey]: !p[pillarKey] }))
                               }
-                              className={`w-full flex items-center justify-between px-3 py-1.5 rounded text-sm ${
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm ${
                                 hasSurfaceActive
-                                  ? "text-white bg-gray-800/60"
-                                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+                                  ? "text-white bg-gray-800"
+                                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
                               }`}
                             >
-                              <span>
-                                {child.icon ? <span className="mr-2">{child.icon}</span> : null}
-                                {child.label}
+                              <span className="flex items-center gap-2 min-w-0">
+                                {child.icon ? <span>{child.icon}</span> : null}
+                                <span className="font-medium truncate">{child.label}</span>
                               </span>
-                              <span className="text-xs text-gray-600">{isPillarOpen ? "▾" : "▸"}</span>
+                              <span className="text-xs text-gray-500">{isPillarOpen ? "▾" : "▸"}</span>
                             </button>
                             {isPillarOpen && (
                               <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-700 pl-2">
