@@ -161,6 +161,8 @@ function AppInner() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/pricing-discrepancy" element={<PricingDiscrepancyPage />} />
             <Route path="/site-verification" element={<SiteVerificationReviewPage />} />
+            {/* TALLY-PHASE-3.7-OPERATIONAL-POLISH — Review Active Overrides moved to top-level Product Operations */}
+            <Route path="/review-active-overrides" element={<ReviewActiveOverridesPage />} />
             <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
             <Route path="/executive" element={<ExecutiveDashboardPage />} />
             <Route path="/neglected-inventory" element={<NeglectedInventoryPage />} />
@@ -195,8 +197,11 @@ function AppInner() {
             <Route path="/admin/ai-automation/prompt-templates" element={<PromptTemplatesAdminPage />} />
             <Route path="/admin/ai-automation/providers" element={<AIProvidersListPage />} />
             <Route path="/admin/pipeline/cadence" element={<CadenceRulesAdminPage />} />
-            {/* TALLY-SHIPPING-OVERRIDE-CLEANUP PR 2 — Active Override Review */}
-            <Route path="/admin/pipeline/review-active-overrides" element={<ReviewActiveOverridesPage />} />
+            {/* TALLY-PHASE-3.7-OPERATIONAL-POLISH — legacy redirect from PR 2 path */}
+            <Route
+              path="/admin/pipeline/review-active-overrides"
+              element={<Navigate to="/review-active-overrides" replace />}
+            />
             <Route path="/admin/pipeline/export-profiles" element={<ExportProfilesPage />} />
             <Route path="/admin/infrastructure/pricing-guardrails" element={<PricingGuardrailsPage />} />
             <Route path="/admin/infrastructure/smtp" element={<SmtpSettingsPage />} />
