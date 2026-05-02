@@ -3430,3 +3430,68 @@ export async function fetchRolePermissions(): Promise<{ roles: CanonicalRoleEntr
   if (!res.ok) throw data;
   return data;
 }
+
+// TALLY-SHIPPING-OVERRIDE-CLEANUP PR 2.2 — candidate list for Review
+// Active Overrides workflow. Backed by PR 1.6 endpoint at
+// backend/functions/src/routes/reviewActiveOverrides.ts (commit 6f38c8a,
+// squash-merged 62d4efc). Mirrors BE row interface shape from PR 1.6.
+export interface ActiveOverrideCandidate {
+  mpn: string;
+  name: string | null;
+  brand_key: string | null;
+  brand_display_name: string | null;
+  brand_logo_url: string | null;
+  primary_image_url: string | null;
+  site_owner: string | null;
+  last_verified_at: string | null;        // ISO-8601 string
+  days_since_verified: number | null;     // computed BE-side
+  product_url: string | null;
+  web_sales_30d: number;
+  store_sales_30d: number;
+  sales_total: number;                    // computed BE-side
+  inventory_store: number;
+  inventory_warehouse: number;
+  inventory_whs: number;
+  inventory_total: number;                // computed BE-side
+  standard_shipping_override: number | null;
+  expedited_shipping_override: number | null;
+  pricing_domain_state: string | null;
+}
+export type ActiveOverrideSortBy =
+  | "last_verified_at_asc"
+  | "last_verified_at_desc"
+  | "mpn_asc"
+  | "brand_asc"
+  | "sales_asc"
+  | "inventory_desc"
+  | "std_shipping_desc"
+  | "exp_shipping_desc";
+export interface ActiveOverrideQueryParams {
+  days_min?: number;
+  sales_max?: number;
+  inventory_min?: number;
+  brand_key?: string;
+  sort_by?: ActiveOverrideSortBy;
+}
+/**
+ * Fetch active-override review candidates. Backed by
+ * GET /api/v1/review/active-overrides (PR 1.6).
+ */
+export async function fetchActiveOverrideCandidates(
+  params?: ActiveOverrideQueryParams
+): Promise<{ items: ActiveOverrideCandidate[]; total: number }> {
+  const qs = params
+    ? "?" + new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(params).filter(([, v]) => v !== undefined && v !== "")
+            .map(([k, v]) => [k, String(v)])
+        )
+      ).toString()
+    : "";
+  const res = await fetch(`${BASE}/api/v1/review/active-overrides${qs}`, {
+    headers: await headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}

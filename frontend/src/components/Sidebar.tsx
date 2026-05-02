@@ -104,6 +104,7 @@ const NAV_TREE: NavNode[] = [
           { label: "Import Mapping Templates", path: "/admin/pipeline/import-templates" },
           { label: "Export Profiles", path: "/admin/pipeline/export-profiles" },
           { label: "Cadence Policies", path: "/admin/pipeline/cadence" },
+          { label: "Review Active Overrides", path: "/admin/pipeline/review-active-overrides" },
         ],
       },
       {
