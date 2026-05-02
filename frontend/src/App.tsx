@@ -37,7 +37,7 @@ import AdvisoryPage from "./pages/AdvisoryPage";
 import MorePage from "./pages/MorePage";
 import ProductListPage from "./pages/ProductListPage";
 import AdminOverviewPage from "./pages/AdminOverviewPage";
-import AdminSettingsPage from "./pages/AdminSettingsPage";
+import UserManagementPage from "./pages/UserManagementPage";
 import RegistriesPillarPage from "./pages/RegistriesPillarPage";
 import SiteRegistryAdminPage from "./pages/SiteRegistryAdminPage";
 import AttributeRegistryAdminPage from "./pages/AttributeRegistryAdminPage";
@@ -84,7 +84,7 @@ function SettingsTabRedirect() {
   const [searchParams] = useSearchParams();
   const tab = searchParams.get("tab");
   const tabMap: Record<string, string> = {
-    users: "/admin/governance",
+    users: "/admin/governance/users",
     smtp: "/admin/infrastructure",
     ai: "/admin/ai-automation",
     variables: "/admin/infrastructure",
@@ -171,8 +171,8 @@ function AppInner() {
             <Route path="/buyer-performance/:buyer_uid" element={<BuyerPerformancePage />} />
             <Route path="/advisory" element={<AdvisoryPage />} />
             <Route path="/admin/settings" element={<SettingsTabRedirect />} />
-            {/* A.4 Phase 2 NAV HOTFIX (Option A) — bridge mount of existing AdminSettingsPage at canonical Governance URL */}
-            <Route path="/admin/governance/users" element={<AdminSettingsPage />} />
+            {/* PHASE-3.7 sub-PR 1.9 — canonical Users page (extracted from AdminSettingsPage) */}
+            <Route path="/admin/governance/users" element={<UserManagementPage />} />
             <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
             <Route path="/admin/overview" element={<AdminOverviewPage />} />
             {/* TALLY-SETTINGS-UX Phase 3 / B.1 / PR 2 — 6 pillar detail pages */}
