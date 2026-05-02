@@ -245,9 +245,9 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
                 }`}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 min-w-0">
                   <span>{node.icon}</span>
-                  <span className="font-medium">{node.label}</span>
+                  <span className="font-medium truncate">{node.label}</span>
                 </span>
                 <span className="text-xs text-gray-500">{isOpen ? "▾" : "▸"}</span>
               </button>
@@ -269,20 +269,20 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                               onClick={() =>
                                 setCollapsed((p) => ({ ...p, [pillarKey]: !p[pillarKey] }))
                               }
-                              className={`w-full flex items-center justify-between px-3 py-1.5 rounded text-sm ${
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm ${
                                 hasSurfaceActive
-                                  ? "text-white bg-gray-800/60"
-                                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+                                  ? "text-white bg-gray-800"
+                                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
                               }`}
                             >
-                              <span>
-                                {child.icon ? <span className="mr-2">{child.icon}</span> : null}
-                                {child.label}
+                              <span className="flex items-center gap-2 min-w-0">
+                                {child.icon ? <span>{child.icon}</span> : null}
+                                <span className="font-medium truncate">{child.label}</span>
                               </span>
-                              <span className="text-xs text-gray-600">{isPillarOpen ? "▾" : "▸"}</span>
+                              <span className="text-xs text-gray-500">{isPillarOpen ? "▾" : "▸"}</span>
                             </button>
                             {isPillarOpen && (
-                              <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-700 pl-2">
+                              <div className="mt-1 space-y-0.5">
                                 {child.children
                                   .filter((s) => canSee(s.roles))
                                   .map((surface) => {
@@ -291,7 +291,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                                       return (
                                         <span
                                           key={surface.path ?? surface.label}
-                                          className="block px-3 py-1.5 rounded text-sm text-gray-500 opacity-60 cursor-default select-none"
+                                          className="block px-3 py-1.5 rounded text-sm truncate text-gray-500 opacity-60 cursor-default select-none"
                                         >
                                           {surface.label}
                                           {surface.comingLabel && (
@@ -309,7 +309,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                                         to={surface.path}
                                         onClick={onNavClick}
                                         className={({ isActive }) =>
-                                          `block px-3 py-1.5 rounded text-sm ${
+                                          `block px-3 py-1.5 rounded text-sm truncate ${
                                             isActive
                                               ? "text-blue-400 font-medium bg-gray-800/60"
                                               : "text-gray-400 hover:text-white hover:bg-gray-800"
