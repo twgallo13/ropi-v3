@@ -282,7 +282,7 @@ export default function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                               <span className="text-xs text-gray-500">{isPillarOpen ? "▾" : "▸"}</span>
                             </button>
                             {isPillarOpen && (
-                              <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-700 pl-2">
+                              <div className="mt-1 space-y-0.5">
                                 {child.children
                                   .filter((s) => canSee(s.roles))
                                   .map((surface) => {
