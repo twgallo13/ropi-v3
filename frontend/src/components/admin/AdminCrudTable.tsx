@@ -50,7 +50,7 @@ export function AdminCrudTable<T>({
   return (
     <div className="overflow-auto">
       <table className="min-w-full text-sm">
-        <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-left text-xs uppercase tracking-wide text-gray-600 dark:text-gray-300">
+        <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 text-left text-xs uppercase tracking-wide text-gray-600 dark:text-gray-300">
           <tr>
             {columns.map((col) => {
               const sortKey = col.sortKey ?? col.key;
