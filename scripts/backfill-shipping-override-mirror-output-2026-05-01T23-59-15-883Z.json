@@ -1,0 +1,53 @@
+{
+  "tally": "TALLY-SHIPPING-OVERRIDE-CLEANUP",
+  "pr": "PR 1.4 backfill",
+  "mode": "DRY-RUN",
+  "project": "ropi-aoss-dev",
+  "started_at": "2026-05-01T23:59:09.808Z",
+  "completed_at": "2026-05-01T23:59:15.883Z",
+  "total_products_scanned": 61,
+  "counters": {
+    "planned_pairs": 3,
+    "applied_pairs": 0,
+    "skipped_attr_missing": 119,
+    "skipped_attr_not_positive": 0,
+    "skipped_root_already_matches_noop": 0,
+    "skipped_root_has_different_value": 0
+  },
+  "planned": [
+    {
+      "product_doc_id": "206991-6SW",
+      "mpn": "206991-6SW",
+      "field_key": "standard_shipping_override",
+      "attr_value_raw": 9.95,
+      "attr_value_type": "number",
+      "mirror_value": 9.95,
+      "root_before": null
+    },
+    {
+      "product_doc_id": "206991-6SW",
+      "mpn": "206991-6SW",
+      "field_key": "expedited_shipping_override",
+      "attr_value_raw": 14.95,
+      "attr_value_type": "number",
+      "mirror_value": 14.95,
+      "root_before": null
+    },
+    {
+      "product_doc_id": "JP26S426SK-DAIS",
+      "mpn": "JP26S426SK-DAIS",
+      "field_key": "standard_shipping_override",
+      "attr_value_raw": "9.95",
+      "attr_value_type": "string",
+      "mirror_value": 9.95,
+      "root_before": null
+    }
+  ],
+  "skipped": [],
+  "notes": [
+    "Dry-run by default. --apply requires --i-am-sure-apply confirmation.",
+    "Mirrors attr_value -> product root only when root is null/undefined.",
+    "Refuses to overwrite a non-null product-root value (logged in skipped).",
+    "Idempotent: re-running after apply produces planned_pairs=0 (root_already_matches no-op)."
+  ]
+}

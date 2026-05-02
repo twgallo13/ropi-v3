@@ -47,6 +47,8 @@ import sopPanelsRouter from "./routes/sopPanels";
 import aiEnrichmentRouter from "./routes/aiEnrichment";
 import queueStatsRouter from "./routes/queueStats";
 import internalJobsRouter from "./routes/internalJobs";
+// TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.6 — Active Override Review router.
+import reviewActiveOverridesRouter from "./routes/reviewActiveOverrides";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -162,6 +164,9 @@ app.use("/api/v1/queue", queueStatsRouter);
 // Mounted before the root handler / Express default 404 so scheduler hits
 // resolve here. Gated by requireSchedulerOIDC inside the router.
 app.use("/api/v1/internal/jobs", internalJobsRouter);
+
+// ── TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.6 — Active Override Review ──
+app.use("/api/v1/review/active-overrides", reviewActiveOverridesRouter);
 
 // ── Root ──
 app.get("/", (_req, res) => {

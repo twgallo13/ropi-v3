@@ -76,6 +76,17 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
     const warnings: string[] = [];
 
     // TALLY-080 Rule 2 — Duplicate column detection (case-insensitive, BOM-safe)
+    //
+    // TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.3 (documentary):
+    // RO exports include the columns "Override Standard Shipping" and
+    // "Override Expedited Shipping" on every product (PO-verified 2026-05-01).
+    // These headers are intentionally NOT present in FULL_PRODUCT_ROW_MAP
+    // (services/ricsParser.ts), so they never canonicalize to a field_key
+    // and never reach the attribute_values write loop. They are registered
+    // here in columnMap purely so dup-detection / column_map persistence
+    // sees them; no downstream read of these headers occurs.
+    // The structural backstop for future regression lives in the L588-region
+    // canonical-key write loop (see "Ropi-editorial guard" comment there).
     const columnMap: Record<string, number> = {};
     headerRow.forEach((col, idx) => {
       const trimmed = col.trim().replace(/^\uFEFF/, "");
@@ -586,6 +597,20 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           ]);
 
           for (const [attrKey, attrValue] of Object.entries(mapped.attributes)) {
+            // TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.3 — Ropi-editorial guard.
+            // Shipping override values are Ropi-side editorial fields owned by ops via
+            // the Product Editor, NOT RO source-of-truth data. RO sends "Override Standard
+            // Shipping" / "Override Expedited Shipping" CSV columns on every product
+            // import (PO-verified 2026-05-01), but those headers are intentionally absent
+            // from FULL_PRODUCT_ROW_MAP in services/ricsParser.ts — so they never
+            // canonicalize to these field_keys today. This guard structurally prevents
+            // future regression if anyone adds shipping-override entries to that parser map.
+            if (
+              attrKey === "standard_shipping_override" ||
+              attrKey === "expedited_shipping_override"
+            ) {
+              continue;
+            }
             if (skipCanonical.has(attrKey)) continue;
             if (attrValue === undefined || attrValue === null || attrValue === "") continue;
 

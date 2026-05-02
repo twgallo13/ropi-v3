@@ -1284,6 +1284,41 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
       }
     }
 
+    // 4d. TALLY-SHIPPING-OVERRIDE-CLEANUP — shipping override mirror.
+    //     standard_shipping_override / expedited_shipping_override mirror to
+    //     the top-level product document so list filters, exporters, and
+    //     downstream reads see the new value. Unlike Block 4b (scom/scom_sale),
+    //     null / "" / undefined preserves null at the root — clearing an
+    //     override is a valid operation, NOT a coercion to 0.
+    if (
+      fieldKey === "standard_shipping_override" ||
+      fieldKey === "expedited_shipping_override"
+    ) {
+      let numericValue: number | null;
+      if (finalValue === null || finalValue === undefined || finalValue === "") {
+        numericValue = null;
+      } else if (typeof finalValue === "number") {
+        numericValue = finalValue;
+      } else {
+        const parsed = Number(finalValue);
+        numericValue = Number.isFinite(parsed) ? parsed : null;
+      }
+      await productRef.set(
+        {
+          [fieldKey]: numericValue,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      // PR 1.2 — shipping override edits feed the Pricing Export queue with
+      // a distinct reason so RetailOps export pipeline can route correctly.
+      try {
+        await queueForPricingExport(mpn, "shipping_override_edit", userId, null);
+      } catch (qerr: any) {
+        console.error("queueForPricingExport (shipping_override_edit) failed:", qerr);
+      }
+    }
+
     // 4c. TALLY-107 — MAP auto-populate:
     //     When `map` is set to a MAP-active value, auto-populate scom / scom_sale
     //     from rics_retail so the product is immediately priced at MAP.

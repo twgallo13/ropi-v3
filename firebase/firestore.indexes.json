@@ -999,6 +999,24 @@
         { "fieldPath": "action",      "order": "ASCENDING"  },
         { "fieldPath": "timestamp",   "order": "DESCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 99 — TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.5: products w/ standard_shipping_override IS NOT NULL, ordered by mpn for query stability",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "standard_shipping_override", "order": "ASCENDING" },
+        { "fieldPath": "mpn",                        "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 100 — TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.5: products w/ expedited_shipping_override IS NOT NULL, ordered by mpn for query stability",
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "expedited_shipping_override", "order": "ASCENDING" },
+        { "fieldPath": "mpn",                         "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
