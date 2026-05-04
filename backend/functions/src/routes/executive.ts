@@ -184,11 +184,8 @@ router.get(
   "/channel-disparity",
   requireAuth,
   requireRole(["buyer", "head_buyer"]),
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (_req: AuthenticatedRequest, res: Response) => {
     try {
-      const role = await resolveRole(req);
-      const uid = req.user?.uid || null;
-
       let storeSaleQ = db()
         .collection("products")
         .where("is_store_sale_web_full", "==", true)
@@ -256,13 +253,6 @@ router.get(
         (x) => x.web_discount_cap !== null && x.web_discount_cap !== undefined
       );
 
-      // Buyer own-scope filter
-      if (role === "buyer" && uid) {
-        storeSaleWebFull = storeSaleWebFull.filter((x) => x.buyer_id === uid);
-        webSaleStoreFull = webSaleStoreFull.filter((x) => x.buyer_id === uid);
-        mapPromoEligible = mapPromoEligible.filter((x) => x.buyer_id === uid);
-      }
-
       res.status(200).json({
         store_sale_web_full: storeSaleWebFull,
         web_sale_store_full: webSaleStoreFull,
@@ -272,7 +262,7 @@ router.get(
           web_sale_store_full: webSaleStoreFull.length,
           map_promo_eligible: mapPromoEligible.length,
         },
-        scoped: role === "buyer",
+        scoped: false,
       });
     } catch (err: any) {
       console.error("executive/channel-disparity error:", err);
