@@ -2262,6 +2262,16 @@ export async function fetchDashboard(): Promise<DashboardResponse> {
 // ────────────────────────────────────────────────
 // Step 3.2 — Executive endpoints
 // ────────────────────────────────────────────────
+export interface LossLeaderWatchlistItem {
+  mpn: string;
+  name: string | null;
+  brand: string | null;
+  rics_offer: number;
+  estimated_cost: number;
+  gap_amount: number;
+  days_pending: number;
+}
+
 export interface ExecutiveHealth {
   products_added_this_month: number;
   products_added_last_month: number;
@@ -2279,6 +2289,7 @@ export interface ExecutiveHealth {
     gm_pct_projected: number | null;
   }>;
   snapshot_freshness: string | null;
+  loss_leader_products: LossLeaderWatchlistItem[];
 }
 
 export async function fetchExecutiveHealth(): Promise<ExecutiveHealth> {

@@ -14,6 +14,7 @@ import {
   fetchExecutiveHealth,
   fetchOperatorThroughput,
   type ExecutiveHealth,
+  type LossLeaderWatchlistItem,
   type ThroughputResponse,
 } from "../lib/api";
 
@@ -336,6 +337,61 @@ export default function ExecutiveDashboardPage() {
               Total: {throughput.total_completions} completions
             </div>
           </>
+        )}
+      </section>
+
+      {/* Below-Cost Watchlist */}
+      <section className="bg-white border rounded p-4">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">
+          Below-Cost Watchlist
+          {health.loss_leader_products.length > 0 && (
+            <span className="ml-2 text-xs font-normal text-red-600">
+              {health.loss_leader_products.length} product
+              {health.loss_leader_products.length !== 1 ? "s" : ""} below cost
+            </span>
+          )}
+        </h2>
+        {health.loss_leader_products.length === 0 ? (
+          <div className="text-sm text-gray-500">No products currently below cost.</div>
+        ) : (
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 border-b">
+                <th className="pb-1 pr-3 font-medium">MPN</th>
+                <th className="pb-1 pr-3 font-medium">Name / Brand</th>
+                <th className="pb-1 pr-3 font-medium text-right">Offer</th>
+                <th className="pb-1 pr-3 font-medium text-right">Est. Cost</th>
+                <th className="pb-1 pr-3 font-medium text-right">Gap</th>
+                <th className="pb-1 font-medium text-right">Days Pending</th>
+              </tr>
+            </thead>
+            <tbody>
+              {health.loss_leader_products.map((row: LossLeaderWatchlistItem) => (
+                <tr key={row.mpn} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="py-1 pr-3">
+                    <Link
+                      to={`/products/${encodeURIComponent(row.mpn)}`}
+                      className="text-blue-700 hover:underline font-mono text-xs"
+                    >
+                      {row.mpn}
+                    </Link>
+                  </td>
+                  <td className="py-1 pr-3 text-gray-700">
+                    {row.name || "—"}
+                    {row.brand && (
+                      <span className="ml-1 text-xs text-gray-400">({row.brand})</span>
+                    )}
+                  </td>
+                  <td className="py-1 pr-3 text-right font-mono">{money(row.rics_offer)}</td>
+                  <td className="py-1 pr-3 text-right font-mono">{money(row.estimated_cost)}</td>
+                  <td className="py-1 pr-3 text-right font-mono text-red-600">
+                    {money(row.gap_amount)}
+                  </td>
+                  <td className="py-1 text-right text-gray-600">{row.days_pending}d</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </section>
 

@@ -262,6 +262,16 @@ export async function computeNeglectedInventory(): Promise<{ total_count: number
   return { total_count: neglected.length };
 }
 
+export interface LossLeaderWatchlistItem {
+  mpn: string;
+  name: string | null;
+  brand: string | null;
+  rics_offer: number;
+  estimated_cost: number;
+  gap_amount: number;
+  days_pending: number;
+}
+
 export interface ExecutiveHealth {
   products_added_this_month: number;
   products_added_last_month: number;
@@ -270,6 +280,7 @@ export interface ExecutiveHealth {
   str_heatmap: { department: string; str_pct: number }[];
   markdown_forecast: any[];
   snapshot_freshness: string | null;
+  loss_leader_products: LossLeaderWatchlistItem[];
 }
 
 export async function buildExecutiveHealth(): Promise<ExecutiveHealth> {
@@ -363,6 +374,45 @@ export async function buildExecutiveHealth(): Promise<ExecutiveHealth> {
 
   const gmTargetPct = await getAdminNumber("gm_target_pct", 40);
 
+  // Below-Cost Watchlist: products in loss_leader_review state, sorted by gap descending.
+  let lossLeaderProducts: LossLeaderWatchlistItem[] = [];
+  try {
+    const llSnap = await db()
+      .collection("products")
+      .where("pricing_domain_state", "in", ["loss_leader_review", "Loss-Leader Review Pending"])
+      .get();
+
+    const now2 = new Date();
+    lossLeaderProducts = llSnap.docs.map((doc) => {
+      const p = doc.data();
+      const payload = p.loss_leader_payload ?? {};
+      const rics_offer: number = Number(payload.rics_offer ?? p.rics_offer ?? 0);
+      const estimated_cost: number = Number(payload.cost ?? 0);
+      const gap_amount: number = rics_offer - estimated_cost;
+      let days_pending = 0;
+      if (p.loss_leader_flagged_at) {
+        const flaggedMs =
+          typeof p.loss_leader_flagged_at.toDate === "function"
+            ? p.loss_leader_flagged_at.toDate().getTime()
+            : new Date(p.loss_leader_flagged_at).getTime();
+        days_pending = Math.floor((now2.getTime() - flaggedMs) / 86_400_000);
+      }
+      return {
+        mpn: p.mpn ?? doc.id,
+        name: p.name ?? null,
+        brand: p.brand ?? null,
+        rics_offer,
+        estimated_cost,
+        gap_amount,
+        days_pending,
+      };
+    });
+    // Sort by gap_amount ascending (most below-cost first — largest negative gap first)
+    lossLeaderProducts.sort((a, b) => a.gap_amount - b.gap_amount);
+  } catch (_e) {
+    lossLeaderProducts = [];
+  }
+
   return {
     products_added_this_month: thisMonthAgg.data().count,
     products_added_last_month: lastMonthAgg.data().count,
@@ -373,5 +423,6 @@ export async function buildExecutiveHealth(): Promise<ExecutiveHealth> {
       .sort((a, b) => b.str_pct - a.str_pct),
     markdown_forecast: markdownForecast,
     snapshot_freshness: gmTrend.length > 0 ? gmTrend[gmTrend.length - 1].date : null,
+    loss_leader_products: lossLeaderProducts,
   };
 }
