@@ -3,7 +3,6 @@ import {
   fetchBuyerReview,
   fetchPriceProjection,
   postBuyerAction,
-  postLossLeaderAcknowledge,
   type BuyerReviewItem,
   type PriceProjection,
   type SiteVerificationEntry,
@@ -189,49 +188,6 @@ function PriceProjectionChart({ projection }: { projection: PriceProjection }) {
   );
 }
 
-// ── Loss Leader Acknowledge Modal ──
-function LossLeaderAcknowledge({
-  minChars,
-  onSubmit,
-  onCancel,
-}: {
-  mpn: string;
-  minChars: number;
-  onSubmit: (reason: string) => void;
-  onCancel: () => void;
-}) {
-  const [reason, setReason] = useState("");
-  return (
-    <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-      <h4 className="font-semibold text-sm text-red-700 mb-2">
-        Acknowledge Below-Cost Pricing
-      </h4>
-      <textarea
-        className="w-full border rounded p-2 text-sm"
-        rows={3}
-        placeholder={`Explain why this below-cost price is necessary (min ${minChars} characters)…`}
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-      />
-      <p className="text-xs text-gray-500 mt-1">{reason.length}/{minChars} characters</p>
-      <div className="flex gap-2 mt-2">
-        <button onClick={onCancel} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100">
-          Cancel
-        </button>
-        <button
-          onClick={() => onSubmit(reason)}
-          disabled={reason.length < minChars}
-          className={`px-3 py-1.5 text-sm rounded text-white ${
-            reason.length >= minChars ? "bg-red-600 hover:bg-red-700" : "bg-gray-400 cursor-not-allowed"
-          }`}
-        >
-          Acknowledge & Submit
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ── Site verification helpers (Task 3) ─────────────────────────────
 // Backend response shape for buyer-review rows:
 //   site_verification: ordered map keyed by site_key (primary first, then by registry priority)
@@ -323,7 +279,6 @@ function ProductCard({
   onApprove,
   onDeny,
   onAdjust,
-  onAcknowledge,
 }: {
   item: BuyerReviewItem;
   density: Density;
@@ -331,10 +286,8 @@ function ProductCard({
   onApprove: (mpn: string) => void;
   onDeny: (mpn: string) => void;
   onAdjust: (mpn: string, adj: { type: string; value: number; effective_date?: string }) => void;
-  onAcknowledge: (mpn: string, reason: string) => void;
 }) {
   const [showAdjust, setShowAdjust] = useState(false);
-  const [showAcknowledge, setShowAcknowledge] = useState(false);
   const [projection, setProjection] = useState<PriceProjection | null>(null);
   const [error] = useState("");
   const isCompact = density === "compact";
@@ -365,7 +318,6 @@ function ProductCard({
 
   const handleAdjustToggle = () => {
     setShowAdjust(!showAdjust);
-    setShowAcknowledge(false);
     if (!showAdjust) loadProjection();
   };
 
@@ -567,45 +519,36 @@ function ProductCard({
 
       {/* Actions */}
       <div className={`flex items-center gap-2 ${isCompact ? "mt-2" : "mt-4"}`}>
-        {isLossLeader ? (
+        <>
           <button
-            onClick={() => { setShowAcknowledge(true); setShowAdjust(false); loadProjection(); }}
-            className="flex-1 px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+            onClick={() => onApprove(item.mpn)}
+            disabled={item.map_conflict_active}
+            className={`px-3 py-1.5 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed ${
+              isCompact ? "text-xs" : "text-sm"
+            }`}
+            title={item.map_conflict_active ? "MAP conflict must be resolved before markdown" : "Approve (A)"}
           >
-            Acknowledge & Submit Reason
+            {isCompact ? "✓" : "✓ Approve"}
           </button>
-        ) : (
-          <>
-            <button
-              onClick={() => onApprove(item.mpn)}
-              disabled={item.map_conflict_active}
-              className={`px-3 py-1.5 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed ${
-                isCompact ? "text-xs" : "text-sm"
-              }`}
-              title={item.map_conflict_active ? "MAP conflict must be resolved before markdown" : "Approve (A)"}
-            >
-              {isCompact ? "✓" : "✓ Approve"}
-            </button>
-            <button
-              onClick={() => onDeny(item.mpn)}
-              className={`px-3 py-1.5 rounded text-white bg-red-500 hover:bg-red-600 ${
-                isCompact ? "text-xs" : "text-sm"
-              }`}
-              title="Deny (D)"
-            >
-              {isCompact ? "✗" : "✗ Deny"}
-            </button>
-            <button
-              onClick={handleAdjustToggle}
-              className={`px-3 py-1.5 rounded border hover:bg-gray-50 ${
-                isCompact ? "text-xs" : "text-sm"
-              } ${showAdjust ? "bg-blue-50 border-blue-300" : ""}`}
-              title="Adjust"
-            >
-              {isCompact ? "⚙" : "⚙ Adjust ▾"}
-            </button>
-          </>
-        )}
+          <button
+            onClick={() => onDeny(item.mpn)}
+            className={`px-3 py-1.5 rounded text-white bg-red-500 hover:bg-red-600 ${
+              isCompact ? "text-xs" : "text-sm"
+            }`}
+            title="Deny (D)"
+          >
+            {isCompact ? "✗" : "✗ Deny"}
+          </button>
+          <button
+            onClick={handleAdjustToggle}
+            className={`px-3 py-1.5 rounded border hover:bg-gray-50 ${
+              isCompact ? "text-xs" : "text-sm"
+            } ${showAdjust ? "bg-blue-50 border-blue-300" : ""}`}
+            title="Adjust"
+          >
+            {isCompact ? "⚙" : "⚙ Adjust ▾"}
+          </button>
+        </>
       </div>
 
       {/* Adjust Popover */}
@@ -620,21 +563,8 @@ function ProductCard({
         />
       )}
 
-      {/* Loss Leader Acknowledge */}
-      {showAcknowledge && (
-        <LossLeaderAcknowledge
-          mpn={item.mpn}
-          minChars={20}
-          onCancel={() => setShowAcknowledge(false)}
-          onSubmit={(reason) => {
-            setShowAcknowledge(false);
-            onAcknowledge(item.mpn, reason);
-          }}
-        />
-      )}
-
-      {/* Price Projection — auto-show for loss-leader or when adjust is open */}
-      {projection && (showAdjust || isLossLeader) && (
+      {/* Price Projection — shown when adjust is open */}
+      {projection && showAdjust && (
         <PriceProjectionChart projection={projection} />
       )}
     </div>
@@ -680,7 +610,7 @@ export default function BuyerReviewPage() {
 
       if (e.key === "a" || e.key === "A") {
         e.preventDefault();
-        if (items[focusIndex] && !items[focusIndex].is_loss_leader) {
+        if (items[focusIndex]) {
           handleApprove(items[focusIndex].mpn);
         }
       }
@@ -739,15 +669,6 @@ export default function BuyerReviewPage() {
     removeCard(mpn);
     try {
       await postBuyerAction({ mpn, action_type: "adjust", adjustment: adj });
-    } catch {
-      load();
-    }
-  };
-
-  const handleAcknowledge = async (mpn: string, reason: string) => {
-    removeCard(mpn);
-    try {
-      await postLossLeaderAcknowledge({ mpn, reason });
     } catch {
       load();
     }
@@ -848,7 +769,6 @@ export default function BuyerReviewPage() {
             onApprove={handleApprove}
             onDeny={handleDeny}
             onAdjust={handleAdjust}
-            onAcknowledge={handleAcknowledge}
           />
         ))}
       </div>
