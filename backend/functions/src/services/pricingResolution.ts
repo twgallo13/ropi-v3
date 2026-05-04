@@ -43,7 +43,6 @@ export interface LossLeaderPayload {
   web_margin_pct: number | null;
   rics_offer: number;
   scom_sale: number;
-  veto_window_hours: number;
 }
 
 export interface PricingResolutionResult {
@@ -170,7 +169,6 @@ export async function resolvePricing(
         web_margin_pct: web_gm_pct,
         rics_offer,
         scom_sale,
-        veto_window_hours: adminSettings.master_veto_window * 24, // master_veto_window is in days
       };
 
       await routeToLossLeaderReview(mpn, payload);
@@ -282,7 +280,7 @@ async function routeToPricingDiscrepancy(mpn: string, reasons: string[]) {
 
   await firestore.collection("products").doc(docId).set(
     {
-      pricing_domain_state: "discrepancy",
+      pricing_domain_state: "Pricing Discrepancy",
       discrepancy_reasons: reasons,
       discrepancy_flagged_at: db.FieldValue.serverTimestamp(),
     },
@@ -307,7 +305,7 @@ async function routeToLossLeaderReview(mpn: string, payload: LossLeaderPayload) 
   // Layer 1: Set domain state
   await firestore.collection("products").doc(docId).set(
     {
-      pricing_domain_state: "loss_leader_review",
+      pricing_domain_state: "Loss-Leader Review Pending",
       loss_leader_flagged_at: db.FieldValue.serverTimestamp(),
       loss_leader_payload: payload,
     },
@@ -329,9 +327,6 @@ async function routeToLossLeaderReview(mpn: string, payload: LossLeaderPayload) 
         type: "loss_leader_alert",
         product_mpn: mpn,
         payload,
-        veto_window_expires_at: new Date(
-          Date.now() + payload.veto_window_hours * 60 * 60 * 1000
-        ),
         is_read: false,
         created_at: db.FieldValue.serverTimestamp(),
       });

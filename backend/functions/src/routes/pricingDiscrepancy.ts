@@ -1,6 +1,6 @@
 /**
  * Pricing Discrepancy — Step 2.5 Part 1.
- *   GET  /                          — list products in pricing_domain_state = "discrepancy"
+ *   GET  /                          — list products in pricing_domain_state = "Pricing Discrepancy"
  *   POST /:mpn/resolve              — correct_pricing | flag_for_review | override_to_export
  *
  * Section 9.10 Step 3B reason codes:
@@ -31,7 +31,7 @@ router.get(
     try {
       const snap = await db()
         .collection("products")
-        .where("pricing_domain_state", "==", "discrepancy")
+        .where("pricing_domain_state", "==", "Pricing Discrepancy")
         .get();
 
       const items = await Promise.all(
@@ -109,7 +109,7 @@ router.post(
         return;
       }
       const p = snap.data()!;
-      if (p.pricing_domain_state !== "discrepancy") {
+      if (p.pricing_domain_state !== "Pricing Discrepancy") {
         res
           .status(400)
           .json({ error: "Product is not in a pricing discrepancy state" });
@@ -190,7 +190,7 @@ router.post(
         if (resolution.status === "Pricing Current") {
           await productRef.set(
             {
-              pricing_domain_state: "export_ready",
+              pricing_domain_state: "Export Ready",
               discrepancy_reasons: [],
               discrepancy_cleared_at: ts(),
             },
@@ -280,7 +280,7 @@ router.post(
 
         await productRef.set(
           {
-            pricing_domain_state: "export_ready",
+            pricing_domain_state: "Export Ready",
             discrepancy_reasons: [],
             discrepancy_override: true,
             discrepancy_override_reason: note,
@@ -299,7 +299,7 @@ router.post(
           created_at: ts(),
         });
 
-        res.json({ mpn, action, pricing_domain_state: "export_ready" });
+        res.json({ mpn, action, pricing_domain_state: "Export Ready" });
         return;
       }
     } catch (err: any) {

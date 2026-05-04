@@ -20,10 +20,10 @@ export async function promoteScheduledItems(): Promise<PromotionResult> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Find all buyer_actions where pricing_domain_state_after = 'scheduled'
+  // Find all buyer_actions where pricing_domain_state_after = 'Scheduled'
   const snap = await db()
     .collection("buyer_actions")
-    .where("pricing_domain_state_after", "==", "scheduled")
+    .where("pricing_domain_state_after", "==", "Scheduled")
     .get();
 
   let promoted = 0;
@@ -50,7 +50,7 @@ export async function promoteScheduledItems(): Promise<PromotionResult> {
           .doc(docId)
           .set(
             {
-              pricing_domain_state: "export_ready",
+              pricing_domain_state: "Export Ready",
               rics_offer: action.new_rics_offer,
               export_rics_offer: exportPrice,
               promoted_from_scheduled_at: ts(),
@@ -60,7 +60,7 @@ export async function promoteScheduledItems(): Promise<PromotionResult> {
 
         // Update buyer_action record
         await doc.ref.update({
-          pricing_domain_state_after: "export_ready",
+          pricing_domain_state_after: "Export Ready",
           promoted_at: ts(),
         });
 

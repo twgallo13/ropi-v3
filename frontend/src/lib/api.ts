@@ -404,17 +404,6 @@ export async function postBuyerAction(body: {
   return data;
 }
 
-export async function postLossLeaderAcknowledge(body: { mpn: string; reason: string }): Promise<any> {
-  const res = await fetch(`${BASE}/api/v1/buyer-actions/loss-leader-acknowledge`, {
-    method: "POST",
-    headers: await headers(),
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) throw data;
-  return data;
-}
-
 // ── Export Center types + API ──
 
 export interface ExportPendingProduct {

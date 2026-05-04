@@ -126,7 +126,7 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
       response.kpis.pricing_discrepancy_count = await countWhere(
         "products",
         "pricing_domain_state",
-        "discrepancy"
+        "Pricing Discrepancy"
       );
     }
     if (visible.has("site_verification_count")) {

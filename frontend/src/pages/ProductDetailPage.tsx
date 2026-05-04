@@ -69,31 +69,22 @@ function StatusBar({
   if (!isComplete) {
     exportLabel = "Awaiting Completion";
     exportClass = "bg-gray-100 text-gray-600";
-  } else if (pricingDomainState === "export_ready") {
+  } else if (pricingDomainState === "Export Ready") {
     exportLabel = "Export Ready ✅";
     exportClass = "bg-green-100 text-green-700";
-  } else if (pricingDomainState === "exported") {
+  } else if (pricingDomainState === "Exported") {
     exportLabel = "Exported ✓";
     exportClass = "bg-green-100 text-green-700";
-  } else if (pricingDomainState === "scheduled") {
+  } else if (pricingDomainState === "Scheduled") {
     exportLabel = "Scheduled 📅";
     exportClass = "bg-purple-50 text-purple-700";
-  } else if (
-    pricingDomainState === "discrepancy" ||
-    pricingDomainState === "Pricing Discrepancy"
-  ) {
+  } else if (pricingDomainState === "Pricing Discrepancy") {
     exportLabel = "Blocked ⛔ Discrepancy";
     exportClass = "bg-red-50 text-red-700";
-  } else if (
-    pricingDomainState === "loss_leader_review" ||
-    pricingDomainState === "Loss-Leader Review Pending"
-  ) {
+  } else if (pricingDomainState === "Loss-Leader Review Pending") {
     exportLabel = "Blocked ⛔ Loss-Leader Review";
     exportClass = "bg-red-50 text-red-700";
-  } else if (
-    pricingDomainState === "buyer_denied" ||
-    pricingDomainState === "loss_leader_vetoed"
-  ) {
+  } else if (pricingDomainState === "Buyer Denied") {
     exportLabel = `Blocked ⛔ ${pricingDomainState}`;
     exportClass = "bg-red-50 text-red-700";
   } else {
@@ -102,22 +93,19 @@ function StatusBar({
   }
 
   // Pricing signal label/color
-  const pricingLabel = pricingDomainState || "pending";
+  const pricingLabel = pricingDomainState || "Pricing Pending";
   let pricingClass = "bg-gray-100 text-gray-600";
-  if (pricingDomainState === "export_ready" || pricingDomainState === "exported") {
+  if (pricingDomainState === "Export Ready" || pricingDomainState === "Exported") {
     pricingClass = "bg-green-50 text-green-700";
   } else if (
-    pricingDomainState === "discrepancy" ||
     pricingDomainState === "Pricing Discrepancy" ||
-    pricingDomainState === "loss_leader_review" ||
     pricingDomainState === "Loss-Leader Review Pending" ||
-    pricingDomainState === "buyer_denied" ||
-    pricingDomainState === "loss_leader_vetoed"
+    pricingDomainState === "Buyer Denied"
   ) {
     pricingClass = "bg-red-50 text-red-700";
-  } else if (pricingDomainState === "scheduled") {
+  } else if (pricingDomainState === "Scheduled") {
     pricingClass = "bg-purple-50 text-purple-700";
-  } else if (pricingDomainState === "Pricing Pending" || pricingDomainState === "pending") {
+  } else if (pricingDomainState === "Pricing Pending") {
     pricingClass = "bg-yellow-50 text-yellow-700";
   }
 
@@ -443,7 +431,7 @@ export default function ProductDetailPage() {
       <StatusBar
         completionState={p.completion_state}
         completionProgress={cp}
-        pricingDomainState={p.pricing_domain_state || "pending"}
+        pricingDomainState={p.pricing_domain_state || "Pricing Pending"}
         isMapProtected={p.is_map_protected}
         mapConflictActive={p.map_conflict_active}
         mapConflictReason={p.map_conflict_reason}

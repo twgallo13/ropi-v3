@@ -10,7 +10,6 @@ export interface AdminSettings {
   estimated_cost_multiplier: number;
   below_cost_acknowledgment_required: boolean;
   below_cost_reason_min_chars: number;
-  master_veto_window: number;
   export_price_rounding_enabled: boolean;
   export_price_rounding_mode: string;
   slow_moving_str_threshold: number;
@@ -24,7 +23,6 @@ const DEFAULTS: AdminSettings = {
   estimated_cost_multiplier: 0.50,
   below_cost_acknowledgment_required: true,
   below_cost_reason_min_chars: 20,
-  master_veto_window: 2,
   export_price_rounding_enabled: true,
   export_price_rounding_mode: "floor_minus_one_cent",
   slow_moving_str_threshold: 15,
