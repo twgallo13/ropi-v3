@@ -34,7 +34,6 @@ const GROUP_A: KeyDef[] = [
   { key: "estimated_cost_multiplier",          label: "Estimated Cost Multiplier",              value_type: "number",  default: 0.50 },
   { key: "below_cost_acknowledgment_required", label: "Below-Cost Acknowledgment Required",     value_type: "boolean", default: true },
   { key: "below_cost_reason_min_chars",        label: "Below-Cost Reason Minimum Characters",   value_type: "number",  default: 20 },
-  { key: "master_veto_window",                 label: "Master Veto Window (hours)",             value_type: "number",  default: 2 },
   { key: "export_price_rounding_enabled",      label: "Export Price Rounding Enabled",          value_type: "boolean", default: true },
   { key: "export_price_rounding_mode",         label: "Export Price Rounding Mode",             value_type: "string",  default: "floor_minus_one_cent" },
   { key: "export_site_separator",              label: "Export Site Separator",                  value_type: "string",  default: "|" },

@@ -93,7 +93,7 @@ router.post("/daily/trigger", requireAuth, requireRole(["head_buyer"]), async (r
           .doc(product.id)
           .set(
             {
-              pricing_domain_state: "exported",
+              pricing_domain_state: "Exported",
               last_exported_at: ts(),
               export_job_id: jobRef.id,
             },

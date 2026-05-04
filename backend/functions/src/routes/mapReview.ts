@@ -315,8 +315,8 @@ router.post(
           map_conflict_reason: null,
           map_removed_at: ts(),
           map_removed_by: userId,
-          // TALLY-113 — buyer decision is final: post-removal pricing goes straight to export_ready
-          pricing_domain_state: "export_ready",
+          // TALLY-113 — buyer decision is final: post-removal pricing goes straight to Export Ready
+          pricing_domain_state: "Export Ready",
           updated_at: ts(),
         };
         // Apply optional buyer-set prices

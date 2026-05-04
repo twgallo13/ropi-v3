@@ -22,10 +22,10 @@ export interface EligibilityResult {
  * Returns eligible docs and a list of blocked products with reasons.
  */
 export async function getExportEligibleProducts(): Promise<EligibilityResult> {
-  // Condition 1 — Base: pricing_domain_state = 'export_ready'
+  // Condition 1 — Base: pricing_domain_state = 'Export Ready'
   const snap = await db()
     .collection("products")
-    .where("pricing_domain_state", "==", "export_ready")
+    .where("pricing_domain_state", "==", "Export Ready")
     .get();
 
   const eligible: FirebaseFirestore.QueryDocumentSnapshot[] = [];
@@ -52,22 +52,19 @@ export async function getExportEligibleProducts(): Promise<EligibilityResult> {
     }
 
     // Condition 4 — defense-in-depth: must not be in discrepancy
-    if (p.pricing_domain_state === "discrepancy") {
+    if (p.pricing_domain_state === "Pricing Discrepancy") {
       reasons.push("Pricing Discrepancy — must be resolved before export");
     }
 
     // Condition 5 — must not be in scheduled hold
-    if (p.pricing_domain_state === "scheduled") {
+    if (p.pricing_domain_state === "Scheduled") {
       reasons.push("Scheduled — awaiting effective date");
     }
 
-    // Condition 6 — Loss-Leader veto window check
-    if (p.pricing_domain_state === "loss_leader_review") {
+    // Condition 6 — Loss-Leader review pending: buyer reason must be submitted
+    if (p.pricing_domain_state === "Loss-Leader Review Pending") {
       if (!p.loss_leader_reason) {
         reasons.push("Loss-Leader: buyer reason not submitted");
-      }
-      if (p.master_veto_pending === true) {
-        reasons.push("Loss-Leader: Head Buyer veto window still open");
       }
     }
 

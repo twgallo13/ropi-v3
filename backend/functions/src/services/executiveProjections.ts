@@ -349,7 +349,7 @@ export async function buildExecutiveHealth(): Promise<ExecutiveHealth> {
   try {
     const scheduledSnap = await db()
       .collection("products")
-      .where("pricing_domain_state", "==", "scheduled")
+      .where("pricing_domain_state", "==", "Scheduled")
       .where("scheduled_effective_date", ">=", today)
       .where("scheduled_effective_date", "<=", sevenDaysStr)
       .get();
@@ -379,7 +379,7 @@ export async function buildExecutiveHealth(): Promise<ExecutiveHealth> {
   try {
     const llSnap = await db()
       .collection("products")
-      .where("pricing_domain_state", "in", ["loss_leader_review", "Loss-Leader Review Pending"])
+      .where("pricing_domain_state", "==", "Loss-Leader Review Pending")
       .get();
 
     const now2 = new Date();

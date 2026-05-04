@@ -78,13 +78,13 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
         new_rics_offer: null,
         export_rics_offer: null,
         effective_date: null,
-        pricing_domain_state_after: "buyer_denied",
+        pricing_domain_state_after: "Buyer Denied",
         created_at: ts(),
       });
 
       await productRef.set(
         {
-          pricing_domain_state: "buyer_denied",
+          pricing_domain_state: "Buyer Denied",
           buyer_action_taken_at: ts(),
           last_buyer_action_id: actionRef.id,
         },
@@ -103,7 +103,7 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
         status: "success",
         mpn,
         action_type: "deny",
-        pricing_domain_state: "buyer_denied",
+        pricing_domain_state: "Buyer Denied",
       });
       refreshBuyerPerformanceMatrix();
       return;
@@ -139,7 +139,7 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
 
     const exportPrice = apply99Rounding(newRicsOffer);
     const effectiveDate = adjustment?.effective_date || null;
-    const stateAfter = effectiveDate ? "scheduled" : "export_ready";
+    const stateAfter = effectiveDate ? "Scheduled" : "Export Ready";
 
     const actionRef = await db().collection("buyer_actions").add({
       mpn,
@@ -192,67 +192,6 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
     refreshBuyerPerformanceMatrix();
   } catch (err: any) {
     console.error("POST /buyer-actions/markdown error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── POST /api/v1/buyer-actions/loss-leader-acknowledge ──
-router.post("/loss-leader-acknowledge", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { mpn, reason } = req.body;
-    if (!mpn || !reason) {
-      res.status(400).json({ error: "mpn and reason are required" });
-      return;
-    }
-
-    const docId = mpnToDocId(mpn);
-    const productRef = db().collection("products").doc(docId);
-    const doc = await productRef.get();
-
-    if (!doc.exists) {
-      res.status(404).json({ error: "Product not found" });
-      return;
-    }
-
-    const product = doc.data()!;
-    if (product.pricing_domain_state !== "Loss-Leader Review Pending") {
-      res.status(400).json({
-        error: `Product must be in "Loss-Leader Review Pending" state, currently "${product.pricing_domain_state}"`,
-      });
-      return;
-    }
-
-    const buyerUserId = req.user?.uid;
-    if (!buyerUserId) {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-
-    await productRef.set(
-      {
-        loss_leader_acknowledged: true,
-        loss_leader_reason: reason,
-        loss_leader_acknowledged_at: ts(),
-        loss_leader_acknowledged_by: buyerUserId,
-      },
-      { merge: true }
-    );
-
-    await db().collection("audit_log").add({
-      product_mpn: mpn,
-      event_type: "loss_leader_acknowledged",
-      reason,
-      acting_user_id: buyerUserId,
-      created_at: ts(),
-    });
-
-    res.json({
-      status: "success",
-      mpn,
-    });
-    refreshBuyerPerformanceMatrix();
-  } catch (err: any) {
-    console.error("POST /buyer-actions/loss-leader-acknowledge error:", err);
     res.status(500).json({ error: err.message });
   }
 });

@@ -726,13 +726,13 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
 
         if (saleWithoutRegular) {
           await productRef.set(
-            { pricing_domain_state: "discrepancy" },
+            { pricing_domain_state: "Pricing Discrepancy" },
             { merge: true }
           );
           pricingDiscrepancy++;
         } else if (allZero) {
           await productRef.set(
-            { pricing_domain_state: "pricing_incomplete" },
+            { pricing_domain_state: "Pricing Incomplete" },
             { merge: true }
           );
           pricingIncomplete++;
