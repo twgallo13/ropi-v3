@@ -139,7 +139,7 @@ router.get("/", async (req: Request, res: Response) => {
     const limitNum = Math.min(parseInt(limitStr, 10) || 50, 100);
     let query: admin.firestore.Query = db()
       .collection("products")
-      .where("pricing_domain_state", "==", "Pricing Current")
+      .where("pricing_domain_state", "in", ["Pricing Current", "Loss-Leader Review Pending"])
       .where("completion_state", "==", "complete");
 
     if (department) query = query.where("department", "==", department);

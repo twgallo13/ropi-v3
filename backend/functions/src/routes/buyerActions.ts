@@ -1,7 +1,6 @@
 import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { apply99Rounding } from "../services/pricingUtils";
-import { getAdminSettings } from "../services/adminSettings";
 import { mpnToDocId } from "../services/mpnUtils";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { queueForPricingExport } from "../services/pricingExportQueue";
@@ -206,14 +205,6 @@ router.post("/loss-leader-acknowledge", requireAuth, async (req: AuthenticatedRe
       return;
     }
 
-    const settings = await getAdminSettings();
-    if (reason.length < settings.below_cost_reason_min_chars) {
-      res.status(400).json({
-        error: `Reason must be at least ${settings.below_cost_reason_min_chars} characters — explain why this below-cost price is necessary`,
-      });
-      return;
-    }
-
     const docId = mpnToDocId(mpn);
     const productRef = db().collection("products").doc(docId);
     const doc = await productRef.get();
@@ -236,8 +227,6 @@ router.post("/loss-leader-acknowledge", requireAuth, async (req: AuthenticatedRe
       res.status(401).json({ error: "Authentication required" });
       return;
     }
-    const vetoWindowHours = settings.master_veto_window * 24;
-    const vetoExpiresAt = new Date(Date.now() + vetoWindowHours * 60 * 60 * 1000);
 
     await productRef.set(
       {
@@ -245,8 +234,6 @@ router.post("/loss-leader-acknowledge", requireAuth, async (req: AuthenticatedRe
         loss_leader_reason: reason,
         loss_leader_acknowledged_at: ts(),
         loss_leader_acknowledged_by: buyerUserId,
-        pricing_domain_state: "Loss-Leader Acknowledged",
-        veto_window_expires_at: vetoExpiresAt,
       },
       { merge: true }
     );
@@ -256,73 +243,16 @@ router.post("/loss-leader-acknowledge", requireAuth, async (req: AuthenticatedRe
       event_type: "loss_leader_acknowledged",
       reason,
       acting_user_id: buyerUserId,
-      veto_expires_at: vetoExpiresAt,
       created_at: ts(),
     });
 
     res.json({
       status: "success",
       mpn,
-      veto_window_hours: vetoWindowHours,
-      veto_expires_at: vetoExpiresAt.toISOString(),
     });
     refreshBuyerPerformanceMatrix();
   } catch (err: any) {
     console.error("POST /buyer-actions/loss-leader-acknowledge error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── POST /api/v1/buyer-actions/loss-leader-veto ──
-router.post("/loss-leader-veto", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { mpn, veto_reason } = req.body;
-    if (!mpn || !veto_reason) {
-      res.status(400).json({ error: "mpn and veto_reason are required" });
-      return;
-    }
-
-    const docId = mpnToDocId(mpn);
-    const productRef = db().collection("products").doc(docId);
-    const doc = await productRef.get();
-
-    if (!doc.exists) {
-      res.status(404).json({ error: "Product not found" });
-      return;
-    }
-
-    const buyerUserId = req.user?.uid;
-    if (!buyerUserId) {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-
-    await productRef.set(
-      {
-        pricing_domain_state: "loss_leader_vetoed",
-        veto_reason,
-        vetoed_by: buyerUserId,
-        vetoed_at: ts(),
-      },
-      { merge: true }
-    );
-
-    await db().collection("audit_log").add({
-      product_mpn: mpn,
-      event_type: "loss_leader_vetoed",
-      veto_reason,
-      acting_user_id: buyerUserId,
-      created_at: ts(),
-    });
-
-    res.json({
-      status: "success",
-      mpn,
-      pricing_domain_state: "loss_leader_vetoed",
-    });
-    refreshBuyerPerformanceMatrix();
-  } catch (err: any) {
-    console.error("POST /buyer-actions/loss-leader-veto error:", err);
     res.status(500).json({ error: err.message });
   }
 });
