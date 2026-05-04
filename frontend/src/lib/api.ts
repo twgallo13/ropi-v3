@@ -275,16 +275,6 @@ export async function fetchAttributeRegistry(
   return data.attributes as AttributeRegistryEntry[];
 }
 
-export async function completeProduct(mpn: string): Promise<{ completion_state: string; blockers?: string[] }> {
-  const res = await fetch(`${BASE}/api/v1/products/${encodeURIComponent(mpn)}/complete`, {
-    method: "POST",
-    headers: await headers(),
-  });
-  const data = await res.json();
-  if (!res.ok) throw data;
-  return data;
-}
-
 export interface SaveFieldResponse {
   field_key: string;
   value: unknown;

@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import {
   fetchProduct,
   fetchAttributeRegistry,
-  completeProduct,
   aiAssistant,
   type ProductDetail,
   type AttributeRegistryEntry,
@@ -257,8 +256,6 @@ export default function ProductDetailPage() {
   const [topView, setTopView] = useState<"details" | "history" | "site_verification">("details");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [completing, setCompleting] = useState(false);
-  const [completeMsg, setCompleteMsg] = useState("");
   const [mapAutoMsg, setMapAutoMsg] = useState("");
 
   useEffect(() => {
@@ -343,27 +340,6 @@ export default function ProductDetailPage() {
     },
     []
   );
-
-  async function handleComplete() {
-    if (!mpn) return;
-    setCompleting(true);
-    setCompleteMsg("");
-    try {
-      await completeProduct(mpn);
-      setCompleteMsg("Product marked complete!");
-      const updated = await fetchProduct(mpn);
-      setProduct(updated);
-    } catch (err: unknown) {
-      const e = err as { error?: string; blockers?: string[] };
-      if (e.blockers) {
-        setCompleteMsg(`Cannot complete: ${e.blockers.join("; ")}`);
-      } else {
-        setCompleteMsg(e.error || "Failed");
-      }
-    } finally {
-      setCompleting(false);
-    }
-  }
 
   if (loading) return <div className="p-8 text-center text-gray-400">Loading…</div>;
   if (error || !product) {
@@ -484,38 +460,6 @@ export default function ProductDetailPage() {
           {mapAutoMsg}
         </div>
       )}
-
-      {/* Complete button */}
-      <div className="mt-4 flex items-center gap-3">
-        {(() => {
-          const hasBlockers = cp.blockers.length > 0;
-          const isDisabled = completing || p.completion_state === "complete" || hasBlockers;
-          return (
-            <button
-              onClick={handleComplete}
-              disabled={isDisabled}
-              className={`px-4 py-2 rounded font-medium ${
-                isDisabled
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
-            >
-              {completing ? "Completing…" : "Mark Complete"}
-            </button>
-          );
-        })()}
-        {completeMsg && (
-          <span
-            className={`text-sm ${
-              completeMsg.startsWith("Cannot") || completeMsg === "Failed"
-                ? "text-red-600"
-                : "text-green-600"
-            }`}
-          >
-            {completeMsg}
-          </span>
-        )}
-      </div>
 
       {/* Key info cards */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">

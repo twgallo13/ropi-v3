@@ -49,6 +49,8 @@ import queueStatsRouter from "./routes/queueStats";
 import internalJobsRouter from "./routes/internalJobs";
 // TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.6 — Active Override Review router.
 import reviewActiveOverridesRouter from "./routes/reviewActiveOverrides";
+// TALLY-3.8-C — Auto-Pilot Completion State Machine: Firestore trigger.
+export { onAttributeRegistryWrite } from "./functions/onAttributeRegistryWrite";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
@@ -177,9 +179,14 @@ app.get("/", (_req, res) => {
 });
 
 // ── Start ──
-const PORT = parseInt(process.env.PORT || "8080", 10);
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀  ropi-aoss-api listening on port ${PORT}`);
-});
+// Guard: only call listen() when run directly (Cloud Run / local).
+// Firebase Functions runtime loads this module via require() — require.main
+// !== module in that context, so listen() is skipped automatically.
+if (require.main === module) {
+  const PORT = parseInt(process.env.PORT || "8080", 10);
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀  ropi-aoss-api listening on port ${PORT}`);
+  });
+}
 
 export default app;
