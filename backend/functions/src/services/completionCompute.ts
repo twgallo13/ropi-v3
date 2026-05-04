@@ -16,7 +16,9 @@
  */
 
 import admin from "firebase-admin";
-import { mpnToDocId } from "./mpnUtils";
+import { mpnToDocId, docIdToMpn } from "./mpnUtils";
+import { checkHighPriorityFlag } from "./launchHighPriority";
+import { getWeekKey } from "./executiveProjections";
 
 // ────────────────────────────────────────────────
 //  Types
@@ -25,6 +27,7 @@ import { mpnToDocId } from "./mpnUtils";
 export interface RequiredField {
   field_key: string;
   display_label: string;
+  depends_on?: { field: string; value: string } | null;
 }
 
 export interface AttributeValueLike {
@@ -52,7 +55,7 @@ export interface CompletionInner {
   ai_blockers: string[];
 }
 
-/** The 5-field stamp payload (TALLY-P1 — Blueprint 11.4-R01). */
+/** The 6-field stamp payload (TALLY-P1 + TALLY-3.8-C — Blueprint 11.4-R01). */
 export interface CompletionResult {
   completion_percent: number;
   blocker_count: number;
@@ -60,6 +63,14 @@ export interface CompletionResult {
   next_action_hint: string;
   // Server timestamp sentinel — Firestore stamps the actual time on write.
   completion_last_computed_at: admin.firestore.FieldValue;
+  completion_state: "complete" | "incomplete";
+}
+
+/** Optional user/system context for auto-pilot stamp side-effects and audit logging. */
+export interface StampContext {
+  uid?: string;
+  displayName?: string;
+  productData?: { department?: string; category?: string | null };
 }
 
 // ────────────────────────────────────────────────
@@ -80,6 +91,7 @@ export function getRequiredFieldKeysPure(
   return attributeRegistrySnap.docs.map((d) => ({
     field_key: d.id,
     display_label: d.data().display_label || d.id,
+    depends_on: (d.data().depends_on as { field: string; value: string }) ?? null,
   }));
 }
 
@@ -102,8 +114,18 @@ export function computeCompletionProgressPure(
   const missing: string[] = [];
   const blockers: string[] = [];
   let completed = 0;
+  let effectiveTotal = 0; // fields whose depends_on predicates are met
 
   for (const rf of required) {
+    // depends_on gate: skip field if its predicate is not met
+    if (rf.depends_on) {
+      const depAttr = attrMap.get(rf.depends_on.field);
+      const depValue = depAttr ? String(depAttr.value ?? "") : "";
+      if (depValue !== rf.depends_on.value) {
+        continue; // predicate not met — field not required in this context
+      }
+    }
+    effectiveTotal++;
     const attr = attrMap.get(rf.field_key);
     const hasValue =
       attr &&
@@ -140,7 +162,7 @@ export function computeCompletionProgressPure(
     }
   }
 
-  const total = required.length;
+  const total = effectiveTotal;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 100;
 
   return { percent, present, missing, blockers, ai_blockers };
@@ -257,6 +279,9 @@ export async function computeCompletion(mpn: string): Promise<CompletionResult> 
   const inner = computeCompletionProgressPure(required, avList);
   const next_action_hint = buildNextActionHintPure(inner, required);
 
+  const completion_state: "complete" | "incomplete" =
+    inner.percent === 100 && inner.missing.length === 0 ? "complete" : "incomplete";
+
   return {
     completion_percent: inner.percent,
     blocker_count: inner.missing.length,
@@ -264,20 +289,32 @@ export async function computeCompletion(mpn: string): Promise<CompletionResult> 
     next_action_hint,
     completion_last_computed_at:
       admin.firestore.FieldValue.serverTimestamp(),
+    completion_state,
   };
 }
 
 /**
- * Stamp the 5 pre-computed completion fields onto products/{mpn}.
+ * Stamp completion fields onto products/{docId}.
+ *
+ * Reads current state first for transition detection (auto-pilot pattern).
+ * On transition, writes an audit_log entry. On incomplete→complete promotion,
+ * also fires operator_throughput and checkHighPriorityFlag (fire-and-forget).
  *
  * Best-effort, non-transactional (PO Ruling N 2026-04-23 — NO tx parameter).
- * Uses set with merge:true so the write is purely additive (Step 2.1 schema
- * additivity rule).
+ * Uses set with merge:true so the write is purely additive.
  */
 export async function stampCompletionOnProduct(
   productRef: admin.firestore.DocumentReference,
-  computeResult: CompletionResult
+  computeResult: CompletionResult,
+  opts?: { context?: StampContext }
 ): Promise<void> {
+  // Read current state for transition detection.
+  const currentSnap = await productRef.get();
+  const oldState: string | null = currentSnap.exists
+    ? (currentSnap.data()?.completion_state ?? null)
+    : null;
+  const newState = computeResult.completion_state;
+
   await productRef.set(
     {
       completion_percent: computeResult.completion_percent,
@@ -285,7 +322,49 @@ export async function stampCompletionOnProduct(
       ai_blocker_count: computeResult.ai_blocker_count,
       next_action_hint: computeResult.next_action_hint,
       completion_last_computed_at: computeResult.completion_last_computed_at,
+      completion_state: newState,
     },
     { merge: true }
   );
+
+  // Audit log on state transition.
+  if (oldState !== null && oldState !== newState) {
+    productRef.firestore
+      .collection("audit_log")
+      .add({
+        entity_type: "product",
+        entity_id: productRef.id,
+        event_type: "completion_state.changed",
+        old_value: oldState,
+        new_value: newState,
+        changed_by: opts?.context?.uid ?? "system",
+        changed_at: admin.firestore.FieldValue.serverTimestamp(),
+      })
+      .catch((e: Error) =>
+        console.warn("audit_log write failed", { err: e.message })
+      );
+  }
+
+  // Side-effects on incomplete → complete promotion.
+  if (oldState !== "complete" && newState === "complete") {
+    const mpn = docIdToMpn(productRef.id);
+    checkHighPriorityFlag(mpn).catch((e: Error) =>
+      console.error("checkHighPriorityFlag failed:", e.message)
+    );
+    productRef.firestore
+      .collection("operator_throughput")
+      .add({
+        operator_uid: opts?.context?.uid ?? "system",
+        operator_name: opts?.context?.displayName ?? "system",
+        mpn,
+        department: opts?.context?.productData?.department ?? "Unknown",
+        category: opts?.context?.productData?.category ?? null,
+        outcome: "complete",
+        completed_at: admin.firestore.FieldValue.serverTimestamp(),
+        week_key: getWeekKey(new Date()),
+      })
+      .catch((e: Error) =>
+        console.error("operator_throughput write failed:", e.message)
+      );
+  }
 }

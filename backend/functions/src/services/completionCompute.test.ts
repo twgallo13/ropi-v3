@@ -166,14 +166,24 @@ console.log("computeCompletion (pure)");
   assert("8 pure-inner deterministic", a, b);
 }
 
-// 9. stampCompletionOnProduct writes exactly the 5 fields with merge:true.
+// 9. stampCompletionOnProduct writes the 6 fields with merge:true.
+//    fakeRef models a product already at "incomplete" so no side-effects fire.
 {
   const calls: Array<{ payload: any; opts: any }> = [];
   const fakeRef = {
+    get: () =>
+      Promise.resolve({
+        exists: true,
+        data: () => ({ completion_state: "incomplete" }),
+      }),
     set: (payload: any, opts: any) => {
       calls.push({ payload, opts });
       return Promise.resolve();
     },
+    firestore: {
+      collection: () => ({ add: () => Promise.resolve() }),
+    },
+    id: "TEST__MPN",
   } as any;
 
   const result: CompletionResult = {
@@ -183,6 +193,7 @@ console.log("computeCompletion (pure)");
     next_action_hint: "Fill Color",
     // sentinel value for the test only — not a real FieldValue
     completion_last_computed_at: ("__SENTINEL__" as unknown) as any,
+    completion_state: "incomplete",
   };
 
   stampCompletionOnProduct(fakeRef, result).then(() => {
@@ -195,6 +206,7 @@ console.log("computeCompletion (pure)");
         "blocker_count",
         "completion_last_computed_at",
         "completion_percent",
+        "completion_state",
         "next_action_hint",
       ]
     );
@@ -205,6 +217,7 @@ console.log("computeCompletion (pure)");
         ai_blocker_count: calls[0].payload.ai_blocker_count,
         next_action_hint: calls[0].payload.next_action_hint,
         completion_last_computed_at: calls[0].payload.completion_last_computed_at,
+        completion_state: calls[0].payload.completion_state,
       },
       {
         completion_percent: 67,
@@ -212,6 +225,7 @@ console.log("computeCompletion (pure)");
         ai_blocker_count: 0,
         next_action_hint: "Fill Color",
         completion_last_computed_at: "__SENTINEL__",
+        completion_state: "incomplete",
       }
     );
 
@@ -224,13 +238,90 @@ console.log("computeCompletion (pure)");
     };
     const required = getRequiredFieldKeysPure(fakeRegSnap);
     assert(
-      "10 getRequiredFieldKeysPure",
+      "10 getRequiredFieldKeysPure (with depends_on)",
       required,
       [
-        { field_key: "department", display_label: "Department" },
-        { field_key: "name",       display_label: "name" },
+        { field_key: "department", display_label: "Department", depends_on: null },
+        { field_key: "name",       display_label: "name",       depends_on: null },
       ]
     );
+
+    // ────────────────────────────────────────────────
+    //  TALLY-3.8-C Smoke Tests
+    // ────────────────────────────────────────────────
+
+    // 11. Auto-promote: all required met → completion_state "complete"
+    {
+      const avs = [
+        av("department", "Mens",    "Human-Verified", "Human"),
+        av("name",       "Sneaker", "Human-Verified", "Human"),
+        av("color",      "Red",     "Rule-Verified",  "System"),
+      ];
+      const inner = computeCompletionProgressPure(REQUIRED, avs);
+      const state = inner.percent === 100 && inner.missing.length === 0 ? "complete" : "incomplete";
+      assert("11a auto-promote: percent=100",           inner.percent, 100);
+      assert("11b auto-promote: state=complete",        state, "complete");
+    }
+
+    // 12. Auto-demote: blockers present → completion_state "incomplete"
+    {
+      const avs = [
+        av("department", "Mens", "Human-Verified", "Human"),
+        // name + color missing
+      ];
+      const inner = computeCompletionProgressPure(REQUIRED, avs);
+      const state = inner.percent === 100 && inner.missing.length === 0 ? "complete" : "incomplete";
+      assert("12a auto-demote: missing>0",              inner.missing.length > 0, true);
+      assert("12b auto-demote: state=incomplete",       state, "incomplete");
+    }
+
+    // 13. Reactive trigger path: new required field added → percent drops.
+    //     Models onAttributeRegistryWrite adding a field to required_for_completion.
+    {
+      const oldSnap = {
+        docs: [
+          { id: "department", data: () => ({ display_label: "Department", depends_on: undefined }) },
+        ],
+      };
+      const newSnap = {
+        docs: [
+          { id: "department", data: () => ({ display_label: "Department", depends_on: undefined }) },
+          { id: "name",       data: () => ({ display_label: "Product Name", depends_on: undefined }) },
+        ],
+      };
+      const avs = [ av("department", "Mens", "Human-Verified", "Human") ];
+      const oldInner = computeCompletionProgressPure(getRequiredFieldKeysPure(oldSnap), avs);
+      const newInner = computeCompletionProgressPure(getRequiredFieldKeysPure(newSnap), avs);
+      assert("13a reactive: before new field 100%",    oldInner.percent, 100);
+      assert("13b reactive: after new field <100%",    newInner.percent < 100, true);
+    }
+
+    // 14. depends_on gating: conditional field skipped when predicate not met.
+    {
+      const conditionalRequired: RequiredField[] = [
+        { field_key: "department",  display_label: "Department" },
+        { field_key: "heel_height", display_label: "Heel Height",
+          depends_on: { field: "is_fast_fashion", value: "true" } },
+      ];
+
+      // Not fast fashion: heel_height skipped → 100%
+      const avsNotFF = [
+        av("department",     "Mens",  "Human-Verified", "Human"),
+        av("is_fast_fashion", "false", null, null),
+      ];
+      const notFF = computeCompletionProgressPure(conditionalRequired, avsNotFF);
+      assert("14a not-FF: percent=100 (heel_height skipped)", notFF.percent, 100);
+      assert("14b not-FF: no blockers",                       notFF.missing.length, 0);
+
+      // Is fast fashion: heel_height IS required, not present → blocker
+      const avsIsFF = [
+        av("department",     "Mens", "Human-Verified", "Human"),
+        av("is_fast_fashion", "true", null, null),
+        // heel_height not present
+      ];
+      const isFF = computeCompletionProgressPure(conditionalRequired, avsIsFF);
+      assert("14c FF: heel_height is a blocker", isFF.missing.includes("heel_height"), true);
+    }
 
     console.log(`\nResults: ${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);

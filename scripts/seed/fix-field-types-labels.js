@@ -88,13 +88,14 @@ const db = admin.firestore();
     console.log(`✅ Launch/Media layout: ${entry.key} → ${entry.group}`);
   }
 
-  // ── Fast Fashion depends_on ──
+  // ── Fast Fashion depends_on + required_for_completion (TALLY-3.8-C C2) ──
   const CONDITIONAL = ['heel_height', 'platform_height', 'heel_type', 'toe_shape', 'shoe_height_map'];
   for (const field of CONDITIONAL) {
     await db.collection('attribute_registry').doc(field).set({
-      depends_on: { field: 'is_fast_fashion', value: 'true' }
+      depends_on: { field: 'is_fast_fashion', value: 'true' },
+      required_for_completion: true,
     }, { merge: true });
-    console.log(`✅ depends_on set: ${field}`);
+    console.log(`✅ depends_on + required_for_completion set: ${field}`);
   }
 
   console.log('\nDone.');
