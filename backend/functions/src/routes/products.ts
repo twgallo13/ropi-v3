@@ -5,6 +5,13 @@ import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
+import {
+  resolvePricing,
+  writePricingSnapshot,
+  type PricingInputs,
+} from "../services/pricingResolution";
+import { getMapState } from "../services/mapState";
+import { getAdminSettings } from "../services/adminSettings";
 import { deriveVerificationState, getStalenessThresholdDays, StalenessCache } from "../lib/staleness";
 import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
 import {
@@ -1002,6 +1009,72 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
         { merge: true }
       );
 
+    // TALLY-3.8-DEFECT-1 — Pricing Domain State reflow on price edits.
+    // FA11 (comment 35645ee1-ec5a-814c-a9f9-001d34b7358d) + FA11.7
+    // (comment 35645ee1-ec5a-81e5-94f2-001d0f96d8a8) on parent DEFECT-1.
+    // Re-runs the pricing engine after a price-input mirror so terminal
+    // states (e.g. "Buyer Denied") and stale projection booleans
+    // (Channel Disparity, MAP conflict, is_loss_leader) are refreshed.
+    // Fire-and-forget — failure must NEVER fail the saveField response
+    // (matches existing queueForPricingExport try/catch pattern).
+    const reflowPricingDomainState = async (): Promise<void> => {
+      try {
+        const batchId = `manual_edit_${userId}_${Date.now()}`;
+        const freshSnap = await productRef.get();
+        const pdata = freshSnap.data() || {};
+        const pricingInputs: PricingInputs = {
+          rics_retail: Number(pdata.rics_retail) || 0,
+          rics_offer: Number(pdata.rics_offer) || 0,
+          scom: Number(pdata.scom) || 0,
+          scom_sale: Number(pdata.scom_sale) || 0,
+          actual_cost: pdata.actual_cost ?? null,
+        };
+        const [mapState, adminSettings] = await Promise.all([
+          getMapState(mpn),
+          getAdminSettings(),
+        ]);
+        const result = await resolvePricing(
+          mpn,
+          pricingInputs,
+          mapState,
+          adminSettings
+        );
+        // Option D resolution (Lisa-asserted reconciliation): match
+        // importWeeklyOperations.ts:328 canonical pattern, which writes
+        // the snapshot UNCONDITIONALLY. writePricingSnapshot is the
+        // canonical writer for the projection booleans (is_loss_leader,
+        // is_map_constrained, map_conflict_active,
+        // is_store_sale_web_full, is_web_sale_store_full) and refreshes
+        // them atomically inside a single productRef.set merge.
+        await writePricingSnapshot(mpn, batchId, result);
+        if (result.status === "Pricing Current") {
+          // FA11.7 caveat: writePricingSnapshot does NOT clear the four
+          // payload fields written by routeToLossLeaderReview /
+          // routeToPricingDiscrepancy. Without this explicit clear,
+          // executiveProjections.ts:388-397 reads stale values and shows
+          // the product as still flagged despite is_loss_leader=false.
+          await productRef.set(
+            {
+              loss_leader_payload: null,
+              loss_leader_flagged_at: null,
+              discrepancy_reasons: null,
+              discrepancy_flagged_at: null,
+            },
+            { merge: true }
+          );
+        }
+        // "Loss-Leader Review Pending" / "Pricing Discrepancy" branches:
+        // routeToLossLeaderReview / routeToPricingDiscrepancy inside
+        // resolvePricing already wrote pricing_domain_state and the
+        // relevant payload fields. No caller-side action needed.
+      } catch (rerr: any) {
+        console.error(
+          "resolvePricing reflow (manual_edit) failed:",
+          rerr
+        );
+      }
+    };
+
     // 4. If field_key is the name field — also update the top-level product document
     if (fieldKey === "name" || fieldKey === "product_name") {
       await productRef.set(
@@ -1079,6 +1152,8 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
       } catch (qerr: any) {
         console.error("queueForPricingExport (scom_edit) failed:", qerr);
       }
+      // TALLY-3.8-DEFECT-1 — reflow pricing domain state after scom/scom_sale edit.
+      await reflowPricingDomainState();
     }
 
     // 4d. TALLY-SHIPPING-OVERRIDE-CLEANUP — shipping override mirror.
@@ -1161,6 +1236,9 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
             { merge: true }
           );
           mapAutoPopulate = { triggered: true, rics_retail: ricsRetail };
+          // TALLY-3.8-DEFECT-1 — reflow pricing domain state after MAP
+          // auto-populate writes scom/scom_sale.
+          await reflowPricingDomainState();
         }
       }
     }
