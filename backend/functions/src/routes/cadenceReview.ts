@@ -52,7 +52,7 @@ router.get(
 
       const assignSnap = await db()
         .collection("cadence_assignments")
-        .where("in_buyer_queue", "==", true)
+        .where("in_cadence_review_queue", "==", true)
         .get();
 
       const items: any[] = [];
@@ -223,7 +223,7 @@ router.post(
             excluded_reason: reason || null,
             excluded_by: uid,
             excluded_at: ts(),
-            in_buyer_queue: false,
+            in_cadence_review_queue: false,
             recommendation: null,
             last_evaluated_at: ts(),
           },

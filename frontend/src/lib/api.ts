@@ -3488,3 +3488,30 @@ export async function fetchActiveOverrideCandidates(
   if (!res.ok) throw data;
   return data;
 }
+
+// ── Admin Cadence Trigger (Phase 3.10 Track 3) ──
+
+export interface CadenceEvaluationResult {
+  evaluated: number;
+  assigned: number;
+  unassigned: number;
+  conflicts: number;
+  skipped_mid_cadence: number;
+  duration_ms: number;
+  mpn_count: number;
+}
+
+export async function runAdminCadenceEvaluation(
+  mpns?: string[]
+): Promise<CadenceEvaluationResult> {
+  const body: Record<string, unknown> = {};
+  if (mpns && mpns.length > 0) body.mpns = mpns;
+  const res = await fetch(`${BASE}/api/v1/admin/cadence/run-evaluation`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}

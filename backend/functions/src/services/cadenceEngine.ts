@@ -178,7 +178,7 @@ async function writeConflictAssignment(
       conflict_rule_ids: rules.map((r) => r.id),
       matched_rule_id: null,
       recommendation: null,
-      in_buyer_queue: false,
+      in_cadence_review_queue: false,
       last_evaluated_at: ts(),
     },
     { merge: true }
@@ -201,7 +201,7 @@ async function writeUnassigned(mpn: string): Promise<void> {
       matched_rule_id: null,
       matched_rule_version: null,
       recommendation: null,
-      in_buyer_queue: false,
+      in_cadence_review_queue: false,
       conflict: false,
       conflict_rule_ids: [],
       last_evaluated_at: ts(),
@@ -355,7 +355,7 @@ async function writeAssignment(
     last_evaluated_at: ts(),
     next_step_due_at: null,
     recommendation,
-    in_buyer_queue: true,
+    in_cadence_review_queue: true,
     buyer_queue_entered_at: existing?.buyer_queue_entered_at || ts(),
     days_in_queue: existing?.days_in_queue || 0,
     conflict: false,
@@ -422,7 +422,7 @@ export async function runCadenceEvaluation(importedMpns: string[]): Promise<{
       if (
         existing &&
         existing.matched_rule_id &&
-        existing.in_buyer_queue &&
+        existing.in_cadence_review_queue &&
         matched.some((r) => r.id === existing.matched_rule_id)
       ) {
         const currentRule = matched.find((r) => r.id === existing.matched_rule_id)!;
