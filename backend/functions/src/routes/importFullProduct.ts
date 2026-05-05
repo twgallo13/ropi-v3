@@ -694,8 +694,11 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             }
           }
 
-          // Rename "product_name" that the earlier block wrote — it duplicates "name".
-          // No-op: we leave the existing product_name attribute untouched.
+          // C.6 writes product_name to attribute_values, preferring the
+          // UUID-resolved mapped.attributes.name from resolveProductName().
+          // Falls back to identity.name when no resolution was applied.
+          // Overwrites the earlier importAttributes loop write at ~L439
+          // which writes raw identity.name unconditionally.
 
           // ── Step C.6 — Mirror Required Identity Fields into attribute_values ──
           // Ensures every newly-imported product has the canonical identity
@@ -704,7 +707,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           // that has already been Human-Verified.
           //
           // Field mapping aligned to attribute_registry required keys:
-          //   product_name  ← identity.name
+          //   product_name  ← mapped.attributes.name (UUID-resolved) || identity.name
           //   brand         ← identity.brand
           //   sku           ← identity.sku
           //   department / gender / age_group / class / category /
@@ -718,7 +721,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             "";
           const websiteValue = siteList[0] || websiteRaw || "";
           const fieldsToWriteAsAttributes: Record<string, any> = {
-            product_name: identity.name,
+            product_name: mapped.attributes.name || identity.name,
             brand: identity.brand,
             sku: identity.sku,
             department: mapped.attributes.department,
