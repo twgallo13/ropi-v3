@@ -86,16 +86,17 @@ router.post("/upload", upload.single("file"), async (req: Request, res: Response
 
     // TALLY-080 Rule 2 — Duplicate column detection (case-insensitive, BOM-safe)
     //
-    // TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.3 (documentary):
-    // RO exports include the columns "Override Standard Shipping" and
-    // "Override Expedited Shipping" on every product (PO-verified 2026-05-01).
-    // These headers are intentionally NOT present in FULL_PRODUCT_ROW_MAP
-    // (services/ricsParser.ts), so they never canonicalize to a field_key
-    // and never reach the attribute_values write loop. They are registered
-    // here in columnMap purely so dup-detection / column_map persistence
-    // sees them; no downstream read of these headers occurs.
-    // The structural backstop for future regression lives in the L588-region
-    // canonical-key write loop (see "Ropi-editorial guard" comment there).
+    // TALLY-PHASE-3.9 Track 1A (documentary, supersedes the prior
+    // TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.3 note):
+    // PO Ruling 2026-05-04 reclassifies "Override Standard Shipping" and
+    // "Override Expedited Shipping" as RO-sourced. Both headers are now
+    // present in FULL_PRODUCT_ROW_MAP (services/ricsParser.ts) and
+    // canonicalize to standard_shipping_override / expedited_shipping_override.
+    // The import path writes them through the canonical attribute loop AND
+    // mirrors them to the root product doc so reviewActiveOverrides.ts can
+    // see them. Editorial protection now relies on the standard
+    // Human-Verified skip in that loop (saveField in products.ts Block 4d
+    // stamps that state on user edits).
     const columnMap: Record<string, number> = {};
     headerRow.forEach((col, idx) => {
       const trimmed = col.trim().replace(/^\uFEFF/, "");
@@ -606,20 +607,6 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           ]);
 
           for (const [attrKey, attrValue] of Object.entries(mapped.attributes)) {
-            // TALLY-SHIPPING-OVERRIDE-CLEANUP PR 1.3 — Ropi-editorial guard.
-            // Shipping override values are Ropi-side editorial fields owned by ops via
-            // the Product Editor, NOT RO source-of-truth data. RO sends "Override Standard
-            // Shipping" / "Override Expedited Shipping" CSV columns on every product
-            // import (PO-verified 2026-05-01), but those headers are intentionally absent
-            // from FULL_PRODUCT_ROW_MAP in services/ricsParser.ts — so they never
-            // canonicalize to these field_keys today. This guard structurally prevents
-            // future regression if anyone adds shipping-override entries to that parser map.
-            if (
-              attrKey === "standard_shipping_override" ||
-              attrKey === "expedited_shipping_override"
-            ) {
-              continue;
-            }
             if (skipCanonical.has(attrKey)) continue;
             if (attrValue === undefined || attrValue === null || attrValue === "") continue;
 
@@ -642,6 +629,52 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
               },
               { merge: true }
             );
+
+            // TALLY-PHASE-3.9 Track 1A — root mirror for shipping override fields.
+            // PO Ruling 2026-05-04: shipping overrides are RO-sourced. Mirror to
+            // root so reviewActiveOverrides.ts (queries products WHERE field != null)
+            // sees imported values. Null semantics mirror Block 4d in products.ts:
+            // null if empty/non-finite; 0 is a valid value. The empty-value guard
+            // above means attrValue is non-empty here, but the defensive
+            // null/undefined/"" handling is kept for parity with Block 4d.
+            if (
+              attrKey === "standard_shipping_override" ||
+              attrKey === "expedited_shipping_override"
+            ) {
+              let numericValue: number | null;
+              if (attrValue === null || attrValue === undefined || attrValue === "") {
+                numericValue = null;
+              } else if (typeof attrValue === "number") {
+                numericValue = attrValue;
+              } else {
+                const parsed = Number(attrValue);
+                numericValue = Number.isFinite(parsed) ? parsed : null;
+              }
+              await productRef.set({ [attrKey]: numericValue }, { merge: true });
+
+              // PO Call D1 — audit_log emission for governance-tracked override
+              // fields specifically. Mirrors the importAttributes loop pattern.
+              const oldValue = existing.exists ? (existing.data()?.value ?? null) : null;
+              const oldVerificationState = existing.exists
+                ? (existing.data()?.verification_state ?? null)
+                : null;
+              if (oldValue !== attrValue) {
+                await firestore.collection("audit_log").add({
+                  product_mpn: mpn,
+                  event_type: existing.exists ? "field_edited" : "field_created",
+                  field_key: attrKey,
+                  old_value: oldValue,
+                  old_verification_state: oldVerificationState,
+                  new_value: numericValue,
+                  new_verification_state: "Rule-Verified",
+                  acting_user_id: `import:${batch_id}`,
+                  origin_type: "Import",
+                  source_type: "import",
+                  batch_id,
+                  created_at: db.FieldValue.serverTimestamp(),
+                });
+              }
+            }
           }
 
           // Rename "product_name" that the earlier block wrote — it duplicates "name".

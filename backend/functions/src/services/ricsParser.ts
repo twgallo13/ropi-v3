@@ -265,6 +265,12 @@ export const FULL_PRODUCT_ROW_MAP: Record<string, string> = {
   "Web Sale Price": "scom_sale",
   "Retail Price": "rics_retail",
   "Retail Sale Price": "rics_offer",
+  // TALLY-PHASE-3.9 Track 1A — PO Ruling 2026-05-04 reclassifies shipping
+  // overrides as RO-sourced (was Ropi-editorial). RO ships these columns
+  // on every product import; canonicalize them so the import path writes
+  // attribute_values + root mirror (see importFullProduct.ts canonical loop).
+  "Override Standard Shipping": "standard_shipping_override",
+  "Override Expedited Shipping": "expedited_shipping_override",
 };
 
 export const BOOLEAN_ATTRIBUTES = new Set([
@@ -287,6 +293,9 @@ export const NUMERIC_ATTRIBUTES = new Set([
   "scom_sale",
   "rics_retail",
   "rics_offer",
+  // TALLY-PHASE-3.9 Track 1A — RO-sourced shipping overrides.
+  "standard_shipping_override",
+  "expedited_shipping_override",
 ]);
 
 export function coerceValue(key: string, raw: string): any {
