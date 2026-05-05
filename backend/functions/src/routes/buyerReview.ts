@@ -25,14 +25,17 @@ interface RegistryEntry {
 }
 
 // Builds the site_verification map + primary_site_key for one product row.
-// Mirrors the Pass 3 builder pattern in routes/products.ts (§7.1.6):
+// Only emits entries for sites in targetedSiteKeys (Phase 3.10 Track 2 cleanup).
 //   - Real entries from product.site_verification get state derived via staleness helper
-//   - Sites in active registry without stored entries get an "unverified" stub
+//   - Targeted sites without stored entries get an "unverified" stub
+//     (stub here means "targeted but not yet verified", not "not targeted")
 //   - Output order: primary site (matches site_owner) first, then by registry priority asc
+//   - Edge case: empty targetedSiteKeys → empty map, primary_site_key = null
 function buildBuyerReviewSiteVerification(
   d: any,
   registryBySiteKey: Record<string, RegistryEntry>,
   stalenessThreshold: number,
+  targetedSiteKeys: Set<string>,
 ): { site_verification: Record<string, any>; primary_site_key: string | null } {
   const storedSv: Record<string, any> = d.site_verification || {};
   const productSiteOwner: string | null =
@@ -43,8 +46,9 @@ function buildBuyerReviewSiteVerification(
   const serializeTs = (ts: any) => ts?.toDate?.()?.toISOString() || null;
 
   const svEntries: Array<{ key: string; entry: Record<string, any> }> = [];
-  for (const siteKey of Object.keys(registryBySiteKey)) {
+  for (const siteKey of targetedSiteKeys) {
     const reg = registryBySiteKey[siteKey];
+    if (!reg) continue; // Targeted but not in active registry; skip silently
     const stored = storedSv[siteKey];
 
     if (stored) {
@@ -104,10 +108,15 @@ function buildBuyerReviewSiteVerification(
     site_verification[key] = entry;
   }
 
-  // primary_site_key is null when the product has no site_owner OR when
-  // site_owner does not match any active registry key (Scenario E branch).
+  // primary_site_key is null when the product has no site_owner, OR when
+  // site_owner is not in the active registry, OR when site_owner is not
+  // in the targeted set for this product (Phase 3.10 Track 2).
   const primary_site_key: string | null =
-    productSiteOwner && registryBySiteKey[productSiteOwner] ? productSiteOwner : null;
+    productSiteOwner &&
+    targetedSiteKeys.has(productSiteOwner) &&
+    registryBySiteKey[productSiteOwner]
+      ? productSiteOwner
+      : null;
 
   return { site_verification, primary_site_key };
 }
@@ -229,20 +238,26 @@ router.get(
       if (map_status === "protected" && !isMapProtected) return null;
       if (map_status === "not_protected" && isMapProtected) return null;
 
+      // Phase 3.10 Track 2: read site_targets BEFORE build so targetedSiteKeys
+      // can be passed in — the builder now emits only targeted-site entries.
+      const stSnap = await doc.ref.collection("site_targets").get();
+      const targetedSiteKeys = new Set<string>(
+        stSnap.docs
+          .filter((stDoc) => stDoc.data().active !== false)
+          .map((stDoc) => stDoc.data().site_id || stDoc.id),
+      );
+
       const { site_verification, primary_site_key } = buildBuyerReviewSiteVerification(
         d,
         registryBySiteKey,
         stalenessThreshold,
+        targetedSiteKeys,
       );
 
       // Track 2B — verification rollup state.
-      // Pull active site_targets, then mark "live" iff at least one targeted
-      // site_key has verification_state === "verified_live" in the map.
-      const stSnap = await doc.ref.collection("site_targets").get();
-      const targetedSiteKeys = stSnap.docs
-        .filter((stDoc) => stDoc.data().active !== false)
-        .map((stDoc) => stDoc.data().site_id || stDoc.id);
-      const isLive = targetedSiteKeys.some(
+      // site_verification is now targeted-only; isLive is equivalent to
+      // checking any site_verification entry for verified_live.
+      const isLive = [...targetedSiteKeys].some(
         (k) => site_verification[k]?.verification_state === "verified_live",
       );
       const verification_rollup_state: "live" | "unverified" = isLive ? "live" : "unverified";
