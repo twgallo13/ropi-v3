@@ -606,9 +606,26 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             "first_received_at",
           ]);
 
-          for (const [attrKey, attrValue] of Object.entries(mapped.attributes)) {
+          for (const [attrKey, attrValueIn] of Object.entries(mapped.attributes)) {
             if (skipCanonical.has(attrKey)) continue;
-            if (attrValue === undefined || attrValue === null || attrValue === "") continue;
+            if (attrValueIn === undefined || attrValueIn === null || attrValueIn === "") continue;
+
+            // Track 1A-FU: import path treats $0 / numeric-0 in the shipping
+            // override columns as "no override intended." CSV cells like
+            // "$0", "N/A", "—" coerce to numeric 0 upstream via coerceValue;
+            // this guard converts those to null so the canonical write
+            // produces null in BOTH the root doc and the attribute_values
+            // mirror. saveField/manual-edit path (routes/products.ts Block 4d
+            // L1159-1193) is intentionally unaffected — buyer-set $0 there
+            // remains a valid deliberate override.
+            let attrValue: any = attrValueIn;
+            if (
+              (attrKey === "standard_shipping_override" ||
+                attrKey === "expedited_shipping_override") &&
+              attrValue === 0
+            ) {
+              attrValue = null;
+            }
 
             const attrRef = productRef.collection("attribute_values").doc(attrKey);
             const existing = await attrRef.get();
