@@ -648,8 +648,11 @@ export default function BuyerReviewPage() {
     try {
       await postBuyerAction({ mpn, action_type: "approve" });
     } catch (err: any) {
-      // Re-insert on failure
-      load();
+      // Restore queue first — load() clears error as its first sync
+      // statement, so setError must come AFTER load() resolves to avoid
+      // being clobbered. PO 2026-05-08 / Frink Round 4.
+      await load();
+      setError(err?.error || err?.message || "Approve failed");
     }
   };
 
@@ -657,8 +660,12 @@ export default function BuyerReviewPage() {
     removeCard(mpn);
     try {
       await postBuyerAction({ mpn, action_type: "deny" });
-    } catch {
-      load();
+    } catch (err: any) {
+      // Restore queue first — load() clears error as its first sync
+      // statement, so setError must come AFTER load() resolves to avoid
+      // being clobbered. PO 2026-05-08 / Frink Round 4.
+      await load();
+      setError(err?.error || err?.message || "Deny failed");
     }
   };
 
@@ -669,8 +676,12 @@ export default function BuyerReviewPage() {
     removeCard(mpn);
     try {
       await postBuyerAction({ mpn, action_type: "adjust", adjustment: adj });
-    } catch {
-      load();
+    } catch (err: any) {
+      // Restore queue first — load() clears error as its first sync
+      // statement, so setError must come AFTER load() resolves to avoid
+      // being clobbered. PO 2026-05-08 / Frink Round 4.
+      await load();
+      setError(err?.error || err?.message || "Adjust failed");
     }
   };
 
