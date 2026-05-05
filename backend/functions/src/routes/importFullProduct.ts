@@ -19,6 +19,15 @@ import {
   computeCompletion,
   stampCompletionOnProduct,
 } from "../services/completionCompute";
+// TALLY-3.8-DEFECT-3 — pricing-domain initialization on import.
+// Mirrors importWeeklyOperations.ts:14–L20 import set.
+import {
+  resolvePricing,
+  writePricingSnapshot,
+  PricingInputs,
+} from "../services/pricingResolution";
+import { getMapState } from "../services/mapState";
+import { getAdminSettings } from "../services/adminSettings";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -770,6 +779,65 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             err: stampErr?.message,
           });
         }
+      }
+    }
+
+    // TALLY-3.8-DEFECT-3 — stamp pricing projection (pricing_domain_state +
+    // is_loss_leader, is_map_constrained, map_conflict_active triple,
+    // is_store_sale_web_full, is_web_sale_store_full, gm_pct × 2). Mirrors
+    // importWeeklyOperations.ts:320–L328 caller pattern, post-loop per
+    // PO Ruling 2026-04-23 architectural rule. Chunked parallelization via
+    // Promise.all (CHUNK_SIZE=25) to stay within Cloud Run task timeout.
+    if (committedMpns.length > 0) {
+      const adminSettings = await getAdminSettings();
+      const CHUNK_SIZE = 25;
+
+      for (let i = 0; i < committedMpns.length; i += CHUNK_SIZE) {
+        const chunk = committedMpns.slice(i, i + CHUNK_SIZE);
+
+        await Promise.all(
+          chunk.map(async (mpn) => {
+            try {
+              const productRef = firestore
+                .collection("products")
+                .doc(mpnToDocId(mpn));
+              const psnap = await productRef.get();
+              const p = psnap.data() || {};
+              const pricingInputs: PricingInputs = {
+                rics_retail: Number(p.rics_retail) || 0,
+                rics_offer: Number(p.rics_offer) || 0,
+                scom: Number(p.scom) || 0,
+                scom_sale: Number(p.scom_sale) || 0,
+                actual_cost: p.actual_cost ?? null,
+              };
+              const mapState = await getMapState(mpn);
+              const result = await resolvePricing(
+                mpn,
+                pricingInputs,
+                mapState,
+                adminSettings
+              );
+              const batchId = `import_${batch_id}_${mpnToDocId(mpn)}`;
+              await writePricingSnapshot(mpn, batchId, result);
+              if (result.status === "Pricing Current") {
+                await productRef.set(
+                  {
+                    loss_leader_payload: null,
+                    loss_leader_flagged_at: null,
+                    discrepancy_reasons: null,
+                    discrepancy_flagged_at: null,
+                  },
+                  { merge: true }
+                );
+              }
+            } catch (perr: any) {
+              console.warn("pricing_resolution_failed", {
+                mpn,
+                err: perr?.message,
+              });
+            }
+          })
+        );
       }
     }
 
