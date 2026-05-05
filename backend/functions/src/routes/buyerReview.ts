@@ -1,5 +1,7 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
 import admin from "firebase-admin";
+import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
+import { requireRole } from "../middleware/roles";
 import { apply99Rounding } from "../services/pricingUtils";
 import { getAdminSettings } from "../services/adminSettings";
 import { mpnToDocId } from "../services/mpnUtils";
@@ -12,6 +14,8 @@ import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
 
 const router = Router();
 const db = () => admin.firestore();
+
+const reviewRoles = ["buyer", "head_buyer", "admin"];
 
 // ── Per-site registry entry shape (subset used by buyer-review) ──
 interface RegistryEntry {
@@ -124,7 +128,11 @@ function buildPhase1Recommendation(product: any) {
 }
 
 // ── GET /api/v1/buyer-review ──
-router.get("/", async (req: Request, res: Response) => {
+router.get(
+  "/",
+  requireAuth,
+  requireRole(reviewRoles),
+  async (req: AuthenticatedRequest, res: Response) => {
   try {
     const {
       department,
@@ -274,7 +282,11 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // ── GET /api/v1/buyer-review/price-projection/:mpn ──
-router.get("/price-projection/:mpn", async (req: Request, res: Response) => {
+router.get(
+  "/price-projection/:mpn",
+  requireAuth,
+  requireRole(reviewRoles),
+  async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { mpn } = req.params;
     const docId = mpnToDocId(mpn);
