@@ -39,9 +39,9 @@ function formatError(err: any): string {
 }
 
 // Office Rule defaults (PR 2.3)
-const DEFAULT_DAYS_MIN = 30;
-const DEFAULT_SALES_MAX = 1;
-const DEFAULT_INVENTORY_MIN = 1;
+const DEFAULT_DAYS_MIN = 0;
+const DEFAULT_SALES_MAX = 9999999; // sentinel; Infinity fails Number.isFinite on backend parse
+const DEFAULT_INVENTORY_MIN = -1; // admits zero-inventory rows
 const DEFAULT_BRAND_KEY = "";
 const DEFAULT_SORT_BY: ActiveOverrideSortBy = "last_verified_at_asc";
 
@@ -209,7 +209,7 @@ function ReviewActiveOverridesPageInner() {
             onClick={handleResetFilters}
             className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
           >
-            Reset to Office Rules
+            Reset filters
           </button>
 
           {/* Sort dropdown: PR 2.4 */}
@@ -251,7 +251,7 @@ function ReviewActiveOverridesPageInner() {
         <div className="text-center text-gray-400 py-12">Loading…</div>
       ) : total === 0 ? (
         <div className="text-center text-gray-500 py-12">
-          No products match the current filters. Try widening the filter range or click 'Reset to Office Rules'.
+          No products match the current filters. Try widening the filter range or click 'Reset filters'.
         </div>
       ) : (
         <div className="space-y-3">
