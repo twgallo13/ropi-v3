@@ -5,7 +5,6 @@ import {
   postBuyerAction,
   type BuyerReviewItem,
   type PriceProjection,
-  type SiteVerificationEntry,
 } from "../lib/api";
 import {
   LineChart,
@@ -194,11 +193,6 @@ function PriceProjectionChart({ projection }: { projection: PriceProjection }) {
 //   primary_site_key: string | null   (null = no primary, e.g. site_owner unset)
 // Iterating Object.entries() on the map preserves the backend's order.
 
-function siteEntries(item: BuyerReviewItem): SiteVerificationEntry[] {
-  const sv = item.site_verification || {};
-  return Object.values(sv);
-}
-
 // Subtask 3b — Primary image fallback hierarchy.
 // 1. primary_site_key + non-null image_url → use it
 // 2. first verified_live entry by priority (backend already sorted) with non-null image_url
@@ -212,7 +206,7 @@ function resolvePrimaryImage(item: BuyerReviewItem): {
   if (primaryKey && sv[primaryKey]?.image_url) {
     return { url: sv[primaryKey].image_url, site_key: primaryKey };
   }
-  for (const entry of siteEntries(item)) {
+  for (const entry of Object.values(sv)) {
     if (entry.verification_state === "verified_live" && entry.image_url) {
       return { url: entry.image_url, site_key: entry.site_key };
     }
@@ -230,39 +224,12 @@ function resolvePrimaryProductUrl(item: BuyerReviewItem): {
   if (primaryKey && sv[primaryKey]?.product_url) {
     return { url: sv[primaryKey].product_url, site_key: primaryKey };
   }
-  for (const entry of siteEntries(item)) {
+  for (const entry of Object.values(sv)) {
     if (entry.product_url) {
       return { url: entry.product_url, site_key: entry.site_key };
     }
   }
   return { url: null, site_key: null };
-}
-
-// Subtask 3d — Per-site badge styling (color + text, never color-only).
-// State color rules per §7.1.3 of the brief:
-//   verified_live → green   mismatch → red   unverified/unknown → gray
-function badgeClasses(state: string): string {
-  switch (state) {
-    case "verified_live":
-      return "bg-green-100 text-green-800 border-green-300";
-    case "mismatch":
-      return "bg-red-100 text-red-800 border-red-300";
-    case "stale":
-      return "bg-amber-100 text-amber-800 border-amber-300";
-    case "unverified":
-    default:
-      return "bg-gray-100 text-gray-600 border-gray-300";
-  }
-}
-
-function badgeLabel(state: string): string {
-  switch (state) {
-    case "verified_live": return "Live";
-    case "mismatch":      return "Mismatch";
-    case "stale":         return "Stale";
-    case "unverified":    return "Unverified";
-    default:              return state;
-  }
 }
 
 // Subtask 3c — Hover preview popover.
@@ -423,28 +390,19 @@ function ProductCard({
           <p className="text-xs text-gray-500">
             {item.department} › {item.class}
           </p>
-          {/* Subtask 3d — per-site badges, primary first then priority (backend order preserved) */}
+          {/* Phase 3.9 Track 2B — single rollup pill replaces per-site badge row */}
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-            {siteEntries(item).map((entry) => {
-              const isPrimary = entry.site_key === item.primary_site_key;
-              const tooltipParts = [
-                `${entry.site_display_name || entry.site_key}: ${badgeLabel(entry.verification_state)}`,
-              ];
-              if (isPrimary) tooltipParts.push("(primary)");
-              if (entry.mismatch_reason) tooltipParts.push(`reason: ${entry.mismatch_reason}`);
-              if (entry.last_verified_at) tooltipParts.push(`last verified ${entry.last_verified_at}`);
-              return (
-                <span
-                  key={entry.site_key}
-                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${badgeClasses(
-                    entry.verification_state,
-                  )} ${isPrimary ? "ring-1 ring-offset-0 ring-blue-300" : ""}`}
-                  title={tooltipParts.join(" · ")}
-                >
-                  {entry.site_key}: {badgeLabel(entry.verification_state)}
-                </span>
-              );
-            })}
+            {item.verification_rollup_state === "live" ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border bg-emerald-100 text-emerald-800 border-emerald-300">
+                <span aria-hidden>✅</span>
+                <span>Live</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border bg-gray-100 text-gray-700 border-gray-300">
+                <span aria-hidden>⚪</span>
+                <span>Unverified</span>
+              </span>
+            )}
           </div>
           {/* Compact site links row — preserves any-site URL access even when image is missing */}
           {!hasImage && primaryProductUrl.url && (
