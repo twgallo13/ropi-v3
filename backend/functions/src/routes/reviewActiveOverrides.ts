@@ -90,13 +90,13 @@ router.get(
       // Parse query params with documented defaults.
       const daysMin = Number.isFinite(parseInt((req.query.days_min as string) ?? "", 10))
         ? parseInt(req.query.days_min as string, 10)
-        : 30;
+        : 0;
       const salesMax = Number.isFinite(parseFloat((req.query.sales_max as string) ?? ""))
         ? parseFloat(req.query.sales_max as string)
-        : 1;
+        : 9999999;
       const inventoryMin = Number.isFinite(parseInt((req.query.inventory_min as string) ?? "", 10))
         ? parseInt(req.query.inventory_min as string, 10)
-        : 1;
+        : -1;
       const brandFilter =
         typeof req.query.brand_key === "string" && req.query.brand_key.trim()
           ? req.query.brand_key.trim()
@@ -187,8 +187,12 @@ router.get(
 
       // Office Rule filters — all in-memory after fetch.
       const filtered = rows.filter((r) => {
-        // days_min: drop if days_since_verified < days_min OR null
-        if (r.days_since_verified === null || r.days_since_verified < daysMin) return false;
+        // PO 2026-05-08 (Track 1B): conditional null-handling.
+        // - daysMin=0 (no-op default): nulls admitted alongside non-nulls.
+        // - daysMin>0 (user-set filter): nulls dropped — user is hunting
+        //   for old verified products, so unverified candidates are excluded.
+        if (daysMin > 0 && r.days_since_verified === null) return false;
+        if (r.days_since_verified !== null && r.days_since_verified < daysMin) return false;
         // sales_max: drop if sales_total >= sales_max
         if (r.sales_total >= salesMax) return false;
         // inventory_min: drop if inventory_total <= inventory_min
