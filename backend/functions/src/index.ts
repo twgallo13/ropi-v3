@@ -33,6 +33,7 @@ import advisoryRouter from "./routes/advisory";
 import toursRouter from "./routes/tours";
 import adminUsersRouter from "./routes/adminUsers";
 import adminSettingsRouter from "./routes/adminSettings";
+import adminCadenceRouter from "./routes/adminCadence";
 import aiPlaneRouter from "./routes/aiPlane";
 import guidedToursRouter from "./routes/guidedTours";
 import rolePermissionsRouter from "./routes/rolePermissions";
@@ -154,6 +155,8 @@ app.use("/api/v1/admin/import-templates", importTemplatesRouter);
 app.use("/api/v1/admin/launch-settings", launchSettingsRouter);
 app.use("/api/v1/admin/search-settings", searchSettingsRouter);
 app.use("/api/v1/admin/sop-panels", sopPanelsRouter);
+// Phase 3.10 Track 3 — Cadence manual trigger
+app.use("/api/v1/admin/cadence", adminCadenceRouter);
 app.use("/api/v1/admin", adminSettingsRouter);
 
 // ── Import Intelligence Layer — AI Enrichment ──

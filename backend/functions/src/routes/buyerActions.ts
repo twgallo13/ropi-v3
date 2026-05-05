@@ -227,7 +227,7 @@ router.post("/hold", requireAuth, async (req: AuthenticatedRequest, res: Respons
       .doc(docId)
       .set(
         {
-          in_buyer_queue: false,
+          in_cadence_review_queue: false,
           last_buyer_action: "hold",
           last_buyer_action_at: ts(),
         },
@@ -277,7 +277,7 @@ router.post("/save-for-season", requireAuth, async (req: AuthenticatedRequest, r
       .doc(docId)
       .set(
         {
-          in_buyer_queue: false,
+          in_cadence_review_queue: false,
           last_buyer_action: "save_for_season",
           last_buyer_action_at: ts(),
         },
@@ -334,7 +334,7 @@ router.post("/postpone-review", requireAuth, async (req: AuthenticatedRequest, r
       .doc(docId)
       .set(
         {
-          in_buyer_queue: false,
+          in_cadence_review_queue: false,
           last_buyer_action: "postpone_review",
           last_buyer_action_at: ts(),
         },

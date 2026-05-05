@@ -4,10 +4,12 @@ import {
   createCadenceRule,
   updateCadenceRule,
   deactivateCadenceRule,
+  runAdminCadenceEvaluation,
   type CadenceRule,
   type CadenceTargetFilter,
   type CadenceTriggerCondition,
   type CadenceMarkdownStep,
+  type CadenceEvaluationResult,
 } from "../lib/api";
 import { ConfirmModal } from "../components/admin";
 
@@ -428,6 +430,10 @@ export default function CadenceRulesAdminPage() {
   // TALLY-SETTINGS-UX Phase 3 / B.0 — ConfirmModal migration
   const [deactivateTarget, setDeactivateTarget] = useState<CadenceRule | null>(null);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  // Phase 3.10 Track 3 — manual cadence evaluation trigger
+  const [evalRunning, setEvalRunning] = useState(false);
+  const [evalResult, setEvalResult] = useState<CadenceEvaluationResult | null>(null);
+  const [evalError, setEvalError] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -482,6 +488,21 @@ export default function CadenceRulesAdminPage() {
     await load();
   }
 
+  async function runEvaluation() {
+    if (!window.confirm("Run cadence evaluation for ALL products now? This may take a moment.")) return;
+    setEvalRunning(true);
+    setEvalResult(null);
+    setEvalError(null);
+    try {
+      const result = await runAdminCadenceEvaluation();
+      setEvalResult(result);
+    } catch (e: any) {
+      setEvalError(e?.error || e?.message || "Evaluation failed");
+    } finally {
+      setEvalRunning(false);
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
@@ -492,14 +513,54 @@ export default function CadenceRulesAdminPage() {
           </p>
         </div>
         {!draft && (
-          <button
-            onClick={() => setDraft(emptyDraft())}
-            className="bg-blue-600 text-white text-sm rounded px-4 py-2 hover:bg-blue-700"
-          >
-            + New Rule
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={runEvaluation}
+              disabled={evalRunning}
+              className="bg-emerald-600 text-white text-sm rounded px-4 py-2 hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {evalRunning ? "Running…" : "Run Cadence Evaluation Now"}
+            </button>
+            <button
+              onClick={() => setDraft(emptyDraft())}
+              className="bg-blue-600 text-white text-sm rounded px-4 py-2 hover:bg-blue-700"
+            >
+              + New Rule
+            </button>
+          </div>
         )}
       </div>
+
+      {evalResult && (
+        <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded text-sm flex items-start justify-between gap-3">
+          <span>
+            Evaluation complete — evaluated: {evalResult.evaluated}, assigned: {evalResult.assigned},
+            unassigned: {evalResult.unassigned}, conflicts: {evalResult.conflicts},
+            skipped: {evalResult.skipped_mid_cadence} ({evalResult.duration_ms}ms,{" "}
+            {evalResult.mpn_count} products)
+          </span>
+          <button
+            onClick={() => setEvalResult(null)}
+            className="text-emerald-600 hover:text-emerald-900 text-xs"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {evalError && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded text-sm flex items-start justify-between gap-3">
+          <span>Evaluation error: {evalError}</span>
+          <button
+            onClick={() => setEvalError(null)}
+            className="text-red-600 hover:text-red-900 text-xs"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {!draft && error && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded text-sm flex items-start justify-between gap-3">
