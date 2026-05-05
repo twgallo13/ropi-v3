@@ -344,6 +344,9 @@ export interface BuyerReviewItem {
   // Replaces the prior synthetic single-element site_targets array.
   site_verification: SiteVerificationMap;
   primary_site_key: string | null;
+  // Phase 3.9 Track 2B: server-side rollup of per-site verification.
+  // "live" = at least one targeted site has verification_state==="verified_live".
+  verification_rollup_state: "live" | "unverified";
   is_loss_leader: boolean;
   days_in_queue: number;
   pricing_domain_state: string;

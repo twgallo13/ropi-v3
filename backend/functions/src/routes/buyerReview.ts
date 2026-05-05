@@ -208,7 +208,7 @@ router.get(
     const hasMore = snap.docs.length > limitNum;
 
     const now = Date.now();
-    const items = docs.map((doc) => {
+    const items = (await Promise.all(docs.map(async (doc) => {
       const d = doc.data();
       const resolvedAt = d.pricing_resolved_at?.toDate?.();
       const daysInQueue = resolvedAt
@@ -234,6 +234,18 @@ router.get(
         registryBySiteKey,
         stalenessThreshold,
       );
+
+      // Track 2B — verification rollup state.
+      // Pull active site_targets, then mark "live" iff at least one targeted
+      // site_key has verification_state === "verified_live" in the map.
+      const stSnap = await doc.ref.collection("site_targets").get();
+      const targetedSiteKeys = stSnap.docs
+        .filter((stDoc) => stDoc.data().active !== false)
+        .map((stDoc) => stDoc.data().site_id || stDoc.id);
+      const isLive = targetedSiteKeys.some(
+        (k) => site_verification[k]?.verification_state === "verified_live",
+      );
+      const verification_rollup_state: "live" | "unverified" = isLive ? "live" : "unverified";
 
       return {
         mpn: d.mpn || doc.id,
@@ -263,12 +275,13 @@ router.get(
 
         site_verification,
         primary_site_key,
+        verification_rollup_state,
 
         is_loss_leader: d.is_loss_leader ?? false,
         days_in_queue: daysInQueue,
         pricing_domain_state: d.pricing_domain_state,
       };
-    }).filter(Boolean);
+    }))).filter(Boolean);
 
     res.json({
       items,
