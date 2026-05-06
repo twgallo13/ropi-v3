@@ -129,7 +129,6 @@ router.get(
       let storeSaleQ = db()
         .collection("products")
         .where("is_store_sale_web_full", "==", true)
-        .where("completion_state", "==", "complete")
         .select(
           "mpn",
           "name",
@@ -140,13 +139,14 @@ router.get(
           "rics_offer",
           "scom",
           "scom_sale",
-          "web_gm_pct"
+          "web_gm_pct",
+          "completion_state",
+          "completion_percent"
         );
 
       let webSaleQ = db()
         .collection("products")
         .where("is_web_sale_store_full", "==", true)
-        .where("completion_state", "==", "complete")
         .select(
           "mpn",
           "name",
@@ -157,7 +157,9 @@ router.get(
           "rics_offer",
           "scom",
           "scom_sale",
-          "web_gm_pct"
+          "web_gm_pct",
+          "completion_state",
+          "completion_percent"
         );
 
       const mapPromoQ = db()

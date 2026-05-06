@@ -38,6 +38,23 @@ function pct(n: number | null | undefined) {
   return `${Number(n).toFixed(1)}%`;
 }
 
+function CompletionCell({ item }: { item: DisparityItem }) {
+  const pctVal =
+    item.completion_percent === undefined || item.completion_percent === null
+      ? "—"
+      : `${item.completion_percent}%`;
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <span className="font-mono">{pctVal}</span>
+      {item.completion_state === "incomplete" && (
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+          incomplete
+        </span>
+      )}
+    </div>
+  );
+}
+
 function StoreSaleWebFullTable({ items }: { items: DisparityItem[] }) {
   return (
     <table className="w-full text-sm">
@@ -50,6 +67,7 @@ function StoreSaleWebFullTable({ items }: { items: DisparityItem[] }) {
           <th className="px-3 py-2 text-right">Web Sale</th>
           <th className="px-3 py-2 text-right">Gap</th>
           <th className="px-3 py-2 text-right">Web GM%</th>
+          <th className="px-3 py-2 text-right">Completion</th>
         </tr>
       </thead>
       <tbody>
@@ -84,6 +102,9 @@ function StoreSaleWebFullTable({ items }: { items: DisparityItem[] }) {
               <td className="px-3 py-2 text-right font-mono">
                 {pct(it.web_gm_pct)}
               </td>
+              <td className="px-3 py-2 text-sm">
+                <CompletionCell item={it} />
+              </td>
             </tr>
           );
         })}
@@ -104,6 +125,7 @@ function WebSaleStoreFullTable({ items }: { items: DisparityItem[] }) {
           <th className="px-3 py-2 text-right">Web Sale</th>
           <th className="px-3 py-2 text-right">Gap</th>
           <th className="px-3 py-2 text-right">Web GM%</th>
+          <th className="px-3 py-2 text-right">Completion</th>
         </tr>
       </thead>
       <tbody>
@@ -135,6 +157,9 @@ function WebSaleStoreFullTable({ items }: { items: DisparityItem[] }) {
               </td>
               <td className="px-3 py-2 text-right font-mono">
                 {pct(it.web_gm_pct)}
+              </td>
+              <td className="px-3 py-2 text-sm">
+                <CompletionCell item={it} />
               </td>
             </tr>
           );

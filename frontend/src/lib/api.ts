@@ -2327,6 +2327,8 @@ export interface DisparityItem {
   map_price?: number;
   web_discount_cap?: number;
   web_gm_pct?: number;
+  completion_state?: "complete" | "incomplete";
+  completion_percent?: number;
 }
 
 export interface ChannelDisparityResponse {
