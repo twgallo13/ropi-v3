@@ -45,9 +45,22 @@ router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Res
 
     // Step 2.1 Part 3 — buyer cannot approve a markdown on a MAP-conflicted product.
     // TALLY-PHASE-3.9 Track 2A — Deny bypasses MAP gate per PO 2026-05-07 (Q1=1A).
-    // MAP conflict is irrelevant when the buyer is denying a markdown rather than
-    // changing price. Approve / adjust / off_sale remain strictly gated.
-    if (product.map_conflict_active === true && action_type !== "deny") {
+    // Phase 3.10 Track 2C — D2 surgical exception: allow adjust when buyer explicitly
+    // matches MAP floor (adjust.type==="price" && adjust.value===map_floor).
+    // map_price is the raw doc field (same source as buyerReview.ts mapFloor derivation).
+    const mapFloorRaw: number | null =
+      product.map_price ?? product.map_state?.map_price ?? null;
+    const isMatchMap =
+      action_type === "adjust" &&
+      adjustment?.type === "price" &&
+      mapFloorRaw !== null &&
+      adjustment?.value === mapFloorRaw;
+
+    if (
+      product.map_conflict_active === true &&
+      action_type !== "deny" &&
+      !isMatchMap
+    ) {
       res.status(400).json({
         error: "MAP conflict must be resolved before markdown",
       });
