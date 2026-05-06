@@ -13,9 +13,14 @@ import {
 } from "../lib/api";
 import { ConfirmModal } from "../components/admin";
 
+// Phase 3.11 — Clean Break: legacy display-name fields ("department", "brand")
+// removed in favor of registry-canonical keys ("department_key", "brand_key").
+// Existing rules persisted under the legacy keys still evaluate at the engine
+// (cadenceEngine.ts:getProductField is field-string agnostic) but cannot be
+// re-selected from the UI dropdown — forcing migration to V3 registry keys.
 const TARGET_FIELDS = [
-  "department",
-  "brand",
+  "department_key",
+  "brand_key",
   "category",
   "class",
   "gender",
@@ -59,7 +64,7 @@ function emptyDraft(): Draft {
     owner_buyer_id: "",
     owner_site_owner: "",
     target_filters: [
-      { field: "department", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
+      { field: "department_key", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
     ],
     trigger_conditions: [
       { field: "str_pct", operator: "less_than", value: 15, logic: "AND" },
@@ -102,7 +107,7 @@ function RuleEditor({
       ...draft,
       target_filters: [
         ...draft.target_filters,
-        { field: "brand", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
+        { field: "brand_key", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
       ],
     });
   }
