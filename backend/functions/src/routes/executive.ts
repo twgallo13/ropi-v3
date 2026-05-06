@@ -1,17 +1,15 @@
 /**
  * Executive endpoints — Step 3.2
  *   GET /api/v1/executive/health              — Executive Dashboard composite
- *   GET /api/v1/executive/neglected           — Neglected Inventory projection
  *   GET /api/v1/executive/throughput          — Operator Throughput by week
  *   GET /api/v1/executive/channel-disparity   — three pre-flagged slices
  *   POST /api/v1/executive/jobs/weekly-snapshots    — manual trigger (admin)
- *   POST /api/v1/executive/jobs/neglected-inventory — manual trigger (admin)
  *
  * Correction 1 — channel-disparity reads use native flag queries + .select().
  * Correction 2 — counts use .count() aggregation.
  * Correction 3 — long-running work is streamed (see executiveProjections.ts).
  *
- * Access: admin + head_buyer for dashboard + neglected + throughput.
+ * Access: admin + head_buyer for dashboard + throughput.
  *         channel-disparity permits buyers (own-scope filter applied).
  */
 import { Router, Response } from "express";
@@ -21,7 +19,6 @@ import { requireRole } from "../middleware/roles";
 import {
   buildExecutiveHealth,
   writeWeeklySnapshots,
-  computeNeglectedInventory,
   getWeekKey,
 } from "../services/executiveProjections";
 import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
@@ -59,63 +56,6 @@ router.get(
       res
         .status(500)
         .json({ error: "Unable to build executive health. Please try again." });
-    }
-  }
-);
-
-// ─────────────────────────────────────────────────────────────
-// GET /api/v1/executive/neglected
-// ─────────────────────────────────────────────────────────────
-router.get(
-  "/neglected",
-  requireAuth,
-  requireRole(["head_buyer", "buyer"]),
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const role = await resolveRole(req);
-      const uid = req.user?.uid || null;
-      const scope = (req.query.scope as string) || null;
-
-      const snap = await db()
-        .collection("executive_projections")
-        .doc("neglected_inventory")
-        .get();
-
-      if (!snap.exists) {
-        res.status(200).json({
-          computed_at: null,
-          items: [],
-          total_count: 0,
-          scoped: false,
-        });
-        return;
-      }
-
-      const data = snap.data() || {};
-      let items: any[] = Array.isArray(data.items) ? data.items : [];
-      let scoped = false;
-
-      // Buyers see own-scope only; admin/head_buyer may narrow via ?scope=<uid>
-      if (role === "buyer") {
-        items = items.filter((it) => it.buyer_id && it.buyer_id === uid);
-        scoped = true;
-      } else if (scope) {
-        items = items.filter((it) => it.buyer_id === scope);
-        scoped = true;
-      }
-
-      res.status(200).json({
-        computed_at: data.computed_at || null,
-        thresholds: data.thresholds || null,
-        items,
-        total_count: items.length,
-        scoped,
-      });
-    } catch (err: any) {
-      console.error("executive/neglected error:", err);
-      res.status(500).json({
-        error: "Unable to load neglected inventory. Please try again.",
-      });
     }
   }
 );
@@ -361,21 +301,6 @@ router.post(
       res.status(200).json({ ok: true, ...result });
     } catch (err: any) {
       console.error("jobs/weekly-snapshots error:", err);
-      res.status(500).json({ error: "Job failed." });
-    }
-  }
-);
-
-router.post(
-  "/jobs/neglected-inventory",
-  requireAuth,
-  requireRole(["admin"]),
-  async (_req: AuthenticatedRequest, res: Response) => {
-    try {
-      const result = await computeNeglectedInventory();
-      res.status(200).json({ ok: true, ...result });
-    } catch (err: any) {
-      console.error("jobs/neglected-inventory error:", err);
       res.status(500).json({ error: "Job failed." });
     }
   }

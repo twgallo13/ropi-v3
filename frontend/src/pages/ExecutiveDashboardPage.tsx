@@ -396,9 +396,6 @@ export default function ExecutiveDashboardPage() {
       </section>
 
       <div className="flex gap-4 text-sm">
-        <Link to="/neglected-inventory" className="text-blue-700 hover:underline">
-          View Neglected Inventory →
-        </Link>
         <Link to="/channel-disparity" className="text-blue-700 hover:underline">
           View Channel Disparity →
         </Link>

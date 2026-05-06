@@ -2296,36 +2296,6 @@ export async function fetchExecutiveHealth(): Promise<ExecutiveHealth> {
   return res.json();
 }
 
-export interface NeglectedItem {
-  mpn: string;
-  name: string | null;
-  brand: string | null;
-  department: string;
-  days_old: number;
-  days_since_touch: number;
-  inventory_total: number;
-  str_pct: number | null;
-  wos: number | null;
-  store_gm_pct: number | null;
-  neglect_score: number;
-  buyer_id?: string | null;
-}
-
-export interface NeglectedResponse {
-  computed_at: any;
-  thresholds: { age_days: number; attention_days: number } | null;
-  items: NeglectedItem[];
-  total_count: number;
-  scoped: boolean;
-}
-
-export async function fetchNeglectedInventory(scope?: string): Promise<NeglectedResponse> {
-  const qs = scope ? `?scope=${encodeURIComponent(scope)}` : "";
-  const res = await fetch(`${BASE}/api/v1/executive/neglected${qs}`, { headers: await headers() });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json();
-}
-
 export interface ThroughputResponse {
   week_key: string;
   total_completions: number;
