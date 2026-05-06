@@ -47,7 +47,6 @@ export default function CommandBar({ open, onClose }: CommandBarProps) {
       { type: "navigation", label: "Pricing Discrepancy", sublabel: "/pricing-discrepancy", icon: "💲", action: () => go("/pricing-discrepancy") },
       { type: "navigation", label: "Site Verification", sublabel: "/site-verification", icon: "🔗", action: () => go("/site-verification") },
       { type: "navigation", label: "Channel Disparity", sublabel: "/channel-disparity", icon: "🔀", action: () => go("/channel-disparity") },
-      { type: "navigation", label: "Neglected Inventory", sublabel: "/neglected-inventory", icon: "🕸️", action: () => go("/neglected-inventory") },
       { type: "navigation", label: "Cadence Rules", sublabel: "/admin/cadence-rules", icon: "⚙️", action: () => go("/admin/cadence-rules") },
       { type: "navigation", label: "Prompt Templates", sublabel: "/admin/prompt-templates", icon: "⚙️", action: () => go("/admin/prompt-templates") },
       { type: "navigation", label: "Smart Rules", sublabel: "/admin/smart-rules", icon: "⚙️", action: () => go("/admin/smart-rules") },

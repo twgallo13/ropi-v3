@@ -7,7 +7,6 @@
  *
  *   POST /promote-scheduled        → wraps promoteScheduledItems()
  *   POST /daily-staleness-sweep    → wraps refreshStalenessFlagsDaily() (Option B)
- *   POST /neglected-inventory      → wraps computeNeglectedInventory()
  *   POST /weekly-snapshots         → wraps writeWeeklySnapshots()
  *
  * Each route stamps scheduler provenance so audit/forensics can distinguish
@@ -20,7 +19,6 @@ import { requireSchedulerOIDC } from "../middleware/requireSchedulerOIDC";
 import { promoteScheduledItems } from "../services/scheduledPromotion";
 import { refreshStalenessFlagsDaily } from "../services/stalenessRefresh";
 import {
-  computeNeglectedInventory,
   writeWeeklySnapshots,
 } from "../services/executiveProjections";
 
@@ -116,26 +114,7 @@ router.post("/daily-staleness-sweep", async (_req: Request, res: Response) => {
   });
 });
 
-// ── 3. Neglected Inventory (cron 0 2 * * * America/Los_Angeles) ──
-router.post("/neglected-inventory", async (_req: Request, res: Response) => {
-  await runJob(res, "neglected_inventory", async () => {
-    const result = await computeNeglectedInventory();
-    // Stamp computed_by:"scheduler" provenance on the projection doc.
-    await db()
-      .collection("executive_projections")
-      .doc("neglected_inventory")
-      .set(
-        {
-          computed_by: "scheduler",
-          computed_by_stamped_at: ts(),
-        },
-        { merge: true }
-      );
-    return { total_count: result.total_count };
-  });
-});
-
-// ── 4. Weekly Snapshots (cron 0 3 * * MON America/Los_Angeles) ──
+// ── 3. Weekly Snapshots (cron 0 3 * * MON America/Los_Angeles) ──
 router.post("/weekly-snapshots", async (_req: Request, res: Response) => {
   await runJob(res, "weekly_snapshots", async () => {
     const result = await writeWeeklySnapshots();

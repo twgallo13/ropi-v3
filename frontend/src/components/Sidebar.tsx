@@ -33,11 +33,6 @@ const NAV_TREE: NavNode[] = [
       { label: "Buyer Review", path: "/buyer-review" },
       { label: "Cadence Review", path: "/cadence-review" },
       { label: "Cadence Unassigned", path: "/cadence-unassigned" },
-      {
-        label: "Neglected Inventory",
-        path: "/neglected-inventory",
-        roles: ["admin", "owner", "head_buyer"],
-      },
       { label: "Channel Disparity", path: "/channel-disparity" },
     ],
   },
