@@ -246,6 +246,7 @@ function ProductCard({
   onApprove,
   onDeny,
   onAdjust,
+  onOffSale,
 }: {
   item: BuyerReviewItem;
   density: Density;
@@ -253,6 +254,7 @@ function ProductCard({
   onApprove: (mpn: string) => void;
   onDeny: (mpn: string) => void;
   onAdjust: (mpn: string, adj: { type: string; value: number; effective_date?: string }) => void;
+  onOffSale: (mpn: string) => void;
 }) {
   const [showAdjust, setShowAdjust] = useState(false);
   const [projection, setProjection] = useState<PriceProjection | null>(null);
@@ -288,10 +290,8 @@ function ProductCard({
     if (!showAdjust) loadProjection();
   };
 
-  const isLossLeader = item.is_loss_leader;
-  const borderClass = isLossLeader
-    ? "border-red-400 animate-pulse"
-    : isFocused
+  // Phase 3.10 Track 2C — loss-leader pulsing border replaced by reason-chip row
+  const borderClass = isFocused
     ? "border-blue-500 ring-2 ring-blue-200"
     : "border-gray-200";
 
@@ -305,11 +305,35 @@ function ProductCard({
       data-mpn={item.mpn}
       tabIndex={0}
     >
-      {isLossLeader && (
-        <div className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-t -mx-4 -mt-4 mb-3 text-center">
-          ⚠️ NEGATIVE MARGIN — This price is below estimated cost
-        </div>
-      )}
+      {/* Phase 3.10 Track 2C — Reason-first chip row (D3) */}
+      {item.queue_reason_primary && (() => {
+        const chipColors: Record<string, string> = {
+          "MAP Conflict": "bg-red-100 text-red-800 border-red-300",
+          "Loss-Leader Pending": "bg-orange-100 text-orange-800 border-orange-300",
+          "Negative Margin": "bg-red-100 text-red-800 border-red-300",
+          "Performance": "bg-amber-100 text-amber-800 border-amber-300",
+        };
+        const alsoReasons = item.queue_reasons_all.filter(
+          (r) => r !== item.queue_reason_primary
+        );
+        return (
+          <div className={`flex items-center gap-1.5 flex-wrap ${isCompact ? "mb-2" : "mb-3"}`}>
+            <span className="text-xs text-gray-500 font-medium">Queued because:</span>
+            <span
+              className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded border ${
+                chipColors[item.queue_reason_primary] ?? "bg-gray-100 text-gray-700 border-gray-300"
+              }`}
+            >
+              {item.queue_reason_primary}
+            </span>
+            {alsoReasons.length > 0 && (
+              <span className="text-xs text-gray-400">
+                + also: {alsoReasons.join(", ")}
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Header */}
       <div className="flex items-start gap-3">
@@ -467,46 +491,66 @@ function ProductCard({
         </div>
       )}
 
-      {/* MAP conflict blocker */}
-      {item.map_conflict_active && (
-        <div className="mt-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1.5">
-          ⚠️ MAP conflict must be resolved before markdown
-          {item.map_conflict_reason ? ` — ${item.map_conflict_reason}` : ""}
+      {/* Phase 3.10 Track 2C — MAP conflict detail (shown only when conflict active and chip alone isn't enough context) */}
+      {item.map_conflict_active && item.map_conflict_reason && (
+        <div className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1">
+          {item.map_conflict_reason}
         </div>
       )}
 
       {/* Actions */}
-      <div className={`flex items-center gap-2 ${isCompact ? "mt-2" : "mt-4"}`}>
-        <>
+      <div className={`flex items-center gap-2 flex-wrap ${isCompact ? "mt-2" : "mt-4"}`}>
+        <button
+          onClick={() => onApprove(item.mpn)}
+          disabled={item.map_conflict_active}
+          className={`px-3 py-1.5 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed ${
+            isCompact ? "text-xs" : "text-sm"
+          }`}
+          title={item.map_conflict_active ? "MAP conflict must be resolved before markdown" : "Approve (A)"}
+        >
+          {isCompact ? "✓" : "✓ Approve"}
+        </button>
+        <button
+          onClick={() => onDeny(item.mpn)}
+          className={`px-3 py-1.5 rounded text-white bg-red-500 hover:bg-red-600 ${
+            isCompact ? "text-xs" : "text-sm"
+          }`}
+          title="Deny (D)"
+        >
+          {isCompact ? "✗" : "✗ Deny"}
+        </button>
+        <button
+          onClick={handleAdjustToggle}
+          disabled={item.map_conflict_active}
+          className={`px-3 py-1.5 rounded border hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
+            isCompact ? "text-xs" : "text-sm"
+          } ${showAdjust ? "bg-blue-50 border-blue-300" : ""}`}
+          title={item.map_conflict_active ? "MAP conflict must be resolved before adjusting" : "Adjust"}
+        >
+          {isCompact ? "⚙" : "⚙ Adjust ▾"}
+        </button>
+        {/* Phase 3.10 Track 2C — Match MAP (D2 exception: resolves MAP conflict) */}
+        {item.map_conflict_active && item.map_floor !== null && (
           <button
-            onClick={() => onApprove(item.mpn)}
-            disabled={item.map_conflict_active}
-            className={`px-3 py-1.5 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed ${
+            onClick={() => onAdjust(item.mpn, { type: "price", value: item.map_floor! })}
+            className={`px-3 py-1.5 rounded text-white bg-orange-600 hover:bg-orange-700 ${
               isCompact ? "text-xs" : "text-sm"
             }`}
-            title={item.map_conflict_active ? "MAP conflict must be resolved before markdown" : "Approve (A)"}
+            title={`Set price to MAP floor (${fmt(item.map_floor)})`}
           >
-            {isCompact ? "✓" : "✓ Approve"}
+            {isCompact ? "MAP" : "Match MAP"}
           </button>
-          <button
-            onClick={() => onDeny(item.mpn)}
-            className={`px-3 py-1.5 rounded text-white bg-red-500 hover:bg-red-600 ${
-              isCompact ? "text-xs" : "text-sm"
-            }`}
-            title="Deny (D)"
-          >
-            {isCompact ? "✗" : "✗ Deny"}
-          </button>
-          <button
-            onClick={handleAdjustToggle}
-            className={`px-3 py-1.5 rounded border hover:bg-gray-50 ${
-              isCompact ? "text-xs" : "text-sm"
-            } ${showAdjust ? "bg-blue-50 border-blue-300" : ""}`}
-            title="Adjust"
-          >
-            {isCompact ? "⚙" : "⚙ Adjust ▾"}
-          </button>
-        </>
+        )}
+        {/* Phase 3.10 Track 2C — Off Sale */}
+        <button
+          onClick={() => onOffSale(item.mpn)}
+          className={`px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${
+            isCompact ? "text-xs" : "text-sm"
+          }`}
+          title="Mark as off sale"
+        >
+          {isCompact ? "Off" : "Off Sale"}
+        </button>
       </div>
 
       {/* Adjust Popover */}
@@ -643,6 +687,16 @@ export default function BuyerReviewPage() {
     }
   };
 
+  const handleOffSale = async (mpn: string) => {
+    removeCard(mpn);
+    try {
+      await postBuyerAction({ mpn, action_type: "off_sale" });
+    } catch (err: any) {
+      await load();
+      setError(err?.error || err?.message || "Off-sale failed");
+    }
+  };
+
   const toggleDensity = () => {
     const next = density === "comfortable" ? "compact" : "comfortable";
     setDensity(next);
@@ -738,6 +792,7 @@ export default function BuyerReviewPage() {
             onApprove={handleApprove}
             onDeny={handleDeny}
             onAdjust={handleAdjust}
+            onOffSale={handleOffSale}
           />
         ))}
       </div>

@@ -121,6 +121,45 @@ function buildBuyerReviewSiteVerification(
   return { site_verification, primary_site_key };
 }
 
+// ── Phase 3.10 Track 2C — Queue reason derivation ──
+// Priority order locked per PO 2026-05-08:
+// MAP Conflict > Loss-Leader > Negative Margin > Performance (D3)
+type QueueReason =
+  | "MAP Conflict"
+  | "Loss-Leader Pending"
+  | "Negative Margin"
+  | "Performance";
+
+function computeQueueReasons(d: any): {
+  primary: QueueReason | null;
+  all: QueueReason[];
+} {
+  const reasons: QueueReason[] = [];
+
+  if (d.map_conflict_active === true) {
+    reasons.push("MAP Conflict");
+  }
+  if (
+    d.is_loss_leader === true ||
+    d.pricing_domain_state === "Loss-Leader Review Pending"
+  ) {
+    reasons.push("Loss-Leader Pending");
+  }
+  // D5: GM% as cost proxy. Threshold = 0; either channel negative triggers.
+  const storeGmNeg =
+    typeof d.store_gm_pct === "number" && d.store_gm_pct < 0;
+  const webGmNeg =
+    typeof d.web_gm_pct === "number" && d.web_gm_pct < 0;
+  if (storeGmNeg || webGmNeg) {
+    reasons.push("Negative Margin");
+  }
+  if (d.is_slow_moving === true) {
+    reasons.push("Performance");
+  }
+
+  return { primary: reasons[0] ?? null, all: reasons };
+}
+
 // ── Phase 1 recommendation builder ──
 function buildPhase1Recommendation(product: any) {
   const PCT = 0.15;
@@ -262,6 +301,27 @@ router.get(
       );
       const verification_rollup_state: "live" | "unverified" = isLive ? "live" : "unverified";
 
+      // Phase 3.10 Track 2C — queue reason derivation
+      const queueReasons = computeQueueReasons(d);
+
+      // Phase 3.10 Track 2C — evidence fields for reason-conditional panels
+      // conflicting_site: MAP conflict is detected at product level (web sale vs map_price),
+      // no per-site key is stored by pricingResolution. Surfacing null here.
+      // TODO(TALLY-BLUEPRINT-CARD-EVIDENCE-FOLLOWUP): if site-level conflict tracking added,
+      // replace null with the site key from the conflict record.
+      const conflicting_site: string | null = null;
+
+      const recommendation = buildPhase1Recommendation(d);
+      const current_export_price: number | null =
+        recommendation.export_price ?? null;
+
+      const webS30 = d.web_sales_30d;
+      const storeS30 = d.store_sales_30d;
+      const sales_30d: number | null =
+        webS30 == null && storeS30 == null
+          ? null
+          : (webS30 ?? 0) + (storeS30 ?? 0);
+
       return {
         mpn: d.mpn || doc.id,
         name: d.name || "",
@@ -286,7 +346,7 @@ router.get(
         inventory_total: inventoryTotal,
         is_slow_moving: d.is_slow_moving ?? false,
 
-        recommendation: buildPhase1Recommendation(d),
+        recommendation,
 
         site_verification,
         primary_site_key,
@@ -295,6 +355,13 @@ router.get(
         is_loss_leader: d.is_loss_leader ?? false,
         days_in_queue: daysInQueue,
         pricing_domain_state: d.pricing_domain_state,
+
+        // Phase 3.10 Track 2C — reason-first hierarchy fields
+        queue_reason_primary: queueReasons.primary,
+        queue_reasons_all: queueReasons.all,
+        conflicting_site,
+        current_export_price,
+        sales_30d,
       };
     }))).filter(Boolean);
 

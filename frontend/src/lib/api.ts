@@ -350,6 +350,12 @@ export interface BuyerReviewItem {
   is_loss_leader: boolean;
   days_in_queue: number;
   pricing_domain_state: string;
+  // Phase 3.10 Track 2C — reason-first hierarchy fields
+  queue_reason_primary: "MAP Conflict" | "Loss-Leader Pending" | "Negative Margin" | "Performance" | null;
+  queue_reasons_all: Array<"MAP Conflict" | "Loss-Leader Pending" | "Negative Margin" | "Performance">;
+  conflicting_site: string | null;
+  current_export_price: number | null;
+  sales_30d: number | null;
 }
 
 export interface BuyerReviewResponse {
@@ -394,7 +400,7 @@ export async function fetchPriceProjection(mpn: string): Promise<PriceProjection
 
 export async function postBuyerAction(body: {
   mpn: string;
-  action_type: "approve" | "deny" | "adjust";
+  action_type: "approve" | "deny" | "adjust" | "off_sale";
   adjustment?: { type: string; value: number; effective_date?: string };
 }): Promise<any> {
   const res = await fetch(`${BASE}/api/v1/buyer-actions/markdown`, {
