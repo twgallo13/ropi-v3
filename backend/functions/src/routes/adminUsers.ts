@@ -3,13 +3,197 @@
  * Admin CRUD for platform users. Firebase Auth account + Firestore users/{uid}.
  *   GET    /api/v1/admin/users          — list
  *   POST   /api/v1/admin/users          — create (auto temp password)
- *   PUT    /api/v1/admin/users/:uid     — update role/departments/site_scope/display_name
+ *   PUT    /api/v1/admin/users/:uid     — update role / portfolio_… / display_name
  *   DELETE /api/v1/admin/users/:uid     — disable account
+ *
+ * Phase 3.12 Track 1A — User Portfolio schema:
+ *   - Legacy fields `departments` and `site_scope` are HARD-CUTOVER:
+ *     POST/PUT bodies containing them return 400.
+ *   - New portfolio_* fields validated against authoritative registries
+ *     before persistence (see validatePortfolioFields).
  */
 import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
+
+// Phase 3.12 Track 1A — portfolio field set + exclusion dimensions.
+const PORTFOLIO_FIELDS = [
+  "portfolio_brands",
+  "portfolio_depts",
+  "portfolio_sites",
+  "portfolio_age_groups",
+  "portfolio_exclusions",
+] as const;
+const LEGACY_PORTFOLIO_FIELDS = ["departments", "site_scope"] as const;
+const EXCLUSION_DIMENSIONS = ["brand", "department", "class", "site", "age_group"] as const;
+type ExclusionDimension = (typeof EXCLUSION_DIMENSIONS)[number];
+
+// Authority sources per dimension. Brand/department/site dimensions read
+// document IDs from their respective registry collection. Class/age_group
+// dimensions read `dropdown_options` from the corresponding
+// `attribute_registry` doc (same convention as product attribute editing).
+async function loadRegistryAuthority(): Promise<{
+  brand: Set<string>;
+  department: Set<string>;
+  site: Set<string>;
+  class: Set<string>;
+  age_group: Set<string>;
+}> {
+  const fs = admin.firestore();
+  const [brandSnap, deptSnap, siteSnap, classDoc, ageDoc] = await Promise.all([
+    fs.collection("brand_registry").get(),
+    fs.collection("department_registry").get(),
+    fs.collection("site_registry").get(),
+    fs.collection("attribute_registry").doc("class").get(),
+    fs.collection("attribute_registry").doc("age_group").get(),
+  ]);
+  const classOpts = ((classDoc.data() || {}).dropdown_options || []) as string[];
+  const ageOpts = ((ageDoc.data() || {}).dropdown_options || []) as string[];
+  return {
+    brand: new Set(brandSnap.docs.map((d) => d.id)),
+    department: new Set(deptSnap.docs.map((d) => d.id)),
+    site: new Set(siteSnap.docs.map((d) => d.id)),
+    class: new Set(classOpts),
+    age_group: new Set(ageOpts),
+  };
+}
+
+function sample(set: Set<string>, n = 5): string[] {
+  return Array.from(set).slice(0, n);
+}
+
+/**
+ * Phase 3.12 Track 1A — validate portfolio_* fields against authoritative
+ * registries. Throws PortfolioValidationError on first failure with structured
+ * detail. Caller must translate to a 400 response.
+ */
+class PortfolioValidationError extends Error {
+  detail: Record<string, unknown>;
+  constructor(detail: Record<string, unknown>) {
+    super(typeof detail.message === "string" ? detail.message : "Invalid portfolio field");
+    this.detail = detail;
+  }
+}
+
+async function validatePortfolioFields(payload: Record<string, unknown>): Promise<void> {
+  // Only load registries if any portfolio_* field is being changed.
+  const touched = PORTFOLIO_FIELDS.filter((k) => payload[k] !== undefined);
+  if (touched.length === 0) return;
+
+  const auth = await loadRegistryAuthority();
+
+  const checkArray = (
+    fieldName: string,
+    dimension: ExclusionDimension,
+    value: unknown,
+    registryName: string
+  ) => {
+    if (value === null) return; // explicit null clears the field
+    if (!Array.isArray(value)) {
+      throw new PortfolioValidationError({
+        field: fieldName,
+        message: `${fieldName} must be an array`,
+        received_type: typeof value,
+      });
+    }
+    const allowed = auth[dimension];
+    for (const v of value) {
+      if (typeof v !== "string" || !allowed.has(v)) {
+        throw new PortfolioValidationError({
+          field: fieldName,
+          invalid_value: v,
+          registry_consulted: registryName,
+          sample_valid_values: sample(allowed),
+          message: `Invalid value '${v}' for ${fieldName}; not present in ${registryName}.`,
+        });
+      }
+    }
+  };
+
+  if (payload.portfolio_brands !== undefined) {
+    checkArray("portfolio_brands", "brand", payload.portfolio_brands, "brand_registry");
+  }
+  if (payload.portfolio_depts !== undefined) {
+    checkArray("portfolio_depts", "department", payload.portfolio_depts, "department_registry");
+  }
+  if (payload.portfolio_sites !== undefined) {
+    checkArray("portfolio_sites", "site", payload.portfolio_sites, "site_registry");
+  }
+  if (payload.portfolio_age_groups !== undefined) {
+    checkArray(
+      "portfolio_age_groups",
+      "age_group",
+      payload.portfolio_age_groups,
+      "attribute_registry/age_group.dropdown_options"
+    );
+  }
+  if (payload.portfolio_exclusions !== undefined) {
+    const excl = payload.portfolio_exclusions;
+    if (excl === null) return;
+    if (typeof excl !== "object" || Array.isArray(excl)) {
+      throw new PortfolioValidationError({
+        field: "portfolio_exclusions",
+        message: "portfolio_exclusions must be a map of { dimension: string[] }",
+        received_type: Array.isArray(excl) ? "array" : typeof excl,
+      });
+    }
+    for (const [dim, vals] of Object.entries(excl as Record<string, unknown>)) {
+      if (!(EXCLUSION_DIMENSIONS as readonly string[]).includes(dim)) {
+        throw new PortfolioValidationError({
+          field: "portfolio_exclusions",
+          invalid_dimension: dim,
+          allowed_dimensions: [...EXCLUSION_DIMENSIONS],
+          message: `Invalid exclusion dimension '${dim}'.`,
+        });
+      }
+      const dimension = dim as ExclusionDimension;
+      const registryName =
+        dimension === "brand"
+          ? "brand_registry"
+          : dimension === "department"
+          ? "department_registry"
+          : dimension === "site"
+          ? "site_registry"
+          : dimension === "class"
+          ? "attribute_registry/class.dropdown_options"
+          : "attribute_registry/age_group.dropdown_options";
+      if (!Array.isArray(vals)) {
+        throw new PortfolioValidationError({
+          field: `portfolio_exclusions.${dim}`,
+          message: `portfolio_exclusions.${dim} must be an array`,
+          received_type: typeof vals,
+        });
+      }
+      const allowed = auth[dimension];
+      for (const v of vals) {
+        if (typeof v !== "string" || !allowed.has(v)) {
+          throw new PortfolioValidationError({
+            field: `portfolio_exclusions.${dim}`,
+            invalid_value: v,
+            registry_consulted: registryName,
+            sample_valid_values: sample(allowed),
+            message: `Invalid exclusion value '${v}' for dimension '${dim}'.`,
+          });
+        }
+      }
+    }
+  }
+}
+
+function rejectLegacyPortfolioFields(body: Record<string, unknown>): { ok: true } | { ok: false; error: string; field: string } {
+  for (const f of LEGACY_PORTFOLIO_FIELDS) {
+    if (f in body) {
+      const replacement = f === "departments" ? "portfolio_depts" : "portfolio_sites";
+      return {
+        ok: false,
+        field: f,
+        error: `Field '${f}' is deprecated; use '${replacement}' instead. See Phase 3.12 schema migration.`,
+      };
+    }
+  }
+  return { ok: true };
+}
 
 const router = Router();
 
@@ -105,8 +289,13 @@ router.get(
           email: data.email || null,
           display_name: data.display_name || data.name || null,
           role: data.role || null,
-          departments: data.departments || null,
-          site_scope: data.site_scope || null,
+          // Phase 3.12 Track 1A — portfolio_* fields. Legacy `departments`
+          // and `site_scope` intentionally absent from response shape.
+          portfolio_brands: data.portfolio_brands ?? [],
+          portfolio_depts: data.portfolio_depts ?? [],
+          portfolio_sites: data.portfolio_sites ?? [],
+          portfolio_age_groups: data.portfolio_age_groups ?? [],
+          portfolio_exclusions: data.portfolio_exclusions ?? {},
           disabled: data.disabled === true,
           created_at: data.created_at?.toDate?.().toISOString() || null,
         };
@@ -125,8 +314,22 @@ router.post(
   requireRole(["admin", "owner"]),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { email, display_name, role, departments, site_scope } =
-        req.body || {};
+      // Phase 3.12 Track 1A — hard cutover on legacy field names.
+      const legacy = rejectLegacyPortfolioFields(req.body || {});
+      if (legacy.ok === false) {
+        res.status(400).json({ error: legacy.error, field: legacy.field });
+        return;
+      }
+      const {
+        email,
+        display_name,
+        role,
+        portfolio_brands,
+        portfolio_depts,
+        portfolio_sites,
+        portfolio_age_groups,
+        portfolio_exclusions,
+      } = req.body || {};
       if (!email || !display_name || !role) {
         res
           .status(400)
@@ -138,6 +341,17 @@ router.post(
           error: `Invalid role. Allowed: ${ALLOWED_ROLES.join(", ")}`,
         });
         return;
+      }
+      // Phase 3.12 Track 1A — validate portfolio_* against authoritative
+      // registries before persistence. 400 on first failure.
+      try {
+        await validatePortfolioFields(req.body || {});
+      } catch (vErr: any) {
+        if (vErr instanceof PortfolioValidationError) {
+          res.status(400).json({ error: vErr.message, ...vErr.detail });
+          return;
+        }
+        throw vErr;
       }
       const rand = Math.floor(1000 + Math.random() * 9000);
       const tempPassword = `${String(display_name).replace(/\s+/g, "")}${rand}@Ropi`;
@@ -157,8 +371,13 @@ router.post(
           email,
           display_name,
           role,
-          departments: departments || null,
-          site_scope: site_scope || null,
+          // Phase 3.12 Track 1A — initialize portfolio_* on create. Defaults
+          // to empty container if caller did not provide.
+          portfolio_brands: portfolio_brands ?? [],
+          portfolio_depts: portfolio_depts ?? [],
+          portfolio_sites: portfolio_sites ?? [],
+          portfolio_age_groups: portfolio_age_groups ?? [],
+          portfolio_exclusions: portfolio_exclusions ?? {},
           requires_review: false,
           created_at: admin.firestore.FieldValue.serverTimestamp(),
           created_by: req.user?.uid || null,
@@ -170,8 +389,14 @@ router.post(
         acting_user_id: req.user?.uid || null,
         extra: {
           role,
-          departments_count: arrayLen(departments),
-          site_scope_count: arrayLen(site_scope),
+          portfolio_brands_count: arrayLen(portfolio_brands),
+          portfolio_depts_count: arrayLen(portfolio_depts),
+          portfolio_sites_count: arrayLen(portfolio_sites),
+          portfolio_age_groups_count: arrayLen(portfolio_age_groups),
+          portfolio_exclusions_dimensions:
+            portfolio_exclusions && typeof portfolio_exclusions === "object"
+              ? Object.keys(portfolio_exclusions)
+              : [],
         },
       });
       res.json({ uid: authUser.uid, temp_password: tempPassword });
@@ -189,11 +414,37 @@ router.put(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { uid } = req.params;
-      const { display_name, role, departments, site_scope } = req.body || {};
+      // Phase 3.12 Track 1A — hard cutover on legacy field names.
+      const legacy = rejectLegacyPortfolioFields(req.body || {});
+      if (legacy.ok === false) {
+        res.status(400).json({ error: legacy.error, field: legacy.field });
+        return;
+      }
+      const {
+        display_name,
+        role,
+        portfolio_brands,
+        portfolio_depts,
+        portfolio_sites,
+        portfolio_age_groups,
+        portfolio_exclusions,
+      } = req.body || {};
 
       // A.4 PR 3 — read current doc to diff for audit emission.
       const oldSnap = await admin.firestore().collection("users").doc(uid).get();
       const oldData = oldSnap.data() || {};
+
+      // Phase 3.12 Track 1A — validate portfolio_* against authoritative
+      // registries before persistence. 400 on first failure.
+      try {
+        await validatePortfolioFields(req.body || {});
+      } catch (vErr: any) {
+        if (vErr instanceof PortfolioValidationError) {
+          res.status(400).json({ error: vErr.message, ...vErr.detail });
+          return;
+        }
+        throw vErr;
+      }
 
       const update: Record<string, any> = {
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -208,8 +459,12 @@ router.put(
         update.role = role;
         await admin.auth().setCustomUserClaims(uid, { role });
       }
-      if (departments !== undefined) update.departments = departments;
-      if (site_scope !== undefined) update.site_scope = site_scope;
+      // Phase 3.12 Track 1A — write portfolio_* fields when present.
+      if (portfolio_brands !== undefined) update.portfolio_brands = portfolio_brands;
+      if (portfolio_depts !== undefined) update.portfolio_depts = portfolio_depts;
+      if (portfolio_sites !== undefined) update.portfolio_sites = portfolio_sites;
+      if (portfolio_age_groups !== undefined) update.portfolio_age_groups = portfolio_age_groups;
+      if (portfolio_exclusions !== undefined) update.portfolio_exclusions = portfolio_exclusions;
       if (display_name !== undefined) {
         await admin.auth().updateUser(uid, { displayName: display_name });
       }
@@ -241,19 +496,13 @@ router.put(
       ) {
         fieldsChanged.push("display_name");
       }
-      if (
-        departments !== undefined &&
-        JSON.stringify(departments ?? null) !==
-          JSON.stringify(oldData.departments ?? null)
-      ) {
-        fieldsChanged.push("departments");
-      }
-      if (
-        site_scope !== undefined &&
-        JSON.stringify(site_scope ?? null) !==
-          JSON.stringify(oldData.site_scope ?? null)
-      ) {
-        fieldsChanged.push("site_scope");
+      // Phase 3.12 Track 1A — diff detection for portfolio_* fields.
+      for (const f of PORTFOLIO_FIELDS) {
+        const incoming = (req.body || {})[f];
+        if (incoming === undefined) continue;
+        if (JSON.stringify(incoming ?? null) !== JSON.stringify(oldData[f] ?? null)) {
+          fieldsChanged.push(f);
+        }
       }
       if (fieldsChanged.length > 0) {
         await emitUserAudit({
