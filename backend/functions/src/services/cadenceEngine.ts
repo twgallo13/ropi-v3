@@ -61,6 +61,113 @@ export interface CadenceRule {
   markdown_steps: MarkdownStep[];
 }
 
+// ── Track 2 — Buyer portfolio types ──
+interface BuyerPortfolio {
+  uid: string;
+  portfolio_brands: Set<string>;
+  portfolio_depts: Set<string>;
+  portfolio_sites: Set<string>;
+  portfolio_age_groups: Set<string>;
+  portfolio_gender: Set<string>;
+  portfolio_exclusions: {
+    brand: Set<string>;
+    department: Set<string>;
+    class: Set<string>;
+    site: Set<string>;
+    age_group: Set<string>;
+    gender: Set<string>;
+  };
+}
+
+type BuyerResolution =
+  | { result: "matched"; assigned_user_id: string }
+  | { result: "buyer_conflict"; candidate_user_ids: string[] }
+  | { result: "no_buyer_match" };
+
+function buildBuyerPortfolio(uid: string, data: any): BuyerPortfolio {
+  const exc = data.portfolio_exclusions || {};
+  return {
+    uid,
+    portfolio_brands: new Set<string>(data.portfolio_brands || []),
+    portfolio_depts: new Set<string>(data.portfolio_depts || []),
+    portfolio_sites: new Set<string>(data.portfolio_sites || []),
+    portfolio_age_groups: new Set<string>(data.portfolio_age_groups || []),
+    portfolio_gender: new Set<string>(data.portfolio_gender || []),
+    portfolio_exclusions: {
+      brand: new Set<string>(exc.brand || []),
+      department: new Set<string>(exc.department || []),
+      class: new Set<string>(exc.class || []),
+      site: new Set<string>(exc.site || []),
+      age_group: new Set<string>(exc.age_group || []),
+      gender: new Set<string>(exc.gender || []),
+    },
+  };
+}
+
+function resolveBuyerForProduct(
+  product: any,
+  buyers: BuyerPortfolio[]
+): BuyerResolution {
+  // Track 2 amendment — use lowercase _key fields for collection-keyed dims
+  // (brand/dept) so they align with portfolio_brands/portfolio_depts which
+  // are stored as registry-keyed lowercase per Track 1C cleanup. site_owner
+  // is already lowercase singleton; class/gender/age_group are display-cased
+  // on both sides (attribute_registry source) so direct compare works.
+  const productBrandKey = String(product.brand_key || "");
+  const productDeptKey = String(product.department_key || "");
+  const productSite = String(product.site_owner || "");
+  const productClass = String(product.class || "");
+  const productAge = String(product.age_group || "");
+  const productGender = String(product.gender || "");
+
+  // Step 1 — exclusions veto (D7: 6 dimensions including class)
+  const notVetoed = buyers.filter((b) => {
+    if (productBrandKey && b.portfolio_exclusions.brand.has(productBrandKey)) return false;
+    if (productDeptKey && b.portfolio_exclusions.department.has(productDeptKey)) return false;
+    if (productClass && b.portfolio_exclusions.class.has(productClass)) return false;
+    if (productSite && b.portfolio_exclusions.site.has(productSite)) return false;
+    if (productAge && b.portfolio_exclusions.age_group.has(productAge)) return false;
+    if (productGender && b.portfolio_exclusions.gender.has(productGender)) return false;
+    return true;
+  });
+
+  // Step 2 — AND-match across 5 portfolio dimensions (D4: brand/dept/site/age_group/gender)
+  // Empty buyer set on a dim = wildcard for that dim
+  const matched = notVetoed.filter((b) => {
+    if (b.portfolio_brands.size > 0 && !b.portfolio_brands.has(productBrandKey)) return false;
+    if (b.portfolio_depts.size > 0 && !b.portfolio_depts.has(productDeptKey)) return false;
+    if (b.portfolio_sites.size > 0 && !b.portfolio_sites.has(productSite)) return false;
+    if (b.portfolio_age_groups.size > 0 && !b.portfolio_age_groups.has(productAge)) return false;
+    if (b.portfolio_gender.size > 0 && !b.portfolio_gender.has(productGender)) return false;
+    return true;
+  });
+
+  if (matched.length === 0) return { result: "no_buyer_match" };
+  if (matched.length === 1) {
+    return { result: "matched", assigned_user_id: matched[0].uid };
+  }
+
+  // Step 3 — D2 specificity tie-breaker (count-based)
+  const populatedCount = (b: BuyerPortfolio): number =>
+    (b.portfolio_brands.size > 0 ? 1 : 0) +
+    (b.portfolio_depts.size > 0 ? 1 : 0) +
+    (b.portfolio_sites.size > 0 ? 1 : 0) +
+    (b.portfolio_age_groups.size > 0 ? 1 : 0) +
+    (b.portfolio_gender.size > 0 ? 1 : 0);
+
+  matched.sort((a, b) => populatedCount(b) - populatedCount(a));
+  const topCount = populatedCount(matched[0]);
+  const topMatches = matched.filter((b) => populatedCount(b) === topCount);
+
+  if (topMatches.length > 1) {
+    return {
+      result: "buyer_conflict",
+      candidate_user_ids: topMatches.map((b) => b.uid),
+    };
+  }
+  return { result: "matched", assigned_user_id: matched[0].uid };
+}
+
 // ── Helpers ──
 function getProductField(product: any, field: string): any {
   // Support dotted paths like attributes.gender
@@ -179,6 +286,9 @@ async function writeConflictAssignment(
       matched_rule_id: null,
       recommendation: null,
       in_cadence_review_queue: false,
+      assigned_user_id: null,
+      candidate_user_ids: [],
+      unassigned_reason: null,
       last_evaluated_at: ts(),
     },
     { merge: true }
@@ -192,7 +302,13 @@ async function writeConflictAssignment(
   });
 }
 
-async function writeUnassigned(mpn: string): Promise<void> {
+async function writeUnassigned(
+  mpn: string,
+  options?: {
+    reason?: "no_rule_match" | "no_buyer_match" | "buyer_conflict";
+    candidate_user_ids?: string[];
+  }
+): Promise<void> {
   const docId = mpnToDocId(mpn);
   await db().collection("cadence_assignments").doc(docId).set(
     {
@@ -204,6 +320,9 @@ async function writeUnassigned(mpn: string): Promise<void> {
       in_cadence_review_queue: false,
       conflict: false,
       conflict_rule_ids: [],
+      assigned_user_id: null,
+      candidate_user_ids: options?.candidate_user_ids || [],
+      unassigned_reason: options?.reason || null,
       last_evaluated_at: ts(),
     },
     { merge: true }
@@ -214,7 +333,8 @@ async function writeAssignment(
   mpn: string,
   rule: CadenceRule,
   signals: Record<string, any>,
-  product: any
+  product: any,
+  assigned_user_id: string
 ): Promise<void> {
   const docId = mpnToDocId(mpn);
   const ref = db().collection("cadence_assignments").doc(docId);
@@ -360,6 +480,9 @@ async function writeAssignment(
     days_in_queue: existing?.days_in_queue || 0,
     conflict: false,
     conflict_rule_ids: [],
+    assigned_user_id,
+    candidate_user_ids: [],
+    unassigned_reason: null,
   };
 
   await ref.set(updates, { merge: true });
@@ -391,6 +514,15 @@ export async function runCadenceEvaluation(importedMpns: string[]): Promise<{
     (d) => ({ id: d.id, ...(d.data() as any) }) as CadenceRule
   );
 
+  // Track 2 — load buyer portfolios once per run (D9 write-time stamping)
+  const buyersSnap = await db()
+    .collection("users")
+    .where("role", "==", "buyer")
+    .get();
+  const buyers: BuyerPortfolio[] = buyersSnap.docs.map((d) =>
+    buildBuyerPortfolio(d.id, d.data())
+  );
+
   let evaluated = 0;
   let assigned = 0;
   let unassigned = 0;
@@ -414,8 +546,7 @@ export async function runCadenceEvaluation(importedMpns: string[]): Promise<{
 
       evaluated++;
 
-      // Correction 3 — if product is mid-cadence on older rule version, skip and
-      // only update last_evaluated_at
+      // Mid-cadence skip (UNCHANGED)
       const assignRef = db().collection("cadence_assignments").doc(docId);
       const existingSnap = await assignRef.get();
       const existing = existingSnap.exists ? existingSnap.data()! : null;
@@ -436,33 +567,60 @@ export async function runCadenceEvaluation(importedMpns: string[]): Promise<{
         }
       }
 
+      // No rule matched
       if (matched.length === 0) {
-        await writeUnassigned(mpn);
+        await writeUnassigned(mpn, { reason: "no_rule_match" });
         unassigned++;
         continue;
       }
 
+      // Resolve winning rule via specificity (existing logic)
+      let winningRule: CadenceRule;
       if (matched.length === 1) {
-        await writeAssignment(mpn, matched[0], signals, product);
-        assigned++;
+        winningRule = matched[0];
+      } else {
+        matched.sort(
+          (a, b) =>
+            (b.target_filters?.length || 0) - (a.target_filters?.length || 0)
+        );
+        const topSpec = matched[0].target_filters?.length || 0;
+        const topMatches = matched.filter(
+          (r) => (r.target_filters?.length || 0) === topSpec
+        );
+        if (topMatches.length > 1) {
+          // Rule conflict — buyer resolution NOT attempted
+          await writeConflictAssignment(mpn, topMatches);
+          conflicts++;
+          continue;
+        }
+        winningRule = matched[0];
+      }
+
+      // Track 2 — resolve buyer for the product
+      const buyerRes = resolveBuyerForProduct(product, buyers);
+
+      if (buyerRes.result === "no_buyer_match") {
+        await writeUnassigned(mpn, { reason: "no_buyer_match" });
+        unassigned++;
+        continue;
+      }
+      if (buyerRes.result === "buyer_conflict") {
+        await writeUnassigned(mpn, {
+          reason: "buyer_conflict",
+          candidate_user_ids: buyerRes.candidate_user_ids,
+        });
+        unassigned++;
         continue;
       }
 
-      // Multiple matches — most specific wins; equal specificity → conflict
-      matched.sort(
-        (a, b) =>
-          (b.target_filters?.length || 0) - (a.target_filters?.length || 0)
+      // Single matched buyer — write assignment
+      await writeAssignment(
+        mpn,
+        winningRule,
+        signals,
+        product,
+        buyerRes.assigned_user_id
       );
-      const topSpec = matched[0].target_filters?.length || 0;
-      const topMatches = matched.filter(
-        (r) => (r.target_filters?.length || 0) === topSpec
-      );
-      if (topMatches.length > 1) {
-        await writeConflictAssignment(mpn, topMatches);
-        conflicts++;
-        continue;
-      }
-      await writeAssignment(mpn, matched[0], signals, product);
       assigned++;
     } catch (err: any) {
       console.error(`runCadenceEvaluation error for ${mpn}:`, err.message);

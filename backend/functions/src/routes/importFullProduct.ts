@@ -553,6 +553,20 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             await productRef.set(mapped.top_level, { merge: true });
           }
 
+          // Track 2 — mirror age_group onto product top-level for cadence portfolio matching
+          // Source of truth: attribute_values.age_group (set in Step C.6 above)
+          // Consumer: cadenceEngine.resolveBuyerForProduct (top-level read, fail-closed)
+          const ageGroupForMirror =
+            mapped.attributes?.age_group ||
+            mapped.attributes?.age_group_detail ||
+            "";
+          if (ageGroupForMirror) {
+            await productRef.set(
+              { age_group: ageGroupForMirror },
+              { merge: true }
+            );
+          }
+
           // Stamp search_tokens for database-side text search.
           // This is what makes search work with pagination — Firestore has
           // no LIKE/CONTAINS, so we precompute the token set instead of
