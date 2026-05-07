@@ -16,6 +16,7 @@ import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
+import { loadRegistryAuthority } from "../lib/registryAuthority";
 
 // Phase 3.12 Track 1A — portfolio field set + exclusion dimensions.
 // Track 1C — added portfolio_gender + 'gender' exclusion dimension.
@@ -30,41 +31,6 @@ const PORTFOLIO_FIELDS = [
 const LEGACY_PORTFOLIO_FIELDS = ["departments", "site_scope", "gender_scope"] as const;
 const EXCLUSION_DIMENSIONS = ["brand", "department", "class", "site", "age_group", "gender"] as const;
 type ExclusionDimension = (typeof EXCLUSION_DIMENSIONS)[number];
-
-// Authority sources per dimension. Brand/department/site dimensions read
-// document IDs from their respective registry collection FILTERED to
-// is_active === true (Track 1C). Class/age_group/gender dimensions read
-// `dropdown_options` from the corresponding `attribute_registry` doc
-// (same convention as product attribute editing).
-async function loadRegistryAuthority(): Promise<{
-  brand: Set<string>;
-  department: Set<string>;
-  site: Set<string>;
-  class: Set<string>;
-  age_group: Set<string>;
-  gender: Set<string>;
-}> {
-  const fs = admin.firestore();
-  const [brandSnap, deptSnap, siteSnap, classDoc, ageDoc, genderDoc] = await Promise.all([
-    fs.collection("brand_registry").where("is_active", "==", true).get(),
-    fs.collection("department_registry").where("is_active", "==", true).get(),
-    fs.collection("site_registry").where("is_active", "==", true).get(),
-    fs.collection("attribute_registry").doc("class").get(),
-    fs.collection("attribute_registry").doc("age_group").get(),
-    fs.collection("attribute_registry").doc("gender").get(),
-  ]);
-  const classOpts = ((classDoc.data() || {}).dropdown_options || []) as string[];
-  const ageOpts = ((ageDoc.data() || {}).dropdown_options || []) as string[];
-  const genderOpts = ((genderDoc.data() || {}).dropdown_options || []) as string[];
-  return {
-    brand: new Set(brandSnap.docs.map((d) => d.id)),
-    department: new Set(deptSnap.docs.map((d) => d.id)),
-    site: new Set(siteSnap.docs.map((d) => d.id)),
-    class: new Set(classOpts),
-    age_group: new Set(ageOpts),
-    gender: new Set(genderOpts),
-  };
-}
 
 function sample(set: Set<string>, n = 5): string[] {
   return Array.from(set).slice(0, n);
