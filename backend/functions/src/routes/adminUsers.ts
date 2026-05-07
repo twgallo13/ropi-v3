@@ -18,44 +18,51 @@ import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 
 // Phase 3.12 Track 1A — portfolio field set + exclusion dimensions.
+// Track 1C — added portfolio_gender + 'gender' exclusion dimension.
 const PORTFOLIO_FIELDS = [
   "portfolio_brands",
   "portfolio_depts",
   "portfolio_sites",
   "portfolio_age_groups",
+  "portfolio_gender",
   "portfolio_exclusions",
 ] as const;
-const LEGACY_PORTFOLIO_FIELDS = ["departments", "site_scope"] as const;
-const EXCLUSION_DIMENSIONS = ["brand", "department", "class", "site", "age_group"] as const;
+const LEGACY_PORTFOLIO_FIELDS = ["departments", "site_scope", "gender_scope"] as const;
+const EXCLUSION_DIMENSIONS = ["brand", "department", "class", "site", "age_group", "gender"] as const;
 type ExclusionDimension = (typeof EXCLUSION_DIMENSIONS)[number];
 
 // Authority sources per dimension. Brand/department/site dimensions read
-// document IDs from their respective registry collection. Class/age_group
-// dimensions read `dropdown_options` from the corresponding
-// `attribute_registry` doc (same convention as product attribute editing).
+// document IDs from their respective registry collection FILTERED to
+// is_active === true (Track 1C). Class/age_group/gender dimensions read
+// `dropdown_options` from the corresponding `attribute_registry` doc
+// (same convention as product attribute editing).
 async function loadRegistryAuthority(): Promise<{
   brand: Set<string>;
   department: Set<string>;
   site: Set<string>;
   class: Set<string>;
   age_group: Set<string>;
+  gender: Set<string>;
 }> {
   const fs = admin.firestore();
-  const [brandSnap, deptSnap, siteSnap, classDoc, ageDoc] = await Promise.all([
-    fs.collection("brand_registry").get(),
-    fs.collection("department_registry").get(),
-    fs.collection("site_registry").get(),
+  const [brandSnap, deptSnap, siteSnap, classDoc, ageDoc, genderDoc] = await Promise.all([
+    fs.collection("brand_registry").where("is_active", "==", true).get(),
+    fs.collection("department_registry").where("is_active", "==", true).get(),
+    fs.collection("site_registry").where("is_active", "==", true).get(),
     fs.collection("attribute_registry").doc("class").get(),
     fs.collection("attribute_registry").doc("age_group").get(),
+    fs.collection("attribute_registry").doc("gender").get(),
   ]);
   const classOpts = ((classDoc.data() || {}).dropdown_options || []) as string[];
   const ageOpts = ((ageDoc.data() || {}).dropdown_options || []) as string[];
+  const genderOpts = ((genderDoc.data() || {}).dropdown_options || []) as string[];
   return {
     brand: new Set(brandSnap.docs.map((d) => d.id)),
     department: new Set(deptSnap.docs.map((d) => d.id)),
     site: new Set(siteSnap.docs.map((d) => d.id)),
     class: new Set(classOpts),
     age_group: new Set(ageOpts),
+    gender: new Set(genderOpts),
   };
 }
 
@@ -128,6 +135,14 @@ async function validatePortfolioFields(payload: Record<string, unknown>): Promis
       "attribute_registry/age_group.dropdown_options"
     );
   }
+  if (payload.portfolio_gender !== undefined) {
+    checkArray(
+      "portfolio_gender",
+      "gender",
+      payload.portfolio_gender,
+      "attribute_registry/gender.dropdown_options"
+    );
+  }
   if (payload.portfolio_exclusions !== undefined) {
     const excl = payload.portfolio_exclusions;
     if (excl === null) return;
@@ -157,6 +172,8 @@ async function validatePortfolioFields(payload: Record<string, unknown>): Promis
           ? "site_registry"
           : dimension === "class"
           ? "attribute_registry/class.dropdown_options"
+          : dimension === "gender"
+          ? "attribute_registry/gender.dropdown_options"
           : "attribute_registry/age_group.dropdown_options";
       if (!Array.isArray(vals)) {
         throw new PortfolioValidationError({
@@ -184,7 +201,12 @@ async function validatePortfolioFields(payload: Record<string, unknown>): Promis
 function rejectLegacyPortfolioFields(body: Record<string, unknown>): { ok: true } | { ok: false; error: string; field: string } {
   for (const f of LEGACY_PORTFOLIO_FIELDS) {
     if (f in body) {
-      const replacement = f === "departments" ? "portfolio_depts" : "portfolio_sites";
+      const replacement =
+        f === "departments"
+          ? "portfolio_depts"
+          : f === "site_scope"
+          ? "portfolio_sites"
+          : "portfolio_gender";
       return {
         ok: false,
         field: f,
@@ -295,6 +317,7 @@ router.get(
           portfolio_depts: data.portfolio_depts ?? [],
           portfolio_sites: data.portfolio_sites ?? [],
           portfolio_age_groups: data.portfolio_age_groups ?? [],
+          portfolio_gender: data.portfolio_gender ?? [],
           portfolio_exclusions: data.portfolio_exclusions ?? {},
           disabled: data.disabled === true,
           created_at: data.created_at?.toDate?.().toISOString() || null,
@@ -328,6 +351,7 @@ router.post(
         portfolio_depts,
         portfolio_sites,
         portfolio_age_groups,
+        portfolio_gender,
         portfolio_exclusions,
       } = req.body || {};
       if (!email || !display_name || !role) {
@@ -377,6 +401,7 @@ router.post(
           portfolio_depts: portfolio_depts ?? [],
           portfolio_sites: portfolio_sites ?? [],
           portfolio_age_groups: portfolio_age_groups ?? [],
+          portfolio_gender: portfolio_gender ?? [],
           portfolio_exclusions: portfolio_exclusions ?? {},
           requires_review: false,
           created_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -393,6 +418,7 @@ router.post(
           portfolio_depts_count: arrayLen(portfolio_depts),
           portfolio_sites_count: arrayLen(portfolio_sites),
           portfolio_age_groups_count: arrayLen(portfolio_age_groups),
+          portfolio_gender_count: arrayLen(portfolio_gender),
           portfolio_exclusions_dimensions:
             portfolio_exclusions && typeof portfolio_exclusions === "object"
               ? Object.keys(portfolio_exclusions)
@@ -427,6 +453,7 @@ router.put(
         portfolio_depts,
         portfolio_sites,
         portfolio_age_groups,
+        portfolio_gender,
         portfolio_exclusions,
       } = req.body || {};
 
@@ -464,6 +491,7 @@ router.put(
       if (portfolio_depts !== undefined) update.portfolio_depts = portfolio_depts;
       if (portfolio_sites !== undefined) update.portfolio_sites = portfolio_sites;
       if (portfolio_age_groups !== undefined) update.portfolio_age_groups = portfolio_age_groups;
+      if (portfolio_gender !== undefined) update.portfolio_gender = portfolio_gender;
       if (portfolio_exclusions !== undefined) update.portfolio_exclusions = portfolio_exclusions;
       if (display_name !== undefined) {
         await admin.auth().updateUser(uid, { displayName: display_name });

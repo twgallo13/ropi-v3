@@ -377,6 +377,7 @@ function AddUserModal({
   const [portfolioDepts, setPortfolioDepts] = useState<string[]>([]);
   const [portfolioSites, setPortfolioSites] = useState<string[]>([]);
   const [portfolioAgeGroups, setPortfolioAgeGroups] = useState<string[]>([]);
+  const [portfolioGender, setPortfolioGender] = useState<string[]>([]);
   const [portfolioExclusions, setPortfolioExclusions] = useState<ExclusionsMap>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -395,6 +396,7 @@ function AddUserModal({
         portfolio_depts: portfolioDepts,
         portfolio_sites: portfolioSites,
         portfolio_age_groups: portfolioAgeGroups,
+        portfolio_gender: portfolioGender,
         portfolio_exclusions: portfolioExclusions,
       });
       setTempPw(r.temp_password);
@@ -488,12 +490,14 @@ function AddUserModal({
             portfolioDepts={portfolioDepts}
             portfolioSites={portfolioSites}
             portfolioAgeGroups={portfolioAgeGroups}
+            portfolioGender={portfolioGender}
             portfolioExclusions={portfolioExclusions}
             onChange={(patch) => {
               if (patch.portfolio_brands !== undefined) setPortfolioBrands(patch.portfolio_brands);
               if (patch.portfolio_depts !== undefined) setPortfolioDepts(patch.portfolio_depts);
               if (patch.portfolio_sites !== undefined) setPortfolioSites(patch.portfolio_sites);
               if (patch.portfolio_age_groups !== undefined) setPortfolioAgeGroups(patch.portfolio_age_groups);
+              if (patch.portfolio_gender !== undefined) setPortfolioGender(patch.portfolio_gender);
               if (patch.portfolio_exclusions !== undefined) setPortfolioExclusions(patch.portfolio_exclusions);
             }}
           />
@@ -548,6 +552,7 @@ function EditUserModal({
   const initialDepts = Array.isArray(user.portfolio_depts) ? user.portfolio_depts : [];
   const initialSites = Array.isArray(user.portfolio_sites) ? user.portfolio_sites : [];
   const initialAgeGroups = Array.isArray(user.portfolio_age_groups) ? user.portfolio_age_groups : [];
+  const initialGender = Array.isArray(user.portfolio_gender) ? user.portfolio_gender : [];
   const initialExclusions: ExclusionsMap =
     user.portfolio_exclusions && typeof user.portfolio_exclusions === "object"
       ? user.portfolio_exclusions
@@ -559,6 +564,7 @@ function EditUserModal({
   const [portfolioDepts, setPortfolioDepts] = useState<string[]>(initialDepts);
   const [portfolioSites, setPortfolioSites] = useState<string[]>(initialSites);
   const [portfolioAgeGroups, setPortfolioAgeGroups] = useState<string[]>(initialAgeGroups);
+  const [portfolioGender, setPortfolioGender] = useState<string[]>(initialGender);
   const [portfolioExclusions, setPortfolioExclusions] = useState<ExclusionsMap>(initialExclusions);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -590,6 +596,7 @@ function EditUserModal({
         portfolio_depts: string[] | null;
         portfolio_sites: string[] | null;
         portfolio_age_groups: string[] | null;
+        portfolio_gender: string[] | null;
         portfolio_exclusions: { [dim: string]: string[] } | null;
       }> = {};
 
@@ -614,6 +621,9 @@ function EditUserModal({
       }
       if (!arrayEqual(portfolioAgeGroups, initialAgeGroups)) {
         body.portfolio_age_groups = portfolioAgeGroups;
+      }
+      if (!arrayEqual(portfolioGender, initialGender)) {
+        body.portfolio_gender = portfolioGender;
       }
       if (!exclusionsEqual(portfolioExclusions, initialExclusions)) {
         body.portfolio_exclusions = portfolioExclusions;
@@ -675,12 +685,14 @@ function EditUserModal({
           portfolioDepts={portfolioDepts}
           portfolioSites={portfolioSites}
           portfolioAgeGroups={portfolioAgeGroups}
+          portfolioGender={portfolioGender}
           portfolioExclusions={portfolioExclusions}
           onChange={(patch) => {
             if (patch.portfolio_brands !== undefined) setPortfolioBrands(patch.portfolio_brands);
             if (patch.portfolio_depts !== undefined) setPortfolioDepts(patch.portfolio_depts);
             if (patch.portfolio_sites !== undefined) setPortfolioSites(patch.portfolio_sites);
             if (patch.portfolio_age_groups !== undefined) setPortfolioAgeGroups(patch.portfolio_age_groups);
+            if (patch.portfolio_gender !== undefined) setPortfolioGender(patch.portfolio_gender);
             if (patch.portfolio_exclusions !== undefined) setPortfolioExclusions(patch.portfolio_exclusions);
           }}
         />

@@ -1,12 +1,13 @@
 /**
  * Phase 3.12 Track 1B — PortfolioExclusionsEditor.
  *
- * Nested editor for `portfolio_exclusions` map. Renders 5 RegistryMultiSelect
- * (one per dimension D7: brand, department, class, site, age_group).
+ * Nested editor for `portfolio_exclusions` map. Renders 6 RegistryMultiSelect
+ * (one per dimension D7 + Track 1C gender: brand, department, class, site,
+ * age_group, gender).
  *
  * Default-collapsed since exclusions are uncommon. Brand / dept / site /
- * age_group option lists come from the parent (UserPortfolioEditor) to
- * avoid double-fetching. Class options are fetched here.
+ * age_group / gender option lists come from the parent (UserPortfolioEditor)
+ * to avoid double-fetching. Class options are fetched here.
  */
 import { useEffect, useState } from "react";
 import { RegistryMultiSelect, type RegistryMultiSelectOption } from "./RegistryMultiSelect";
@@ -21,14 +22,17 @@ export interface PortfolioExclusionsEditorProps {
   deptOptions: RegistryMultiSelectOption[];
   siteOptions: RegistryMultiSelectOption[];
   ageGroupOptions: RegistryMultiSelectOption[];
+  genderOptions: RegistryMultiSelectOption[];
   brandLoading?: boolean;
   deptLoading?: boolean;
   siteLoading?: boolean;
   ageGroupLoading?: boolean;
+  genderLoading?: boolean;
   brandError?: string | null;
   deptError?: string | null;
   siteError?: string | null;
   ageGroupError?: string | null;
+  genderError?: string | null;
 }
 
 export function PortfolioExclusionsEditor({
@@ -38,14 +42,17 @@ export function PortfolioExclusionsEditor({
   deptOptions,
   siteOptions,
   ageGroupOptions,
+  genderOptions,
   brandLoading,
   deptLoading,
   siteLoading,
   ageGroupLoading,
+  genderLoading,
   brandError,
   deptError,
   siteError,
   ageGroupError,
+  genderError,
 }: PortfolioExclusionsEditorProps) {
   // Default-collapsed unless any dimension already has a value (so existing
   // exclusions are visible on open).
@@ -144,6 +151,14 @@ export function PortfolioExclusionsEditor({
             options={ageGroupOptions}
             loading={ageGroupLoading}
             error={ageGroupError ?? null}
+          />
+          <RegistryMultiSelect
+            label="Exclude Genders"
+            value={value?.gender || []}
+            onChange={(next) => patch("gender", next)}
+            options={genderOptions}
+            loading={genderLoading}
+            error={genderError ?? null}
           />
         </>
       )}

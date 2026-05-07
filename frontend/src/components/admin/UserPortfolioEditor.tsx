@@ -1,13 +1,13 @@
 /**
  * Phase 3.12 Track 1B — UserPortfolioEditor.
  *
- * Domain composition. Renders all 4 portfolio_* RegistryMultiSelect plus
- * nested PortfolioExclusionsEditor. Single Promise.all fetches all 4
+ * Domain composition. Renders all 5 portfolio_* RegistryMultiSelect plus
+ * nested PortfolioExclusionsEditor. Single Promise.all fetches all 5
  * registry option lists on mount; lists are passed through to the
- * exclusions editor to avoid double-fetching brand/dept/site/age_group.
+ * exclusions editor to avoid double-fetching.
  *
  * D1 fields: portfolio_brands, portfolio_depts, portfolio_sites,
- * portfolio_age_groups (arrays); portfolio_exclusions (map).
+ * portfolio_age_groups, portfolio_gender (arrays); portfolio_exclusions (map).
  */
 import { useEffect, useState } from "react";
 import { RegistryMultiSelect, type RegistryMultiSelectOption } from "./RegistryMultiSelect";
@@ -17,6 +17,7 @@ import {
   fetchDepartmentRegistry,
   fetchSiteRegistry,
   fetchAgeGroupOptions,
+  fetchGenderOptions,
 } from "../../lib/api";
 
 export interface UserPortfolioEditorPatch {
@@ -24,6 +25,7 @@ export interface UserPortfolioEditorPatch {
   portfolio_depts?: string[];
   portfolio_sites?: string[];
   portfolio_age_groups?: string[];
+  portfolio_gender?: string[];
   portfolio_exclusions?: ExclusionsMap;
 }
 
@@ -32,6 +34,7 @@ export interface UserPortfolioEditorProps {
   portfolioDepts: string[];
   portfolioSites: string[];
   portfolioAgeGroups: string[];
+  portfolioGender: string[];
   portfolioExclusions: ExclusionsMap;
   onChange: (patch: UserPortfolioEditorPatch) => void;
 }
@@ -49,6 +52,7 @@ export function UserPortfolioEditor({
   portfolioDepts,
   portfolioSites,
   portfolioAgeGroups,
+  portfolioGender,
   portfolioExclusions,
   onChange,
 }: UserPortfolioEditorProps) {
@@ -56,6 +60,7 @@ export function UserPortfolioEditor({
   const [depts, setDepts] = useState<RegistryState>(initialState);
   const [sites, setSites] = useState<RegistryState>(initialState);
   const [ageGroups, setAgeGroups] = useState<RegistryState>(initialState);
+  const [gender, setGender] = useState<RegistryState>(initialState);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +98,10 @@ export function UserPortfolioEditor({
     fetchAgeGroupOptions()
       .then((opts) => setOK(setAgeGroups, opts))
       .catch((e) => setErr(setAgeGroups, e));
+
+    fetchGenderOptions()
+      .then((opts) => setOK(setGender, opts))
+      .catch((e) => setErr(setGender, e));
 
     return () => {
       cancelled = true;
@@ -134,6 +143,14 @@ export function UserPortfolioEditor({
         loading={ageGroups.loading}
         error={ageGroups.error}
       />
+      <RegistryMultiSelect
+        label="Gender"
+        value={portfolioGender}
+        onChange={(next) => onChange({ portfolio_gender: next })}
+        options={gender.options}
+        loading={gender.loading}
+        error={gender.error}
+      />
       <PortfolioExclusionsEditor
         value={portfolioExclusions}
         onChange={(next) => onChange({ portfolio_exclusions: next })}
@@ -141,14 +158,17 @@ export function UserPortfolioEditor({
         deptOptions={depts.options}
         siteOptions={sites.options}
         ageGroupOptions={ageGroups.options}
+        genderOptions={gender.options}
         brandLoading={brands.loading}
         deptLoading={depts.loading}
         siteLoading={sites.loading}
         ageGroupLoading={ageGroups.loading}
+        genderLoading={gender.loading}
         brandError={brands.error}
         deptError={depts.error}
         siteError={sites.error}
         ageGroupError={ageGroups.error}
+        genderError={gender.error}
       />
     </div>
   );
