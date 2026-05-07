@@ -297,6 +297,16 @@ export async function fetchClassOptions(): Promise<
   return (entry.dropdown_options || []).map((v) => ({ value: v, label: v }));
 }
 
+// Phase 3.12 Track 1C — gender dropdown options for Admin Portfolio editor.
+export async function fetchGenderOptions(): Promise<
+  Array<{ value: string; label: string }>
+> {
+  const registry = await fetchAttributeRegistry();
+  const entry = registry.find((e) => e.field_key === "gender");
+  if (!entry) return [];
+  return (entry.dropdown_options || []).map((v) => ({ value: v, label: v }));
+}
+
 export interface SaveFieldResponse {
   field_key: string;
   value: unknown;
@@ -2583,6 +2593,7 @@ export interface AdminUser {
   portfolio_depts?: string[];
   portfolio_sites?: string[];
   portfolio_age_groups?: string[];
+  portfolio_gender?: string[];
   portfolio_exclusions?: { [dimension: string]: string[] };
   disabled?: boolean;
   created_at?: string | null;
@@ -2605,6 +2616,7 @@ export async function createAdminUser(body: {
   portfolio_depts?: string[];
   portfolio_sites?: string[];
   portfolio_age_groups?: string[];
+  portfolio_gender?: string[];
   portfolio_exclusions?: { [dimension: string]: string[] };
 }): Promise<{ uid: string; temp_password: string }> {
   const res = await fetch(`${BASE}/api/v1/admin/users`, {
@@ -2626,6 +2638,7 @@ export async function updateAdminUser(
     portfolio_depts: string[] | null;
     portfolio_sites: string[] | null;
     portfolio_age_groups: string[] | null;
+    portfolio_gender: string[] | null;
     portfolio_exclusions: { [dimension: string]: string[] } | null;
   }>
 ): Promise<{ ok: boolean }> {
