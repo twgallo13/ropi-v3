@@ -23,13 +23,13 @@ import {
   disableAdminUser,
   reenableAdminUser,
   resetAdminUserPassword,
-  fetchSiteRegistry,
   fetchRoleOptions,
   type AdminUser,
-  type SiteRegistryEntry,
   type RoleOption,
 } from "../lib/api";
 import { ConfirmModal } from "../components/admin";
+import { UserPortfolioEditor } from "../components/admin/UserPortfolioEditor";
+import type { ExclusionsMap } from "../components/admin/PortfolioExclusionsEditor";
 
 export default function UserManagementPage() {
   const { role, loading: authLoading } = useAuth();
@@ -371,15 +371,16 @@ function AddUserModal({
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("buyer");
-  const [departments, setDepartments] = useState("");
-  const [siteScope, setSiteScope] = useState<string[]>([]);
-  const [siteOptions, setSiteOptions] = useState<SiteRegistryEntry[]>([]);
+  // Phase 3.12 Track 1B — portfolio_* state replaces departments comma-text
+  // and site_scope checkbox row. All locked-options multi-selects.
+  const [portfolioBrands, setPortfolioBrands] = useState<string[]>([]);
+  const [portfolioDepts, setPortfolioDepts] = useState<string[]>([]);
+  const [portfolioSites, setPortfolioSites] = useState<string[]>([]);
+  const [portfolioAgeGroups, setPortfolioAgeGroups] = useState<string[]>([]);
+  const [portfolioExclusions, setPortfolioExclusions] = useState<ExclusionsMap>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchSiteRegistry(true).then(setSiteOptions).catch(() => {});
-  }, []);
   const [tempPw, setTempPw] = useState<string | null>(null);
 
   async function submit() {
@@ -390,10 +391,11 @@ function AddUserModal({
         email: email.trim(),
         display_name: displayName.trim(),
         role,
-        departments: departments
-          ? departments.split(",").map((s) => s.trim()).filter(Boolean)
-          : undefined,
-        site_scope: siteScope.length ? siteScope : undefined,
+        portfolio_brands: portfolioBrands,
+        portfolio_depts: portfolioDepts,
+        portfolio_sites: portfolioSites,
+        portfolio_age_groups: portfolioAgeGroups,
+        portfolio_exclusions: portfolioExclusions,
       });
       setTempPw(r.temp_password);
     } catch (e: any) {
@@ -481,34 +483,20 @@ function AddUserModal({
               </div>
             )}
           </Field>
-          <Field label="Departments (comma separated)">
-            <input
-              value={departments}
-              onChange={(e) => setDepartments(e.target.value)}
-              placeholder="footwear, accessories"
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Site Scope">
-            <div className="flex gap-3 text-sm">
-              {siteOptions.map((s) => (
-                <label key={s.site_key} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={siteScope.includes(s.site_key)}
-                    onChange={(e) =>
-                      setSiteScope((prev) =>
-                        e.target.checked
-                          ? [...prev, s.site_key]
-                          : prev.filter((x) => x !== s.site_key)
-                      )
-                    }
-                  />
-                  {s.display_name}
-                </label>
-              ))}
-            </div>
-          </Field>
+          <UserPortfolioEditor
+            portfolioBrands={portfolioBrands}
+            portfolioDepts={portfolioDepts}
+            portfolioSites={portfolioSites}
+            portfolioAgeGroups={portfolioAgeGroups}
+            portfolioExclusions={portfolioExclusions}
+            onChange={(patch) => {
+              if (patch.portfolio_brands !== undefined) setPortfolioBrands(patch.portfolio_brands);
+              if (patch.portfolio_depts !== undefined) setPortfolioDepts(patch.portfolio_depts);
+              if (patch.portfolio_sites !== undefined) setPortfolioSites(patch.portfolio_sites);
+              if (patch.portfolio_age_groups !== undefined) setPortfolioAgeGroups(patch.portfolio_age_groups);
+              if (patch.portfolio_exclusions !== undefined) setPortfolioExclusions(patch.portfolio_exclusions);
+            }}
+          />
           <div className="flex justify-end gap-2 pt-3">
             <button
               onClick={onClose}
@@ -553,40 +541,42 @@ function EditUserModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  // A.4 Tier 2.1 — per Q6 live shape (PR #43), departments + site_scope
-  // can be undefined / null / array. Normalize to array for state init.
-  const initialDepartments = Array.isArray(user.departments)
-    ? user.departments.join(", ")
-    : "";
-  const initialSiteScope = Array.isArray(user.site_scope) ? user.site_scope : [];
+  // Phase 3.12 Track 1B — portfolio_* schema. Track 1A migration left some
+  // pre-migration users with `departments: null`; the GET endpoint normalizes
+  // to []. Carry-over null still possible from old client cache; normalize here.
+  const initialBrands = Array.isArray(user.portfolio_brands) ? user.portfolio_brands : [];
+  const initialDepts = Array.isArray(user.portfolio_depts) ? user.portfolio_depts : [];
+  const initialSites = Array.isArray(user.portfolio_sites) ? user.portfolio_sites : [];
+  const initialAgeGroups = Array.isArray(user.portfolio_age_groups) ? user.portfolio_age_groups : [];
+  const initialExclusions: ExclusionsMap =
+    user.portfolio_exclusions && typeof user.portfolio_exclusions === "object"
+      ? user.portfolio_exclusions
+      : {};
 
   const [displayName, setDisplayName] = useState(user.display_name || "");
   const [role, setRole] = useState(user.role || "buyer");
-  const [departments, setDepartments] = useState(initialDepartments);
-  const [siteScope, setSiteScope] = useState<string[]>(initialSiteScope);
-  const [siteOptions, setSiteOptions] = useState<SiteRegistryEntry[]>([]);
+  const [portfolioBrands, setPortfolioBrands] = useState<string[]>(initialBrands);
+  const [portfolioDepts, setPortfolioDepts] = useState<string[]>(initialDepts);
+  const [portfolioSites, setPortfolioSites] = useState<string[]>(initialSites);
+  const [portfolioAgeGroups, setPortfolioAgeGroups] = useState<string[]>(initialAgeGroups);
+  const [portfolioExclusions, setPortfolioExclusions] = useState<ExclusionsMap>(initialExclusions);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchSiteRegistry(true).then(setSiteOptions).catch(() => {});
-  }, []);
-
-  // A.4 Tier 2.1 — split-trim-filter on submit; matches AddUserModal exactly.
-  function parseDepartments(raw: string): string[] {
-    return raw
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-
-  // Helper: detect array-vs-array equality regardless of order? Spec says
-  // send if changed. We use JSON-stringify of sorted copy for stable diff.
+  // Helper: order-insensitive array equality for stable diffing.
   function arrayEqual(a: string[], b: string[]): boolean {
     if (a.length !== b.length) return false;
     const sa = [...a].sort();
     const sb = [...b].sort();
     return sa.every((v, i) => v === sb[i]);
+  }
+
+  function exclusionsEqual(a: ExclusionsMap, b: ExclusionsMap): boolean {
+    const ak = Object.keys(a || {}).sort();
+    const bk = Object.keys(b || {}).sort();
+    if (ak.length !== bk.length) return false;
+    if (!ak.every((k, i) => k === bk[i])) return false;
+    return ak.every((k) => arrayEqual(a[k] || [], b[k] || []));
   }
 
   async function submit() {
@@ -596,8 +586,11 @@ function EditUserModal({
       const body: Partial<{
         display_name: string;
         role: string;
-        departments: string[] | null;
-        site_scope: string[] | null;
+        portfolio_brands: string[] | null;
+        portfolio_depts: string[] | null;
+        portfolio_sites: string[] | null;
+        portfolio_age_groups: string[] | null;
+        portfolio_exclusions: { [dim: string]: string[] } | null;
       }> = {};
 
       const trimmedName = displayName.trim();
@@ -608,18 +601,22 @@ function EditUserModal({
         body.role = role;
       }
 
-      // A.4 Tier 2.1 — departments diff. Send array if non-empty; send null
-      // to explicitly clear; omit if unchanged.
-      const newDepartments = parseDepartments(departments);
-      const oldDepartments = Array.isArray(user.departments) ? user.departments : [];
-      if (!arrayEqual(newDepartments, oldDepartments)) {
-        body.departments = newDepartments.length > 0 ? newDepartments : null;
+      // Partial-diff: only send portfolio_* fields whose value changed.
+      // Empty array is a valid value (clears scope) — send [] not null.
+      if (!arrayEqual(portfolioBrands, initialBrands)) {
+        body.portfolio_brands = portfolioBrands;
       }
-
-      // A.4 Tier 2.1 — site_scope diff. Same rules.
-      const oldSiteScope = Array.isArray(user.site_scope) ? user.site_scope : [];
-      if (!arrayEqual(siteScope, oldSiteScope)) {
-        body.site_scope = siteScope.length > 0 ? siteScope : null;
+      if (!arrayEqual(portfolioDepts, initialDepts)) {
+        body.portfolio_depts = portfolioDepts;
+      }
+      if (!arrayEqual(portfolioSites, initialSites)) {
+        body.portfolio_sites = portfolioSites;
+      }
+      if (!arrayEqual(portfolioAgeGroups, initialAgeGroups)) {
+        body.portfolio_age_groups = portfolioAgeGroups;
+      }
+      if (!exclusionsEqual(portfolioExclusions, initialExclusions)) {
+        body.portfolio_exclusions = portfolioExclusions;
       }
 
       await updateAdminUser(user.uid, body);
@@ -673,34 +670,20 @@ function EditUserModal({
             </div>
           )}
         </Field>
-        <Field label="Departments (comma separated)">
-          <input
-            value={departments}
-            onChange={(e) => setDepartments(e.target.value)}
-            placeholder="footwear, accessories"
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Site Scope">
-          <div className="flex gap-3 text-sm">
-            {siteOptions.map((s) => (
-              <label key={s.site_key} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={siteScope.includes(s.site_key)}
-                  onChange={(e) =>
-                    setSiteScope((prev) =>
-                      e.target.checked
-                        ? [...prev, s.site_key]
-                        : prev.filter((x) => x !== s.site_key)
-                    )
-                  }
-                />
-                {s.display_name}
-              </label>
-            ))}
-          </div>
-        </Field>
+        <UserPortfolioEditor
+          portfolioBrands={portfolioBrands}
+          portfolioDepts={portfolioDepts}
+          portfolioSites={portfolioSites}
+          portfolioAgeGroups={portfolioAgeGroups}
+          portfolioExclusions={portfolioExclusions}
+          onChange={(patch) => {
+            if (patch.portfolio_brands !== undefined) setPortfolioBrands(patch.portfolio_brands);
+            if (patch.portfolio_depts !== undefined) setPortfolioDepts(patch.portfolio_depts);
+            if (patch.portfolio_sites !== undefined) setPortfolioSites(patch.portfolio_sites);
+            if (patch.portfolio_age_groups !== undefined) setPortfolioAgeGroups(patch.portfolio_age_groups);
+            if (patch.portfolio_exclusions !== undefined) setPortfolioExclusions(patch.portfolio_exclusions);
+          }}
+        />
         <div className="flex justify-end gap-2 pt-3">
           <button
             onClick={onClose}

@@ -275,6 +275,28 @@ export async function fetchAttributeRegistry(
   return data.attributes as AttributeRegistryEntry[];
 }
 
+// Phase 3.12 Track 1B — convenience wrappers that resolve attribute_registry
+// dropdown_options for a single field_key into the {value, label} shape used
+// by RegistryMultiSelect. dropdown_options is `string[]` per
+// AttributeRegistryEntry; label === value.
+export async function fetchAgeGroupOptions(): Promise<
+  Array<{ value: string; label: string }>
+> {
+  const registry = await fetchAttributeRegistry();
+  const entry = registry.find((e) => e.field_key === "age_group");
+  if (!entry) return [];
+  return (entry.dropdown_options || []).map((v) => ({ value: v, label: v }));
+}
+
+export async function fetchClassOptions(): Promise<
+  Array<{ value: string; label: string }>
+> {
+  const registry = await fetchAttributeRegistry();
+  const entry = registry.find((e) => e.field_key === "class");
+  if (!entry) return [];
+  return (entry.dropdown_options || []).map((v) => ({ value: v, label: v }));
+}
+
 export interface SaveFieldResponse {
   field_key: string;
   value: unknown;
@@ -2548,13 +2570,20 @@ export async function fetchTourForHub(hub: string): Promise<TourDoc | null> {
 }
 
 // ── Step 4.2 — Admin Control Center ──
+// Phase 3.12 Track 1A — User doc schema rename: departments → portfolio_depts,
+// site_scope → portfolio_sites; net-new portfolio_brands / portfolio_age_groups
+// / portfolio_exclusions. Old field names hard-cutover at API (400). Track 1B
+// removes the old fields from the client type.
 export interface AdminUser {
   uid: string;
   email: string | null;
   display_name: string | null;
   role: string | null;
-  departments?: string[] | null;
-  site_scope?: string[] | null;
+  portfolio_brands?: string[];
+  portfolio_depts?: string[];
+  portfolio_sites?: string[];
+  portfolio_age_groups?: string[];
+  portfolio_exclusions?: { [dimension: string]: string[] };
   disabled?: boolean;
   created_at?: string | null;
 }
@@ -2572,8 +2601,11 @@ export async function createAdminUser(body: {
   email: string;
   display_name: string;
   role: string;
-  departments?: string[];
-  site_scope?: string[];
+  portfolio_brands?: string[];
+  portfolio_depts?: string[];
+  portfolio_sites?: string[];
+  portfolio_age_groups?: string[];
+  portfolio_exclusions?: { [dimension: string]: string[] };
 }): Promise<{ uid: string; temp_password: string }> {
   const res = await fetch(`${BASE}/api/v1/admin/users`, {
     method: "POST",
@@ -2590,8 +2622,11 @@ export async function updateAdminUser(
   body: Partial<{
     display_name: string;
     role: string;
-    departments: string[] | null;
-    site_scope: string[] | null;
+    portfolio_brands: string[] | null;
+    portfolio_depts: string[] | null;
+    portfolio_sites: string[] | null;
+    portfolio_age_groups: string[] | null;
+    portfolio_exclusions: { [dimension: string]: string[] } | null;
   }>
 ): Promise<{ ok: boolean }> {
   const res = await fetch(
