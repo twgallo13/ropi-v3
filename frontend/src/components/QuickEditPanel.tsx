@@ -115,6 +115,32 @@ function readAttrValue(detail: ProductDetail, key: FieldKey): string {
   return String(v);
 }
 
+// TALLY-138 — hydration converters: legacy `attribute_values` stores brand /
+// department as display_name; dropdown options now key on `brand_key` / `key`,
+// so convert at hydration. Falls back to raw value (existing inactive-option
+// branch in renderField will surface unmatched values as legacy entries).
+function displayToBrandKey(displayName: string, registry: BrandRegistryEntry[]): string {
+  if (!displayName) return "";
+  const norm = displayName.trim().toLowerCase();
+  const match = registry.find(
+    (b) =>
+      b.brand_key.toLowerCase() === norm ||
+      b.display_name.toLowerCase() === norm
+  );
+  return match?.brand_key || displayName;
+}
+
+function displayToDeptKey(displayName: string, registry: DepartmentRegistryEntry[]): string {
+  if (!displayName) return "";
+  const norm = displayName.trim().toLowerCase();
+  const match = registry.find(
+    (d) =>
+      d.key.toLowerCase() === norm ||
+      d.display_name.toLowerCase() === norm
+  );
+  return match?.key || displayName;
+}
+
 interface Props {
   mpn: string;
   brandRegistry: BrandRegistryEntry[];
@@ -154,8 +180,8 @@ export default function QuickEditPanel({
         if (cancelled) return;
         const next: Values = {
           product_name: readAttrValue(detail, "product_name") || detail.name || "",
-          brand: readAttrValue(detail, "brand"),
-          department: readAttrValue(detail, "department"),
+          brand: displayToBrandKey(readAttrValue(detail, "brand"), brandRegistry),
+          department: displayToDeptKey(readAttrValue(detail, "department"), departmentRegistry),
           site_owner: readAttrValue(detail, "site_owner"),
           scom: readAttrValue(detail, "scom"),
           scom_sale: readAttrValue(detail, "scom_sale"),
@@ -175,7 +201,7 @@ export default function QuickEditPanel({
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [mpn]);
+  }, [mpn, brandRegistry, departmentRegistry]);
 
   // ── Dirty tracking (trimmed-string-equal) ──
   const dirtyKeys = useMemo<FieldKey[]>(() => {
@@ -296,7 +322,8 @@ export default function QuickEditPanel({
     }
     if (field.kind === "brand") {
       const inOptions = brandRegistry.some(
-        (b) => b.display_name.toLowerCase() === (v || "").toLowerCase()
+        (b) => b.brand_key.toLowerCase() === (v || "").toLowerCase()
+          || b.display_name.toLowerCase() === (v || "").toLowerCase()
       );
       return (
         <select
@@ -310,7 +337,7 @@ export default function QuickEditPanel({
             <option value={v}>{v} (inactive)</option>
           )}
           {brandRegistry.map((b) => (
-            <option key={b.brand_key} value={b.display_name}>{b.display_name}</option>
+            <option key={b.brand_key} value={b.brand_key}>{b.display_name}</option>
           ))}
         </select>
       );
@@ -332,7 +359,7 @@ export default function QuickEditPanel({
             <option value={v}>{v} (inactive)</option>
           )}
           {departmentRegistry.map((d) => (
-            <option key={d.key} value={d.display_name}>{d.display_name}</option>
+            <option key={d.key} value={d.key}>{d.display_name}</option>
           ))}
         </select>
       );

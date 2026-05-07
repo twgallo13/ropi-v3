@@ -5,22 +5,29 @@ import {
   updateCadenceRule,
   deactivateCadenceRule,
   runAdminCadenceEvaluation,
+  fetchDepartmentRegistry,
+  fetchBrandRegistry,
+  fetchSiteRegistry,
+  fetchAttributeRegistry,
   type CadenceRule,
   type CadenceTargetFilter,
   type CadenceTriggerCondition,
   type CadenceMarkdownStep,
   type CadenceEvaluationResult,
+  type DepartmentRegistryEntry,
+  type BrandRegistryEntry,
+  type SiteRegistryEntry,
+  type AttributeRegistryEntry,
 } from "../lib/api";
 import { ConfirmModal } from "../components/admin";
 
 const TARGET_FIELDS = [
-  "department",
-  "brand",
+  "department_key",
+  "brand_key",
   "category",
   "class",
   "gender",
   "site_owner",
-  "season",
 ];
 const STRING_OPS = ["equals", "not_equals", "contains", "starts_with"];
 
@@ -59,7 +66,7 @@ function emptyDraft(): Draft {
     owner_buyer_id: "",
     owner_site_owner: "",
     target_filters: [
-      { field: "department", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
+      { field: "department_key", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
     ],
     trigger_conditions: [
       { field: "str_pct", operator: "less_than", value: 15, logic: "AND" },
@@ -84,6 +91,10 @@ function RuleEditor({
   onCancel,
   saving,
   error,
+  departmentRegistry,
+  brandRegistry,
+  siteRegistry,
+  attributeOptions,
 }: {
   draft: Draft;
   onChange: (d: Draft) => void;
@@ -91,6 +102,10 @@ function RuleEditor({
   onCancel: () => void;
   saving: boolean;
   error: string;
+  departmentRegistry: DepartmentRegistryEntry[];
+  brandRegistry: BrandRegistryEntry[];
+  siteRegistry: SiteRegistryEntry[];
+  attributeOptions: { [key: string]: string[] };
 }) {
   function updateFilter(i: number, patch: Partial<CadenceTargetFilter>) {
     const next = [...draft.target_filters];
@@ -102,7 +117,7 @@ function RuleEditor({
       ...draft,
       target_filters: [
         ...draft.target_filters,
-        { field: "brand", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
+        { field: "brand_key", operator: "equals", value: "", case_sensitive: true, logic: "AND" as const },
       ],
     });
   }
@@ -227,12 +242,58 @@ function RuleEditor({
                 </option>
               ))}
             </select>
-            <input
-              value={f.value}
-              onChange={(e) => updateFilter(i, { value: e.target.value })}
-              placeholder="value"
-              className="flex-1 border rounded px-2 py-1 text-sm"
-            />
+            {f.field === "department_key" ? (
+              <select
+                value={f.value}
+                onChange={(e) => updateFilter(i, { value: e.target.value })}
+                className="flex-1 border rounded px-2 py-1 text-sm"
+              >
+                <option value="">— Select Department —</option>
+                {departmentRegistry.map((d) => (
+                  <option key={d.key} value={d.key}>{d.display_name}</option>
+                ))}
+              </select>
+            ) : f.field === "brand_key" ? (
+              <select
+                value={f.value}
+                onChange={(e) => updateFilter(i, { value: e.target.value })}
+                className="flex-1 border rounded px-2 py-1 text-sm"
+              >
+                <option value="">— Select Brand —</option>
+                {brandRegistry.map((b) => (
+                  <option key={b.brand_key} value={b.brand_key}>{b.display_name}</option>
+                ))}
+              </select>
+            ) : f.field === "site_owner" ? (
+              <select
+                value={f.value}
+                onChange={(e) => updateFilter(i, { value: e.target.value })}
+                className="flex-1 border rounded px-2 py-1 text-sm"
+              >
+                <option value="">— Select Site —</option>
+                {siteRegistry.map((s) => (
+                  <option key={s.site_key} value={s.site_key}>{s.display_name}</option>
+                ))}
+              </select>
+            ) : (f.field === "class" || f.field === "gender" || f.field === "category") ? (
+              <select
+                value={f.value}
+                onChange={(e) => updateFilter(i, { value: e.target.value })}
+                className="flex-1 border rounded px-2 py-1 text-sm"
+              >
+                <option value="">— Select —</option>
+                {(attributeOptions[f.field] || []).map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={f.value}
+                onChange={(e) => updateFilter(i, { value: e.target.value })}
+                placeholder="value"
+                className="flex-1 border rounded px-2 py-1 text-sm"
+              />
+            )}
             <label className="text-xs flex items-center gap-1">
               <input
                 type="checkbox"
@@ -434,6 +495,15 @@ export default function CadenceRulesAdminPage() {
   const [evalRunning, setEvalRunning] = useState(false);
   const [evalResult, setEvalResult] = useState<CadenceEvaluationResult | null>(null);
   const [evalError, setEvalError] = useState<string | null>(null);
+  // TALLY-138 — registry-driven dropdowns for cadence rule target_filters.
+  const [departmentRegistry, setDepartmentRegistry] = useState<DepartmentRegistryEntry[]>([]);
+  const [brandRegistry, setBrandRegistry] = useState<BrandRegistryEntry[]>([]);
+  const [siteRegistry, setSiteRegistry] = useState<SiteRegistryEntry[]>([]);
+  const [attributeOptions, setAttributeOptions] = useState<{ [key: string]: string[] }>({
+    class: [],
+    gender: [],
+    category: [],
+  });
 
   async function load() {
     setLoading(true);
@@ -449,6 +519,38 @@ export default function CadenceRulesAdminPage() {
 
   useEffect(() => {
     load();
+  }, []);
+
+  // TALLY-138 — load registries for target_filter value dropdowns.
+  useEffect(() => {
+    Promise.all([
+      fetchDepartmentRegistry(true),
+      fetchBrandRegistry(true),
+      fetchSiteRegistry(true),
+      fetchAttributeRegistry({ admin: true, includeInactive: false }),
+    ])
+      .then(
+        ([depts, brands, sites, attrs]: [
+          DepartmentRegistryEntry[],
+          BrandRegistryEntry[],
+          SiteRegistryEntry[],
+          AttributeRegistryEntry[],
+        ]) => {
+          setDepartmentRegistry(depts);
+          setBrandRegistry(brands);
+          setSiteRegistry(sites);
+          const findOpts = (key: string): string[] =>
+            attrs.find((a) => a.field_key === key)?.dropdown_options || [];
+          setAttributeOptions({
+            class: findOpts("class"),
+            gender: findOpts("gender"),
+            category: findOpts("category"),
+          });
+        }
+      )
+      .catch((e) => {
+        console.error("Failed to load registries for cadence rule editor:", e);
+      });
   }, []);
 
   async function save() {
@@ -587,6 +689,10 @@ export default function CadenceRulesAdminPage() {
             }}
             saving={saving}
             error={error}
+            departmentRegistry={departmentRegistry}
+            brandRegistry={brandRegistry}
+            siteRegistry={siteRegistry}
+            attributeOptions={attributeOptions}
           />
         </div>
       )}
