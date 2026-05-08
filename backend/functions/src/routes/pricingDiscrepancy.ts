@@ -12,8 +12,13 @@ import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
+import { viewAs } from "../middleware/viewAs";
 import { mpnToDocId } from "../services/mpnUtils";
 import { resolvePricing } from "../services/pricingResolution";
+import {
+  buildBuyerPortfolio,
+  productMatchesBuyerPortfolio,
+} from "../lib/portfolioFilter";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -26,16 +31,30 @@ const resolveRoles = ["buyer", "head_buyer"];
 router.get(
   "/",
   requireAuth,
+  viewAs,
   requireRole(viewRoles),
-  async (_req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const effectiveUid = req.effectiveUserId || req.user!.uid;
+      const userSnap = await db().collection("users").doc(effectiveUid).get();
+      const userData = userSnap.exists ? userSnap.data()! : {};
+      const role = userData.role || "buyer";
+      const isAdminGlobal = ["map_analyst", "head_buyer", "admin", "owner"].includes(role);
+      const portfolio = isAdminGlobal
+        ? null
+        : buildBuyerPortfolio(effectiveUid, userData);
+
       const snap = await db()
         .collection("products")
         .where("pricing_domain_state", "==", "Pricing Discrepancy")
         .get();
 
+      const portfolioFilteredDocs = portfolio
+        ? snap.docs.filter((d) => productMatchesBuyerPortfolio(d.data(), portfolio))
+        : snap.docs;
+
       const items = await Promise.all(
-        snap.docs.map(async (doc) => {
+        portfolioFilteredDocs.map(async (doc) => {
           const p = doc.data();
           // Pull latest pricing snapshot for effective prices
           const snapQuery = await doc.ref
