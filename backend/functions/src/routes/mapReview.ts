@@ -9,22 +9,39 @@ import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest, requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
+import { viewAs } from "../middleware/viewAs";
 import { mpnToDocId } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
+import {
+  buildBuyerPortfolio,
+  productMatchesBuyerPortfolio,
+} from "../lib/portfolioFilter";
 
 const router = Router();
 const db = () => admin.firestore();
 const ts = () => admin.firestore.FieldValue.serverTimestamp();
 
+// Track 3 D6 — split: viewers include `buyer` (with portfolio filter); resolvers stay restricted.
+const viewerRoles = ["buyer", "map_analyst", "head_buyer"];
 const resolverRoles = ["map_analyst", "head_buyer"];
 
 // ── GET /conflicts ──
 router.get(
   "/conflicts",
   requireAuth,
-  requireRole(resolverRoles),
-  async (_req: AuthenticatedRequest, res: Response) => {
+  viewAs,
+  requireRole(viewerRoles),
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const effectiveUid = req.effectiveUserId || req.user!.uid;
+      const userSnap = await db().collection("users").doc(effectiveUid).get();
+      const userData = userSnap.exists ? userSnap.data()! : {};
+      const role = userData.role || "buyer";
+      const isAdminGlobal = ["map_analyst", "head_buyer", "admin", "owner"].includes(role);
+      const portfolio = isAdminGlobal
+        ? null
+        : buildBuyerPortfolio(effectiveUid, userData);
+
       const snap = await db()
         .collection("products")
         .where("map_conflict_active", "==", true)
@@ -47,8 +64,16 @@ router.get(
         };
       });
 
+      // Track 3 D3 — portfolio filter (buyer scope only).
+      const portfolioFiltered = portfolio
+        ? items.filter((it) => {
+            const docData = snap.docs.find((d) => (d.data().mpn || d.id) === it.mpn)?.data();
+            return docData ? productMatchesBuyerPortfolio(docData, portfolio) : false;
+          })
+        : items;
+
       // Filter out held products — they are excluded until hold is lifted
-      const visible = items.filter((i) => !i.map_conflict_held);
+      const visible = portfolioFiltered.filter((i) => !i.map_conflict_held);
 
       res.json({ items: visible, total: visible.length });
     } catch (err: any) {
@@ -229,15 +254,28 @@ router.post(
 router.get(
   "/removals",
   requireAuth,
-  requireRole(resolverRoles),
-  async (_req: AuthenticatedRequest, res: Response) => {
+  viewAs,
+  requireRole(viewerRoles),
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const effectiveUid = req.effectiveUserId || req.user!.uid;
+      const userSnap = await db().collection("users").doc(effectiveUid).get();
+      const userData = userSnap.exists ? userSnap.data()! : {};
+      const role = userData.role || "buyer";
+      const isAdminGlobal = ["map_analyst", "head_buyer", "admin", "owner"].includes(role);
+      const portfolio = isAdminGlobal
+        ? null
+        : buildBuyerPortfolio(effectiveUid, userData);
+
       const today = new Date().toISOString().split("T")[0];
       const snap = await db()
         .collection("products")
         .where("map_removal_proposed", "==", true)
         .get();
-      const items = snap.docs
+      const sourceDocs = portfolio
+        ? snap.docs.filter((d) => productMatchesBuyerPortfolio(d.data(), portfolio))
+        : snap.docs;
+      const items = sourceDocs
         .map((doc) => {
           const p = doc.data();
           const invStore = Number(p.inventory_store) || 0;

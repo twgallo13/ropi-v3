@@ -2,379 +2,214 @@ import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
+import { viewAs } from "../middleware/viewAs";
 import { apply99Rounding } from "../services/pricingUtils";
 import { getAdminSettings } from "../services/adminSettings";
 import { mpnToDocId } from "../services/mpnUtils";
 import {
-  deriveVerificationState,
-  getStalenessThresholdDays,
-  StalenessCache,
-} from "../lib/staleness";
-import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
+  buildBuyerPortfolio,
+  productMatchesBuyerPortfolio,
+} from "../lib/portfolioFilter";
 
 const router = Router();
 const db = () => admin.firestore();
 
 const reviewRoles = ["buyer", "head_buyer", "admin"];
 
-// ── Per-site registry entry shape (subset used by buyer-review) ──
-interface RegistryEntry {
-  display_name: string;
-  domain: string;
-  priority: number;
-}
-
-// Builds the site_verification map + primary_site_key for one product row.
-// Only emits entries for sites in targetedSiteKeys (Phase 3.10 Track 2 cleanup).
-//   - Real entries from product.site_verification get state derived via staleness helper
-//   - Targeted sites without stored entries get an "unverified" stub
-//     (stub here means "targeted but not yet verified", not "not targeted")
-//   - Output order: primary site (matches site_owner) first, then by registry priority asc
-//   - Edge case: empty targetedSiteKeys → empty map, primary_site_key = null
-function buildBuyerReviewSiteVerification(
-  d: any,
-  registryBySiteKey: Record<string, RegistryEntry>,
-  stalenessThreshold: number,
-  targetedSiteKeys: Set<string>,
-): { site_verification: Record<string, any>; primary_site_key: string | null } {
-  const storedSv: Record<string, any> = d.site_verification || {};
-  const productSiteOwner: string | null =
-    typeof d.site_owner === "string" && d.site_owner.trim()
-      ? d.site_owner.trim()
-      : null;
-
-  const serializeTs = (ts: any) => ts?.toDate?.()?.toISOString() || null;
-
-  const svEntries: Array<{ key: string; entry: Record<string, any> }> = [];
-  for (const siteKey of targetedSiteKeys) {
-    const reg = registryBySiteKey[siteKey];
-    if (!reg) continue; // Targeted but not in active registry; skip silently
-    const stored = storedSv[siteKey];
-
-    if (stored) {
-      const derivedState = deriveVerificationState(
-        stored.verification_state,
-        stored.last_verified_at,
-        stalenessThreshold,
-      );
-      svEntries.push({
-        key: siteKey,
-        entry: {
-          site_key: siteKey,
-          site_display_name: reg.display_name,
-          site_domain: reg.domain,
-          verification_state: derivedState,
-          product_url: stored.product_url || null,
-          image_url: stored.image_url || null,
-          additional_image_url_parsed: parseAdditionalImageUrls(stored.additional_image_url),
-          last_verified_at: serializeTs(stored.last_verified_at),
-          verification_date: stored.verification_date || null,
-          mismatch_reason: stored.mismatch_reason || null,
-          reviewer_uid: stored.reviewer_uid || null,
-          reviewer_action_at: serializeTs(stored.reviewer_action_at),
-        },
-      });
-    } else {
-      svEntries.push({
-        key: siteKey,
-        entry: {
-          site_key: siteKey,
-          site_display_name: reg.display_name,
-          site_domain: reg.domain,
-          verification_state: "unverified",
-          product_url: null,
-          image_url: null,
-          additional_image_url_parsed: [],
-          last_verified_at: null,
-          verification_date: null,
-          mismatch_reason: null,
-          reviewer_uid: null,
-          reviewer_action_at: null,
-        },
-      });
-    }
-  }
-
-  // Primary first, then by registry priority asc
-  svEntries.sort((a, b) => {
-    const aIsPrimary = a.key === productSiteOwner ? 0 : 1;
-    const bIsPrimary = b.key === productSiteOwner ? 0 : 1;
-    if (aIsPrimary !== bIsPrimary) return aIsPrimary - bIsPrimary;
-    return (registryBySiteKey[a.key]?.priority ?? 999) - (registryBySiteKey[b.key]?.priority ?? 999);
-  });
-
-  const site_verification: Record<string, any> = {};
-  for (const { key, entry } of svEntries) {
-    site_verification[key] = entry;
-  }
-
-  // primary_site_key is null when the product has no site_owner, OR when
-  // site_owner is not in the active registry, OR when site_owner is not
-  // in the targeted set for this product (Phase 3.10 Track 2).
-  const primary_site_key: string | null =
-    productSiteOwner &&
-    targetedSiteKeys.has(productSiteOwner) &&
-    registryBySiteKey[productSiteOwner]
-      ? productSiteOwner
-      : null;
-
-  return { site_verification, primary_site_key };
-}
-
-// ── Phase 3.10 Track 2C — Queue reason derivation ──
-// Priority order locked per PO 2026-05-08:
-// MAP Conflict > Loss-Leader > Negative Margin > Performance (D3)
-type QueueReason =
-  | "MAP Conflict"
-  | "Loss-Leader Pending"
-  | "Negative Margin"
-  | "Performance";
-
-function computeQueueReasons(d: any): {
-  primary: QueueReason | null;
-  all: QueueReason[];
-} {
-  const reasons: QueueReason[] = [];
-
-  if (d.map_conflict_active === true) {
-    reasons.push("MAP Conflict");
-  }
-  if (
-    d.is_loss_leader === true ||
-    d.pricing_domain_state === "Loss-Leader Review Pending"
-  ) {
-    reasons.push("Loss-Leader Pending");
-  }
-  // D5: GM% as cost proxy. Threshold = 0; either channel negative triggers.
-  const storeGmNeg =
-    typeof d.store_gm_pct === "number" && d.store_gm_pct < 0;
-  const webGmNeg =
-    typeof d.web_gm_pct === "number" && d.web_gm_pct < 0;
-  if (storeGmNeg || webGmNeg) {
-    reasons.push("Negative Margin");
-  }
-  if (d.is_slow_moving === true) {
-    reasons.push("Performance");
-  }
-
-  return { primary: reasons[0] ?? null, all: reasons };
-}
-
-// ── Phase 1 recommendation builder ──
-function buildPhase1Recommendation(product: any) {
-  const PCT = 0.15;
-  const ricsRetail = product.rics_retail || 0;
-  const newRicsOffer = ricsRetail * (1 - PCT);
-  return {
-    type: "markdown_pct" as const,
-    pct: 15,
-    new_rics_offer: Math.round(newRicsOffer * 100) / 100,
-    export_price: apply99Rounding(newRicsOffer),
-    rule_name: "Phase 1 Default — 15% Markdown",
-    rule_id: null,
-  };
-}
-
 // ── GET /api/v1/buyer-review ──
+// Track 3 — Cockpit aggregator. Returns cadence + MAP + Pricing + KPIs
+// filtered by effective user's portfolio (or admin-global for
+// head_buyer/admin/owner). Replaces the legacy markdown-queue handler.
 router.get(
   "/",
   requireAuth,
-  requireRole(reviewRoles),
-  async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const {
-      department,
-      brand,
-      site_owner,
-      map_status,
-      sort = "aging",
-      limit: limitStr = "50",
-      cursor,
-    } = req.query as Record<string, string>;
+  viewAs,
+  requireRole(["buyer", "head_buyer", "admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const effectiveUid = req.effectiveUserId || req.user!.uid;
+      const actingUid = req.actingUserId || req.user!.uid;
 
-    const limitNum = Math.min(parseInt(limitStr, 10) || 50, 100);
-    let query: admin.firestore.Query = db()
-      .collection("products")
-      .where("pricing_domain_state", "in", ["Pricing Current", "Loss-Leader Review Pending"])
-      .where("completion_state", "==", "complete");
-
-    if (department) query = query.where("department", "==", department);
-    if (brand) query = query.where("brand", "==", brand);
-    if (site_owner) query = query.where("site_owner", "==", site_owner);
-
-    // Sort
-    let orderField = "pricing_resolved_at";
-    let orderDir: "asc" | "desc" = "asc";
-    switch (sort) {
-      case "str_asc":
-        orderField = "str_pct";
-        orderDir = "asc";
-        break;
-      case "wos_desc":
-        orderField = "wos";
-        orderDir = "desc";
-        break;
-      case "gm_asc":
-        orderField = "store_gm_pct";
-        orderDir = "asc";
-        break;
-      default: // "aging"
-        orderField = "pricing_resolved_at";
-        orderDir = "asc";
-        break;
-    }
-
-    query = query.orderBy(orderField, orderDir).limit(limitNum + 1);
-
-    if (cursor) {
-      const cursorDoc = await db().collection("products").doc(cursor).get();
-      if (cursorDoc.exists) {
-        query = query.startAfter(cursorDoc);
+      // Load effective user.
+      const userSnap = await db().collection("users").doc(effectiveUid).get();
+      if (!userSnap.exists) {
+        res.status(404).json({ error: "Effective user not found" });
+        return;
       }
+      const userData = userSnap.data()!;
+      const role = userData.role || "buyer";
+      const isAdminGlobal = ["head_buyer", "admin", "owner"].includes(role);
+
+      // Build portfolio for buyer-role (used for MAP + Pricing + High-GM% KPI).
+      const portfolio = isAdminGlobal
+        ? null
+        : buildBuyerPortfolio(effectiveUid, userData);
+
+      // ── Cadence section (D4: legacy ownedRuleIds path) ──
+      let ownedRuleIds: string[] | null = null;
+      if (!isAdminGlobal) {
+        const rulesSnap = await db()
+          .collection("cadence_rules")
+          .where("owner_buyer_id", "==", effectiveUid)
+          .get();
+        ownedRuleIds = rulesSnap.docs.map((d) => d.id);
+      }
+
+      const cadence: any[] = [];
+      let agedOver45d = 0;
+      const now = Date.now();
+      const FORTY_FIVE_DAYS_MS = 45 * 24 * 60 * 60 * 1000;
+
+      if (isAdminGlobal || (ownedRuleIds && ownedRuleIds.length > 0)) {
+        const assignSnap = await db()
+          .collection("cadence_assignments")
+          .where("in_cadence_review_queue", "==", true)
+          .get();
+
+        for (const d of assignSnap.docs) {
+          const a = d.data();
+          if (a.cadence_state !== "assigned" || !a.recommendation) continue;
+          if (ownedRuleIds && !ownedRuleIds.includes(a.matched_rule_id)) continue;
+
+          const pSnap = await db()
+            .collection("products")
+            .doc(mpnToDocId(a.mpn))
+            .get();
+          if (!pSnap.exists) continue;
+          const p = pSnap.data() as any;
+
+          const queueEnteredAt =
+            a.buyer_queue_entered_at?.toDate?.()?.getTime?.() ?? null;
+          const daysInQueue =
+            queueEnteredAt != null
+              ? Math.floor((now - queueEnteredAt) / (24 * 60 * 60 * 1000))
+              : 0;
+
+          // D2 — Aged>45d KPI: anchor on buyer_queue_entered_at
+          if (queueEnteredAt != null && now - queueEnteredAt > FORTY_FIVE_DAYS_MS) {
+            agedOver45d += 1;
+          }
+
+          cadence.push({
+            mpn: a.mpn,
+            name: p.name || "",
+            brand: p.brand || "",
+            department: p.department || "",
+            class: p.class || "",
+            site_owner: p.site_owner || "",
+            rics_retail: p.rics_retail ?? 0,
+            rics_offer: p.rics_offer ?? 0,
+            scom: p.scom ?? 0,
+            scom_sale: p.scom_sale ?? 0,
+            is_map_protected: !!p.is_map_protected,
+            map_price: p.map_price ?? null,
+            map_conflict_active: !!p.map_conflict_active,
+            str_pct: p.str_pct ?? null,
+            wos: p.wos ?? null,
+            store_gm_pct: p.store_gm_pct ?? null,
+            web_gm_pct: p.web_gm_pct ?? null,
+            inventory_total:
+              (p.inventory_store ?? 0) +
+              (p.inventory_warehouse ?? 0) +
+              (p.inventory_whs ?? 0),
+            is_slow_moving: !!p.is_slow_moving,
+            recommendation: a.recommendation,
+            current_step: a.current_step,
+            days_in_queue: daysInQueue,
+          });
+        }
+      }
+
+      // ── MAP section (D3: portfolio filter) ──
+      const mapSnap = await db()
+        .collection("products")
+        .where("map_conflict_active", "==", true)
+        .get();
+      const map: any[] = [];
+      for (const d of mapSnap.docs) {
+        const p = d.data() as any;
+        if (p.map_conflict_held) continue;
+        if (portfolio && !productMatchesBuyerPortfolio(p, portfolio)) continue;
+        map.push({
+          mpn: p.mpn || d.id,
+          name: p.name || "",
+          brand: p.brand || "",
+          map_price: p.map_price || 0,
+          map_promo_price: p.map_promo_price || null,
+          scom: p.scom || 0,
+          scom_sale: p.scom_sale || 0,
+          rics_offer: p.rics_offer || 0,
+          map_conflict_reason: p.map_conflict_reason || null,
+          map_conflict_flagged_at:
+            p.map_conflict_flagged_at?.toDate?.()?.toISOString() || null,
+          map_conflict_held: !!p.map_conflict_held,
+        });
+      }
+
+      // ── Pricing Discrepancy section (D3: portfolio filter) ──
+      const pricingSnap = await db()
+        .collection("products")
+        .where("pricing_domain_state", "==", "Pricing Discrepancy")
+        .get();
+      const pricing: any[] = [];
+      for (const d of pricingSnap.docs) {
+        const p = d.data() as any;
+        if (portfolio && !productMatchesBuyerPortfolio(p, portfolio)) continue;
+        pricing.push({
+          mpn: p.mpn || d.id,
+          name: p.name || "",
+          brand: p.brand || "",
+          discrepancy_reasons: p.discrepancy_reasons || [],
+          discrepancy_flagged_at:
+            p.discrepancy_flagged_at?.toDate?.()?.toISOString() || null,
+          web_gm_pct: p.web_gm_pct ?? null,
+          store_gm_pct: p.store_gm_pct ?? null,
+          rics_retail: p.rics_retail ?? 0,
+          rics_offer: p.rics_offer ?? 0,
+          scom: p.scom ?? 0,
+          scom_sale: p.scom_sale ?? 0,
+        });
+      }
+
+      // ── KPI: High GM% (web_gm_pct > 60), portfolio-scoped ──
+      const highGmSnap = await db()
+        .collection("products")
+        .where("web_gm_pct", ">", 60)
+        .get();
+      let highGmPct = 0;
+      for (const d of highGmSnap.docs) {
+        const p = d.data() as any;
+        if (portfolio && !productMatchesBuyerPortfolio(p, portfolio)) continue;
+        highGmPct += 1;
+      }
+
+      // ── KPI: daily_approval_goal = ceil(cadence.length / 5) ──
+      const dailyApprovalGoal = Math.ceil(cadence.length / 5);
+
+      res.json({
+        cadence,
+        map,
+        pricing,
+        kpis: {
+          aged_over_45d: agedOver45d,
+          high_gm_pct: highGmPct,
+          daily_approval_goal: dailyApprovalGoal,
+          map_violations: map.length,
+          pricing_discrepancies: pricing.length,
+        },
+        meta: {
+          effective_user_id: effectiveUid,
+          acting_user_id: actingUid,
+          is_view_as: effectiveUid !== actingUid,
+          role,
+        },
+      });
+    } catch (err: any) {
+      console.error("[buyer-review aggregator] error:", err);
+      res.status(500).json({ error: err.message || "Internal error" });
     }
-
-    // Pre-fetch active site_registry + staleness threshold once per request
-    // (single StalenessCache shared across all rows — not per row).
-    const stalenessCache: StalenessCache = {};
-    const [snap, activeRegistrySnap, stalenessThreshold] = await Promise.all([
-      query.get(),
-      db().collection("site_registry").where("is_active", "==", true).get(),
-      getStalenessThresholdDays(stalenessCache),
-    ]);
-
-    const registryBySiteKey: Record<string, RegistryEntry> = {};
-    activeRegistrySnap.docs.forEach((rDoc) => {
-      const rd = rDoc.data();
-      registryBySiteKey[rDoc.id] = {
-        display_name: rd.display_name || rDoc.id,
-        domain: rd.domain || "",
-        priority: typeof rd.priority === "number" ? rd.priority : 999,
-      };
-    });
-
-    const docs = snap.docs.slice(0, limitNum);
-    const hasMore = snap.docs.length > limitNum;
-
-    const now = Date.now();
-    const items = (await Promise.all(docs.map(async (doc) => {
-      const d = doc.data();
-      const resolvedAt = d.pricing_resolved_at?.toDate?.();
-      const daysInQueue = resolvedAt
-        ? Math.floor((now - resolvedAt.getTime()) / (1000 * 60 * 60 * 24))
-        : 0;
-
-      const inventoryTotal =
-        (d.inventory_store || 0) +
-        (d.inventory_warehouse || 0) +
-        (d.inventory_whs || 0);
-
-      const isMapProtected =
-        d.is_map_protected === true ||
-        (d.map_state?.is_active === true && (d.map_state?.map_price || 0) > 0);
-      const mapFloor = d.map_price ?? d.map_state?.map_price ?? null;
-
-      // Phase 1 filter: map_status
-      if (map_status === "protected" && !isMapProtected) return null;
-      if (map_status === "not_protected" && isMapProtected) return null;
-
-      // Phase 3.10 Track 2: read site_targets BEFORE build so targetedSiteKeys
-      // can be passed in — the builder now emits only targeted-site entries.
-      const stSnap = await doc.ref.collection("site_targets").get();
-      const targetedSiteKeys = new Set<string>(
-        stSnap.docs
-          .filter((stDoc) => stDoc.data().active !== false)
-          .map((stDoc) => stDoc.data().site_id || stDoc.id),
-      );
-
-      const { site_verification, primary_site_key } = buildBuyerReviewSiteVerification(
-        d,
-        registryBySiteKey,
-        stalenessThreshold,
-        targetedSiteKeys,
-      );
-
-      // Track 2B — verification rollup state.
-      // site_verification is now targeted-only; isLive is equivalent to
-      // checking any site_verification entry for verified_live.
-      const isLive = [...targetedSiteKeys].some(
-        (k) => site_verification[k]?.verification_state === "verified_live",
-      );
-      const verification_rollup_state: "live" | "unverified" = isLive ? "live" : "unverified";
-
-      // Phase 3.10 Track 2C — queue reason derivation
-      const queueReasons = computeQueueReasons(d);
-
-      // Phase 3.10 Track 2C — evidence fields for reason-conditional panels
-      // conflicting_site: MAP conflict is detected at product level (web sale vs map_price),
-      // no per-site key is stored by pricingResolution. Surfacing null here.
-      // TODO(TALLY-BLUEPRINT-CARD-EVIDENCE-FOLLOWUP): if site-level conflict tracking added,
-      // replace null with the site key from the conflict record.
-      const conflicting_site: string | null = null;
-
-      const recommendation = buildPhase1Recommendation(d);
-      const current_export_price: number | null =
-        recommendation.export_price ?? null;
-
-      const webS30 = d.web_sales_30d;
-      const storeS30 = d.store_sales_30d;
-      const sales_30d: number | null =
-        webS30 == null && storeS30 == null
-          ? null
-          : (webS30 ?? 0) + (storeS30 ?? 0);
-
-      return {
-        mpn: d.mpn || doc.id,
-        name: d.name || "",
-        brand: d.brand || "",
-        department: d.department || "",
-        class: d.class || "",
-        site_owner: d.site_owner || "",
-
-        rics_retail: d.rics_retail || 0,
-        rics_offer: d.rics_offer || 0,
-        scom: d.scom || 0,
-        scom_sale: d.scom_sale || 0,
-        is_map_protected: isMapProtected,
-        map_floor: isMapProtected ? mapFloor : null,
-        map_conflict_active: d.map_conflict_active === true,
-        map_conflict_reason: d.map_conflict_reason || null,
-
-        str_pct: d.str_pct ?? 0,
-        wos: d.wos ?? null,
-        store_gm_pct: d.store_gm_pct != null ? Math.round(d.store_gm_pct * 100) / 100 : null,
-        web_gm_pct: d.web_gm_pct != null ? Math.round(d.web_gm_pct * 100) / 100 : null,
-        inventory_total: inventoryTotal,
-        is_slow_moving: d.is_slow_moving ?? false,
-
-        recommendation,
-
-        site_verification,
-        primary_site_key,
-        verification_rollup_state,
-
-        is_loss_leader: d.is_loss_leader ?? false,
-        days_in_queue: daysInQueue,
-        pricing_domain_state: d.pricing_domain_state,
-
-        // Phase 3.10 Track 2C — reason-first hierarchy fields
-        queue_reason_primary: queueReasons.primary,
-        queue_reasons_all: queueReasons.all,
-        conflicting_site,
-        current_export_price,
-        sales_30d,
-      };
-    }))).filter(Boolean);
-
-    res.json({
-      items,
-      total: items.length,
-      next_cursor: hasMore ? docs[docs.length - 1].id : null,
-    });
-  } catch (err: any) {
-    console.error("GET /buyer-review error:", err);
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 // ── GET /api/v1/buyer-review/price-projection/:mpn ──
 router.get(

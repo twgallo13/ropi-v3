@@ -3,6 +3,9 @@ import admin from "firebase-admin";
 
 export interface AuthenticatedRequest extends Request {
   user?: admin.auth.DecodedIdToken;
+  // Track 3 D11 — set by viewAs middleware
+  effectiveUserId?: string;
+  actingUserId?: string;
 }
 
 /**
