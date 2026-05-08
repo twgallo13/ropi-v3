@@ -16,14 +16,18 @@ import { fetchCockpit } from "../lib/api";
 import type { CockpitResponse } from "../lib/api";
 import KpiHeader from "../components/cockpit/KpiHeader";
 import ViewAsBar from "../components/cockpit/ViewAsBar";
+import CockpitTabs from "../components/cockpit/CockpitTabs";
 import CockpitCadenceSection from "../components/cockpit/CockpitCadenceSection";
 import CockpitMapSection from "../components/cockpit/CockpitMapSection";
 import CockpitPricingSection from "../components/cockpit/CockpitPricingSection";
+
+type CockpitTabId = "cadence" | "map" | "pricing";
 
 export default function BuyerReviewPage() {
   const [data, setData] = useState<CockpitResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<CockpitTabId>("cadence");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,9 +66,24 @@ export default function BuyerReviewPage() {
       <h1 className="text-2xl font-bold mb-3">Buyer Cockpit</h1>
       <ViewAsBar meta={data.meta} onChange={load} />
       <KpiHeader kpis={data.kpis} />
-      <CockpitCadenceSection items={data.cadence} readOnly={readOnly} onAction={load} />
-      <CockpitMapSection items={data.map} readOnly={readOnly} onAction={load} />
-      <CockpitPricingSection items={data.pricing} readOnly={readOnly} onAction={load} />
+      <CockpitTabs<CockpitTabId>
+        tabs={[
+          { id: "cadence", label: "Cadence Review", count: data.cadence.length },
+          { id: "map", label: "MAP Conflicts", count: data.map.length },
+          { id: "pricing", label: "Pricing Discrepancies", count: data.pricing.length },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
+      {activeTab === "cadence" && (
+        <CockpitCadenceSection items={data.cadence} readOnly={readOnly} onAction={load} />
+      )}
+      {activeTab === "map" && (
+        <CockpitMapSection items={data.map} readOnly={readOnly} onAction={load} />
+      )}
+      {activeTab === "pricing" && (
+        <CockpitPricingSection items={data.pricing} readOnly={readOnly} onAction={load} />
+      )}
     </div>
   );
 }
