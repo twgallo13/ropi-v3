@@ -7,8 +7,12 @@ import { executeSmartRules } from "../services/smartRules";
 import { mpnToDocId } from "../services/mpnUtils";
 import { mapFullProductRow, FULL_PRODUCT_ROW_MAP } from "../services/ricsParser";
 import { buildSearchTokens } from "../services/searchTokens";
-import { matchBrand, loadBrandRegistry, BrandRegistryEntry } from "../lib/brandRegistry";
-import { normalizeDepartment } from "./departmentRegistry";
+import {
+  buildBrandCanonicalizer,
+  buildDepartmentCanonicalizer,
+  buildSiteOwnerCanonicalizer,
+  type Canonicalizer,
+} from "../lib/registryAuthority";
 import {
   respondAsync,
   runInBackground,
@@ -33,19 +37,6 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 const db = admin.firestore;
-
-// TALLY-PRODUCT-LIST-UX Phase 0.5 — load active department keys from
-// department_registry. Used per-import-run for department_key validation.
-async function getActiveDepartmentKeys(): Promise<Set<string>> {
-  const snap = await admin.firestore().collection("department_registry").get();
-  return new Set(
-    snap.docs
-      .map((d) => d.data())
-      .filter((d) => d.is_active === true)
-      .map((d) => d.key as string)
-      .filter((k) => typeof k === "string" && k.length > 0)
-  );
-}
 
 // TALLY-078 — Required columns for Full Product Import
 const REQUIRED_COLUMNS = [
@@ -240,11 +231,16 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
       if (domain) domainToSiteId.set(domain, d.id);
     });
 
-    // TALLY-PRODUCT-LIST-UX Phase 0.5 — load brand + department registries
-    // once for per-row brand_key / department_key stamping. Non-blocking:
-    // unresolved values yield null *_key, product still writes.
-    const loadedBrandRegistry: Map<string, BrandRegistryEntry> = await loadBrandRegistry();
-    const activeDepartmentKeys: Set<string> = await getActiveDepartmentKeys();
+    // Issue #1 — build canonicalizers once per import batch.
+    // Replaces per-row loadBrandRegistry/matchBrand + getActiveDepartmentKeys checks.
+    const canonicalizeBrand: Canonicalizer = await buildBrandCanonicalizer();
+    const canonicalizeDepartment: Canonicalizer = await buildDepartmentCanonicalizer();
+    const canonicalizeSiteOwner: Canonicalizer = await buildSiteOwnerCanonicalizer();
+
+    // Orphan tracking for import summary.
+    const orphanBrands = new Set<string>();
+    const orphanDepartments = new Set<string>();
+    const orphanSiteOwners = new Set<string>();
 
     // Counters
     let committedRows = 0;
@@ -319,10 +315,17 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           updated_at: db.FieldValue.serverTimestamp(),
         };
 
-        // TALLY-PRODUCT-LIST-UX Phase 0.5 — resolve brand_key from registry.
-        // Non-blocking: unresolved → null, product still writes.
-        const matchedBrand = matchBrand(identity.brand, loadedBrandRegistry);
-        identity.brand_key = matchedBrand ? matchedBrand.brand_key : null;
+        // Issue #1 — resolve brand against active brand_registry (key → display_name → alias).
+        // Saves canonical display to identity.brand and canonical key to identity.brand_key.
+        // Orphan rows get raw display + empty key (no slug-derived fallback).
+        const rawBrand = identity.brand;
+        const brandMatch = canonicalizeBrand(rawBrand);
+        if (rawBrand && !brandMatch) {
+          orphanBrands.add(rawBrand);
+          console.warn(`[import] orphan brand: "${rawBrand}" did not match any active brand_registry entry`);
+        }
+        identity.brand = brandMatch?.display ?? (rawBrand || "");
+        identity.brand_key = brandMatch?.key ?? "";
 
         // Source inputs → source_inputs subcollection
         const sourceInputs: Record<string, any> = {
@@ -430,7 +433,20 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           }
         }
 
-        // Write attribute values with provenance for import fields (TALLY-044)
+        // Issue #1 — resolve canonical site_owner for product root.
+        // The CSV Website column contains domain strings; canonicalizeSiteOwner
+        // maps domain → site_registry key (doc.id). Write to product root so
+        // .where("site_owner") queries in the product list route work correctly.
+        const rawSiteOwnerDomain = siteList[0] ?? null;
+        const siteMatch = canonicalizeSiteOwner(rawSiteOwnerDomain);
+        if (rawSiteOwnerDomain && !siteMatch) {
+          orphanSiteOwners.add(rawSiteOwnerDomain);
+          console.warn(`[import] orphan site_owner: "${rawSiteOwnerDomain}" did not match any active site_registry entry`);
+        }
+        await productRef.set(
+          { site_owner: siteMatch?.key ?? "" },
+          { merge: true }
+        );
         // TALLY-103: MPN and SKU arrive pre-verified (Human-Verified)
         const importAttributes: Record<string, any> = {
           mpn,
@@ -534,19 +550,21 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         try {
           const mapped = mapFullProductRow(row);
 
-          // TALLY-PRODUCT-LIST-UX Phase 0.5 — inject brand_key + department_key
-          // into mapped.top_level so they land on the product doc alongside
-          // their human-readable companions. Non-blocking: unresolved → null.
-          if (mapped.top_level.brand) {
+          // Issue #1 — inject brand_key + department_key using canonicalizers
+          // (replaces TALLY-PRODUCT-LIST-UX Phase 0.5 active-key-Set checks).
+          // brand is already resolved on identity from the per-row block above.
+          if (mapped.top_level.brand !== undefined) {
+            mapped.top_level.brand = identity.brand;
             mapped.top_level.brand_key = identity.brand_key;
           }
-          const deptRaw = mapped.top_level.department;
-          if (deptRaw) {
-            const normalizedDept = normalizeDepartment(String(deptRaw));
-            mapped.top_level.department_key = activeDepartmentKeys.has(normalizedDept)
-              ? normalizedDept
-              : null;
+          const deptRaw = mapped.top_level.department ? String(mapped.top_level.department) : "";
+          const deptMatch = canonicalizeDepartment(deptRaw);
+          if (deptRaw && !deptMatch) {
+            orphanDepartments.add(deptRaw.trim());
+            console.warn(`[import] orphan department: "${deptRaw}" did not match any active department_registry entry`);
           }
+          mapped.top_level.department = deptMatch?.display ?? (deptRaw ? deptRaw.trim() : "");
+          mapped.top_level.department_key = deptMatch?.key ?? "";
 
           // Stamp top-level fields on the product document (query perf)
           if (Object.keys(mapped.top_level).length > 0) {
@@ -923,6 +941,11 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         no_image_products: noImageProducts,
         pricing_incomplete: pricingIncomplete,
         pricing_discrepancy: pricingDiscrepancy,
+        orphans: {
+          brands: Array.from(orphanBrands).sort(),
+          departments: Array.from(orphanDepartments).sort(),
+          site_owners: Array.from(orphanSiteOwners).sort(),
+        },
       },
     });
 
