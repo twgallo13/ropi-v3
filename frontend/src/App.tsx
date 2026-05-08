@@ -13,7 +13,6 @@ import ExportCenterPage from "./pages/ExportCenterPage";
 import ImportHubPage from "./pages/ImportHubPage";
 import MapConflictReviewPage from "./pages/MapConflictReviewPage";
 import MapRemovalReviewPage from "./pages/MapRemovalReviewPage";
-import CadenceReviewPage from "./pages/CadenceReviewPage";
 import CadenceUnassignedPage from "./pages/CadenceUnassignedPage";
 import CadenceRulesAdminPage from "./pages/CadenceRulesAdminPage";
 import ReviewActiveOverridesPage from "./pages/ReviewActiveOverridesPage";
@@ -143,7 +142,7 @@ function AppInner() {
             <Route path="/queue/completion" element={<CompletionQueuePage />} />
             <Route path="/import-hub" element={<ImportHubPage />} />
             <Route path="/buyer-review" element={<BuyerReviewPage />} />
-            <Route path="/cadence-review" element={<CadenceReviewPage />} />
+            <Route path="/cadence-review" element={<Navigate to="/buyer-review" replace />} />
             <Route path="/cadence-unassigned" element={<CadenceUnassignedPage />} />
             <Route path="/admin/cadence-rules" element={<Navigate to="/admin/pipeline/cadence" replace />} />
             <Route path="/admin/prompt-templates" element={<Navigate to="/admin/ai-automation/prompt-templates" replace />} />

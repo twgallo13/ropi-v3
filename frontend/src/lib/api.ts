@@ -12,6 +12,80 @@ async function headers(): Promise<Record<string, string>> {
   };
 }
 
+// ── Track 3 Cockpit V1 — View As helpers + aggregator fetcher ──
+
+const VIEW_AS_KEY = "ropi_view_as_uid";
+
+export function getViewAsUid(): string | null {
+  try {
+    return localStorage.getItem(VIEW_AS_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setViewAsUid(uid: string | null): void {
+  try {
+    if (!uid) localStorage.removeItem(VIEW_AS_KEY);
+    else localStorage.setItem(VIEW_AS_KEY, uid);
+  } catch {
+    /* noop */
+  }
+}
+
+export interface CockpitKpis {
+  aged_over_45d: number;
+  high_gm_pct: number;
+  daily_approval_goal: number;
+  map_violations: number;
+  pricing_discrepancies: number;
+}
+
+export interface ViewableUser {
+  uid: string;
+  display_name: string;
+  role: string;
+}
+
+export interface CockpitMeta {
+  effective_user_id: string;
+  acting_user_id: string;
+  is_view_as: boolean;
+  role: string;
+  acting_role: string;
+  can_write: boolean;
+  viewable_users: ViewableUser[];
+}
+
+export interface CockpitPricingItem {
+  mpn: string;
+  name?: string;
+  brand?: string;
+  rics_offer?: number;
+  scom?: number;
+  scom_sale?: number;
+  reason?: string | null;
+  [key: string]: any;
+}
+
+export interface CockpitResponse {
+  cadence: any[];
+  map: any[];
+  pricing: CockpitPricingItem[];
+  kpis: CockpitKpis;
+  meta: CockpitMeta;
+}
+
+export async function fetchCockpit(): Promise<CockpitResponse> {
+  const baseHeaders = await headers();
+  const viewAs = getViewAsUid();
+  if (viewAs) baseHeaders["X-View-As-Uid"] = viewAs;
+  const res = await fetch(`${BASE}/api/v1/buyer-review`, { headers: baseHeaders });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data as CockpitResponse;
+}
+
 export interface ProductListItem {
   mpn: string;
   doc_id: string;

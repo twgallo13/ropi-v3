@@ -1,22 +1,28 @@
 /**
- * Track 3 D11 — View As middleware.
+ * Track 3 D11 (PO-modified 2026-05-07) — View As middleware.
  *
- * Reads `X-View-As-Uid` header. Behavior:
- *   - Header absent: req.effectiveUserId = req.user.uid. Default.
- *   - Header set + caller role in {head_buyer, admin, owner} + safe method:
- *       req.effectiveUserId = <header value>.
- *   - Header set + caller not privileged: 403.
- *   - Header set + write method: 403 (read-only audit).
- *   - Header set + target user not found: 400.
+ * Reads X-View-As-Uid header. Behavior:
  *
- * Always sets req.actingUserId = req.user.uid for downstream audit logging.
+ *   No header / header equals own uid:
+ *     req.effectiveUserId = req.user.uid (default).
+ *
+ *   Header set, target != self:
+ *     1. Method must be safe (GET, HEAD). Otherwise 403 (read-only audit).
+ *     2. Target user must exist. Otherwise 400.
+ *     3. req.effectiveUserId = <header value>.
+ *
+ * Always sets req.actingUserId = req.user.uid for downstream audit.
+ *
+ * Note: The FE strips X-View-As-Uid from write requests for privileged users
+ * who retain action authority. The BE-side write block is defense in depth
+ * — it ensures any header sent on a write is rejected, regardless of role.
+ *
  * Place AFTER requireAuth, BEFORE requireRole + handler.
  */
 import { Response, NextFunction } from "express";
 import admin from "firebase-admin";
 import { AuthenticatedRequest } from "./auth";
 
-const VIEW_AS_PRIVILEGED_ROLES = ["head_buyer", "admin", "owner"];
 const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 export async function viewAs(
@@ -33,29 +39,20 @@ export async function viewAs(
   req.actingUserId = actingUid;
 
   const viewAsHeader = req.header("X-View-As-Uid");
-  if (!viewAsHeader) {
+
+  // No header, or header equals self — default to own uid.
+  if (!viewAsHeader || viewAsHeader === actingUid) {
     req.effectiveUserId = actingUid;
     next();
     return;
   }
 
-  // Header set — validate.
+  // Header set, target != self.
+
+  // Safe-method gate (read-only enforcement at BE).
   if (!SAFE_METHODS.has(req.method)) {
     res.status(403).json({
       error: "X-View-As-Uid is read-only; cannot be set on write methods",
-    });
-    return;
-  }
-
-  // Resolve caller role (claim first, Firestore fallback).
-  let role = (req.user as any)?.role as string | undefined;
-  if (!role) {
-    const userDoc = await admin.firestore().collection("users").doc(actingUid).get();
-    role = userDoc.data()?.role;
-  }
-  if (!role || !VIEW_AS_PRIVILEGED_ROLES.includes(role)) {
-    res.status(403).json({
-      error: "Insufficient privileges to use X-View-As-Uid",
     });
     return;
   }

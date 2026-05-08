@@ -186,6 +186,31 @@ router.get(
       // ── KPI: daily_approval_goal = ceil(cadence.length / 5) ──
       const dailyApprovalGoal = Math.ceil(cadence.length / 5);
 
+      // PO-modified D5 — fetch acting user's role separately when viewing-as-other.
+      let actingRole = role;
+      if (effectiveUid !== actingUid) {
+        const actingSnap = await db().collection("users").doc(actingUid).get();
+        const actingData = actingSnap.exists ? actingSnap.data()! : {};
+        actingRole = actingData.role || "buyer";
+      }
+
+      // can_write: true when not viewing-as, OR when actor has privileged role.
+      const PRIVILEGED_ACTOR_ROLES = ["head_buyer", "admin", "owner"];
+      const canWrite =
+        effectiveUid === actingUid ||
+        PRIVILEGED_ACTOR_ROLES.includes(actingRole);
+
+      // viewable_users: minimal user list for the FE View As dropdown.
+      const allUsersSnap = await db().collection("users").get();
+      const viewableUsers = allUsersSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          uid: d.id,
+          display_name: data.display_name || data.email || "Unknown",
+          role: data.role || "unknown",
+        };
+      });
+
       res.json({
         cadence,
         map,
@@ -202,6 +227,9 @@ router.get(
           acting_user_id: actingUid,
           is_view_as: effectiveUid !== actingUid,
           role,
+          acting_role: actingRole,
+          can_write: canWrite,
+          viewable_users: viewableUsers,
         },
       });
     } catch (err: any) {
