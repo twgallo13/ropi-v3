@@ -789,7 +789,11 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             product_name: mapped.attributes.name || identity.name,
             brand: identity.brand,
             sku: identity.sku,
-            department: mapped.attributes.department,
+            // TALLY-149 — use the canonicalized top_level value instead of the raw
+            // RICS-parsed string. mapped.top_level.department is mutated at L587-594
+            // to deptMatch?.display (canonical display_name). Without this, AV["department"]
+            // stores RICS-output that may be an alias and bypass FE alias-walk on save.
+            department: mapped.top_level.department,
             gender: mapped.attributes.gender,
             age_group: ageGroupValue,
             class: mapped.attributes.class,
