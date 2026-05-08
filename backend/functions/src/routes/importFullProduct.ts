@@ -624,7 +624,13 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           const skipCanonical = new Set([
             "mpn", // already written above with its own provenance
             "sku",
-            "brand",
+            "brand",      // written via importAttributes loop with canonical display
+            "department", // TALLY-146: canonical display + department_key written to
+                          // top_level via canonicalizeDepartment; raw CSV value must
+                          // not overwrite attribute_values["department"] via this loop
+            "site_owner", // TALLY-146: canonical key written to root.site_owner via
+                          // canonicalizeSiteOwner; raw CSV domain (e.g. "Shiekh.com")
+                          // must not overwrite attribute_values["site_owner"]
             "name",
             "status",
             "ro_status",
