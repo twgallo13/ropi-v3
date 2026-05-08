@@ -457,6 +457,11 @@ export default function ProductListPage() {
     setExportInFlight(true);
     try {
       const params = buildParams();
+      // TALLY-147 — if user has items selected, restrict export to that selection.
+      // Selection wins over filters per BE handler logic.
+      if (selectedDocIds.size > 0) {
+        params.ids = Array.from(selectedDocIds).join(",");
+      }
       const blob = await exportProductsCsv(params);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -496,7 +501,7 @@ export default function ProductListPage() {
             disabled={exportInFlight}
             className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-wait"
           >
-            {exportInFlight ? "Exporting..." : "Export CSV"}
+            {exportInFlight ? "Exporting..." : selectedDocIds.size > 0 ? `Export selected (${selectedDocIds.size})` : "Export CSV"}
           </button>
         )}
       </div>
