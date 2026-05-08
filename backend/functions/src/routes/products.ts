@@ -460,6 +460,7 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
       department,
       image_status,
       search,
+      ids: idsRaw,
       sort: sortRaw = "first_received_at",
       dir: dirRaw,
     } = req.query as Record<string, string | undefined>;
@@ -483,49 +484,97 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
     const searchTerm = (search || "").toLowerCase().trim();
     const useSearch = searchTerm.length >= 2;
 
-    // ── Build filtered query (DUPLICATED INLINE — see header note) ──────
-    let query: admin.firestore.Query = firestore.collection("products");
-    if (useSearch) {
-      query = query.where("search_tokens", "array-contains", searchTerm);
-    }
-    if (completion_state && completion_state !== "all") {
-      query = query.where("completion_state", "==", completion_state);
-    }
-    if (!useSearch) {
-      if (brand) query = query.where("brand_key", "==", brand);
-      if (department) query = query.where("department_key", "==", department);
-      if (site_owner) query = query.where("site_owner", "==", site_owner);
-    }
-    query = query.orderBy(sortField, sortDir as "asc" | "desc");
+    // TALLY-147 — selection-aware export. When the FE passes `ids`, fetch only
+    // those specific docs via getAll and bypass the categorical query path.
+    // Selection wins over filters per PO ruling D2.
+    const SELECTION_CAP = 250;
+    const selectedIds: string[] = idsRaw
+      ? idsRaw
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+      : [];
+    // Dedup (defensive)
+    const uniqueSelectedIds = Array.from(new Set(selectedIds));
 
-    // ── count() — Frink D1: failure ABORTS, does NOT fall back. ─────────
-    let matched: number;
-    try {
-      const countSnap = await query.count().get();
-      matched = countSnap.data().count;
-    } catch (countErr) {
-      console.error("export.csv count() failed:", countErr);
-      res.status(500).json({ error: "Could not estimate result size; export aborted." });
-      return;
-    }
+    let docs: FirebaseFirestore.QueryDocumentSnapshot[];
 
-    if (matched > EXPORT_ROW_CAP) {
-      res.status(413).json({
-        error: `Result exceeds ${EXPORT_ROW_CAP} rows. Narrow your filter and re-export.`,
-        matched,
-      });
-      return;
-    }
+    if (uniqueSelectedIds.length > 0) {
+      if (uniqueSelectedIds.length > SELECTION_CAP) {
+        res.status(400).json({
+          error: `Selection too large (${uniqueSelectedIds.length}). Max ${SELECTION_CAP}. Apply filters and re-export, or split into multiple exports.`,
+        });
+        return;
+      }
+      const refs = uniqueSelectedIds.map((id) => firestore.collection("products").doc(id));
+      const snaps = await firestore.getAll(...refs);
+      const existingSnaps = snaps.filter((s) => s.exists);
+      if (existingSnaps.length === 0) {
+        // No matching docs — emit empty CSV (header only) below.
+        docs = [];
+      } else {
+        // Sort post-fetch using the same sortField/sortDir as non-selection export
+        // for ordering consistency.
+        existingSnaps.sort((a, b) => {
+          const av = (a.data() as any)?.[sortField];
+          const bv = (b.data() as any)?.[sortField];
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          if (av < bv) return sortDir === "asc" ? -1 : 1;
+          if (av > bv) return sortDir === "asc" ? 1 : -1;
+          return 0;
+        });
+        docs = existingSnaps as unknown as FirebaseFirestore.QueryDocumentSnapshot[];
+      }
+      // Skip the categorical query path — docs are now ready for the existing loop.
+    } else {
+      // (existing path — no change to the code below this point)
 
-    // ── Fetch rows in EXPORT_PAGE_SIZE pages, cap-bounded ───────────────
-    const docs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
-    let offset = 0;
-    while (offset < matched && docs.length < EXPORT_ROW_CAP) {
-      const pageSnap = await query.offset(offset).limit(EXPORT_PAGE_SIZE).get();
-      if (pageSnap.empty) break;
-      docs.push(...pageSnap.docs);
-      if (pageSnap.size < EXPORT_PAGE_SIZE) break;
-      offset += EXPORT_PAGE_SIZE;
+      // ── Build filtered query (DUPLICATED INLINE — see header note) ──────
+      let query: admin.firestore.Query = firestore.collection("products");
+      if (useSearch) {
+        query = query.where("search_tokens", "array-contains", searchTerm);
+      }
+      if (completion_state && completion_state !== "all") {
+        query = query.where("completion_state", "==", completion_state);
+      }
+      if (!useSearch) {
+        if (brand) query = query.where("brand_key", "==", brand);
+        if (department) query = query.where("department_key", "==", department);
+        if (site_owner) query = query.where("site_owner", "==", site_owner);
+      }
+      query = query.orderBy(sortField, sortDir as "asc" | "desc");
+
+      // ── count() — Frink D1: failure ABORTS, does NOT fall back. ─────────
+      let matched: number;
+      try {
+        const countSnap = await query.count().get();
+        matched = countSnap.data().count;
+      } catch (countErr) {
+        console.error("export.csv count() failed:", countErr);
+        res.status(500).json({ error: "Could not estimate result size; export aborted." });
+        return;
+      }
+
+      if (matched > EXPORT_ROW_CAP) {
+        res.status(413).json({
+          error: `Result exceeds ${EXPORT_ROW_CAP} rows. Narrow your filter and re-export.`,
+          matched,
+        });
+        return;
+      }
+
+      // ── Fetch rows in EXPORT_PAGE_SIZE pages, cap-bounded ───────────────
+      docs = [];
+      let offset = 0;
+      while (offset < matched && docs.length < EXPORT_ROW_CAP) {
+        const pageSnap = await query.offset(offset).limit(EXPORT_PAGE_SIZE).get();
+        if (pageSnap.empty) break;
+        docs.push(...pageSnap.docs);
+        if (pageSnap.size < EXPORT_PAGE_SIZE) break;
+        offset += EXPORT_PAGE_SIZE;
+      }
     }
 
     // ── In-memory filters (mirror list endpoint, sans pagination cap) ───
