@@ -7,6 +7,7 @@ import admin from "firebase-admin";
 import { parse } from "json2csv";
 import { mpnToDocId } from "./mpnUtils";
 import { apply99Rounding } from "./pricingUtils";
+import { loadExportableAttrs, serializeAttrValue } from "../lib/exportRegistry";
 
 const db = () => admin.firestore();
 
@@ -44,6 +45,8 @@ export interface ExportRow {
   };
   site_targets: string[];
   push_list_ids: string[];
+  /** Issue #3 — raw attribute_values map passthrough for dynamic column resolution. */
+  _attrs?: Record<string, any>;
 }
 
 export interface ExportCsvBuildResult {
@@ -61,6 +64,10 @@ export async function buildExportCsv(rows: ExportRow[]): Promise<ExportCsvBuildR
   const separator = typeof settingVal === "string" && settingVal.length > 0
     ? settingVal
     : ",";
+
+  // Issue #3 — PO-ratified E2/E3/E6: load export-eligible registry attrs once per run.
+  const exportableAttrs = await loadExportableAttrs();
+  const exportableAttrMap = new Map(exportableAttrs.map((a) => [a.field_key, a]));
 
   const csvRows = rows.map((r) => ({
     mpn: r.mpn,
@@ -87,6 +94,8 @@ export async function buildExportCsv(rows: ExportRow[]): Promise<ExportCsvBuildR
     site_targets: r.site_targets.join(separator),
     push_list_ids: r.push_list_ids.join(separator),
   }));
+
+  // Append dynamic registry-driven columns, deduped against hardcoded fields.
   const fields = [
     "mpn",
     "sku",
@@ -112,8 +121,23 @@ export async function buildExportCsv(rows: ExportRow[]): Promise<ExportCsvBuildR
     "site_targets",
     "push_list_ids",
   ];
+  const hardcodedFieldSet = new Set<string>(fields);
+  const dynamicAttrKeys = exportableAttrs
+    .filter((a) => !hardcodedFieldSet.has(a.field_key))
+    .map((a) => a.field_key);
+  const allFields = [...fields, ...dynamicAttrKeys];
 
-  return { csv: parse(csvRows, { fields }), separator };
+  // Issue #3 — resolve dynamic registry-driven columns from already-fetched _attrs.
+  for (let i = 0; i < csvRows.length; i++) {
+    for (const key of dynamicAttrKeys) {
+      const meta = exportableAttrMap.get(key);
+      (csvRows[i] as any)[key] = serializeAttrValue(
+        (rows[i] as any)._attrs?.[key],
+        meta?.field_type || "text"
+      );
+    }
+  }
+  return { csv: parse(csvRows, { fields: allFields }), separator };
 }
 
 /**
@@ -233,5 +257,7 @@ export async function serializeProduct(mpn: string): Promise<ExportRow> {
     },
     site_targets: siteTargets,
     push_list_ids: pushListIds,
+    // Issue #3 — pass through full attrs map for dynamic column resolution in buildExportCsv.
+    _attrs: attrs,
   };
 }

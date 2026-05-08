@@ -36,6 +36,7 @@ import {
   cascadeDeleteProduct,
   PRODUCT_SUBCOLLECTIONS,
 } from "../services/productCascadeDelete";
+import { loadExportableAttrs, serializeAttrValue } from "../lib/exportRegistry";
 
 const router = Router();
 const db = admin.firestore;
@@ -529,6 +530,16 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
 
     // ── In-memory filters (mirror list endpoint, sans pagination cap) ───
     const requiredFields = await getRequiredFieldKeys(firestore);
+
+    // Issue #3 — PO-ratified E2/E3/E6: load export-eligible registry attrs once per request.
+    const exportableAttrs = await loadExportableAttrs();
+    const exportableAttrMap = new Map(exportableAttrs.map((a) => [a.field_key, a]));
+    const hardcodedColumnSet = new Set<string>(EXPORT_COLUMNS as readonly string[]);
+    const dynamicAttrKeys = exportableAttrs
+      .filter((a) => !hardcodedColumnSet.has(a.field_key))
+      .map((a) => a.field_key);
+    const allColumns: string[] = [...EXPORT_COLUMNS as readonly string[], ...dynamicAttrKeys];
+
     const rows: string[] = [];
 
     for (const doc of docs) {
@@ -544,35 +555,33 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
       if (useSearch && site_owner) {
         if ((productSiteOwner || "").toLowerCase() !== site_owner.toLowerCase()) continue;
       }
+
+      // Issue #3 — fetch the full attribute_values subcollection once; resolve
+      // hardcoded + dynamic keys from the same in-memory map. Net I/O per product
+      // shifts from 5 specific .doc().get() calls to 1 .collection().get() call.
+      const attrRef = firestore.collection("products").doc(docId).collection("attribute_values");
+      const attrSnap = await attrRef.get();
+      const attrs: Record<string, any> = {};
+      attrSnap.docs.forEach((d) => {
+        attrs[d.id] = d.data();
+      });
+
+      // image_status filter using new attrs map
       if (image_status) {
-        const imgAttr = await firestore
-          .collection("products").doc(docId)
-          .collection("attribute_values").doc("image_status").get();
-        const imgVal = imgAttr.exists ? imgAttr.data()?.value : null;
+        const imgVal = attrs["image_status"]?.value ?? null;
         if (!imgVal || String(imgVal).toUpperCase() !== image_status.toUpperCase()) continue;
       }
 
-      // department fallback (mirror list endpoint)
+      // department fallback (check product doc first, then attrs map)
       let deptVal = typeof data.department === "string" && data.department ? data.department : "";
       if (!deptVal) {
-        const deptSnap = await firestore
-          .collection("products").doc(docId)
-          .collection("attribute_values").doc("department").get();
-        deptVal = deptSnap.exists ? deptSnap.data()?.value || "" : "";
+        deptVal = attrs["department"]?.value || "";
       }
 
-      // 4 attribute_values reads in parallel (mirror list endpoint pattern)
-      const attrRef = firestore.collection("products").doc(docId).collection("attribute_values");
-      const [scomSnap, scomSaleSnap, stdShipSnap, expShipSnap] = await Promise.all([
-        attrRef.doc("scom").get(),
-        attrRef.doc("scom_sale").get(),
-        attrRef.doc("standard_shipping_override").get(),
-        attrRef.doc("expedited_shipping_override").get(),
-      ]);
-      const scomVal = scomSnap.exists ? scomSnap.data()?.value : null;
-      const scomSaleVal = scomSaleSnap.exists ? scomSaleSnap.data()?.value : null;
-      const stdShipVal = stdShipSnap.exists ? stdShipSnap.data()?.value : null;
-      const expShipVal = expShipSnap.exists ? expShipSnap.data()?.value : null;
+      const scomVal = attrs["scom"]?.value ?? null;
+      const scomSaleVal = attrs["scom_sale"]?.value ?? null;
+      const stdShipVal = attrs["standard_shipping_override"]?.value ?? null;
+      const expShipVal = attrs["expedited_shipping_override"]?.value ?? null;
 
       // completion_percent — stamped-then-computed (Frink C3, parity with list)
       let completionPct: number;
@@ -583,7 +592,7 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
         completionPct = progress.pct;
       }
 
-      const cells = [
+      const hardcodedCells = [
         csvEscape(data.mpn || docIdToMpn(docId)),
         csvEscape(data.brand || ""),
         csvEscape(data.name || ""),
@@ -600,11 +609,18 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
         csvEscape(data.rics_offer === null || data.rics_offer === undefined ? "" : String(data.rics_offer)),
         csvEscape(data.rics_retail === null || data.rics_retail === undefined ? "" : String(data.rics_retail)),
       ];
-      rows.push(cells.join(","));
+
+      // Issue #3 — resolve dynamic registry-driven columns.
+      const dynamicCells = dynamicAttrKeys.map((key) => {
+        const meta = exportableAttrMap.get(key);
+        return csvEscape(serializeAttrValue(attrs[key]?.value, meta?.field_type || "text"));
+      });
+
+      rows.push([...hardcodedCells, ...dynamicCells].join(","));
     }
 
     // Header row — column names contain no special chars; no escape needed.
-    const header = EXPORT_COLUMNS.join(",");
+    const header = allColumns.join(",");
     const body = [header, ...rows].join("\r\n") + "\r\n";
 
     // Filename — server (UTC) date. Content-Disposition wins over the
