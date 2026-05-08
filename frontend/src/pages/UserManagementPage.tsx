@@ -748,8 +748,8 @@ function ModalShell({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md p-5">
-        <div className="flex items-center justify-between mb-3">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
           <h2 className="text-lg font-bold">{title}</h2>
           <button
             onClick={onClose}
@@ -758,7 +758,7 @@ function ModalShell({
             ✕
           </button>
         </div>
-        {children}
+        <div className="flex-1 overflow-y-auto px-5 pb-5">{children}</div>
       </div>
     </div>
   );
