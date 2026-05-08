@@ -447,6 +447,33 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           { site_owner: siteMatch?.key ?? "" },
           { merge: true }
         );
+        // TALLY-148: write canonical site_key to attribute_values["site_owner"]
+        // so QuickEditPanel can pre-populate the site_owner dropdown.
+        // Only write when a canonical match exists; never overwrite Human-Verified.
+        if (siteMatch?.key) {
+          const siteOwnerAttrRef = productRef
+            .collection("attribute_values")
+            .doc("site_owner");
+          const existingSiteOwnerAttr = await siteOwnerAttrRef.get();
+          if (
+            !existingSiteOwnerAttr.exists ||
+            existingSiteOwnerAttr.data()?.verification_state !== "Human-Verified"
+          ) {
+            await siteOwnerAttrRef.set(
+              {
+                field_name: "site_owner",
+                value: siteMatch.key,
+                origin_type: "Import",
+                origin_rule: "Full Product Import",
+                origin_detail: `Import Batch ${batch_id}`,
+                verification_state: "Rule-Verified",
+                updated_at: db.FieldValue.serverTimestamp(),
+                written_at: db.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
+        }
         // TALLY-103: MPN and SKU arrive pre-verified (Human-Verified)
         const importAttributes: Record<string, any> = {
           mpn,
