@@ -115,28 +115,32 @@ function readAttrValue(detail: ProductDetail, key: FieldKey): string {
   return String(v);
 }
 
-// TALLY-138 — hydration converters: legacy `attribute_values` stores brand /
-// department as display_name; dropdown options now key on `brand_key` / `key`,
-// so convert at hydration. Falls back to raw value (existing inactive-option
-// branch in renderField will surface unmatched values as legacy entries).
+// TALLY-149 — alias walk for legacy AV entries that store an alias value
+// (e.g. pre-PR-#101 imports). Without this, alias-valued AV entries fall
+// through to raw display and render "(inactive)" in QuickEdit.
 function displayToBrandKey(displayName: string, registry: BrandRegistryEntry[]): string {
   if (!displayName) return "";
   const norm = displayName.trim().toLowerCase();
   const match = registry.find(
     (b) =>
       b.brand_key.toLowerCase() === norm ||
-      b.display_name.toLowerCase() === norm
+      b.display_name.toLowerCase() === norm ||
+      (Array.isArray(b.aliases) &&
+        b.aliases.some((a: string) => typeof a === "string" && a.toLowerCase() === norm))
   );
   return match?.brand_key || displayName;
 }
 
+// TALLY-149 — alias walk; same rationale as displayToBrandKey.
 function displayToDeptKey(displayName: string, registry: DepartmentRegistryEntry[]): string {
   if (!displayName) return "";
   const norm = displayName.trim().toLowerCase();
   const match = registry.find(
     (d) =>
       d.key.toLowerCase() === norm ||
-      d.display_name.toLowerCase() === norm
+      d.display_name.toLowerCase() === norm ||
+      (Array.isArray(d.aliases) &&
+        d.aliases.some((a: string) => typeof a === "string" && a.toLowerCase() === norm))
   );
   return match?.key || displayName;
 }

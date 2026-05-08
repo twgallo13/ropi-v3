@@ -56,7 +56,8 @@ export interface CanonicalRegistryMatch {
 export type Canonicalizer = (raw: string | null | undefined) => CanonicalRegistryMatch | null;
 
 async function buildCanonicalizerFromCollection(
-  collectionName: string
+  collectionName: string,
+  keyField: string = "key"
 ): Promise<Canonicalizer> {
   const snap = await admin
     .firestore()
@@ -70,7 +71,10 @@ async function buildCanonicalizerFromCollection(
 
   for (const doc of snap.docs) {
     const d = doc.data() as Record<string, unknown>;
-    const key = String(d.key || doc.id).toLowerCase().trim();
+    // TALLY-149 — brand_registry stores `brand_key` (not `key`). Without
+    // parameterization, fallback to doc.id produced root.brand_key drift
+    // for docs where doc.id !== brand_key (e.g. "field grade" vs "field_grade").
+    const key = String(d[keyField] || doc.id).toLowerCase().trim();
     const display = String(d.display_name || d.name || doc.id);
     const entry = { key, display };
 
@@ -107,11 +111,11 @@ async function buildCanonicalizerFromCollection(
 }
 
 export async function buildBrandCanonicalizer(): Promise<Canonicalizer> {
-  return buildCanonicalizerFromCollection("brand_registry");
+  return buildCanonicalizerFromCollection("brand_registry", "brand_key");
 }
 
 export async function buildDepartmentCanonicalizer(): Promise<Canonicalizer> {
-  return buildCanonicalizerFromCollection("department_registry");
+  return buildCanonicalizerFromCollection("department_registry", "key");
 }
 
 /**
