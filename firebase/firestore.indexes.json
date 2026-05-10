@@ -1017,6 +1017,24 @@
         { "fieldPath": "expedited_shipping_override", "order": "ASCENDING" },
         { "fieldPath": "mpn",                         "order": "ASCENDING" }
       ]
+    },
+    {
+      "__comment__": "Index 101 — TALLY-D2B Phase 3.13: cockpit cadence query by primary_user_id + in_cadence_review_queue",
+      "collectionGroup": "cadence_assignments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "primary_user_id",         "order": "ASCENDING" },
+        { "fieldPath": "in_cadence_review_queue", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "__comment__": "Index 102 — TALLY-D2B Phase 3.13: cockpit cadence query by support_user_ids array-contains + in_cadence_review_queue",
+      "collectionGroup": "cadence_assignments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "support_user_ids",        "arrayConfig": "CONTAINS" },
+        { "fieldPath": "in_cadence_review_queue", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
