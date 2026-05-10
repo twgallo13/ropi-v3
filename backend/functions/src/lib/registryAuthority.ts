@@ -169,3 +169,22 @@ export async function buildSiteOwnerCanonicalizer(): Promise<Canonicalizer> {
     return null;
   };
 }
+
+/**
+ * TALLY-D2C — Build brand_key → default_site_owner Map from active brand_registry.
+ * Used by import pipeline to override CSV-derived site_owner with brand defaults.
+ * Map values are canonical site_keys (e.g., "shiekh", "mltd", "karmaloop") or null
+ * if the brand has no default. Cost: 1 collection read per import batch.
+ */
+export async function buildBrandDefaultSiteOwnerMap(
+  db: admin.firestore.Firestore
+): Promise<Map<string, string | null>> {
+  const snap = await db.collection("brand_registry").where("is_active", "==", true).get();
+  const out = new Map<string, string | null>();
+  for (const doc of snap.docs) {
+    const d = doc.data();
+    const key = String(d.brand_key || "").toLowerCase().trim();
+    if (key) out.set(key, (d.default_site_owner as string | null) ?? null);
+  }
+  return out;
+}
