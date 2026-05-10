@@ -19,7 +19,7 @@ const FieldValue = admin.firestore.FieldValue;
 
 const COMMIT = process.argv.includes("--commit");
 const LEAK_OWNER_ID = "step22-verify-bot";
-const HEATHER_RULE_NAME = "Heather — Women's Footwear";
+const HEATHER_RULE_NAME = "Heather — Women's Footwear 45-Day Zero Sales";
 
 async function findStep22Leaks() {
   const snap = await db
