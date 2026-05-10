@@ -56,6 +56,20 @@ const TARGETS: Array<{
     },
   },
   {
+    uid: "v8w9ogiVBUdBHpOSNhAzhqsIkvB3",
+    name: "Richard",
+    role: "buyer",
+    portfolio: {
+      portfolio_brands: [],
+      portfolio_depts: ["clothing", "accessories"],
+      portfolio_sites: [],
+      portfolio_age_groups: [],
+      portfolio_gender: ["Mens", "Boys"],
+      portfolio_attributes: {},
+      portfolio_exclusions: null,
+    },
+  },
+  {
     uid: "njIY4yyVSIUhchVe78g7BVN0Bx72",
     name: "Mike",
     role: "head_buyer",
