@@ -38,86 +38,123 @@ router.get(
       }
       const userData = userSnap.data()!;
       const role = userData.role || "buyer";
-      const isAdminGlobal = ["head_buyer", "admin", "owner"].includes(role);
+      // TALLY-D2B (Option B): owner routes through portfolio-filtered path, not admin-global.
+      const isAdminGlobal = ["head_buyer", "admin"].includes(role);
 
       // Build portfolio for buyer-role (used for MAP + Pricing + High-GM% KPI).
       const portfolio = isAdminGlobal
         ? null
         : buildBuyerPortfolio(effectiveUid, userData);
 
-      // ── Cadence section (D4: legacy ownedRuleIds path) ──
-      let ownedRuleIds: string[] | null = null;
-      if (!isAdminGlobal) {
-        const rulesSnap = await db()
-          .collection("cadence_rules")
-          .where("owner_buyer_id", "==", effectiveUid)
-          .get();
-        ownedRuleIds = rulesSnap.docs.map((d) => d.id);
+      // ── Build users map ONCE (reused for primary_display_name + viewableUsers) ──
+      const allUsersSnap = await db().collection("users").get();
+      const usersMap = new Map<
+        string,
+        { display_name: string; role: string }
+      >();
+      for (const u of allUsersSnap.docs) {
+        const ud = u.data();
+        usersMap.set(u.id, {
+          display_name: ud.display_name || ud.email || "Unknown",
+          role: ud.role || "unknown",
+        });
       }
 
+      // ── Cadence section (TALLY-D2B: primary/support two-query union) ──
       const cadence: any[] = [];
       let agedOver45d = 0;
       const now = Date.now();
       const FORTY_FIVE_DAYS_MS = 45 * 24 * 60 * 60 * 1000;
 
-      if (isAdminGlobal || (ownedRuleIds && ownedRuleIds.length > 0)) {
-        const assignSnap = await db()
+      let assignmentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+      if (isAdminGlobal) {
+        // Admin path: full sweep, no user filter.
+        const snap = await db()
           .collection("cadence_assignments")
           .where("in_cadence_review_queue", "==", true)
           .get();
-
-        for (const d of assignSnap.docs) {
-          const a = d.data();
-          if (a.cadence_state !== "assigned" || !a.recommendation) continue;
-          if (ownedRuleIds && !ownedRuleIds.includes(a.matched_rule_id)) continue;
-
-          const pSnap = await db()
-            .collection("products")
-            .doc(mpnToDocId(a.mpn))
-            .get();
-          if (!pSnap.exists) continue;
-          const p = pSnap.data() as any;
-
-          const queueEnteredAt =
-            a.buyer_queue_entered_at?.toDate?.()?.getTime?.() ?? null;
-          const daysInQueue =
-            queueEnteredAt != null
-              ? Math.floor((now - queueEnteredAt) / (24 * 60 * 60 * 1000))
-              : 0;
-
-          // D2 — Aged>45d KPI: anchor on buyer_queue_entered_at
-          if (queueEnteredAt != null && now - queueEnteredAt > FORTY_FIVE_DAYS_MS) {
-            agedOver45d += 1;
+        assignmentDocs = snap.docs;
+      } else {
+        // Portfolio path: union of primary_user_id + support_user_ids queries.
+        const [primarySnap, supportSnap] = await Promise.all([
+          db()
+            .collection("cadence_assignments")
+            .where("primary_user_id", "==", effectiveUid)
+            .where("in_cadence_review_queue", "==", true)
+            .get(),
+          db()
+            .collection("cadence_assignments")
+            .where("support_user_ids", "array-contains", effectiveUid)
+            .where("in_cadence_review_queue", "==", true)
+            .get(),
+        ]);
+        // Dedup by document ID (defensive — should be no overlap per resolver semantics).
+        const seen = new Set<string>();
+        for (const d of [...primarySnap.docs, ...supportSnap.docs]) {
+          if (!seen.has(d.id)) {
+            seen.add(d.id);
+            assignmentDocs.push(d);
           }
-
-          cadence.push({
-            mpn: a.mpn,
-            name: p.name || "",
-            brand: p.brand || "",
-            department: p.department || "",
-            class: p.class || "",
-            site_owner: p.site_owner || "",
-            rics_retail: p.rics_retail ?? 0,
-            rics_offer: p.rics_offer ?? 0,
-            scom: p.scom ?? 0,
-            scom_sale: p.scom_sale ?? 0,
-            is_map_protected: !!p.is_map_protected,
-            map_price: p.map_price ?? null,
-            map_conflict_active: !!p.map_conflict_active,
-            str_pct: p.str_pct ?? null,
-            wos: p.wos ?? null,
-            store_gm_pct: p.store_gm_pct ?? null,
-            web_gm_pct: p.web_gm_pct ?? null,
-            inventory_total:
-              (p.inventory_store ?? 0) +
-              (p.inventory_warehouse ?? 0) +
-              (p.inventory_whs ?? 0),
-            is_slow_moving: !!p.is_slow_moving,
-            recommendation: a.recommendation,
-            current_step: a.current_step,
-            days_in_queue: daysInQueue,
-          });
         }
+      }
+
+      for (const d of assignmentDocs) {
+        const a = d.data();
+        if (a.cadence_state !== "assigned" || !a.recommendation) continue;
+
+        const pSnap = await db()
+          .collection("products")
+          .doc(mpnToDocId(a.mpn))
+          .get();
+        if (!pSnap.exists) continue;
+        const p = pSnap.data() as any;
+
+        const queueEnteredAt =
+          a.buyer_queue_entered_at?.toDate?.()?.getTime?.() ?? null;
+        const daysInQueue =
+          queueEnteredAt != null
+            ? Math.floor((now - queueEnteredAt) / (24 * 60 * 60 * 1000))
+            : 0;
+
+        // D2 — Aged>45d KPI: anchor on buyer_queue_entered_at
+        if (queueEnteredAt != null && now - queueEnteredAt > FORTY_FIVE_DAYS_MS) {
+          agedOver45d += 1;
+        }
+
+        cadence.push({
+          mpn: a.mpn,
+          name: p.name || "",
+          brand: p.brand || "",
+          department: p.department || "",
+          class: p.class || "",
+          site_owner: p.site_owner || "",
+          rics_retail: p.rics_retail ?? 0,
+          rics_offer: p.rics_offer ?? 0,
+          scom: p.scom ?? 0,
+          scom_sale: p.scom_sale ?? 0,
+          is_map_protected: !!p.is_map_protected,
+          map_price: p.map_price ?? null,
+          map_conflict_active: !!p.map_conflict_active,
+          str_pct: p.str_pct ?? null,
+          wos: p.wos ?? null,
+          store_gm_pct: p.store_gm_pct ?? null,
+          web_gm_pct: p.web_gm_pct ?? null,
+          inventory_total:
+            (p.inventory_store ?? 0) +
+            (p.inventory_warehouse ?? 0) +
+            (p.inventory_whs ?? 0),
+          is_slow_moving: !!p.is_slow_moving,
+          recommendation: a.recommendation,
+          current_step: a.current_step,
+          days_in_queue: daysInQueue,
+          // TALLY-D2B — Phase 3.13 Primary/Support tier fields
+          primary_user_id: a.primary_user_id ?? null,
+          support_user_ids: a.support_user_ids ?? [],
+          is_primary: a.primary_user_id === effectiveUid,
+          primary_display_name: a.primary_user_id
+            ? (usersMap.get(a.primary_user_id)?.display_name ?? null)
+            : null,
+        });
       }
 
       // ── MAP section (D3: portfolio filter) ──
@@ -201,15 +238,12 @@ router.get(
         PRIVILEGED_ACTOR_ROLES.includes(actingRole);
 
       // viewable_users: minimal user list for the FE View As dropdown.
-      const allUsersSnap = await db().collection("users").get();
-      const viewableUsers = allUsersSnap.docs.map((d) => {
-        const data = d.data();
-        return {
-          uid: d.id,
-          display_name: data.display_name || data.email || "Unknown",
-          role: data.role || "unknown",
-        };
-      });
+      // TALLY-D2B — reuse usersMap built above (single users full-scan per request).
+      const viewableUsers = Array.from(usersMap.entries()).map(([uid, u]) => ({
+        uid,
+        display_name: u.display_name,
+        role: u.role,
+      }));
 
       res.json({
         cadence,

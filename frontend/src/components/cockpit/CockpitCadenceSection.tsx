@@ -40,6 +40,12 @@ function CadenceRow({
 }) {
   const [busy, setBusy] = useState(false);
 
+  // TALLY-D2B — Phase 3.13 Primary/Support tier UI.
+  // Explicit `=== false` check: admin-global rows have is_primary undefined
+  // and should not be badged.
+  const isSupport =
+    item.is_primary === false && (item.support_user_ids?.length ?? 0) > 0;
+
   async function run(fn: () => Promise<unknown>) {
     if (readOnly || busy) return;
     setBusy(true);
@@ -57,31 +63,48 @@ function CadenceRow({
   return (
     <div className="rounded border border-slate-200 bg-white p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
       <div className="text-sm">
-        <div className="font-medium">
-          {item.name} <span className="text-slate-400">({item.mpn})</span>
+        <div className="flex items-center gap-2 font-medium">
+          <span>
+            {item.name} <span className="text-slate-400">({item.mpn})</span>
+          </span>
+          {item.is_primary === true && (
+            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+              Primary
+            </span>
+          )}
+          {isSupport && (
+            <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+              Support
+            </span>
+          )}
         </div>
         <div className="text-xs text-slate-500">
           {item.brand} • {item.department} / {item.class} • Step {item.current_step} •{" "}
           {item.days_in_queue}d in queue
         </div>
+        {isSupport && item.primary_display_name && (
+          <div className="text-xs text-slate-500">
+            Shared by {item.primary_display_name}
+          </div>
+        )}
       </div>
       <div className="flex gap-1">
         <button
-          disabled={readOnly || busy}
+          disabled={readOnly || busy || isSupport}
           onClick={() => run(() => buyerAction(item.mpn, "approve"))}
           className="px-2 py-1 text-xs rounded bg-emerald-600 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
         >
           Approve
         </button>
         <button
-          disabled={readOnly || busy}
+          disabled={readOnly || busy || isSupport}
           onClick={() => run(() => buyerAction(item.mpn, "deny"))}
           className="px-2 py-1 text-xs rounded bg-rose-600 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
         >
           Deny
         </button>
         <button
-          disabled={readOnly || busy}
+          disabled={readOnly || busy || isSupport}
           onClick={() => run(() => buyerHold(item.mpn, "Held from Cockpit V1"))}
           className="px-2 py-1 text-xs rounded bg-amber-500 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
         >
