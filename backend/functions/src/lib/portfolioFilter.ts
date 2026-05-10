@@ -11,33 +11,28 @@
  * Track 2 amendment logic in cadenceEngine.ts:111–143 exactly.
  */
 import admin from "firebase-admin";
+import { BuyerPortfolio, PortfolioAttributes } from "../types/cadence";
 
-export interface BuyerPortfolio {
-  uid: string;
-  portfolio_brands: Set<string>;
-  portfolio_depts: Set<string>;
-  portfolio_sites: Set<string>;
-  portfolio_age_groups: Set<string>;
-  portfolio_gender: Set<string>;
-  portfolio_exclusions: {
-    brand: Set<string>;
-    department: Set<string>;
-    class: Set<string>;
-    site: Set<string>;
-    age_group: Set<string>;
-    gender: Set<string>;
-  };
-}
+export type { BuyerPortfolio } from "../types/cadence";
 
 export function buildBuyerPortfolio(uid: string, data: any): BuyerPortfolio {
   const exc = data.portfolio_exclusions || {};
+  const rawAttrs =
+    data.portfolio_attributes && typeof data.portfolio_attributes === "object"
+      ? data.portfolio_attributes
+      : {};
+  const portfolio_attributes: PortfolioAttributes = Object.fromEntries(
+    Object.entries(rawAttrs).filter(([, v]) => typeof v === "boolean")
+  ) as PortfolioAttributes;
   return {
     uid,
+    role: data.role as "buyer" | "head_buyer" | "owner",
     portfolio_brands: new Set<string>(data.portfolio_brands || []),
     portfolio_depts: new Set<string>(data.portfolio_depts || []),
     portfolio_sites: new Set<string>(data.portfolio_sites || []),
     portfolio_age_groups: new Set<string>(data.portfolio_age_groups || []),
     portfolio_gender: new Set<string>(data.portfolio_gender || []),
+    portfolio_attributes,
     portfolio_exclusions: {
       brand: new Set<string>(exc.brand || []),
       department: new Set<string>(exc.department || []),
@@ -68,13 +63,26 @@ export function productMatchesBuyerPortfolio(
   if (productAge && buyer.portfolio_exclusions.age_group.has(productAge)) return false;
   if (productGender && buyer.portfolio_exclusions.gender.has(productGender)) return false;
 
-  // Step 2 — AND-match across 5 portfolio dimensions
+  // Step 2 — AND-match across 6 portfolio dimensions (5 existing + portfolio_attributes)
   // Empty buyer set on a dim = wildcard for that dim.
   if (buyer.portfolio_brands.size > 0 && !buyer.portfolio_brands.has(productBrandKey)) return false;
   if (buyer.portfolio_depts.size > 0 && !buyer.portfolio_depts.has(productDeptKey)) return false;
   if (buyer.portfolio_sites.size > 0 && !buyer.portfolio_sites.has(productSite)) return false;
   if (buyer.portfolio_age_groups.size > 0 && !buyer.portfolio_age_groups.has(productAge)) return false;
   if (buyer.portfolio_gender.size > 0 && !buyer.portfolio_gender.has(productGender)) return false;
+
+  // 6th dim — portfolio_attributes (boolean AND-match against root or attributes bag).
+  // Mirrors cadenceEngine.productMatchesBuyerPortfolio exactly.
+  const attrKeys = Object.keys(buyer.portfolio_attributes);
+  if (attrKeys.length > 0) {
+    for (const key of attrKeys) {
+      const expected = buyer.portfolio_attributes[key];
+      const fromBag = product?.attributes?.[key];
+      const fromRoot = product?.[key];
+      const got = fromBag !== undefined ? fromBag : fromRoot;
+      if (Boolean(got) !== Boolean(expected)) return false;
+    }
+  }
 
   return true;
 }
