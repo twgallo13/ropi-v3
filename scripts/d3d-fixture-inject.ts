@@ -16,19 +16,22 @@ const FieldValue = admin.firestore.FieldValue;
 
 const COMMIT = process.argv.includes("--commit");
 const T1_MPN = "CK9246 101";
-const NON_BUYER_GENDERS = new Set(["Unisex", "Toddler"]);
+const T4_GENDERS = new Set(["Girls", "Kids"]);
+const T4_DEPTS = new Set(["clothing", "accessories"]);
 const MIKE_BRANDS = new Set(["new_era", "pro_standard"]);
 
 async function findT4Candidate() {
   const snap = await db.collection("products").limit(500).get();
-  const genderDist: Record<string, number> = {};
-  const candidates: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  const dist: Record<string, number> = {};
+  const candidates: any[] = [];
   for (const d of snap.docs) {
     const data = d.data();
     const gender = String(data.gender ?? "");
-    genderDist[gender || "(empty)"] = (genderDist[gender || "(empty)"] || 0) + 1;
-    const brandKey = String(data.brand_key ?? "");
-    if (NON_BUYER_GENDERS.has(gender) && !MIKE_BRANDS.has(brandKey)) {
+    const dept = String(data.department_key ?? "");
+    const brand = String(data.brand_key ?? "");
+    const key = `${gender || "(empty)"}/${dept || "(empty)"}`;
+    dist[key] = (dist[key] || 0) + 1;
+    if (T4_GENDERS.has(gender) && T4_DEPTS.has(dept) && !MIKE_BRANDS.has(brand)) {
       candidates.push(d);
     }
   }
@@ -36,14 +39,16 @@ async function findT4Candidate() {
     return {
       doc: candidates[0],
       fallback: false,
+      total_candidates: candidates.length,
       alternates: candidates.slice(1, 5).map((c) => ({
         mpn: c.id,
         gender: c.data().gender,
-        brand_key: c.data().brand_key,
+        dept: c.data().department_key,
+        brand: c.data().brand_key,
       })),
     };
   }
-  return { doc: null, fallback: true, gender_distribution: genderDist, total_scanned: snap.size };
+  return { doc: null, fallback: true, gender_dept_distribution: dist, total_scanned: snap.size };
 }
 
 async function main() {
@@ -76,9 +81,9 @@ async function main() {
   console.log(`\n=== T4 fixture: dynamic select ===`);
   const t4Pick = await findT4Candidate();
   if (!t4Pick.doc) {
-    console.log("  Gender distribution:", JSON.stringify(t4Pick.gender_distribution));
+    console.log("  Gender/dept distribution:", JSON.stringify(t4Pick.gender_dept_distribution, null, 2));
     console.log(`  Total scanned: ${t4Pick.total_scanned}`);
-    console.error("HALT: no T4 candidate found using gender+brand selection (need gender in [Unisex,Toddler] and brand_key not in Mike brands [new_era, pro_standard])");
+    console.error("HALT: no T4 candidate found using gender+dept+brand triple (need gender in [Girls,Kids], dept in [clothing,accessories], brand_key not in [new_era,pro_standard])");
     process.exit(3);
   }
   const t4Mpn = t4Pick.doc.id;
@@ -89,15 +94,12 @@ async function main() {
     gender: t4Data.gender ?? null,
     brand_key: t4Data.brand_key ?? null,
   };
-  console.log(`  Selected: ${t4Mpn} (fallback=${t4Pick.fallback})`);
-  if (t4Pick.alternates.length > 0) {
+  console.log(`  Selected: ${t4Mpn} (fallback=${t4Pick.fallback}, total_candidates=${t4Pick.total_candidates})`);
+  if (t4Pick.alternates && t4Pick.alternates.length > 0) {
     console.log("  Alternates:", JSON.stringify(t4Pick.alternates));
   }
   console.log("  BEFORE root:", JSON.stringify(t4Before));
   console.log("  AFTER:  root.site_owner='mltd', attribute_values/site_owner {value:'mltd', origin:Smoke Fixture}");
-  if (t4Before.brand_key === "new_era" || t4Before.brand_key === "pro_standard") {
-    console.warn(`  WARNING: T4 candidate brand_key="${t4Before.brand_key}" is in Mike's portfolio_brands. Smoke (b) Tier 4 will resolve to Mike (tier2=1), not Alana. Consider selecting a different MPN or accepting that Tier 4 smoke is non-conclusive.`);
-  }
 
   if (!COMMIT) {
     console.log("\n=== DRY-RUN ONLY — no writes performed. Re-run with --commit to apply. ===");
