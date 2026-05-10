@@ -11,6 +11,7 @@ import {
   buildBrandCanonicalizer,
   buildDepartmentCanonicalizer,
   buildSiteOwnerCanonicalizer,
+  buildBrandDefaultSiteOwnerMap,
   type Canonicalizer,
 } from "../lib/registryAuthority";
 import {
@@ -236,6 +237,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
     const canonicalizeBrand: Canonicalizer = await buildBrandCanonicalizer();
     const canonicalizeDepartment: Canonicalizer = await buildDepartmentCanonicalizer();
     const canonicalizeSiteOwner: Canonicalizer = await buildSiteOwnerCanonicalizer();
+    const brandDefaultSiteOwnerMap = await buildBrandDefaultSiteOwnerMap(admin.firestore());
 
     // Orphan tracking for import summary.
     const orphanBrands = new Set<string>();
@@ -443,14 +445,22 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           orphanSiteOwners.add(rawSiteOwnerDomain);
           console.warn(`[import] orphan site_owner: "${rawSiteOwnerDomain}" did not match any active site_registry entry`);
         }
+
+        // TALLY-D2C: brand-default site_owner overrides CSV-derived domain.
+        // brandDefaultSiteOwnerMap is loaded once per batch at startup.
+        // Brand default wins; falls through to CSV-derived value for brands
+        // without a default_site_owner (preserves prior behavior as fallback).
+        const brandDefaultSiteOwner = brandDefaultSiteOwnerMap.get(identity.brand_key) ?? null;
+        const effectiveSiteOwnerKey = brandDefaultSiteOwner ?? siteMatch?.key ?? "";
+
         await productRef.set(
-          { site_owner: siteMatch?.key ?? "" },
+          { site_owner: effectiveSiteOwnerKey },
           { merge: true }
         );
         // TALLY-148: write canonical site_key to attribute_values["site_owner"]
         // so QuickEditPanel can pre-populate the site_owner dropdown.
         // Only write when a canonical match exists; never overwrite Human-Verified.
-        if (siteMatch?.key) {
+        if (effectiveSiteOwnerKey) {
           const siteOwnerAttrRef = productRef
             .collection("attribute_values")
             .doc("site_owner");
@@ -462,7 +472,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             await siteOwnerAttrRef.set(
               {
                 field_name: "site_owner",
-                value: siteMatch.key,
+                value: effectiveSiteOwnerKey,
                 origin_type: "Import",
                 origin_rule: "Full Product Import",
                 origin_detail: `Import Batch ${batch_id}`,
