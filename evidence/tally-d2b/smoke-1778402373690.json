@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "tally": "TALLY-D2B-SMOKE",
+    "probed_at": "2026-05-10T08:39:31.560Z",
+    "cloud_run_rev": "ropi-aoss-api-00200-zdq",
+    "merge_sha": "3c7c7fc"
+  },
+  "alex": {
+    "primary_count": 0,
+    "support_count": 0,
+    "union_unique": 0,
+    "sample_assigned": []
+  },
+  "heather": {
+    "primary_count": 0,
+    "support_count": 0,
+    "union_unique": 0,
+    "sample_assigned": []
+  },
+  "shiekh": {
+    "primary_count": 0,
+    "support_count": 0,
+    "union_unique": 0,
+    "sample_assigned": []
+  },
+  "admin_path": {
+    "total_in_queue": 110,
+    "by_state": {
+      "assigned": 110
+    },
+    "with_primary_user_id": 0,
+    "without_primary_user_id": 110
+  }
+}
