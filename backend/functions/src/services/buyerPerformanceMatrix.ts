@@ -122,7 +122,7 @@ export async function computeBuyerPerformanceMatrix(): Promise<{
   // ── Load buyers ──
   const buyersSnap = await db()
     .collection("users")
-    .where("role", "in", ["buyer", "head_buyer"])
+    .where("role", "in", ["buyer", "head_buyer", "owner"])
     .get();
 
   const actionCutoff = new Date();
