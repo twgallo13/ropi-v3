@@ -39,7 +39,7 @@ router.get(
       const userSnap = await db().collection("users").doc(effectiveUid).get();
       const userData = userSnap.exists ? userSnap.data()! : {};
       const role = userData.role || "buyer";
-      const isAdminGlobal = ["map_analyst", "head_buyer", "admin", "owner"].includes(role);
+      const isAdminGlobal = ["map_analyst", "head_buyer", "admin"].includes(role);
       const portfolio = isAdminGlobal
         ? null
         : buildBuyerPortfolio(effectiveUid, userData);
