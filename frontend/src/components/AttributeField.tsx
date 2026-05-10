@@ -12,6 +12,7 @@ import type {
   BrandRegistryEntry,
   DepartmentRegistryEntry,
 } from "../lib/api";
+import { displayToBrandKey, displayToDeptKey } from "../lib/registryAliases";
 
 /** Resolved option for dropdowns — label shown to user, value submitted on save. */
 interface ResolvedOption {
@@ -67,6 +68,13 @@ export function AttributeField({
   // Three explicit branches by design — no generic dispatcher abstraction.
   const [registryOptions, setRegistryOptions] = useState<ResolvedOption[] | null>(null);
   const [registryError, setRegistryError] = useState<"fetch-fail" | "empty" | null>(null);
+  // TALLY-D2D — keep the raw registry entries (brand/dept only) so we can run
+  // displayToBrandKey / displayToDeptKey on initialValue. Aliases live on the
+  // raw entry, not on the mapped ResolvedOption[]. Null for site_registry and
+  // any other dropdownSource.
+  const [registryRaw, setRegistryRaw] = useState<
+    BrandRegistryEntry[] | DepartmentRegistryEntry[] | null
+  >(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,13 +84,15 @@ export function AttributeField({
         sites.map((s) => ({ label: s.display_name, value: s.site_key }))
       );
     } else if (dropdownSource === "brand_registry") {
-      p = fetchBrandRegistry(true).then((brands: BrandRegistryEntry[]) =>
-        brands.map((b) => ({ label: b.display_name, value: b.brand_key }))
-      );
+      p = fetchBrandRegistry(true).then((brands: BrandRegistryEntry[]) => {
+        if (!cancelled) setRegistryRaw(brands);
+        return brands.map((b) => ({ label: b.display_name, value: b.brand_key }));
+      });
     } else if (dropdownSource === "department_registry") {
-      p = fetchDepartmentRegistry(true).then((depts: DepartmentRegistryEntry[]) =>
-        depts.map((d) => ({ label: d.display_name, value: d.key }))
-      );
+      p = fetchDepartmentRegistry(true).then((depts: DepartmentRegistryEntry[]) => {
+        if (!cancelled) setRegistryRaw(depts);
+        return depts.map((d) => ({ label: d.display_name, value: d.key }));
+      });
     } else {
       return;
     }
@@ -106,10 +116,30 @@ export function AttributeField({
 
   // If the parent-provided initialValue changes (e.g. after a save from
   // elsewhere or a refetch), sync it in — but only while idle.
+  // TALLY-D2D — for brand_registry / department_registry, walk the raw
+  // registry to substitute the canonical key when initialValue is a raw
+  // display alias (e.g. "New Era" → "new_era"). Without this, the orphan-
+  // value branch below renders "(inactive)" for legacy AV entries that
+  // pre-date PR #101's importer normalization.
   useEffect(() => {
-    if (saveState === "idle") setValue(initialValue);
+    if (saveState !== "idle") return;
+    if (
+      dropdownSource === "brand_registry" &&
+      registryRaw &&
+      initialValue
+    ) {
+      setValue(displayToBrandKey(initialValue, registryRaw as BrandRegistryEntry[]));
+    } else if (
+      dropdownSource === "department_registry" &&
+      registryRaw &&
+      initialValue
+    ) {
+      setValue(displayToDeptKey(initialValue, registryRaw as DepartmentRegistryEntry[]));
+    } else {
+      setValue(initialValue);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialValue]);
+  }, [initialValue, registryRaw, dropdownSource, saveState]);
 
   // ── Resolve effective options ──
   // Registry-driven fields override the static options prop.

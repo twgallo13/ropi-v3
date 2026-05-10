@@ -7,6 +7,7 @@ import {
   type DepartmentRegistryEntry,
   type SiteRegistryEntry,
 } from "../lib/api";
+import { displayToBrandKey, displayToDeptKey } from "../lib/registryAliases";
 
 // TALLY-PRODUCT-LIST-UX Phase 4B.1 — Quick Edit per-row side panel.
 //
@@ -113,36 +114,6 @@ function readAttrValue(detail: ProductDetail, key: FieldKey): string {
   const v = av.value;
   if (v === null || v === undefined) return "";
   return String(v);
-}
-
-// TALLY-149 — alias walk for legacy AV entries that store an alias value
-// (e.g. pre-PR-#101 imports). Without this, alias-valued AV entries fall
-// through to raw display and render "(inactive)" in QuickEdit.
-function displayToBrandKey(displayName: string, registry: BrandRegistryEntry[]): string {
-  if (!displayName) return "";
-  const norm = displayName.trim().toLowerCase();
-  const match = registry.find(
-    (b) =>
-      b.brand_key.toLowerCase() === norm ||
-      b.display_name.toLowerCase() === norm ||
-      (Array.isArray(b.aliases) &&
-        b.aliases.some((a: string) => typeof a === "string" && a.toLowerCase() === norm))
-  );
-  return match?.brand_key || displayName;
-}
-
-// TALLY-149 — alias walk; same rationale as displayToBrandKey.
-function displayToDeptKey(displayName: string, registry: DepartmentRegistryEntry[]): string {
-  if (!displayName) return "";
-  const norm = displayName.trim().toLowerCase();
-  const match = registry.find(
-    (d) =>
-      d.key.toLowerCase() === norm ||
-      d.display_name.toLowerCase() === norm ||
-      (Array.isArray(d.aliases) &&
-        d.aliases.some((a: string) => typeof a === "string" && a.toLowerCase() === norm))
-  );
-  return match?.key || displayName;
 }
 
 interface Props {
