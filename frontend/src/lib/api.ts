@@ -1057,6 +1057,11 @@ export interface CadenceReviewItem {
   recommendation: CadenceRecommendation;
   current_step: number;
   days_in_queue: number;
+  // TALLY-D2B — Phase 3.13 Primary/Support tier fields
+  primary_user_id?: string | null;
+  support_user_ids?: string[];
+  is_primary?: boolean;
+  primary_display_name?: string | null;
 }
 
 export interface CadenceUnassignedItem {
