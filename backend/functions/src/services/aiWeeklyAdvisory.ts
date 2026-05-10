@@ -491,7 +491,7 @@ export async function generateWeeklyAdvisories(
   // Per-buyer reports (buyers + head_buyer)
   const buyersSnap = await db()
     .collection("users")
-    .where("role", "in", ["buyer", "head_buyer"])
+    .where("role", "in", ["buyer", "head_buyer", "owner"])
     .get();
 
   let buyerReports = 0;
