@@ -10,6 +10,7 @@ import admin from "firebase-admin";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { mpnToDocId } from "../services/mpnUtils";
+import { runCadenceEvaluation } from "../services/cadenceEngine";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -196,6 +197,11 @@ router.post(
         acting_user_id: uid,
         created_at: ts(),
       });
+      // F5 — trigger full re-eval so primary_user_id, support_user_ids,
+      // recommendation, and in_cadence_review_queue are populated against the
+      // locked rule. Engine respects manual_assignment:true and skips rule
+      // matching; resolver still runs against current portfolios.
+      await runCadenceEvaluation([mpn]);
       res.json({ status: "assigned", mpn, rule_id });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
