@@ -16,25 +16,34 @@ const FieldValue = admin.firestore.FieldValue;
 
 const COMMIT = process.argv.includes("--commit");
 const T1_MPN = "CK9246 101";
-const BUYER_DEPTS = ["footwear", "clothing", "accessories"];
+const NON_BUYER_GENDERS = new Set(["Unisex", "Toddler"]);
+const MIKE_BRANDS = new Set(["new_era", "pro_standard"]);
 
 async function findT4Candidate() {
-  // First pass: scan first 500 products, return first with dept NOT in BUYER_DEPTS
   const snap = await db.collection("products").limit(500).get();
+  const genderDist: Record<string, number> = {};
+  const candidates: FirebaseFirestore.QueryDocumentSnapshot[] = [];
   for (const d of snap.docs) {
-    const dept = d.data().department_key;
-    if (dept && !BUYER_DEPTS.includes(dept)) {
-      return { doc: d, fallback: false };
+    const data = d.data();
+    const gender = String(data.gender ?? "");
+    genderDist[gender || "(empty)"] = (genderDist[gender || "(empty)"] || 0) + 1;
+    const brandKey = String(data.brand_key ?? "");
+    if (NON_BUYER_GENDERS.has(gender) && !MIKE_BRANDS.has(brandKey)) {
+      candidates.push(d);
     }
   }
-  // Fallback: first doc with dept = empty/null (still candidate; Alex/Heather/Richard/Shiekh have non-empty dept filters → excluded)
-  for (const d of snap.docs) {
-    const dept = d.data().department_key;
-    if (!dept) {
-      return { doc: d, fallback: true };
-    }
+  if (candidates.length > 0) {
+    return {
+      doc: candidates[0],
+      fallback: false,
+      alternates: candidates.slice(1, 5).map((c) => ({
+        mpn: c.id,
+        gender: c.data().gender,
+        brand_key: c.data().brand_key,
+      })),
+    };
   }
-  return null;
+  return { doc: null, fallback: true, gender_distribution: genderDist, total_scanned: snap.size };
 }
 
 async function main() {
@@ -66,8 +75,10 @@ async function main() {
   // === T4 ===
   console.log(`\n=== T4 fixture: dynamic select ===`);
   const t4Pick = await findT4Candidate();
-  if (!t4Pick) {
-    console.error("HALT: no T4 candidate found (no product with dept outside buyer set or empty dept)");
+  if (!t4Pick.doc) {
+    console.log("  Gender distribution:", JSON.stringify(t4Pick.gender_distribution));
+    console.log(`  Total scanned: ${t4Pick.total_scanned}`);
+    console.error("HALT: no T4 candidate found using gender+brand selection (need gender in [Unisex,Toddler] and brand_key not in Mike brands [new_era, pro_standard])");
     process.exit(3);
   }
   const t4Mpn = t4Pick.doc.id;
@@ -79,6 +90,9 @@ async function main() {
     brand_key: t4Data.brand_key ?? null,
   };
   console.log(`  Selected: ${t4Mpn} (fallback=${t4Pick.fallback})`);
+  if (t4Pick.alternates.length > 0) {
+    console.log("  Alternates:", JSON.stringify(t4Pick.alternates));
+  }
   console.log("  BEFORE root:", JSON.stringify(t4Before));
   console.log("  AFTER:  root.site_owner='mltd', attribute_values/site_owner {value:'mltd', origin:Smoke Fixture}");
   if (t4Before.brand_key === "new_era" || t4Before.brand_key === "pro_standard") {
