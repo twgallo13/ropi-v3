@@ -15,16 +15,19 @@ interface Props {
   onChange: () => void;
 }
 
-const PRIVILEGED_ROLES = ["head_buyer", "admin", "owner"];
+// TALLY-D3-F — actors whose Self option carries an "Admin Global" suffix.
+// Mirrors backend isAdminGlobal inference (buyerReview.ts L42:
+// ["head_buyer", "admin"].includes(role)). Must stay in sync with backend.
+const ADMIN_GLOBAL_ROLES = new Set(["head_buyer", "admin"]);
 
 export default function ViewAsBar({ meta, onChange }: Props) {
-  const callerIsPrivileged = PRIVILEGED_ROLES.includes(meta.acting_role);
+  // TALLY-D3-F — backend pre-filters viewable_users to cadence buyer roles;
+  // FE only excludes self.
+  const options = meta.viewable_users.filter((u) => u.uid !== meta.acting_user_id);
 
-  const options = meta.viewable_users.filter((u) => {
-    if (u.uid === meta.acting_user_id) return false;
-    if (callerIsPrivileged) return true;
-    return u.role === "buyer";
-  });
+  const selfLabel = ADMIN_GLOBAL_ROLES.has(meta.acting_role)
+    ? `— Self (${meta.acting_role} — Admin Global) —`
+    : `— Self (${meta.acting_role}) —`;
 
   const currentSelection = meta.is_view_as ? meta.effective_user_id : "";
 
@@ -44,7 +47,7 @@ export default function ViewAsBar({ meta, onChange }: Props) {
             value={currentSelection}
             onChange={handleChange}
           >
-            <option value="">— Self ({meta.acting_role}) —</option>
+            <option value="">{selfLabel}</option>
             {options.map((u) => (
               <option key={u.uid} value={u.uid}>
                 {u.display_name} ({u.role})
