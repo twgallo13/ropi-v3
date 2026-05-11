@@ -16,39 +16,63 @@ const FieldValue = admin.firestore.FieldValue;
 
 const COMMIT = process.argv.includes("--commit");
 const T1_MPN = "CK9246 101";
-const T4_GENDERS = new Set(["Girls", "Kids"]);
-const T4_DEPTS = new Set(["clothing", "accessories"]);
-const MIKE_BRANDS = new Set(["new_era", "pro_standard"]);
+const T4_SYNTHETIC_MPN = "D3D-T4-FIXTURE-001";
+const T4_SYNTHETIC_BASE = {
+  mpn: T4_SYNTHETIC_MPN,
+  name: "TALLY-D3-D Tier 4 Smoke Fixture (synthetic)",
+  sku: "D3D-T4-FIXTURE-001",
+  department: "Clothing",
+  department_key: "clothing",
+  gender: "Girls",
+  brand: "Jordan",
+  brand_key: "jordan",
+  site_owner: "mltd",
+  product_is_active: true,
+  completion_state: "incomplete",
+  is_fixture: true,
+  fixture_tally: "TALLY-D3-D",
+  import_batch_id: "TALLY-D3-D-FIXTURE",
+};
 
-async function findT4Candidate() {
-  const snap = await db.collection("products").limit(500).get();
-  const dist: Record<string, number> = {};
-  const candidates: any[] = [];
-  for (const d of snap.docs) {
-    const data = d.data();
-    const gender = String(data.gender ?? "");
-    const dept = String(data.department_key ?? "");
-    const brand = String(data.brand_key ?? "");
-    const key = `${gender || "(empty)"}/${dept || "(empty)"}`;
-    dist[key] = (dist[key] || 0) + 1;
-    if (T4_GENDERS.has(gender) && T4_DEPTS.has(dept) && !MIKE_BRANDS.has(brand)) {
-      candidates.push(d);
-    }
+async function ensureT4Synthetic(commit: boolean) {
+  const ref = db.collection("products").doc(T4_SYNTHETIC_MPN);
+  const doc = await ref.get();
+  if (doc.exists) {
+    return { doc, created: false, exists_before: true, dry_run_would_create: false };
   }
-  if (candidates.length > 0) {
-    return {
-      doc: candidates[0],
-      fallback: false,
-      total_candidates: candidates.length,
-      alternates: candidates.slice(1, 5).map((c) => ({
-        mpn: c.id,
-        gender: c.data().gender,
-        dept: c.data().department_key,
-        brand: c.data().brand_key,
-      })),
-    };
+  if (!commit) {
+    return { doc: null, created: false, exists_before: false, dry_run_would_create: true };
   }
-  return { doc: null, fallback: true, gender_dept_distribution: dist, total_scanned: snap.size };
+  // Create synthetic root doc
+  await ref.set({
+    ...T4_SYNTHETIC_BASE,
+    first_received_at: FieldValue.serverTimestamp(),
+    last_received_at: FieldValue.serverTimestamp(),
+    updated_at: FieldValue.serverTimestamp(),
+  });
+  // Seed canonical attribute_values
+  for (const [field_name, value] of Object.entries({
+    mpn: T4_SYNTHETIC_MPN,
+    sku: T4_SYNTHETIC_BASE.sku,
+    product_name: T4_SYNTHETIC_BASE.name,
+    brand: T4_SYNTHETIC_BASE.brand,
+    department: T4_SYNTHETIC_BASE.department,
+    gender: T4_SYNTHETIC_BASE.gender,
+    site_owner: T4_SYNTHETIC_BASE.site_owner,
+  })) {
+    await ref.collection("attribute_values").doc(field_name).set({
+      field_name,
+      value,
+      origin_type: "Smoke Fixture",
+      origin_detail: "TALLY-D3-D-PATCH-3 synthetic Tier 4 inject",
+      origin_rule: "TALLY-D3-D",
+      verification_state: "Rule-Verified",
+      written_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
+    });
+  }
+  const newDoc = await ref.get();
+  return { doc: newDoc, created: true, exists_before: false, dry_run_would_create: false };
 }
 
 async function main() {
@@ -77,29 +101,18 @@ async function main() {
   console.log("  BEFORE attribute_values/is_fast_fashion:", JSON.stringify(t1AvBefore));
   console.log("  AFTER:  root.is_fast_fashion=true, attributes.is_fast_fashion=true, attribute_values/is_fast_fashion {value:true, origin:Smoke Fixture}");
 
-  // === T4 ===
-  console.log(`\n=== T4 fixture: dynamic select ===`);
-  const t4Pick = await findT4Candidate();
-  if (!t4Pick.doc) {
-    console.log("  Gender/dept distribution:", JSON.stringify(t4Pick.gender_dept_distribution, null, 2));
-    console.log(`  Total scanned: ${t4Pick.total_scanned}`);
-    console.error("HALT: no T4 candidate found using gender+dept+brand triple (need gender in [Girls,Kids], dept in [clothing,accessories], brand_key not in [new_era,pro_standard])");
-    process.exit(3);
+  // === T4 (synthetic) ===
+  console.log(`\n=== T4 fixture (synthetic): ${T4_SYNTHETIC_MPN} ===`);
+  const t4Result = await ensureT4Synthetic(COMMIT);
+  if (t4Result.dry_run_would_create) {
+    console.log(`  DRY-RUN would create synthetic product:`);
+    console.log(`    ${JSON.stringify(T4_SYNTHETIC_BASE, null, 2)}`);
+    console.log(`  Engine math: Alex/Heather/Richard/Mike/Shiekh all excluded; Alana matches via sites=[mltd] (tier3=1).`);
+  } else if (t4Result.exists_before) {
+    console.log(`  Synthetic already exists; would re-affirm site_owner='mltd'.`);
+  } else if (t4Result.created) {
+    console.log(`  ✓ Created synthetic ${T4_SYNTHETIC_MPN}`);
   }
-  const t4Mpn = t4Pick.doc.id;
-  const t4Data = t4Pick.doc.data() || {};
-  const t4Before = {
-    site_owner: t4Data.site_owner ?? null,
-    department_key: t4Data.department_key ?? null,
-    gender: t4Data.gender ?? null,
-    brand_key: t4Data.brand_key ?? null,
-  };
-  console.log(`  Selected: ${t4Mpn} (fallback=${t4Pick.fallback}, total_candidates=${t4Pick.total_candidates})`);
-  if (t4Pick.alternates && t4Pick.alternates.length > 0) {
-    console.log("  Alternates:", JSON.stringify(t4Pick.alternates));
-  }
-  console.log("  BEFORE root:", JSON.stringify(t4Before));
-  console.log("  AFTER:  root.site_owner='mltd', attribute_values/site_owner {value:'mltd', origin:Smoke Fixture}");
 
   if (!COMMIT) {
     console.log("\n=== DRY-RUN ONLY — no writes performed. Re-run with --commit to apply. ===");
@@ -138,39 +151,27 @@ async function main() {
   });
   console.log(`  ✓ T1: ${T1_MPN} updated (is_fast_fashion=true, root + nested + attribute_values)`);
 
-  // T4 commit
-  const t4Ref = db.collection("products").doc(t4Mpn);
-  await t4Ref.update({
-    site_owner: "mltd",
-    updated_at: FieldValue.serverTimestamp(),
-  });
-  await t4Ref.collection("attribute_values").doc("site_owner").set({
-    field_name: "site_owner",
-    value: "mltd",
-    origin_type: "Smoke Fixture",
-    origin_detail: "TALLY-D3-D Tier 4 fixture inject",
-    origin_rule: "TALLY-D3-D",
-    verification_state: "Rule-Verified",
-    written_at: FieldValue.serverTimestamp(),
-    updated_at: FieldValue.serverTimestamp(),
-  }, { merge: true });
+  // T4 commit (after ensureT4Synthetic already created the doc + attribute_values if it was new)
+  // Re-affirm site_owner=mltd on the synthetic doc (idempotent) and audit the fixture inject event
+  const t4Ref = db.collection("products").doc(T4_SYNTHETIC_MPN);
+  await t4Ref.set({ site_owner: "mltd", updated_at: FieldValue.serverTimestamp() }, { merge: true });
   await db.collection("audit_log").add({
     event_type: "fixture_injected",
     acting_user_id: "system:tally-d3-d",
-    product_mpn: t4Mpn,
+    product_mpn: T4_SYNTHETIC_MPN,
     field_key: "site_owner",
-    before: t4Before,
-    after: { site_owner: "mltd" },
+    before: t4Result.exists_before ? { existing: "synthetic already present" } : { created: true },
+    after: { site_owner: "mltd", synthetic: true, shape: T4_SYNTHETIC_BASE },
     tier: "T4",
     tally: "TALLY-D3-D",
-    reason: `Smoke (b) Tier 4 fixture for Alana portfolio resolution test (selected MPN: ${t4Mpn}, dept_key: ${t4Before.department_key})`,
+    reason: "Smoke (b) Tier 4 synthetic fixture for Alana portfolio resolution test (no real product satisfies selection rule against live 114-doc corpus)",
     created_at: FieldValue.serverTimestamp(),
   });
-  console.log(`  ✓ T4: ${t4Mpn} updated (site_owner='mltd')`);
+  console.log(`  ✓ T4: synthetic ${T4_SYNTHETIC_MPN} ensured with site_owner='mltd'`);
 
   console.log("\n=== COMPLETE — 2 fixtures injected ===");
   console.log(`  T1 MPN for D3-E smoke verify: ${T1_MPN} (expect resolves to Shiekh)`);
-  console.log(`  T4 MPN for D3-E smoke verify: ${t4Mpn} (expect resolves to Alana, unless brand triggered Mike warning above)`);
+  console.log(`  T4 MPN for D3-E smoke verify: ${T4_SYNTHETIC_MPN} (expect resolves to Alana via sites=[mltd])`);
 }
 
 main().catch((e) => {
