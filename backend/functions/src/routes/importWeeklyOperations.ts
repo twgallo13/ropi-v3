@@ -43,17 +43,53 @@ const upload = multer({
 const db = admin.firestore;
 
 // TALLY-001 — Required columns for Weekly Operations Import
-const REQUIRED_COLUMNS_WEEKLY = [
-  "MPN",
-  "Week Ending Date",
-  "Store Price",       // → ricsRetail
-  "Store Sale Price",  // → ricsOffer
-  "Web Price",         // → scom
-  "Web Sale Price",    // → scomSale
-  "Store Inv",         // → inventory_store
-  "Warehouse Inv",     // → inventory_warehouse
-  "WHS inv",           // → inventory_whs
+// TALLY-145 — Header contract harmonization with Full Product Import:
+//   * Canonical pricing vocabulary is "Web Regular Price", "Web Sale Price",
+//     "Retail Price", "Retail Sale Price". Legacy headers ("Web Price",
+//     "Store Price", "Store Sale Price") are accepted as aliases during
+//     transition. Web Sale Price is the same header on both sides.
+//   * Canonical distribution-center inventory header is "Distro Ctr".
+//     "WHS inv" remains accepted as a legacy alias only.
+//   * Each header group passes validation if EITHER the canonical name OR
+//     any listed alias is present (case-insensitive).
+//   * Internal Firestore field keys (scom, scom_sale, rics_retail, rics_offer,
+//     inventory_whs) are NOT renamed — PO ruling 2026-05-12.
+const REQUIRED_HEADER_GROUPS: Array<{ canonical: string; aliases?: string[] }> = [
+  { canonical: "MPN" },
+  { canonical: "Week Ending Date" },
+  { canonical: "Retail Price", aliases: ["Store Price"] },
+  { canonical: "Retail Sale Price", aliases: ["Store Sale Price"] },
+  { canonical: "Web Regular Price", aliases: ["Web Price"] },
+  { canonical: "Web Sale Price" },
+  { canonical: "Store Inv" },
+  { canonical: "Warehouse Inv" },
+  { canonical: "Distro Ctr", aliases: ["WHS inv"] },
 ];
+
+// Flat list of every header name (canonical + alias) the importer recognises,
+// used by the case-insensitive header normaliser below.
+const REQUIRED_COLUMNS_WEEKLY: string[] = REQUIRED_HEADER_GROUPS.flatMap(
+  (g) => [g.canonical, ...(g.aliases ?? [])]
+);
+
+// TALLY-145 — Read a numeric cell, preferring the canonical header. Falls
+// through to legacy aliases in order. Returns 0 when no candidate has a
+// non-empty value (matches the prior parseFloat||0 / parseInt||0 semantics).
+function readNumberWithAliases(
+  row: Record<string, string>,
+  canonicalHeader: string,
+  aliases: string[] = [],
+  parser: (s: string) => number = parseFloat,
+): number {
+  for (const h of [canonicalHeader, ...aliases]) {
+    const raw = row[h];
+    if (raw !== undefined && String(raw).trim() !== "") {
+      const n = parser(String(raw));
+      return Number.isFinite(n) ? n : 0;
+    }
+  }
+  return 0;
+}
 
 // Step 2.1 — MAP state is now read from each product via getMapState(mpn)
 // (populated by the MAP Policy Import). The Phase 1 default has been removed.
@@ -102,10 +138,16 @@ router.post(
       });
 
       // Validate required columns (case-insensitive)
+      // TALLY-145 — Each header group passes if EITHER the canonical name OR
+      // any registered alias is present. Reported missing column is the
+      // canonical name (this is what we tell uploaders to use going forward).
       const presentLower = new Set(Object.keys(columnMap).map((k) => k.toLowerCase()));
-      const missingColumns = REQUIRED_COLUMNS_WEEKLY.filter(
-        (c) => !presentLower.has(c.toLowerCase())
-      );
+      const missingColumns = REQUIRED_HEADER_GROUPS
+        .filter((g) => {
+          const candidates = [g.canonical, ...(g.aliases ?? [])];
+          return !candidates.some((c) => presentLower.has(c.toLowerCase()));
+        })
+        .map((g) => g.canonical);
 
       if (missingColumns.length > 0) {
         res.status(400).json({
@@ -284,13 +326,29 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         const existingProduct = productSnap.data()!;
 
         // Parse pricing and inventory fields
-        const ricsRetail = parseFloat(row["Store Price"]) || 0;
-        const ricsOffer = parseFloat(row["Store Sale Price"]) || 0;
-        const scom = parseFloat(row["Web Price"]) || 0;
-        const scomSale = parseFloat(row["Web Sale Price"]) || 0;
-        const inventoryStore = parseInt(row["Store Inv"]) || 0;
-        const inventoryWarehouse = parseInt(row["Warehouse Inv"]) || 0;
-        const inventoryWhs = parseInt(row["WHS inv"]) || 0;
+        // TALLY-145 — Prefer canonical headers, fall back to legacy aliases.
+        // Internal Firestore field keys are unchanged (scom, scom_sale,
+        // rics_retail, rics_offer, inventory_whs).
+        const ricsRetail = readNumberWithAliases(row, "Retail Price", ["Store Price"], parseFloat);
+        const ricsOffer = readNumberWithAliases(row, "Retail Sale Price", ["Store Sale Price"], parseFloat);
+        const scom = readNumberWithAliases(row, "Web Regular Price", ["Web Price"], parseFloat);
+        const scomSale = readNumberWithAliases(row, "Web Sale Price", [], parseFloat);
+        const inventoryStore = readNumberWithAliases(row, "Store Inv", [], parseInt);
+        const inventoryWarehouse = readNumberWithAliases(row, "Warehouse Inv", [], parseInt);
+        // Distro Ctr is canonical for distribution-center inventory; WHS inv is
+        // legacy alias only. Distro Ctr wins when both are present. The same
+        // resolved value is mirrored to inventory_whs for legacy readers.
+        const distributionCenterInventory = readNumberWithAliases(
+          row, "Distro Ctr", ["WHS inv"], parseInt
+        );
+        const inventoryWhs = distributionCenterInventory;
+        // Optional CSV-sourced total. Only written when the column is present
+        // and non-empty; backend never recomputes (PO ruling 2026-05-12).
+        const totalInventoryRaw = (row["Total Inventory"] ?? "").toString().trim();
+        const totalInventoryUpdate: { total_inventory?: number } =
+          totalInventoryRaw !== ""
+            ? { total_inventory: parseInt(totalInventoryRaw) || 0 }
+            : {};
 
         // Update pricing fields on product document (merge)
         await firestore.collection("products").doc(docId).set(
@@ -302,6 +360,8 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             inventory_store: inventoryStore,
             inventory_warehouse: inventoryWarehouse,
             inventory_whs: inventoryWhs,
+            distribution_center_inventory: distributionCenterInventory,
+            ...totalInventoryUpdate,
             last_weekly_import_at: db.FieldValue.serverTimestamp(),
             updated_at: db.FieldValue.serverTimestamp(),
           },

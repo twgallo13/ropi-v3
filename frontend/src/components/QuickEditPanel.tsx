@@ -69,8 +69,11 @@ const FIELDS: Array<{
   { key: "brand", label: "Brand", kind: "brand", section: "Identity" },
   { key: "department", label: "Department", kind: "department", section: "Identity" },
   { key: "site_owner", label: "Site Owner", kind: "site", section: "Identity" },
-  { key: "scom", label: "SCOM Price", kind: "number", section: "Pricing" },
-  { key: "scom_sale", label: "SCOM Sale Price", kind: "number", section: "Pricing" },
+  // TALLY-145 — user-facing pricing labels harmonised with importer
+  // vocabulary. Underlying Firestore field keys (scom, scom_sale) are
+  // unchanged — PO ruling 2026-05-12.
+  { key: "scom", label: "Web Regular Price", kind: "number", section: "Pricing" },
+  { key: "scom_sale", label: "Web Sale Price", kind: "number", section: "Pricing" },
   { key: "standard_shipping_override", label: "Standard Shipping Override", kind: "number", section: "Shipping" },
   { key: "expedited_shipping_override", label: "Expedited Shipping Override", kind: "number", section: "Shipping" },
 ];

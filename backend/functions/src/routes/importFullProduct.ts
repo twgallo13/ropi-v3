@@ -41,10 +41,15 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 
 const db = admin.firestore;
 
 // TALLY-078 — Required columns for Full Product Import
+// TALLY-145 — Inventory contract cleanup:
+//   * "Distro Ctr" is the new canonical distribution-center inventory header.
+//   * "Total Inventory" is the CSV-sourced total (backend never recomputes).
+//   * "WHS inv" is no longer required — it is accepted as a legacy alias only,
+//     handled at row read time. Distro Ctr wins when both are present.
 const REQUIRED_COLUMNS = [
   "MPN", "SKU", "Brand", "Name", "RO Status",
   "Web Regular Price", "Web Sale Price", "Retail Price", "Retail Sale Price",
-  "Store Inv", "Warehouse Inv", "WHS inv",
+  "Store Inv", "Warehouse Inv", "Distro Ctr", "Total Inventory",
   "Website", "Media Status",
 ];
 
@@ -353,10 +358,24 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         };
 
         // Inventory inputs
+        // TALLY-145 — "Distro Ctr" is the canonical distribution-center inventory
+        // header. "WHS inv" remains accepted as a legacy alias only; when both
+        // are present Distro Ctr wins. inventory_whs is mirrored to the resolved
+        // value so legacy readers do not see stale data, but it is not the
+        // canonical future field. "Total Inventory" is read directly from the
+        // CSV — backend never recomputes it (PO ruling 2026-05-12).
+        const distroCtrRaw = (row["Distro Ctr"] ?? "").toString().trim();
+        const whsInvLegacyRaw = (row["WHS inv"] ?? "").toString().trim();
+        const distributionCenterInventory =
+          distroCtrRaw !== ""
+            ? (parseInt(distroCtrRaw) || 0)
+            : (parseInt(whsInvLegacyRaw) || 0);
         const inventory = {
           inventory_store: parseInt(row["Store Inv"]) || 0,
           inventory_warehouse: parseInt(row["Warehouse Inv"]) || 0,
-          inventory_whs: parseInt(row["WHS inv"]) || 0,
+          distribution_center_inventory: distributionCenterInventory,
+          inventory_whs: distributionCenterInventory,
+          total_inventory: parseInt(row["Total Inventory"]) || 0,
         };
 
         // Media Status
