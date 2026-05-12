@@ -113,7 +113,7 @@ async function main() {
       is_active: false,
       always_overwrite: false,
       conditions: [
-        { field: "department", operator: "equals", value: "Footwear", logic: "AND", case_sensitive: true },
+        { field: "department_key", operator: "equals", value: "footwear", logic: "AND", case_sensitive: true },
       ],
       actions: [{ target_field: "dimension_height", value: 99 }],
     },

@@ -14,6 +14,7 @@ import admin from "firebase-admin";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { dryRunSmartRule } from "../services/smartRules";
+import { rejectLegacyRuleField } from "../lib/ruleFieldValidation";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -53,6 +54,9 @@ function validateRuleBody(body: any): string | null {
   }
   for (const c of body.conditions) {
     if (!c.field) return "condition.field required";
+    // TALLY-146B: hard-reject legacy display-string fields.
+    const legacy = rejectLegacyRuleField(c.field, "condition.field");
+    if (legacy) return legacy;
     if (!c.operator || !VALID_OPERATORS.includes(c.operator)) {
       return `condition.operator must be one of ${VALID_OPERATORS.join(", ")}`;
     }

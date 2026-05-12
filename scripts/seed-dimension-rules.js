@@ -47,8 +47,8 @@ const DIMENSION_RULES = [
     priority: 10,
     always_overwrite: false,
     conditions: [
-      { field: "department", operator: "equals", value: "Footwear", logic: "AND" },
-      { field: "gender",     operator: "equals", value: "Mens",     logic: "AND" },
+      { field: "department_key", operator: "equals", value: "footwear", logic: "AND" },
+      { field: "gender",         operator: "equals", value: "Mens",     logic: "AND" },
     ],
     actions: [
       { target_field: "dimension_height", value: 4 },
@@ -64,8 +64,8 @@ const DIMENSION_RULES = [
     priority: 10,
     always_overwrite: false,
     conditions: [
-      { field: "department", operator: "equals", value: "Footwear", logic: "AND" },
-      { field: "gender",     operator: "equals", value: "Womens",   logic: "AND" },
+      { field: "department_key", operator: "equals", value: "footwear", logic: "AND" },
+      { field: "gender",         operator: "equals", value: "Womens",   logic: "AND" },
     ],
     actions: [
       { target_field: "dimension_height", value: 4 },
@@ -81,8 +81,8 @@ const DIMENSION_RULES = [
     priority: 10,
     always_overwrite: false,
     conditions: [
-      { field: "department", operator: "equals", value: "Footwear", logic: "AND" },
-      { field: "age_group",  operator: "equals", value: "Kids",     logic: "AND" },
+      { field: "department_key", operator: "equals", value: "footwear", logic: "AND" },
+      { field: "age_group",      operator: "equals", value: "Kids",     logic: "AND" },
     ],
     actions: [
       { target_field: "dimension_height", value: 4 },
@@ -98,8 +98,8 @@ const DIMENSION_RULES = [
     priority: 10,
     always_overwrite: false,
     conditions: [
-      { field: "department", operator: "equals", value: "Footwear", logic: "AND" },
-      { field: "gender",     operator: "equals", value: "Unisex",   logic: "AND" },
+      { field: "department_key", operator: "equals", value: "footwear", logic: "AND" },
+      { field: "gender",         operator: "equals", value: "Unisex",   logic: "AND" },
     ],
     actions: [
       { target_field: "dimension_height", value: 4 },
@@ -131,7 +131,7 @@ const DIMENSION_RULES = [
     priority: 10,
     always_overwrite: false,
     conditions: [
-      { field: "department", operator: "equals", value: "Clothing", logic: "AND" },
+      { field: "department_key", operator: "equals", value: "clothing", logic: "AND" },
     ],
     actions: [{ target_field: "weight", value: 2 }],
   },
@@ -142,7 +142,7 @@ const DIMENSION_RULES = [
     priority: 10,
     always_overwrite: false,
     conditions: [
-      { field: "department", operator: "equals", value: "Accessories", logic: "AND" },
+      { field: "department_key", operator: "equals", value: "accessories", logic: "AND" },
     ],
     actions: [{ target_field: "weight", value: 1 }],
   },
@@ -153,8 +153,8 @@ const DIMENSION_RULES = [
     priority: 30,
     always_overwrite: true,
     conditions: [
-      { field: "launch", operator: "equals", value: "true", logic: "AND" },
-      { field: "brand",  operator: "equals", value: "Nike", logic: "AND" },
+      { field: "launch",    operator: "equals", value: "true", logic: "AND" },
+      { field: "brand_key", operator: "equals", value: "nike", logic: "AND" },
     ],
     actions: [
       { target_field: "standard_shipping_override", value: 19.95 },
