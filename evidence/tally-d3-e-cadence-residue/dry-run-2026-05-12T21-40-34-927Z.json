@@ -1,0 +1,144 @@
+{
+  "tally": "TALLY-D3-E-CADENCE-RESIDUE",
+  "mode": "dry-run",
+  "timestamp": "2026-05-12T21:40:34.927Z",
+  "project": "ropi-aoss-dev",
+  "product_count": 25,
+  "cadence_assignment_count": 25,
+  "orphan_count": 0,
+  "retained_count": 25,
+  "delete_count": 0,
+  "safety_cap": 900,
+  "stale_assigned_null_primary_count": 0,
+  "active_primary_on_orphan_count": 0,
+  "orphan_set_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sample_orphans": [],
+  "sample_retained": [
+    {
+      "doc_id": "1005177",
+      "mpn": "1005177",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "101405-CHRM",
+      "mpn": "101405-CHRM",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "120029-CHRMWHTNVY",
+      "mpn": "120029-CHRMWHTNVY",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "300511-BLU",
+      "mpn": "300511-BLU",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "300518-NVY",
+      "mpn": "300518-NVY",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "305440 005",
+      "mpn": "305440 005",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "30865601",
+      "mpn": "30865601",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "600219-NVY",
+      "mpn": "600219-NVY",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "A11110F",
+      "mpn": "A11110F",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "A14929F",
+      "mpn": "A14929F",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "A17830C",
+      "mpn": "A17830C",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "CU8401 901",
+      "mpn": "CU8401 901",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "DM0029 109",
+      "mpn": "DM0029 109",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "DQ8426 100",
+      "mpn": "DQ8426 100",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "FBRK-CR92024-2CAMO",
+      "mpn": "FBRK-CR92024-2CAMO",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "FC9297-UNCCLBL",
+      "mpn": "FC9297-UNCCLBL",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "FZ0634 010",
+      "mpn": "FZ0634 010",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "HJ0052 010",
+      "mpn": "HJ0052 010",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "HQ7540 006",
+      "mpn": "HQ7540 006",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "HQ7540 602",
+      "mpn": "HQ7540 602",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "HV0955 276",
+      "mpn": "HV0955 276",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "IM7490 675",
+      "mpn": "IM7490 675",
+      "cadence_state": "assigned"
+    },
+    {
+      "doc_id": "IR2106 001",
+      "mpn": "IR2106 001",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "M2002RCC",
+      "mpn": "M2002RCC",
+      "cadence_state": "unassigned"
+    },
+    {
+      "doc_id": "SS8185-LADNTRL",
+      "mpn": "SS8185-LADNTRL",
+      "cadence_state": "assigned"
+    }
+  ],
+  "doc_ids_to_delete": []
+}
