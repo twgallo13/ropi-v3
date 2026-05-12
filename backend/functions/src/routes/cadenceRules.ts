@@ -10,6 +10,7 @@ import { Router, Response } from "express";
 import admin from "firebase-admin";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
+import { rejectLegacyRuleField } from "../lib/ruleFieldValidation";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -22,6 +23,13 @@ function validateRule(body: any): string | null {
     return "rule_name is required";
   }
   if (!Array.isArray(body.target_filters)) return "target_filters must be an array";
+  // TALLY-146B: hard-reject legacy display-string fields in target_filters.
+  for (const f of body.target_filters) {
+    if (f && typeof f === "object") {
+      const legacy = rejectLegacyRuleField(f.field, "target_filters[].field");
+      if (legacy) return legacy;
+    }
+  }
   if (!Array.isArray(body.trigger_conditions))
     return "trigger_conditions must be an array";
   if (!Array.isArray(body.markdown_steps) || body.markdown_steps.length === 0) {

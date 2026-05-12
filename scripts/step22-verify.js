@@ -67,7 +67,7 @@ async function run() {
       owner_buyer_id: "step22-verify-bot",
       owner_site_owner: "SHOES.COM",
       target_filters: [
-        { field: "brand", operator: "equals", value: "NIKE", case_sensitive: true },
+        { field: "brand_key", operator: "equals", value: "nike", case_sensitive: true },
       ],
       trigger_conditions: [
         { field: "str_pct", operator: "less_than", value: 20, logic: "AND" },

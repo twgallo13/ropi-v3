@@ -17,57 +17,57 @@ async function seedRules() {
   const RULES = [
     { name: "Heather — Women's Footwear 45-Day Zero Sales", owner: heather,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Footwear', case_sensitive: true, logic: 'AND' },
+        { field: 'department_key', operator: 'equals', value: 'footwear', case_sensitive: true, logic: 'AND' },
         { field: 'gender', operator: 'equals', value: 'Womens', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Heather — Girls' Footwear 45-Day Zero Sales", owner: heather,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Footwear', case_sensitive: true, logic: 'AND' },
+        { field: 'department_key', operator: 'equals', value: 'footwear', case_sensitive: true, logic: 'AND' },
         { field: 'gender', operator: 'equals', value: 'Girls', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Heather — Women's Clothing 45-Day Zero Sales", owner: heather,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Clothing', case_sensitive: true, logic: 'AND' },
+        { field: 'department_key', operator: 'equals', value: 'clothing', case_sensitive: true, logic: 'AND' },
         { field: 'gender', operator: 'equals', value: 'Womens', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Alex — Men's Footwear 45-Day Zero Sales", owner: alex,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Footwear', case_sensitive: true, logic: 'AND' },
+        { field: 'department_key', operator: 'equals', value: 'footwear', case_sensitive: true, logic: 'AND' },
         { field: 'gender', operator: 'equals', value: 'Mens', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Alex — Boys' Footwear 45-Day Zero Sales", owner: alex,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Footwear', case_sensitive: true, logic: 'AND' },
+        { field: 'department_key', operator: 'equals', value: 'footwear', case_sensitive: true, logic: 'AND' },
         { field: 'gender', operator: 'equals', value: 'Boys', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Alex — Toddler Footwear 45-Day Zero Sales", owner: alex,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Footwear', case_sensitive: true, logic: 'AND' },
+        { field: 'department_key', operator: 'equals', value: 'footwear', case_sensitive: true, logic: 'AND' },
         { field: 'gender', operator: 'equals', value: 'Toddler', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Richard — Men's Clothing 45-Day Zero Sales", owner: richard,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Clothing', case_sensitive: true, logic: 'AND' },
+        { field: 'department_key', operator: 'equals', value: 'clothing', case_sensitive: true, logic: 'AND' },
         { field: 'gender', operator: 'equals', value: 'Mens', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Mike — Accessories 45-Day Zero Sales", owner: mike,
       filters: [
-        { field: 'department', operator: 'equals', value: 'Accessories', case_sensitive: true, logic: 'AND' }
+        { field: 'department_key', operator: 'equals', value: 'accessories', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Alana — MLTD Footwear 45-Day Zero Sales", owner: alana,
       filters: [
         { field: 'site_owner', operator: 'equals', value: 'mltd', case_sensitive: false, logic: 'AND' },
-        { field: 'department', operator: 'equals', value: 'Footwear', case_sensitive: true, logic: 'AND' }
+        { field: 'department_key', operator: 'equals', value: 'footwear', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Alana — MLTD Clothing 45-Day Zero Sales", owner: alana,
       filters: [
         { field: 'site_owner', operator: 'equals', value: 'mltd', case_sensitive: false, logic: 'AND' },
-        { field: 'department', operator: 'equals', value: 'Clothing', case_sensitive: true, logic: 'AND' }
+        { field: 'department_key', operator: 'equals', value: 'clothing', case_sensitive: true, logic: 'AND' }
       ]},
     { name: "Alana — MLTD Accessories 45-Day Zero Sales", owner: alana,
       filters: [
         { field: 'site_owner', operator: 'equals', value: 'mltd', case_sensitive: false, logic: 'AND' },
-        { field: 'department', operator: 'equals', value: 'Accessories', case_sensitive: true, logic: 'AND' }
+        { field: 'department_key', operator: 'equals', value: 'accessories', case_sensitive: true, logic: 'AND' }
       ]}
   ];
 
