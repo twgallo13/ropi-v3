@@ -16,6 +16,10 @@ const db = () => admin.firestore();
 
 const reviewRoles = ["buyer", "head_buyer", "admin"];
 
+// TALLY-D3-F — narrow View-As dropdown to cadence-buyer-eligible roles.
+// Mirrors cadenceEngine.ts buyer-loading query (Frink #15 Section A).
+const CADENCE_BUYER_ROLES = new Set(["buyer", "head_buyer", "owner"]);
+
 // ── GET /api/v1/buyer-review ──
 // Track 3 — Cockpit aggregator. Returns cadence + MAP + Pricing + KPIs
 // filtered by effective user's portfolio (or admin-global for
@@ -239,11 +243,15 @@ router.get(
 
       // viewable_users: minimal user list for the FE View As dropdown.
       // TALLY-D2B — reuse usersMap built above (single users full-scan per request).
-      const viewableUsers = Array.from(usersMap.entries()).map(([uid, u]) => ({
-        uid,
-        display_name: u.display_name,
-        role: u.role,
-      }));
+      // TALLY-D3-F — filter to cadence-buyer roles + sort by display_name for stable UI order.
+      const viewableUsers = Array.from(usersMap.entries())
+        .filter(([, u]) => CADENCE_BUYER_ROLES.has(u.role))
+        .map(([uid, u]) => ({
+          uid,
+          display_name: u.display_name,
+          role: u.role,
+        }))
+        .sort((a, b) => a.display_name.localeCompare(b.display_name));
 
       res.json({
         cadence,
