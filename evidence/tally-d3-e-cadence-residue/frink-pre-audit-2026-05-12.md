@@ -187,7 +187,7 @@ Per Carry-Forward "Dry-Run Gate":
 Two-layer:
 
 1. **Per-chunk summary entry** in `audit_log` (avoid emitting 759 individual writes):
-   ```
+   ```yaml
    event_type: "cadence_assignment_orphan_cleanup"
    tally_id: "TALLY-D3-E-CADENCE-RESIDUE"
    chunk_index: <n>
@@ -199,7 +199,7 @@ Two-layer:
    ```
 
 2. **Run-summary entry** (one per `--apply` invocation):
-   ```
+   ```yaml
    event_type: "cadence_assignment_orphan_cleanup_run"
    tally_id: "TALLY-D3-E-CADENCE-RESIDUE"
    total_before: <N>
