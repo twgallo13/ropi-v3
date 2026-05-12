@@ -105,20 +105,24 @@ async function classify() {
     if (productIds.has(d.id)) {
       retained.push({ doc_id: d.id, mpn: data.mpn || null, cadence_state: data.cadence_state || null });
     } else {
+      // NOTE: raw primary_user_id / assigned_user_id intentionally redacted from
+      // committed evidence — emit booleans only. See TALLY-D3-E user-id redaction.
+      const hasPrimary = !!(data.primary_user_id);
+      const hasAssigned = !!(data.assigned_user_id);
       const row = {
         doc_id: d.id,
         mpn: data.mpn || null,
         product_id: data.product_id || null,
         cadence_state: data.cadence_state || null,
-        primary_user_id: data.primary_user_id || null,
-        assigned_user_id: data.assigned_user_id || null,
+        primary_user_present: hasPrimary,
+        assigned_user_present: hasAssigned,
         unassigned_reason: data.unassigned_reason || null,
         in_cadence_review_queue: data.in_cadence_review_queue === true,
         manual_assignment: data.manual_assignment === true,
         created_at: tsToIso(data.created_at),
         updated_at: tsToIso(data.updated_at) || tsToIso(data.last_evaluated_at),
       };
-      if (row.primary_user_id || row.assigned_user_id) activePrimaryOnOrphan++;
+      if (hasPrimary || hasAssigned) activePrimaryOnOrphan++;
       orphans.push(row);
     }
   }
@@ -288,6 +292,10 @@ async function main() {
   console.log(`  products:            ${phase3.productCount}`);
   console.log(`  cadence_assignments: ${phase3.cadenceCount}`);
   console.log(`  remaining orphans:   ${phase3.orphans.length}`);
+  const cleanupComplete = phase3.orphans.length === 0;
+  if (!cleanupComplete) {
+    console.error(`❌ Incomplete cleanup: ${phase3.orphans.length} orphan(s) remain after apply.`);
+  }
 
   // Audit log — single summary entry
   const auditRef = db.collection("audit_log").doc();
@@ -334,6 +342,7 @@ async function main() {
       retained_count: phase3.retained.length,
     },
     deleted_count: deleted.length,
+    cleanup_complete: cleanupComplete,
     audit_log_entry_id: auditRef.id,
     sample_deleted_doc_ids: deleted.slice(0, 25),
     doc_ids_deleted: deleted,
@@ -343,7 +352,7 @@ async function main() {
   console.log(`Deleted: ${deleted.length}`);
   console.log(`Evidence: ${path}`);
   console.log(`Audit log: audit_log/${auditRef.id}`);
-  process.exit(0);
+  process.exit(cleanupComplete ? 0 : 7);
 }
 
 main().catch((e) => {

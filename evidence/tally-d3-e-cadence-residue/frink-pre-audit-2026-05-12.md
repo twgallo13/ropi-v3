@@ -117,7 +117,7 @@ Notes:
 
 ### 7.4 Sample orphans (25 of 759)
 
-From probe Section 5. Pattern: orphan MPNs span the catalog (`10001-001`, `1003868`, `1004438`, `101405-CHRM`, `120029-CHRMWHTNVY`, `152-518-SH-BLK`, etc.) — a mixture of states. Three carry an active `primary_user_id == v8w9ogiVBUdBHpOSNhAzhqsIkvB3` (the same buyer uid) and `in_cadence_review_queue = true`. Those three are currently visible in that buyer's review queue pointing at deleted products.
+From probe Section 5. Pattern: orphan MPNs span the catalog (`10001-001`, `1003868`, `1004438`, `101405-CHRM`, `120029-CHRMWHTNVY`, `152-518-SH-BLK`, etc.) — a mixture of states. Three carry an active primary user assignment (same buyer uid; raw uid redacted) and `in_cadence_review_queue = true`. Those three are currently visible in that buyer's review queue pointing at deleted products.
 
 ### 7.5 Linkage to most-recent committed import
 
