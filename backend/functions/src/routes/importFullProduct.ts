@@ -6,6 +6,7 @@ import { parse } from "csv-parse/sync";
 import { executeSmartRules } from "../services/smartRules";
 import { mpnToDocId } from "../services/mpnUtils";
 import { mapFullProductRow, FULL_PRODUCT_ROW_MAP } from "../services/ricsParser";
+import { parseImportDate } from "../services/parseImportDate";
 import { buildSearchTokens } from "../services/searchTokens";
 import {
   buildBrandCanonicalizer,
@@ -313,7 +314,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           brand: (row.Brand || "").trim(),
           name: (row.Name || "").trim(),
           status: (row["RO Status"] || "").trim(),
-          last_received_at: db.FieldValue.serverTimestamp(),
+          last_received_at: parseImportDate(row["Last Received"]) ?? db.FieldValue.serverTimestamp(),
           updated_at: db.FieldValue.serverTimestamp(),
         };
 
@@ -377,7 +378,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
         const isNewProduct = !existingSnap.exists;
         const firstReceivedAt = existingSnap.exists
           ? existingSnap.data()!.first_received_at
-          : db.FieldValue.serverTimestamp();
+          : (parseImportDate(row["First Received"]) ?? db.FieldValue.serverTimestamp());
 
         await productRef.set(
           {
