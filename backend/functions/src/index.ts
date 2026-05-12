@@ -52,6 +52,8 @@ import internalJobsRouter from "./routes/internalJobs";
 import reviewActiveOverridesRouter from "./routes/reviewActiveOverrides";
 // TALLY-3.8-C — Auto-Pilot Completion State Machine: Firestore trigger.
 export { onAttributeRegistryWrite } from "./functions/onAttributeRegistryWrite";
+// TALLY-D3-E-CADENCE-RESIDUE-FORWARD-FIX — Firestore delete-cascade trigger.
+export { onProductDeletedCleanupCadenceAssignment } from "./functions/onProductDeletedCleanupCadenceAssignment";
 // ── Firebase Admin Init ──
 admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
