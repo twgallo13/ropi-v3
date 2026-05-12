@@ -251,7 +251,13 @@ export const FULL_PRODUCT_ROW_MAP: Record<string, string> = {
   "RICS Category": "rics_category",
   "Store Inv": "inventory_store",
   "Warehouse Inv": "inventory_warehouse",
+  // TALLY-145 — "Distro Ctr" is canonical for distribution-center inventory.
+  // "WHS inv" remains accepted as a legacy alias only; do not promote
+  // inventory_whs to the canonical field. "Total Inventory" is sourced
+  // directly from the CSV (backend never recomputes it — PO ruling).
+  "Distro Ctr": "distribution_center_inventory",
   "WHS inv": "inventory_whs",
+  "Total Inventory": "total_inventory",
   Website: "site_owner",
   Height: "height",
   Width: "width",
@@ -284,6 +290,9 @@ export const NUMERIC_ATTRIBUTES = new Set([
   "inventory_store",
   "inventory_warehouse",
   "inventory_whs",
+  // TALLY-145 — distribution-center inventory (canonical) and CSV-sourced total.
+  "distribution_center_inventory",
+  "total_inventory",
   "height",
   "width",
   "length",

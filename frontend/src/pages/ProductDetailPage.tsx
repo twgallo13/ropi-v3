@@ -450,14 +450,17 @@ export default function ProductDetailPage() {
       )}
 
       {/* Key info cards */}
+      {/* TALLY-145 — user-facing pricing labels harmonised with importer */}
+      {/* vocabulary (Web Regular/Sale Price, Retail/Retail Sale Price).      */}
+      {/* Underlying Firestore field keys are unchanged — PO ruling 2026-05-12. */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
         <InfoCard label="Status" value={p.status} />
         <InfoCard label="Store Inv" value={String(p.inventory_store)} />
         <InfoCard label="WH Inv" value={String(p.inventory_warehouse)} />
-        <InfoCard label="SCOM" value={`$${p.scom.toFixed(2)}`} />
-        <InfoCard label="SCOM Sale" value={`$${p.scom_sale.toFixed(2)}`} />
-        <InfoCard label="RICS Retail" value={`$${p.rics_retail.toFixed(2)}`} />
-        <InfoCard label="RICS Offer" value={`$${p.rics_offer.toFixed(2)}`} />
+        <InfoCard label="Web Regular Price" value={`$${p.scom.toFixed(2)}`} />
+        <InfoCard label="Web Sale Price" value={`$${p.scom_sale.toFixed(2)}`} />
+        <InfoCard label="Retail Price" value={`$${p.rics_retail.toFixed(2)}`} />
+        <InfoCard label="Retail Sale Price" value={`$${p.rics_offer.toFixed(2)}`} />
       </div>
 
       {/* Site Targets */}
