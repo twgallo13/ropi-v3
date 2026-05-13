@@ -21,10 +21,28 @@ gives the longer pre-deprecation runway (~2 years vs ~1 year). Local dev
 runtime is `v24.14.0`, so build environment matches the target runtime.
 
 ## Support verification (no guessing)
-Inspected the firebase-tools runtime support table directly:
-`/home/codespace/nvm/current/lib/node_modules/firebase-tools/lib/deploy/functions/runtimes/supported/types.js`
+Inspected the firebase-tools runtime support table via a portable,
+package-relative lookup (works on any environment with `firebase-tools`
+installed in any reachable `node_modules`):
 
-Relevant entries:
+```js
+const path = require("path");
+const firebaseToolsPkg = require.resolve("firebase-tools/package.json");
+const runtimesFile = path.join(
+  path.dirname(firebaseToolsPkg),
+  "lib/deploy/functions/runtimes/supported/types.js"
+);
+// then: read runtimesFile and inspect the RUNTIMES table
+```
+
+The resolved `runtimesFile` was inspected to confirm:
+
+- `nodejs22` → `status: "GA"`
+- `nodejs24` → `status: "GA"`
+- `nodejs24` selected because it is the latest Firebase-supported GA Node
+  runtime in the current toolchain (firebase-tools `15.15.0`).
+
+Relevant entries from the resolved file:
 
 ```js
 nodejs20: { status: "GA",   deprecationDate: "2026-04-30", decommissionDate: "2026-10-30" },
