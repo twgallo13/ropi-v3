@@ -3,7 +3,7 @@
   "version": "3.0.0",
   "description": "ropi-aoss API — Express on Cloud Run",
   "engines": {
-    "node": "20"
+    "node": "24"
   },
   "main": "lib/index.js",
   "scripts": {
