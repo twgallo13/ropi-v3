@@ -1,0 +1,5 @@
+▶ --plan-only: smart functions deploy decision = marker-stale
+  Would deploy: marker SHA not reachable in current git history.
+  HEAD: 8ed081a85eb79c75a8157324df749f09d641f4c5
+  Marker: deadbeef0000000000000000000000000000beef (/workspaces/ropi-v3/.deploy-state/dev-functions-last-deployed-sha)
+✅ Plan-only complete. No preflight, build, or deploy commands executed.
