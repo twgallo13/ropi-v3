@@ -1,0 +1,129 @@
+{
+  "tally": "TALLY-BRAND-JORDAN-CANONICALIZATION",
+  "mode": "dry-run",
+  "project_id": "ropi-aoss-dev",
+  "plan": {
+    "jordan": {
+      "doc_path": "brand_registry/jordan",
+      "fields_touched": [
+        "aliases"
+      ],
+      "fields_left_untouched": [
+        "brand_key",
+        "created_at",
+        "created_by",
+        "default_site_owner",
+        "display_name",
+        "is_active",
+        "logo_url",
+        "notes",
+        "po_confirmed",
+        "updated_at"
+      ],
+      "before": {
+        "aliases": [
+          "jordan",
+          "brand jordan",
+          "nike jordan",
+          "jordan brand"
+        ]
+      },
+      "after": {
+        "aliases": [
+          "jordan",
+          "brand jordan",
+          "nike jordan",
+          "jordan brand"
+        ]
+      },
+      "no_op": true,
+      "doc_snapshot_before": {
+        "is_active": true,
+        "created_by": "tally-product-list-ux-p05",
+        "logo_url": null,
+        "brand_key": "jordan",
+        "po_confirmed": true,
+        "created_at": {
+          "_seconds": 1776986386,
+          "_nanoseconds": 723000000
+        },
+        "default_site_owner": "shiekh",
+        "updated_at": {
+          "_seconds": 1776986386,
+          "_nanoseconds": 723000000
+        },
+        "display_name": "Jordan",
+        "notes": null,
+        "aliases": [
+          "jordan",
+          "brand jordan",
+          "nike jordan",
+          "jordan brand"
+        ]
+      }
+    },
+    "brand_jordan": {
+      "doc_path": "brand_registry/brand_jordan",
+      "fields_touched": [
+        "display_name",
+        "is_active"
+      ],
+      "fields_left_untouched": [
+        "aliases",
+        "brand_key",
+        "created_at",
+        "created_by",
+        "default_site_owner",
+        "logo_url",
+        "notes",
+        "po_confirmed",
+        "updated_at",
+        "updated_by"
+      ],
+      "before": {
+        "display_name": "Jordan",
+        "is_active": false
+      },
+      "after": {
+        "display_name": "Jordan",
+        "is_active": false
+      },
+      "no_op": true,
+      "doc_snapshot_before": {
+        "brand_key": "brand_jordan",
+        "aliases": [],
+        "po_confirmed": false,
+        "notes": null,
+        "logo_url": null,
+        "created_by": "4hf2oKvc0igp2Sn0Mc06JjTBKXF2",
+        "updated_by": "4hf2oKvc0igp2Sn0Mc06JjTBKXF2",
+        "created_at": {
+          "_seconds": 1777979303,
+          "_nanoseconds": 920000000
+        },
+        "default_site_owner": "shiekh",
+        "updated_at": {
+          "_seconds": 1777979377,
+          "_nanoseconds": 406000000
+        },
+        "is_active": false,
+        "display_name": "Jordan"
+      }
+    }
+  },
+  "normalization_expectations_post_apply": {
+    "description": "post-apply expected resolution under buildBrandCanonicalizer (key→display→alias, active-only)",
+    "expected": {
+      "Brand Jordan": "jordan",
+      "Nike Jordan": "jordan",
+      "Jordan Brand": "jordan",
+      "Jordan": "jordan"
+    }
+  },
+  "started_at": "2026-05-13T01:03:59.636Z",
+  "result": "no-op",
+  "reason": "both docs already at target values",
+  "write_planned": false,
+  "writes_performed": false,
+  "finished_at": "2026-05-13T01:04:00.192Z"
+}
