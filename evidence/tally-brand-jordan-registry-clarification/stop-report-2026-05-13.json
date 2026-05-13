@@ -1,0 +1,114 @@
+{
+  "tally": "TALLY-BRAND-JORDAN-REGISTRY-CLARIFICATION",
+  "mode": "stopped-on-dispatch-case-D",
+  "timestamp": "2026-05-13T00:10:00Z",
+  "repo_main_head": "de1149a609b6770bf7d3c6264b609beb434fdff3",
+  "branch_created": false,
+  "commit_created": false,
+  "pr_created": false,
+  "po_ruling_acknowledged": "brand_jordan is a valid explicit brand key for the brand 'Nike Jordan' and is distinct from 'jordan'. No deletion, no merge, no migration.",
+  "summary": "The display label 'Jordan' is sourced exclusively from Firestore brand_registry/brand_jordan.display_name. All frontend dropdowns render registry display_name verbatim. There is no codebase patch that can change the rendered label. Per dispatch case D, this requires a Firestore write and Homer must STOP and report.",
+  "files_inspected": {
+    "frontend_dropdown_renderers_using_registry_display_name": [
+      "frontend/src/pages/ProductListPage.tsx (L557)",
+      "frontend/src/pages/CadenceRulesAdminPage.tsx (L264)",
+      "frontend/src/pages/ReviewActiveOverridesPage.tsx (L201)",
+      "frontend/src/components/QuickEditPanel.tsx (L318)",
+      "frontend/src/components/AttributeField.tsx (L89)",
+      "frontend/src/components/admin/UserPortfolioEditor.tsx (uses portfolioBrands array; brand pills derived via registry lookup)"
+    ],
+    "frontend_label_lookup_helpers": [
+      "frontend/src/lib/registryAliases.ts (uses b.display_name from registry only)"
+    ],
+    "backend_registry_service": [
+      "backend/functions/src/lib/brandRegistry.ts (loadBrandRegistry → returns brand_key + display_name verbatim from Firestore)"
+    ],
+    "backend_routes_returning_registry": [
+      "backend/functions/src/routes/buyerReview.ts (sorts/returns display_name)",
+      "backend/functions/src/routes/aiPlane.ts (uses display_name)"
+    ],
+    "registry_seed_scripts": [
+      "scripts/tally-product-list-ux-p05-brand-reseed.js — SEED contains 'jordan' but DOES NOT contain 'brand_jordan'",
+      "scripts/tally-128-task2-brand-registry-seed.js — references 'Jordan' display in shiekh brand list, no 'brand_jordan' key",
+      "scripts/seed/backfill-rics-taxonomy.js — uses substring 'jordan', not the brand_jordan key"
+    ]
+  },
+  "label_source_identified": "Firestore brand_registry/brand_jordan.display_name (currently 'Jordan')",
+  "code_search_findings": {
+    "brand_jordan_in_source_code": 0,
+    "Nike_Jordan_in_source_code": 0,
+    "frontend_dropdowns_rendering_registry_display_name": 6,
+    "hardcoded_brand_label_overrides_for_brand_jordan": 0
+  },
+  "live_dev_state_from_phase_3_recon": {
+    "brand_registry_total": 42,
+    "doc_brand_jordan_present": true,
+    "doc_brand_jordan_brand_key": "brand_jordan",
+    "doc_brand_jordan_display_name": "Jordan",
+    "doc_brand_jordan_aliases": [],
+    "doc_brand_jordan_active": true,
+    "doc_jordan_present": true,
+    "doc_jordan_brand_key": "jordan",
+    "doc_jordan_display_name": "Jordan",
+    "doc_jordan_aliases": ["jordan", "brand jordan"],
+    "doc_jordan_active": true,
+    "products_using_brand_jordan_key": 0,
+    "products_using_jordan_key": 2,
+    "users_listing_brand_jordan": 0,
+    "users_listing_jordan": 0
+  },
+  "anomaly_blocking_code_patch": {
+    "case": "D",
+    "reason": "Display label is data, not code. Source-of-truth is Firestore Document. No source file in the repo currently encodes 'brand_jordan' (or its label). Patching code would be a no-op.",
+    "implication": "Editing brand_registry/brand_jordan.display_name from 'Jordan' → 'Nike Jordan' is the ONLY effective fix. That requires a Firestore write."
+  },
+  "alias_collision_risk": {
+    "concern": "brand_registry/jordan currently has aliases=['jordan','brand jordan']. The literal string 'brand jordan' (with space) is an alias under the 'jordan' key. matchBrand() normalizes case+whitespace and would match 'BRAND JORDAN' against the 'jordan' entry, NOT against 'brand_jordan'. This means a CSV import row with raw brand value 'BRAND JORDAN' would be classified as brand_key='jordan' rather than 'brand_jordan'.",
+    "evidence_data_point": "evidence/tally-product-list-ux-phase5b/413-live-test.txt L36 shows a real import row 'BRAND JORDAN' which under current rules would normalize to brand_key='jordan'.",
+    "PO_ruling_needed_followups": [
+      "Should brand_registry/jordan keep the 'brand jordan' alias, or should that alias migrate to brand_registry/brand_jordan to enforce the distinct business meaning?",
+      "Should brand_registry/brand_jordan acquire any aliases? (currently empty array)",
+      "If the answer to either is yes, that is a SECOND Firestore write tally and should NOT be folded into the display-label clarification."
+    ]
+  },
+  "proposed_firestore_update_plan_AWAITING_PO_APPROVAL": {
+    "scope": "single field edit on a single document",
+    "project": "ropi-aoss-dev (then ropi-aoss-prod separately if approved)",
+    "collection": "brand_registry",
+    "doc_id": "brand_jordan",
+    "field": "display_name",
+    "before": "Jordan",
+    "after": "Nike Jordan",
+    "other_fields": "untouched",
+    "delivery_options": [
+      {
+        "option": "1-line admin UI edit at /admin/registries/brands",
+        "pros": ["No new code, no script", "Zero blast radius"],
+        "cons": ["No audit_log entry tied to a Tally"]
+      },
+      {
+        "option": "Tiny dedicated dev script scripts/tally-brand-jordan-registry-clarification-apply.js",
+        "pros": [
+          "Project guard (ropi-aoss-dev)",
+          "Dry-run default, --apply required",
+          "Reads existing doc, asserts brand_key='brand_jordan' and display_name='Jordan' before write",
+          "Writes single field via { merge: true } — does not touch aliases/active/po_confirmed",
+          "Emits one summary audit_log entry tied to TALLY-BRAND-JORDAN-REGISTRY-CLARIFICATION",
+          "Evidence JSON before/after"
+        ],
+        "cons": ["Slightly more setup than a UI edit"]
+      }
+    ],
+    "homer_recommendation": "Option 2 (script) — matches established Tally evidence-trail pattern, leaves an audit_log breadcrumb, dry-run protected. Same pattern as TALLY-D3-E-CADENCE-RESIDUE."
+  },
+  "build_results": "not run — no code changes were made",
+  "anomalies": [
+    "DISPATCH CASE D — Firestore data update required, dispatch instructed STOP and report",
+    "Adjacent alias-collision risk found (separate from display-label fix); flagged as a candidate follow-up tally, NOT actioned"
+  ],
+  "status": "stopped-on-anomaly-case-D",
+  "next_step_requested_from_lisa": [
+    "PO approval for the Firestore write described above (delivery option 1 or 2)",
+    "Separate ruling on the brand jordan alias on the 'jordan' registry doc — keep or migrate"
+  ]
+}

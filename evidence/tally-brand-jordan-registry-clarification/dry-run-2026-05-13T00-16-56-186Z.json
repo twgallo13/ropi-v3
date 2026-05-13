@@ -1,0 +1,51 @@
+{
+  "tally": "TALLY-BRAND-JORDAN-REGISTRY-CLARIFICATION",
+  "mode": "dry-run",
+  "project_id": "ropi-aoss-dev",
+  "doc_path": "brand_registry/brand_jordan",
+  "field": "display_name",
+  "before_value": "Nike Jordan",
+  "after_value": "Nike Jordan",
+  "fields_touched": [
+    "display_name"
+  ],
+  "fields_left_untouched": [
+    "aliases",
+    "brand_key",
+    "created_at",
+    "created_by",
+    "default_site_owner",
+    "is_active",
+    "logo_url",
+    "notes",
+    "po_confirmed",
+    "updated_at",
+    "updated_by"
+  ],
+  "doc_snapshot_before": {
+    "brand_key": "brand_jordan",
+    "aliases": [],
+    "is_active": true,
+    "po_confirmed": false,
+    "notes": null,
+    "logo_url": null,
+    "created_by": "4hf2oKvc0igp2Sn0Mc06JjTBKXF2",
+    "updated_by": "4hf2oKvc0igp2Sn0Mc06JjTBKXF2",
+    "created_at": {
+      "_seconds": 1777979303,
+      "_nanoseconds": 920000000
+    },
+    "default_site_owner": "shiekh",
+    "updated_at": {
+      "_seconds": 1777979377,
+      "_nanoseconds": 406000000
+    },
+    "display_name": "Nike Jordan"
+  },
+  "started_at": "2026-05-13T00:16:55.825Z",
+  "result": "no-op",
+  "reason": "display_name already at target value",
+  "write_planned": false,
+  "writes_performed": false,
+  "finished_at": "2026-05-13T00:16:56.186Z"
+}
