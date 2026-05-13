@@ -68,16 +68,30 @@ if [[ "$FORCE_FUNCTIONS" == "1" && "$SKIP_FUNCTIONS" == "1" ]]; then
   exit 1
 fi
 
+# ── TALLY-INFRA: fail-closed git preflight ──
+# Validate git availability and repo integrity BEFORE any deploy side effects
+# (preflight, builds, Cloud Run, Firebase). Both plan-only and full-deploy
+# paths depend on git for the smart-functions decision; failing late after
+# partial deploys is unsafe.
+cd "$REPO_ROOT"
+if ! command -v git >/dev/null; then
+  echo "✗ git not installed (required for smart functions deploy decision)."
+  exit 1
+fi
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "✗ $REPO_ROOT is not a git work tree."
+  exit 1
+fi
+if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+  echo "✗ Unable to resolve HEAD in $REPO_ROOT (no commits or corrupt repo)."
+  exit 1
+fi
+
 # ── TALLY-INFRA-DEV-SMART-FUNCTIONS-DEPLOY — plan-only short-circuit ──
 # Must run BEFORE preflight, builds, Cloud Run deploy, and Firebase deploy so
 # that --plan-only can never trigger any side effect. Only operations allowed
 # here are pure git reads against the local repo.
 if [[ "$PLAN_ONLY" == "1" ]]; then
-  cd "$REPO_ROOT"
-  if ! command -v git >/dev/null; then
-    echo "✗ --plan-only requires git on PATH."
-    exit 1
-  fi
   HEAD_SHA="$(git rev-parse HEAD)"
 
   if [[ "$FORCE_FUNCTIONS" == "1" ]]; then
@@ -93,7 +107,10 @@ if [[ "$PLAN_ONLY" == "1" ]]; then
     elif ! git cat-file -e "${marker_sha}^{commit}" 2>/dev/null; then
       DECISION="marker-stale"
     else
-      diff_out="$(git diff --name-only "$marker_sha" "$HEAD_SHA" -- "${FUNCTIONS_PATHS[@]}" || true)"
+      if ! diff_out="$(git diff --name-only "$marker_sha" "$HEAD_SHA" -- "${FUNCTIONS_PATHS[@]}")"; then
+        echo "✗ git diff failed comparing $marker_sha..$HEAD_SHA for smart deploy decision."
+        exit 1
+      fi
       if [[ -n "$diff_out" ]]; then
         DECISION="changed"
       else
@@ -184,6 +201,7 @@ firebase deploy \
 echo ""
 
 # ── TALLY-INFRA-DEV-SMART-FUNCTIONS-DEPLOY: compute + execute decision ──
+# git availability + HEAD validity already enforced at top of script.
 cd "$REPO_ROOT"
 HEAD_SHA="$(git rev-parse HEAD)"
 
@@ -200,7 +218,10 @@ else
   elif ! git cat-file -e "${marker_sha}^{commit}" 2>/dev/null; then
     DECISION="marker-stale"
   else
-    diff_out="$(git diff --name-only "$marker_sha" "$HEAD_SHA" -- "${FUNCTIONS_PATHS[@]}" || true)"
+    if ! diff_out="$(git diff --name-only "$marker_sha" "$HEAD_SHA" -- "${FUNCTIONS_PATHS[@]}")"; then
+      echo "✗ git diff failed comparing $marker_sha..$HEAD_SHA for smart deploy decision."
+      exit 1
+    fi
     if [[ -n "$diff_out" ]]; then
       DECISION="changed"
     else
@@ -219,7 +240,10 @@ case "$DECISION" in
     if [[ -f "$FUNCTIONS_MARKER_FILE" ]]; then
       marker_sha="$(tr -d '[:space:]' < "$FUNCTIONS_MARKER_FILE")"
       if git cat-file -e "${marker_sha}^{commit}" 2>/dev/null; then
-        diff_out="$(git diff --name-only "$marker_sha" "$HEAD_SHA" -- "${FUNCTIONS_PATHS[@]}" || true)"
+        if ! diff_out="$(git diff --name-only "$marker_sha" "$HEAD_SHA" -- "${FUNCTIONS_PATHS[@]}")"; then
+          echo "✗ git diff failed comparing $marker_sha..$HEAD_SHA for --skip-functions warn check."
+          exit 1
+        fi
         if [[ -n "$diff_out" ]]; then
           echo "⚠ --skip-functions set, but backend/functions or firebase.json changed since marker $marker_sha:"
           echo "$diff_out" | sed 's/^/    /'
