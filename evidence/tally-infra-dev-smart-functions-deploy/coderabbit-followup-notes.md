@@ -8,7 +8,7 @@ could turn a real git error into an empty diff and silently flip the smart
 decision to `unchanged` (skipping a needed Functions deploy). Replaced with
 explicit:
 
-```
+```bash
 if ! diff_out="$(git diff --name-only "$marker_sha" "$HEAD_SHA" -- "${FUNCTIONS_PATHS[@]}")"; then
   echo "✗ git diff failed comparing $marker_sha..$HEAD_SHA ..."
   exit 1
