@@ -411,16 +411,9 @@ export default function SmartRuleBuilderPage() {
       prev.map((c, idx) => {
         if (idx !== i) return c;
         const next: BuilderCondition = { ...c, ...patch };
-        // If operator just changed the field to a registry-driven canonical
-        // field, drop legacy markers (operator has explicitly re-pointed it).
-        if (
-          patch.field !== undefined &&
-          REGISTRY_DRIVEN_FIELDS.has(patch.field as string) &&
-          c._legacyOriginalField
-        ) {
-          // Keep the warning visible until they pick a new value too.
-          // Markers cleared once value is non-empty (handled below).
-        }
+        // Legacy markers are intentionally NOT cleared on field-only changes:
+        // the warning must remain visible until the operator also picks a
+        // non-empty registry-backed value (handled below).
         if (
           patch.value !== undefined &&
           patch.value !== "" &&
