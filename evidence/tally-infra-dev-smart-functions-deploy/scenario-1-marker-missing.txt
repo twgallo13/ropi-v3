@@ -1,0 +1,5 @@
+▶ --plan-only: smart functions deploy decision = first-deploy
+  Would deploy: no functions deploy marker found.
+  HEAD: 8ed081a85eb79c75a8157324df749f09d641f4c5
+  Marker: <missing>
+✅ Plan-only complete. No preflight, build, or deploy commands executed.

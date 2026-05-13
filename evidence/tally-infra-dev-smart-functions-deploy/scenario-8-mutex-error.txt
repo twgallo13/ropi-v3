@@ -1,0 +1,2 @@
+✗ --force-functions and --skip-functions are mutually exclusive.
+exit=1

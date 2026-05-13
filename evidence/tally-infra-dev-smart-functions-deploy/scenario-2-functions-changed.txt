@@ -1,0 +1,49 @@
+▶ --plan-only: smart functions deploy decision = changed
+  Would deploy: backend/functions or firebase.json changed since last functions deploy.
+  Changed paths:
+    backend/functions/package-lock.json
+    backend/functions/package.json
+    backend/functions/src/functions/onAttributeRegistryWrite.ts
+    backend/functions/src/functions/onProductDeletedCleanupCadenceAssignment.ts
+    backend/functions/src/index.ts
+    backend/functions/src/lib/exportRegistry.ts
+    backend/functions/src/lib/portfolioFilter.ts
+    backend/functions/src/lib/registryAuthority.ts
+    backend/functions/src/lib/ruleFieldValidation.ts
+    backend/functions/src/middleware/auth.ts
+    backend/functions/src/middleware/viewAs.ts
+    backend/functions/src/routes/adminCadence.ts
+    backend/functions/src/routes/adminSmartRules.ts
+    backend/functions/src/routes/adminUsers.ts
+    backend/functions/src/routes/buyerActions.ts
+    backend/functions/src/routes/buyerReview.ts
+    backend/functions/src/routes/cadenceReview.ts
+    backend/functions/src/routes/cadenceRules.ts
+    backend/functions/src/routes/dashboard.ts
+    backend/functions/src/routes/executive.ts
+    backend/functions/src/routes/exports.ts
+    backend/functions/src/routes/importFullProduct.ts
+    backend/functions/src/routes/importWeeklyOperations.ts
+    backend/functions/src/routes/internalJobs.ts
+    backend/functions/src/routes/mapReview.ts
+    backend/functions/src/routes/pricingDiscrepancy.ts
+    backend/functions/src/routes/products.ts
+    backend/functions/src/routes/reviewActiveOverrides.ts
+    backend/functions/src/services/adminSettings.ts
+    backend/functions/src/services/aiWeeklyAdvisory.ts
+    backend/functions/src/services/buyerPerformanceMatrix.ts
+    backend/functions/src/services/cadenceEngine.ts
+    backend/functions/src/services/completionCompute.test.ts
+    backend/functions/src/services/completionCompute.ts
+    backend/functions/src/services/executiveProjections.ts
+    backend/functions/src/services/exportEligibility.ts
+    backend/functions/src/services/exportSerializer.ts
+    backend/functions/src/services/parseImportDate.ts
+    backend/functions/src/services/pricingResolution.ts
+    backend/functions/src/services/ricsParser.ts
+    backend/functions/src/services/scheduledPromotion.ts
+    backend/functions/src/types/cadence.ts
+    firebase.json
+  HEAD: 8ed081a85eb79c75a8157324df749f09d641f4c5
+  Marker: 9ed570d148dc776d089871456f8131db541cd286 (/workspaces/ropi-v3/.deploy-state/dev-functions-last-deployed-sha)
+✅ Plan-only complete. No preflight, build, or deploy commands executed.

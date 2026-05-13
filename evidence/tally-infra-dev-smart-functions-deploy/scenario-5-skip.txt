@@ -1,0 +1,5 @@
+▶ --plan-only: smart functions deploy decision = skip
+  Would skip:   --skip-functions/--no-functions set.
+  HEAD: 8ed081a85eb79c75a8157324df749f09d641f4c5
+  Marker: 9ed570d148dc776d089871456f8131db541cd286 (/workspaces/ropi-v3/.deploy-state/dev-functions-last-deployed-sha)
+✅ Plan-only complete. No preflight, build, or deploy commands executed.

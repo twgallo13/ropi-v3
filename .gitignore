@@ -17,6 +17,10 @@ firestore-debug.log
 ui-debug.log
 database-debug.log
 
+# TALLY-INFRA-DEV-SMART-FUNCTIONS-DEPLOY — local per-host marker tracking
+# the last successful dev Firebase Functions deploy SHA. Never commit.
+.deploy-state/
+
 # Environment / secrets — NEVER commit these
 .env
 .env.local

@@ -1,0 +1,5 @@
+▶ --plan-only: smart functions deploy decision = force
+  Would deploy: --force-functions set.
+  HEAD: 8ed081a85eb79c75a8157324df749f09d641f4c5
+  Marker: 8ed081a85eb79c75a8157324df749f09d641f4c5 (/workspaces/ropi-v3/.deploy-state/dev-functions-last-deployed-sha)
+✅ Plan-only complete. No preflight, build, or deploy commands executed.
