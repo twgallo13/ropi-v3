@@ -1,0 +1,113 @@
+{
+  "tally": "TALLY-144-2C.1",
+  "phase": "Phase 2 — Rule Field Normalization & Hard Deletes",
+  "branch": "tally-144-2c1-importer-department-key",
+  "base_main_sha": "3dfc270621bf18e96b519204ecd0eebb5a68f78d",
+  "prerequisite": {
+    "tally": "TALLY-144-2C.0",
+    "merged_at": "3dfc270621bf18e96b519204ecd0eebb5a68f78d (squash merge of PR #136)",
+    "result": "attribute_registry/department_key seeded on ropi-aoss-dev (audit_log_id: PQz7DrOsB5n7oBcdR1fx)"
+  },
+  "prior_stop_reason": "TALLY-144-2C.1 first attempt STOPPED on dispatch-listed STOP condition: attribute_registry/department_key did not exist. Resolved by 2C.0.",
+  "source_leak_root_cause": {
+    "file": "backend/functions/src/routes/importFullProduct.ts",
+    "step": "C.6 — Mirror Required Identity Fields into attribute_values",
+    "construct": "fieldsToWriteAsAttributes object literal (declared at L818 pre-patch) iterated by the for-of loop that writes attribute_values/<fieldKey> docs.",
+    "leaked_doc_path": "products/{productId}/attribute_values/department",
+    "leaked_doc_shape_observed_in_TALLY_144_2C_recon": {
+      "field_name": "department",
+      "value": "<display string>",
+      "origin_type": "Import",
+      "origin_rule": "Full Product Import",
+      "origin_detail": "Import Batch <batch_id>",
+      "verification_state": "Rule-Verified",
+      "written_at": "<serverTimestamp>",
+      "updated_at": "<serverTimestamp>"
+    },
+    "non_writers_audited": [
+      "C.5 attributes loop already skips 'department' via skipCanonical (importFullProduct.ts L683).",
+      "L520-532 importAttributes loop writes only mpn/sku/brand/product_name/status — no department writer.",
+      "ricsParser.ts: only comment hit on attribute_values; no Firestore writes.",
+      "registryAuthority.ts: reads class/age_group/gender registry only; no writes."
+    ]
+  },
+  "files_changed": [
+    "backend/functions/src/routes/importFullProduct.ts"
+  ],
+  "files_NOT_changed": [
+    "smart_rules — no read/write/edit",
+    "cadence_rules — no read/write/edit",
+    "cadence_assignments — no read/write/edit",
+    "rule engines — no edit",
+    "frontend — no edit",
+    "scripts/tally-144-2c-department-attribute-values-backfill.js (PR #135) — untouched",
+    "evidence/tally-144-2c-department-attribute-values-backfill/ (PR #135) — untouched",
+    "scripts/tally-144-2c0-seed-department-key-registry.js — untouched",
+    "attribute_registry — no live writes (registry doc was created by 2C.0; nothing written this turn)"
+  ],
+  "before_after_behavior": {
+    "before": {
+      "fields_to_write_as_attributes_department_entry": "department: mapped.top_level.department  // canonical display string from canonicalizeDepartment",
+      "resulting_attribute_value_doc_id": "department",
+      "resulting_attribute_value_value": "<display string, e.g. 'Accessories' / 'Footwear' / 'Clothing'>",
+      "resulting_field_name": "department",
+      "registry_correlate": "attribute_registry/department"
+    },
+    "after": {
+      "fields_to_write_as_attributes_entry": "department_key: mapped.top_level.department_key  // canonical key from deptMatch?.key (e.g. 'accessories' / 'footwear' / 'clothing')",
+      "resulting_attribute_value_doc_id": "department_key",
+      "resulting_attribute_value_value": "<canonical key string, e.g. 'accessories' / 'footwear' / 'clothing'>",
+      "resulting_field_name": "department_key",
+      "registry_correlate": "attribute_registry/department_key (seeded by 2C.0)"
+    },
+    "no_legacy_doc_write": true,
+    "empty_value_safety": "Loop's existing `if (value === undefined || value === null || value === \"\") continue;` filters products without a canonical department match; legacy av/department docs already on disk are NOT touched (handled by 2C / PR #135).",
+    "root_product_unchanged": "productRef.set(mapped.top_level, { merge: true }) at L597 still sets BOTH product.department (display) AND product.department_key (canonical) on the root doc. Per dispatch: 'Do not remove root product.department display field'."
+  },
+  "diff_summary": {
+    "file": "backend/functions/src/routes/importFullProduct.ts",
+    "stat": "1 file changed, 15 insertions(+), 5 deletions(-)",
+    "scope": "Single object-literal entry inside Step C.6's fieldsToWriteAsAttributes plus its preceding comment block."
+  },
+  "build_result": {
+    "command": "npm --prefix backend/functions run build",
+    "exit_code": 0,
+    "result": "tsc clean — no errors, no warnings"
+  },
+  "static_validation": {
+    "grep_field_to_write_as_attributes_literal": "1 match at L818 (the only declaration).",
+    "grep_department_key_colon": "1 match at L836 inside fieldsToWriteAsAttributes (the new entry).",
+    "grep_legacy_department_colon_in_fieldsToWriteAsAttributes": "0 matches — the legacy `department: mapped.top_level.department` entry has been removed from the mirror loop.",
+    "remaining_department_colon_occurrences_in_file": [
+      "L656 — `department: mapped.attributes.department` inside buildSearchTokens({...}) call. NOT an attribute_values write; feeds the search-token builder. Display string is intentional here for token generation.",
+      "L621 — `[import] orphan department:` log string (unrelated)."
+    ],
+    "c5_skip_canonical_still_excludes_department": "L683 `skipCanonical` set still includes 'department' — the C.5 attributes loop continues to refuse writing av/department from the raw RICS-mapped payload. With C.6 also now refusing, the legacy doc has no remaining writer in this file."
+  },
+  "confirmations": {
+    "no_data_backfill_performed": true,
+    "no_data_quarantine_performed": true,
+    "no_firestore_writes_this_turn": true,
+    "no_deploy": true,
+    "no_smart_rules_changes": true,
+    "no_cadence_rules_changes": true,
+    "no_cadence_assignments_changes": true,
+    "no_rule_engine_changes": true,
+    "no_frontend_changes": true,
+    "no_site_key_introduced": true,
+    "pr_135_remains_paused": true,
+    "pr_135_files_unchanged": true,
+    "registry_prerequisite_satisfied": "attribute_registry/department_key exists on ropi-aoss-dev (verified live earlier; created by 2C.0)."
+  },
+  "stop_conditions_evaluated": {
+    "registry_missing": "false (resolved by 2C.0)",
+    "source_path_differs_from_prior_stop_report": "false — same file/step (importFullProduct.ts Step C.6 mirror loop fieldsToWriteAsAttributes literal)",
+    "root_department_key_unavailable_before_mirror_write": "false — mapped.top_level.department_key is set at L588 (deptMatch?.key ?? \"\") and the productRef.set(mapped.top_level, { merge: true }) at L597 stamps it on root before C.6 runs",
+    "broad_importer_architecture_change_required": "false — single object-literal-entry edit",
+    "patch_required_writing_product_data": "false — code change only",
+    "patch_required_modifying_pr_135": "false — PR #135 untouched",
+    "backend_build_failed": "false — tsc clean"
+  },
+  "next_step": "Open PR. After merge, resume TALLY-144-2C apply with the approved quarantine shape (PR #135).",
+  "timestamp": "2026-05-14T02:35:00Z"
+}
