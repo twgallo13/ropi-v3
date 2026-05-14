@@ -819,11 +819,21 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             product_name: mapped.attributes.name || identity.name,
             brand: identity.brand,
             sku: identity.sku,
-            // TALLY-149 — use the canonicalized top_level value instead of the raw
-            // RICS-parsed string. mapped.top_level.department is mutated at L587-594
-            // to deptMatch?.display (canonical display_name). Without this, AV["department"]
-            // stores RICS-output that may be an alias and bypass FE alias-walk on save.
-            department: mapped.top_level.department,
+            // TALLY-144-2C.1 — write canonical attribute_values/department_key
+            // (value = root department_key, e.g. "footwear" / "clothing" /
+            // "accessories") instead of the legacy attribute_values/department
+            // (display string). The C.6 mirror loop was the sole remaining
+            // writer of the leaked legacy doc per TALLY-144-2C recon.
+            // The supporting registry doc attribute_registry/department_key
+            // was seeded by TALLY-144-2C.0 (PR #136). Root product.department
+            // and root product.department_key are still set upstream via
+            // productRef.set(mapped.top_level, { merge: true }) — only the
+            // attribute_values mirror entry is migrated here. Empty values
+            // (no canonical match) are skipped by the loop's null/empty
+            // guard below; legacy attribute_values/department docs are NOT
+            // backfilled or quarantined by this patch (handled by
+            // TALLY-144-2C / PR #135).
+            department_key: mapped.top_level.department_key,
             gender: mapped.attributes.gender,
             age_group: ageGroupValue,
             class: mapped.attributes.class,
