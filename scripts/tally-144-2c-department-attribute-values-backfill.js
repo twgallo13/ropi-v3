@@ -59,7 +59,9 @@
 
 const fs = require("fs");
 const path = require("path");
-const admin = require("/workspaces/ropi-v3/backend/functions/node_modules/firebase-admin");
+// CodeRabbit (PR #135): use Node module resolution; firebase-admin is declared
+// in scripts/package.json and installed in scripts/node_modules.
+const admin = require("firebase-admin");
 
 const TALLY = "TALLY-144-2C";
 const ACTOR = "system:tally-144-2c-department-attribute-values-backfill";
@@ -140,7 +142,13 @@ async function main() {
 
   for (const p of ps.docs) {
     scanned++;
-    const root = p.data().department_key || null;
+    // CodeRabbit (PR #135): accept department_key only when it is a non-empty
+    // trimmed string; reject numbers/objects/empty strings/whitespace.
+    const rawRoot = p.data()?.department_key;
+    const root =
+      typeof rawRoot === "string" && rawRoot.trim().length > 0
+        ? rawRoot.trim()
+        : null;
     const [dDept, dDk] = await Promise.all([
       p.ref.collection("attribute_values").doc("department").get(),
       p.ref.collection("attribute_values").doc("department_key").get(),
@@ -290,7 +298,24 @@ async function main() {
         continue;
       }
       if (liveDk.exists && liveDk.data()?.value !== liveRoot) {
+        // CodeRabbit (PR #135): persist a durable stop-evidence file BEFORE
+        // aborting so any partially-applied work has a recoverable trail.
+        summary.writes_performed = products_updated > 0;
+        summary.products_updated = products_updated;
+        summary.department_docs_quarantined = dept_docs_quarantined;
+        summary.applied = applied;
+        summary.revalidation_conflict = {
+          product_id: e.product_id,
+          live_root_department_key: liveRoot,
+          live_av_department_key_value: liveDk.data()?.value ?? null,
+        };
+        const stopFile = path.join(
+          EVIDENCE_DIR,
+          `stop-revalidation-conflict-${tsTag()}.json`
+        );
+        fs.writeFileSync(stopFile, JSON.stringify(summary, null, 2));
         console.error("STOP: re-validation conflict on", e.product_id);
+        console.error("Wrote", stopFile);
         await admin.app().delete();
         process.exit(3);
       }
@@ -339,15 +364,22 @@ async function main() {
     summary.department_docs_quarantined = dept_docs_quarantined;
     summary.applied = applied;
 
-    // Post-apply verification
-    const verSnap = await db.collection("products").get();
+    // CodeRabbit (PR #135): scope post-apply verification to the products this
+    // run targeted, not the entire products collection. Other products may
+    // legitimately carry a non-quarantined av/department doc that this run
+    // intentionally did not touch (e.g. missing-root rows or future-dated
+    // imports), and counting them here produces false negatives.
+    const targetedProductIds = applied
+      .filter((a) => a.wrote_av_department_key || a.quarantined_av_department)
+      .map((a) => a.product_id);
     let post_remaining_unquarantined_dept = 0;
     let post_with_av_dk = 0;
     let post_with_av_dept_quarantined = 0;
-    for (const p of verSnap.docs) {
+    for (const productId of targetedProductIds) {
+      const productRef = db.collection("products").doc(productId);
       const [d, k] = await Promise.all([
-        p.ref.collection("attribute_values").doc("department").get(),
-        p.ref.collection("attribute_values").doc("department_key").get(),
+        productRef.collection("attribute_values").doc("department").get(),
+        productRef.collection("attribute_values").doc("department_key").get(),
       ]);
       if (d.exists) {
         if (d.data()?.quarantined === true) post_with_av_dept_quarantined++;
