@@ -1,0 +1,275 @@
+{
+  "tally": "TALLY-144-2C",
+  "mode": "dry-run",
+  "project_id": "ropi-aoss-dev",
+  "timestamp": "2026-05-14T01:35:24.017Z",
+  "products_scanned": 25,
+  "with_av_department": 25,
+  "with_av_department_key": 0,
+  "eligible_count": 25,
+  "skipped_missing_root_with_av_dept_count": 0,
+  "skipped_missing_root_with_av_dept": [],
+  "conflicts_count": 0,
+  "conflicts": [],
+  "already_clean_no_av_department": 0,
+  "quarantine_shape_proposal": {
+    "quarantined": true,
+    "quarantined_by": "system:tally-144-2c-department-attribute-values-backfill",
+    "quarantined_reason": "TALLY-144-2C: legacy display-string field; superseded by attribute_values/department_key",
+    "superseded_by_field": "department_key",
+    "tally": "TALLY-144-2C",
+    "quarantined_at": "<serverTimestamp at apply time>"
+  },
+  "fields_touched_per_product": {
+    "attribute_values/department_key (created or merged)": [
+      "value",
+      "verification_state",
+      "origin_type",
+      "origin_detail",
+      "origin_rule",
+      "field_name",
+      "written_at",
+      "updated_at"
+    ],
+    "attribute_values/department (merged, never deleted)": [
+      "quarantined",
+      "quarantined_by",
+      "quarantined_reason",
+      "superseded_by_field",
+      "tally",
+      "quarantined_at"
+    ]
+  },
+  "eligible_samples": [
+    {
+      "product_id": "1005177",
+      "root_department_key": "accessories",
+      "av_department_before": {
+        "verification_state": "Rule-Verified",
+        "updated_at": {
+          "_seconds": 1778621165,
+          "_nanoseconds": 169000000
+        },
+        "origin_detail": "Import Batch d57fb35d-860d-482e-b40d-4e647b0cff4a",
+        "origin_rule": "Full Product Import",
+        "written_at": {
+          "_seconds": 1778621165,
+          "_nanoseconds": 169000000
+        },
+        "value": "Accessories",
+        "origin_type": "Import",
+        "field_name": "department"
+      },
+      "av_department_key_present": false,
+      "av_department_key_before": null,
+      "planned_av_department_key": {
+        "value": "accessories",
+        "verification_state": "Rule-Verified",
+        "origin_type": "Backfill",
+        "origin_detail": "TALLY-144-2C: backfilled from product root department_key",
+        "origin_rule": "TALLY-144-2C",
+        "field_name": "department_key",
+        "written_at": "<serverTimestamp>",
+        "updated_at": "<serverTimestamp>"
+      },
+      "planned_av_department_quarantine_merge": {
+        "quarantined": true,
+        "quarantined_by": "system:tally-144-2c-department-attribute-values-backfill",
+        "quarantined_reason": "TALLY-144-2C: legacy display-string field; superseded by attribute_values/department_key",
+        "superseded_by_field": "department_key",
+        "tally": "TALLY-144-2C",
+        "quarantined_at": "<serverTimestamp>"
+      }
+    },
+    {
+      "product_id": "101405-CHRM",
+      "root_department_key": "accessories",
+      "av_department_before": {
+        "verification_state": "Rule-Verified",
+        "updated_at": {
+          "_seconds": 1778621205,
+          "_nanoseconds": 17000000
+        },
+        "origin_detail": "Import Batch d57fb35d-860d-482e-b40d-4e647b0cff4a",
+        "origin_rule": "Full Product Import",
+        "written_at": {
+          "_seconds": 1778621205,
+          "_nanoseconds": 17000000
+        },
+        "value": "Accessories",
+        "origin_type": "Import",
+        "field_name": "department"
+      },
+      "av_department_key_present": false,
+      "av_department_key_before": null,
+      "planned_av_department_key": {
+        "value": "accessories",
+        "verification_state": "Rule-Verified",
+        "origin_type": "Backfill",
+        "origin_detail": "TALLY-144-2C: backfilled from product root department_key",
+        "origin_rule": "TALLY-144-2C",
+        "field_name": "department_key",
+        "written_at": "<serverTimestamp>",
+        "updated_at": "<serverTimestamp>"
+      },
+      "planned_av_department_quarantine_merge": {
+        "quarantined": true,
+        "quarantined_by": "system:tally-144-2c-department-attribute-values-backfill",
+        "quarantined_reason": "TALLY-144-2C: legacy display-string field; superseded by attribute_values/department_key",
+        "superseded_by_field": "department_key",
+        "tally": "TALLY-144-2C",
+        "quarantined_at": "<serverTimestamp>"
+      }
+    },
+    {
+      "product_id": "120029-CHRMWHTNVY",
+      "root_department_key": "accessories",
+      "av_department_before": {
+        "verification_state": "Rule-Verified",
+        "updated_at": {
+          "_seconds": 1778621207,
+          "_nanoseconds": 431000000
+        },
+        "origin_detail": "Import Batch d57fb35d-860d-482e-b40d-4e647b0cff4a",
+        "origin_rule": "Full Product Import",
+        "written_at": {
+          "_seconds": 1778621207,
+          "_nanoseconds": 431000000
+        },
+        "value": "Accessories",
+        "origin_type": "Import",
+        "field_name": "department"
+      },
+      "av_department_key_present": false,
+      "av_department_key_before": null,
+      "planned_av_department_key": {
+        "value": "accessories",
+        "verification_state": "Rule-Verified",
+        "origin_type": "Backfill",
+        "origin_detail": "TALLY-144-2C: backfilled from product root department_key",
+        "origin_rule": "TALLY-144-2C",
+        "field_name": "department_key",
+        "written_at": "<serverTimestamp>",
+        "updated_at": "<serverTimestamp>"
+      },
+      "planned_av_department_quarantine_merge": {
+        "quarantined": true,
+        "quarantined_by": "system:tally-144-2c-department-attribute-values-backfill",
+        "quarantined_reason": "TALLY-144-2C: legacy display-string field; superseded by attribute_values/department_key",
+        "superseded_by_field": "department_key",
+        "tally": "TALLY-144-2C",
+        "quarantined_at": "<serverTimestamp>"
+      }
+    },
+    {
+      "product_id": "300511-BLU",
+      "root_department_key": "clothing",
+      "av_department_before": {
+        "verification_state": "Rule-Verified",
+        "updated_at": {
+          "_seconds": 1778621209,
+          "_nanoseconds": 853000000
+        },
+        "origin_detail": "Import Batch d57fb35d-860d-482e-b40d-4e647b0cff4a",
+        "origin_rule": "Full Product Import",
+        "written_at": {
+          "_seconds": 1778621209,
+          "_nanoseconds": 853000000
+        },
+        "value": "Clothing",
+        "origin_type": "Import",
+        "field_name": "department"
+      },
+      "av_department_key_present": false,
+      "av_department_key_before": null,
+      "planned_av_department_key": {
+        "value": "clothing",
+        "verification_state": "Rule-Verified",
+        "origin_type": "Backfill",
+        "origin_detail": "TALLY-144-2C: backfilled from product root department_key",
+        "origin_rule": "TALLY-144-2C",
+        "field_name": "department_key",
+        "written_at": "<serverTimestamp>",
+        "updated_at": "<serverTimestamp>"
+      },
+      "planned_av_department_quarantine_merge": {
+        "quarantined": true,
+        "quarantined_by": "system:tally-144-2c-department-attribute-values-backfill",
+        "quarantined_reason": "TALLY-144-2C: legacy display-string field; superseded by attribute_values/department_key",
+        "superseded_by_field": "department_key",
+        "tally": "TALLY-144-2C",
+        "quarantined_at": "<serverTimestamp>"
+      }
+    },
+    {
+      "product_id": "300518-NVY",
+      "root_department_key": "clothing",
+      "av_department_before": {
+        "verification_state": "Rule-Verified",
+        "updated_at": {
+          "_seconds": 1778621212,
+          "_nanoseconds": 130000000
+        },
+        "origin_detail": "Import Batch d57fb35d-860d-482e-b40d-4e647b0cff4a",
+        "origin_rule": "Full Product Import",
+        "written_at": {
+          "_seconds": 1778621212,
+          "_nanoseconds": 130000000
+        },
+        "value": "Clothing",
+        "origin_type": "Import",
+        "field_name": "department"
+      },
+      "av_department_key_present": false,
+      "av_department_key_before": null,
+      "planned_av_department_key": {
+        "value": "clothing",
+        "verification_state": "Rule-Verified",
+        "origin_type": "Backfill",
+        "origin_detail": "TALLY-144-2C: backfilled from product root department_key",
+        "origin_rule": "TALLY-144-2C",
+        "field_name": "department_key",
+        "written_at": "<serverTimestamp>",
+        "updated_at": "<serverTimestamp>"
+      },
+      "planned_av_department_quarantine_merge": {
+        "quarantined": true,
+        "quarantined_by": "system:tally-144-2c-department-attribute-values-backfill",
+        "quarantined_reason": "TALLY-144-2C: legacy display-string field; superseded by attribute_values/department_key",
+        "superseded_by_field": "department_key",
+        "tally": "TALLY-144-2C",
+        "quarantined_at": "<serverTimestamp>"
+      }
+    }
+  ],
+  "eligible_product_ids": [
+    "1005177",
+    "101405-CHRM",
+    "120029-CHRMWHTNVY",
+    "300511-BLU",
+    "300518-NVY",
+    "305440 005",
+    "30865601",
+    "600219-NVY",
+    "A11110F",
+    "A14929F",
+    "A17830C",
+    "CU8401 901",
+    "DM0029 109",
+    "DQ8426 100",
+    "FBRK-CR92024-2CAMO",
+    "FC9297-UNCCLBL",
+    "FZ0634 010",
+    "HJ0052 010",
+    "HQ7540 006",
+    "HQ7540 602",
+    "HV0955 276",
+    "IM7490 675",
+    "IR2106 001",
+    "M2002RCC",
+    "SS8185-LADNTRL"
+  ],
+  "writes_performed": false,
+  "audit_log_id": null,
+  "apply_quarantine_shape_approved": false
+}
