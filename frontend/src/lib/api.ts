@@ -91,6 +91,12 @@ export interface ProductListItem {
   doc_id: string;
   name: string;
   brand: string;
+  // TALLY-144-2C.2 — canonical brand_key / department_key surfaced on the
+  // detail response so the UI (and Quick Edit) can read canonical values
+  // directly. Optional during deploy/backfill window; readers must fall
+  // back to the legacy display-string fields when absent.
+  brand_key?: string;
+  department_key?: string;
   department: string;
   class: string;
   site_owner: string;

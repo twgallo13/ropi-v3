@@ -159,7 +159,13 @@ export default function QuickEditPanel({
         const next: Values = {
           product_name: readAttrValue(detail, "product_name") || detail.name || "",
           brand: displayToBrandKey(readAttrValue(detail, "brand"), brandRegistry),
-          department: displayToDeptKey(readAttrValue(detail, "department"), departmentRegistry),
+          // TALLY-144-2C.2 — prefer canonical root.department_key over the
+          // legacy attribute_values.department display string (now suppressed
+          // server-side as quarantined). Fallback preserves behavior for any
+          // product whose root.department_key is not yet populated.
+          department:
+            (detail.department_key && detail.department_key.trim()) ||
+            displayToDeptKey(readAttrValue(detail, "department"), departmentRegistry),
           site_owner: readAttrValue(detail, "site_owner"),
           scom: readAttrValue(detail, "scom"),
           scom_sale: readAttrValue(detail, "scom_sale"),
