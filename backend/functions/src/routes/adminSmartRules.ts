@@ -66,6 +66,12 @@ function validateRuleBody(body: any): string | null {
   }
   for (const a of body.actions) {
     if (!a.target_field) return "action.target_field required";
+    // TALLY-144-2A: hard-reject legacy display-string action target fields.
+    // Closes the validator gap that allowed Smart Rules to silently write
+    // display strings (e.g. "Footwear") to attribute_values/department.
+    // Canonical replacements: brand → brand_key, department → department_key.
+    const legacyAction = rejectLegacyRuleField(a.target_field, "action.target_field");
+    if (legacyAction) return legacyAction;
     if (a.value === undefined) return "action.value required";
   }
   return null;
