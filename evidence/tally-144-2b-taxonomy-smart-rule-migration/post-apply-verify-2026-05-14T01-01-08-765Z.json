@@ -1,0 +1,21 @@
+{
+  "tally": "TALLY-144-2B",
+  "mode": "dry-run",
+  "project_id": "ropi-aoss-dev",
+  "timestamp": "2026-05-14T01:01:08.765Z",
+  "scanned_total": 35,
+  "skipped_inactive": 1,
+  "skipped_non_taxonomy": 21,
+  "skipped_no_legacy_action": 13,
+  "targeted_rules_count": 0,
+  "target_field_mapping": {
+    "legacy": "department",
+    "canonical": "department_key"
+  },
+  "department_value_mapping_summary": {},
+  "unmapped_values": [],
+  "legacy_condition_conflicts": [],
+  "targets": [],
+  "writes_performed": false,
+  "audit_log_id": null
+}
