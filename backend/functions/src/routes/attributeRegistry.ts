@@ -86,12 +86,28 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res: Response) =>
     const firestore = admin.firestore();
     const snap = await firestore.collection("attribute_registry").get();
 
+    // TALLY-144-2C.2 — code-level filters for legacy/canonical attribute
+    // display. SUPERSEDED_FIELD_KEYS hides legacy display-string registry
+    // entries that have been replaced by canonical "<field>_key" siblings
+    // (data is preserved; only the registry response is filtered).
+    // READONLY_DISPLAYABLE_KEYS lets specific canonical read-only entries
+    // (e.g. department_key) bypass the non-admin is_editable=false filter
+    // so they render in the product UI as read-only badges. Both lists are
+    // narrow on purpose to bound the blast radius. Admin mode is unaffected.
+    const SUPERSEDED_FIELD_KEYS = new Set<string>(["department"]);
+    const READONLY_DISPLAYABLE_KEYS = new Set<string>(["department_key"]);
+
     const attributes = snap.docs
       .filter((d) => {
         const data = d.data();
         if (!includeInactive && data.active !== true) return false;
         if (!adminMode && data.destination_tab === "system") return false;
-        if (!adminMode && data.is_editable === false) return false;
+        if (!adminMode && SUPERSEDED_FIELD_KEYS.has(d.id)) return false;
+        if (
+          !adminMode &&
+          data.is_editable === false &&
+          !READONLY_DISPLAYABLE_KEYS.has(d.id)
+        ) return false;
         return true;
       })
       .map((d) => ({

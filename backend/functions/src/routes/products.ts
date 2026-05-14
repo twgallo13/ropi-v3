@@ -730,12 +730,19 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
         }
       } else {
         const attrData = d.data();
+        // TALLY-144-2C.2 — quarantined attribute_values (legacy display-string
+        // docs superseded by canonical _key siblings) are suppressed from the
+        // wire payload so the product UI shows only canonical values. The
+        // underlying Firestore docs are preserved for audit; this is a
+        // display-path filter only. See evidence/tally-144-2c2-display-department-key/.
+        if (attrData.quarantined === true) return;
         attribute_values[d.id] = {
           value: attrData.value,
           origin_type: attrData.origin_type || null,
           origin_detail: attrData.origin_detail || null,
           verification_state: attrData.verification_state || null,
           written_at: attrData.written_at?.toDate?.()?.toISOString() || null,
+          quarantined: false,
         };
       }
     });
@@ -849,6 +856,12 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
       doc_id: docId,
       name: data.name || "",
       brand: data.brand || "",
+      // TALLY-144-2C.2 — expose canonical brand_key / department_key on the
+      // detail response so the product UI (and Quick Edit pre-population)
+      // can read the canonical values directly instead of the legacy
+      // display-string attribute_values docs.
+      brand_key: data.brand_key || "",
+      department_key: data.department_key || "",
       sku: data.sku || "",
       status: data.status || "",
       scom: data.scom ?? 0,
