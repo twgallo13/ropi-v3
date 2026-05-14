@@ -1,0 +1,933 @@
+{
+  "tally": "TALLY-144-2B",
+  "mode": "apply",
+  "project_id": "ropi-aoss-dev",
+  "timestamp": "2026-05-14T01:00:54.547Z",
+  "scanned_total": 35,
+  "skipped_inactive": 1,
+  "skipped_non_taxonomy": 21,
+  "skipped_no_legacy_action": 3,
+  "targeted_rules_count": 10,
+  "target_field_mapping": {
+    "legacy": "department",
+    "canonical": "department_key"
+  },
+  "department_value_mapping_summary": {
+    "Footwear → footwear": 6,
+    "Clothing → clothing": 2,
+    "Accessories → accessories": 2
+  },
+  "unmapped_values": [],
+  "legacy_condition_conflicts": [],
+  "targets": [
+    {
+      "rule_id": "00fed715-9bf5-431e-b763-be6bc63940f2",
+      "rule_name": "Taxonomy: Boys Grade School Sneakers",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Boys"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Grade-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Boys"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Grade-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Footwear"
+          },
+          "mapped_value": "footwear"
+        }
+      ]
+    },
+    {
+      "rule_id": "17454719-1713-4968-af76-8d7b27399d02",
+      "rule_name": "Taxonomy: Women's High Heels",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "High Heels"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "High Heels"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Footwear"
+          },
+          "mapped_value": "footwear"
+        }
+      ]
+    },
+    {
+      "rule_id": "181bb571-3ff8-4468-be27-f0a5e3fdb211",
+      "rule_name": "Taxonomy: Girls Pre-School Sneakers",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Girls"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Pre-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Girls"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Pre-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Footwear"
+          },
+          "mapped_value": "footwear"
+        }
+      ]
+    },
+    {
+      "rule_id": "71ac578f-cd3d-4579-becf-fa2b08f5b1ee",
+      "rule_name": "Taxonomy: Toddler Footwear",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Footwear"
+          },
+          "mapped_value": "footwear"
+        }
+      ]
+    },
+    {
+      "rule_id": "9faca916-e9eb-489e-ab73-9e4b48a93a10",
+      "rule_name": "Taxonomy: Men's T-Shirts",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "T-shirts"
+        },
+        {
+          "target_field": "category",
+          "value": "Short Sleeve"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "T-shirts"
+        },
+        {
+          "target_field": "category",
+          "value": "Short Sleeve"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Clothing"
+          },
+          "mapped_value": "clothing"
+        }
+      ]
+    },
+    {
+      "rule_id": "a0873bdc-3f2c-47f1-9df1-b6c33f3de113",
+      "rule_name": "Taxonomy: Men's Sandals/Slides",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Sandals"
+        },
+        {
+          "target_field": "category",
+          "value": "Slides"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Sandals"
+        },
+        {
+          "target_field": "category",
+          "value": "Slides"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Footwear"
+          },
+          "mapped_value": "footwear"
+        }
+      ]
+    },
+    {
+      "rule_id": "c697d7bc-cbc1-4183-a13d-3a662f84b73f",
+      "rule_name": "Taxonomy: Socks",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Socks & Underwear"
+        },
+        {
+          "target_field": "category",
+          "value": "Socks"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Socks & Underwear"
+        },
+        {
+          "target_field": "category",
+          "value": "Socks"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Accessories"
+          },
+          "mapped_value": "accessories"
+        }
+      ]
+    },
+    {
+      "rule_id": "c8356222-010c-4f43-9f7d-3003a445516b",
+      "rule_name": "Taxonomy: Hats & Headwear",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Hats"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Hats"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Accessories"
+          },
+          "mapped_value": "accessories"
+        }
+      ]
+    },
+    {
+      "rule_id": "e3da1f19-35bc-4a15-ad72-2ef8fc480b7c",
+      "rule_name": "Taxonomy: Women's Pants/Joggers",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Pants"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Pants"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Clothing"
+          },
+          "mapped_value": "clothing"
+        }
+      ]
+    },
+    {
+      "rule_id": "eb442c1f-0cc4-4575-8097-51615e1dbeec",
+      "rule_name": "Taxonomy: Women's Boots",
+      "version_before": null,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Boots"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Boots"
+        }
+      ],
+      "planned_changes": [
+        {
+          "original": {
+            "target_field": "department",
+            "value": "Footwear"
+          },
+          "mapped_value": "footwear"
+        }
+      ]
+    }
+  ],
+  "writes_performed": true,
+  "audit_log_id": "UsuzvYRF9euyYDupVXQ0",
+  "applied": [
+    {
+      "rule_id": "00fed715-9bf5-431e-b763-be6bc63940f2",
+      "rule_name": "Taxonomy: Boys Grade School Sneakers",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Boys"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Grade-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Boys"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Grade-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ]
+    },
+    {
+      "rule_id": "17454719-1713-4968-af76-8d7b27399d02",
+      "rule_name": "Taxonomy: Women's High Heels",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "High Heels"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "High Heels"
+        }
+      ]
+    },
+    {
+      "rule_id": "181bb571-3ff8-4468-be27-f0a5e3fdb211",
+      "rule_name": "Taxonomy: Girls Pre-School Sneakers",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Girls"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Pre-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Girls"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Pre-School"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ]
+    },
+    {
+      "rule_id": "71ac578f-cd3d-4579-becf-fa2b08f5b1ee",
+      "rule_name": "Taxonomy: Toddler Footwear",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Toddler"
+        },
+        {
+          "target_field": "class",
+          "value": "Sneakers"
+        }
+      ]
+    },
+    {
+      "rule_id": "9faca916-e9eb-489e-ab73-9e4b48a93a10",
+      "rule_name": "Taxonomy: Men's T-Shirts",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "T-shirts"
+        },
+        {
+          "target_field": "category",
+          "value": "Short Sleeve"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "T-shirts"
+        },
+        {
+          "target_field": "category",
+          "value": "Short Sleeve"
+        }
+      ]
+    },
+    {
+      "rule_id": "a0873bdc-3f2c-47f1-9df1-b6c33f3de113",
+      "rule_name": "Taxonomy: Men's Sandals/Slides",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Sandals"
+        },
+        {
+          "target_field": "category",
+          "value": "Slides"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Mens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Sandals"
+        },
+        {
+          "target_field": "category",
+          "value": "Slides"
+        }
+      ]
+    },
+    {
+      "rule_id": "c697d7bc-cbc1-4183-a13d-3a662f84b73f",
+      "rule_name": "Taxonomy: Socks",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Socks & Underwear"
+        },
+        {
+          "target_field": "category",
+          "value": "Socks"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Socks & Underwear"
+        },
+        {
+          "target_field": "category",
+          "value": "Socks"
+        }
+      ]
+    },
+    {
+      "rule_id": "c8356222-010c-4f43-9f7d-3003a445516b",
+      "rule_name": "Taxonomy: Hats & Headwear",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Hats"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "accessories"
+        },
+        {
+          "target_field": "class",
+          "value": "Hats"
+        }
+      ]
+    },
+    {
+      "rule_id": "e3da1f19-35bc-4a15-ad72-2ef8fc480b7c",
+      "rule_name": "Taxonomy: Women's Pants/Joggers",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Pants"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "clothing"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Pants"
+        }
+      ]
+    },
+    {
+      "rule_id": "eb442c1f-0cc4-4575-8097-51615e1dbeec",
+      "rule_name": "Taxonomy: Women's Boots",
+      "version_before": null,
+      "version_after": 1,
+      "actions_before": [
+        {
+          "target_field": "department",
+          "value": "Footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Boots"
+        }
+      ],
+      "actions_after": [
+        {
+          "target_field": "department_key",
+          "value": "footwear"
+        },
+        {
+          "target_field": "gender",
+          "value": "Womens"
+        },
+        {
+          "target_field": "age_group",
+          "value": "Adult"
+        },
+        {
+          "target_field": "class",
+          "value": "Boots"
+        }
+      ]
+    }
+  ],
+  "post_apply_remaining_legacy_taxonomy_actions": []
+}
