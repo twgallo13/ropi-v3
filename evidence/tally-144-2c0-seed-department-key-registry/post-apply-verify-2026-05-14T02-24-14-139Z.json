@@ -1,0 +1,16 @@
+{
+  "tally": "TALLY-144-2C.0",
+  "project_id": "ropi-aoss-dev",
+  "target_doc": "attribute_registry/department_key",
+  "exists": true,
+  "field_key": "department_key",
+  "enum_source": "department_registry",
+  "display_label": "Department",
+  "display_name": "Department",
+  "dropdown_source": "department_registry",
+  "is_editable": false,
+  "required_for_completion": true,
+  "created_by": "system:tally-144-2c0-seed-department-key-registry",
+  "audit_log_id": "PQz7DrOsB5n7oBcdR1fx",
+  "timestamp": "2026-05-14T02:24:14.139Z"
+}
