@@ -11,7 +11,7 @@
  * Track 2 amendment logic in cadenceEngine.ts:111–143 exactly.
  */
 import admin from "firebase-admin";
-import { BuyerPortfolio, PortfolioAttributes } from "../types/cadence";
+import { BuyerPortfolio, BuyerResolution, PortfolioAttributes } from "../types/cadence";
 
 export type { BuyerPortfolio } from "../types/cadence";
 
@@ -94,4 +94,102 @@ export async function loadBuyerPortfolio(uid: string): Promise<BuyerPortfolio | 
   const doc = await admin.firestore().collection("users").doc(uid).get();
   if (!doc.exists) return null;
   return buildBuyerPortfolio(uid, doc.data() || {});
+}
+
+/**
+ * Counts populated portfolio dimensions for a buyer. Mirrors
+ * cadenceEngine.countPopulatedDims exactly. Used as the tier-3 specificity
+ * input for pickPrimary.
+ */
+function countPopulatedDims(b: BuyerPortfolio): number {
+  return (
+    (b.portfolio_brands.size > 0 ? 1 : 0) +
+    (b.portfolio_depts.size > 0 ? 1 : 0) +
+    (b.portfolio_sites.size > 0 ? 1 : 0) +
+    (b.portfolio_age_groups.size > 0 ? 1 : 0) +
+    (b.portfolio_gender.size > 0 ? 1 : 0) +
+    (Object.keys(b.portfolio_attributes).length > 0 ? 1 : 0)
+  );
+}
+
+/**
+ * Picks the Primary buyer from a non-empty matches list using the
+ * 4-tier hierarchy (PO-ratified):
+ *  1. Boolean-attribute match wins (buyer has portfolio_attributes set)
+ *  2. Brand-portfolio over dimension-only
+ *  3. More-populated portfolio (specificity = total dim count)
+ *  4. uid alphabetical (deterministic final tie-break)
+ *
+ * Behavior must remain identical to cadenceEngine.pickPrimary so that
+ * ownership-at-import (TALLY-144-2E) and live cadence evaluation always
+ * resolve to the same primary buyer.
+ */
+export function pickPrimary(matches: BuyerPortfolio[]): BuyerPortfolio {
+  const scored = matches.map((b) => ({
+    buyer: b,
+    tier1: Object.keys(b.portfolio_attributes).length > 0 ? 1 : 0,
+    tier2: b.portfolio_brands.size > 0 ? 1 : 0,
+    tier3: countPopulatedDims(b),
+  }));
+  scored.sort(
+    (a, b) =>
+      b.tier1 - a.tier1 ||
+      b.tier2 - a.tier2 ||
+      b.tier3 - a.tier3 ||
+      a.buyer.uid.localeCompare(b.buyer.uid)
+  );
+  return scored[0].buyer;
+}
+
+/**
+ * TALLY-144-2E — Buyer resolver for ownership-at-import (Strategy C).
+ *
+ * Mirrors cadenceEngine.resolveBuyerForProduct:
+ *   1. Filter buyers via productMatchesBuyerPortfolio (which already runs
+ *      the exclusions veto + 6-dimension AND-match in one call).
+ *   2. If no matches → no_buyer_match.
+ *   3. If exactly one match → that buyer is Primary; Support is empty.
+ *   4. If multiple matches → pick Primary via the 4-tier hierarchy
+ *      (pickPrimary); the remainder become Support.
+ *
+ * Kept additive (cadenceEngine retains its module-private resolver) so the
+ * blast radius is bounded and live cadence semantics are unchanged.
+ */
+export function resolveBuyerForProduct(
+  product: any,
+  buyers: BuyerPortfolio[]
+): BuyerResolution {
+  const matches = buyers.filter((b) => productMatchesBuyerPortfolio(product, b));
+  if (matches.length === 0) return { result: "no_buyer_match" };
+  if (matches.length === 1) {
+    return {
+      result: "matched",
+      primary_user_id: matches[0].uid,
+      support_user_ids: [],
+    };
+  }
+  const primary = pickPrimary(matches);
+  const support_user_ids = matches
+    .filter((b) => b.uid !== primary.uid)
+    .map((b) => b.uid);
+  return {
+    result: "matched",
+    primary_user_id: primary.uid,
+    support_user_ids,
+  };
+}
+
+/**
+ * Loads every active buyer-bearing user (buyer | head_buyer | owner) and
+ * returns their built BuyerPortfolios. Mirrors the snapshot shape used by
+ * cadenceEngine.runCadenceEvaluation so resolveBuyerForProduct sees the
+ * same candidate set as live cadence evaluation.
+ */
+export async function loadAllBuyerPortfolios(): Promise<BuyerPortfolio[]> {
+  const snap = await admin
+    .firestore()
+    .collection("users")
+    .where("role", "in", ["buyer", "head_buyer", "owner"])
+    .get();
+  return snap.docs.map((d) => buildBuyerPortfolio(d.id, d.data() || {}));
 }

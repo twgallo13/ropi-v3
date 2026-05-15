@@ -1,0 +1,61 @@
+{
+  "project": "ropi-aoss-dev",
+  "timestamp": "2026-05-15T00:57:49.484Z",
+  "buyer_count": 6,
+  "sampled_products": 25,
+  "resolved_count": 24,
+  "no_buyer_match_count": 1,
+  "support_user_ids_distribution": {
+    "0": 24
+  },
+  "sample_resolved": [
+    {
+      "mpn": "1005177",
+      "brand_key": "field_grade",
+      "department_key": "accessories",
+      "site_owner": "shiekh",
+      "primary_user_id": "v8w9ogiVBUdBHpOSNhAzhqsIkvB3",
+      "support_user_ids": []
+    },
+    {
+      "mpn": "101405-CHRM",
+      "brand_key": "paper_planes",
+      "department_key": "accessories",
+      "site_owner": "karmaloop",
+      "primary_user_id": "v8w9ogiVBUdBHpOSNhAzhqsIkvB3",
+      "support_user_ids": []
+    },
+    {
+      "mpn": "120029-CHRMWHTNVY",
+      "brand_key": "paper_planes",
+      "department_key": "accessories",
+      "site_owner": "karmaloop",
+      "primary_user_id": "v8w9ogiVBUdBHpOSNhAzhqsIkvB3",
+      "support_user_ids": []
+    },
+    {
+      "mpn": "300511-BLU",
+      "brand_key": "paper_planes",
+      "department_key": "clothing",
+      "site_owner": "karmaloop",
+      "primary_user_id": "v8w9ogiVBUdBHpOSNhAzhqsIkvB3",
+      "support_user_ids": []
+    },
+    {
+      "mpn": "300518-NVY",
+      "brand_key": "paper_planes",
+      "department_key": "clothing",
+      "site_owner": "karmaloop",
+      "primary_user_id": "v8w9ogiVBUdBHpOSNhAzhqsIkvB3",
+      "support_user_ids": []
+    }
+  ],
+  "sample_unresolved": [
+    {
+      "mpn": "M2002RCC",
+      "brand_key": "new_balance",
+      "department_key": "footwear",
+      "site_owner": "shiekh"
+    }
+  ]
+}

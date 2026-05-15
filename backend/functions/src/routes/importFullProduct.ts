@@ -34,6 +34,14 @@ import {
 } from "../services/pricingResolution";
 import { getMapState } from "../services/mapState";
 import { getAdminSettings } from "../services/adminSettings";
+// TALLY-144-2E — ownership-at-import (Strategy C). Resolve buyer from the
+// same hierarchy used by cadence evaluation and stamp ownership visibility
+// fields onto cadence_assignments/{productId}. Additive — does NOT trigger
+// runCadenceEvaluation and does NOT touch product root or buyer_assignments.
+import {
+  loadAllBuyerPortfolios,
+  resolveBuyerForProduct,
+} from "../lib/portfolioFilter";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -999,6 +1007,79 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
               });
             }
           })
+        );
+      }
+    }
+
+    // TALLY-144-2E — Ownership at Import (Strategy C).
+    // Resolve buyer ownership for every committed MPN using the same buyer
+    // hierarchy and resolver used by live cadence evaluation, and upsert
+    // ownership visibility fields onto cadence_assignments/{productId}.
+    //
+    // Scope rules (PO/Lisa-ratified):
+    //   - Writes ONLY to cadence_assignments/{productId} (sibling doc).
+    //   - DOES NOT write product root ownership fields.
+    //   - DOES NOT create or write buyer_assignments collection.
+    //   - DOES NOT trigger runCadenceEvaluation; cadence stays driven by the
+    //     weekly importer (importWeeklyOperations).
+    //   - Merge-only. NEVER overwrites cadence workflow fields:
+    //       cadence_state, in_cadence_review_queue, manual_assignment,
+    //       matched_rule_id, conflict_rule_ids, last_evaluated_at.
+    //
+    // Resolver source: lib/portfolioFilter.resolveBuyerForProduct, which
+    // mirrors cadenceEngine.resolveBuyerForProduct (Frink pre-audit
+    // confirmed cadenceEngine resolver was module-private; portfolioFilter
+    // already exposes the same exclusions+AND-match predicate, so the
+    // resolver was lifted there additively without refactoring cadenceEngine).
+    if (committedMpns.length > 0) {
+      try {
+        const buyers = await loadAllBuyerPortfolios();
+        const CHUNK_SIZE = 25;
+        for (let i = 0; i < committedMpns.length; i += CHUNK_SIZE) {
+          const chunk = committedMpns.slice(i, i + CHUNK_SIZE);
+          await Promise.all(
+            chunk.map(async (mpn) => {
+              try {
+                const docId = mpnToDocId(mpn);
+                const psnap = await firestore
+                  .collection("products")
+                  .doc(docId)
+                  .get();
+                if (!psnap.exists) return;
+                const product = psnap.data() || {};
+                const resolution = resolveBuyerForProduct(product, buyers);
+                const ownershipUpdate: Record<string, any> = {
+                  mpn,
+                  ownership_source: "import",
+                  ownership_updated_at: db.FieldValue.serverTimestamp(),
+                  ownership_import_batch_id: batch_id,
+                };
+                if (resolution.result === "matched") {
+                  ownershipUpdate.primary_user_id = resolution.primary_user_id;
+                  ownershipUpdate.assigned_user_id = resolution.primary_user_id;
+                  ownershipUpdate.support_user_ids = resolution.support_user_ids;
+                } else {
+                  ownershipUpdate.primary_user_id = null;
+                  ownershipUpdate.assigned_user_id = null;
+                  ownershipUpdate.support_user_ids = [];
+                }
+                await firestore
+                  .collection("cadence_assignments")
+                  .doc(docId)
+                  .set(ownershipUpdate, { merge: true });
+              } catch (oerr: any) {
+                console.warn("ownership_stamp_failed", {
+                  mpn,
+                  err: oerr?.message,
+                });
+              }
+            })
+          );
+        }
+      } catch (oerrBatch: any) {
+        console.error(
+          "ownership_stamp_batch_failed:",
+          oerrBatch?.message
         );
       }
     }
