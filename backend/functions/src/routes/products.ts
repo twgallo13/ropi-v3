@@ -1803,7 +1803,7 @@ const BULK_BATCH_MAX = 100;
 router.post(
   "/bulk/markdown",
   requireAuth,
-  requireRole(["admin", "owner", "buyer"]),
+  requireRole(["admin", "owner", "buyer", "head_buyer"]),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userId = req.user?.uid;
