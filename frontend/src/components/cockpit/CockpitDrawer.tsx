@@ -8,7 +8,16 @@
  * - Keyboard: j = next, k = prev, a = approve, d = deny/reject, h = hold,
  *   Esc = close, Tab = focus trap inside drawer.
  * - Auto-advance: after a per-item decision succeeds, drawer advances to the
- *   NEXT item in queue (parent supplies the queue).
+ *   NEXT item in queue (parent supplies the queue, already filtered by the
+ *   shared hidden-MPN set).
+ *
+ * TALLY-155 — Optimistic UI + toast feedback:
+ *   - On success: emit success toast, call parent onRowSuccess (which hides
+ *     the row + re-derives the filtered queue), then advance() to the next
+ *     visible item. Drawer never closes from an action alone.
+ *   - On failure: emit error toast (persistent if code matches), surface an
+ *     inline rose error block above the action buttons, do NOT advance.
+ *   - alert("Action failed. See console.") removed.
  *
  * Hierarchy blocks (whitespace-separated, no dividers):
  *   1. Header  : MPN, name, brand
@@ -27,6 +36,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { buyerAction, buyerHold } from "../../lib/api";
 import type { CadenceReviewItem } from "../../lib/api";
 import ReasonBadges from "./ReasonBadge";
+import { showToast } from "../../lib/toast";
+import {
+  extractErrorCode,
+  extractErrorMessage,
+  isPersistentErrorCode,
+} from "../../lib/errorMessage";
+
+const DECISION_LABEL: Record<"approve" | "deny" | "hold", string> = {
+  approve: "Approve",
+  deny: "Reject",
+  hold: "Hold",
+};
 
 interface Props {
   open: boolean;
@@ -39,6 +60,11 @@ interface Props {
   onNavigate: (nextMpn: string | null) => void;
   /** Called after a per-item decision so parent can refetch cockpit. */
   onActionComplete: () => void;
+  /** TALLY-155 — optimistic-hide + per-row error callbacks (cadence tab). */
+  onRowSuccess: (mpn: string) => void;
+  onRowFailure: (mpn: string, errMsg: string) => void;
+  getRowError: (mpn: string) => string | undefined;
+  clearRowError: (mpn: string) => void;
 }
 
 export default function CockpitDrawer({
@@ -49,21 +75,34 @@ export default function CockpitDrawer({
   onClose,
   onNavigate,
   onActionComplete,
+  onRowSuccess,
+  onRowFailure,
+  getRowError,
+  clearRowError,
 }: Props) {
   const [busy, setBusy] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const currentMpn = item?.mpn ?? null;
+  const inlineError = currentMpn ? getRowError(currentMpn) : undefined;
 
-  // Auto-advance helper: move to NEXT in queue, or close if at end.
-  const advance = useCallback(() => {
-    if (!item) {
-      onClose();
-      return;
-    }
-    const idx = queue.findIndex((q) => q.mpn === item.mpn);
-    const next = idx >= 0 && idx + 1 < queue.length ? queue[idx + 1] : null;
-    if (next) onNavigate(next.mpn);
-    else onClose();
-  }, [item, queue, onClose, onNavigate]);
+  // Auto-advance helper: move to NEXT visible item in queue, or close if at end.
+  // The parent strips successful rows out of `queue` before passing it down,
+  // so the next index is always the next visible MPN.
+  const advance = useCallback(
+    (succeededMpn: string) => {
+      const idx = queue.findIndex((q) => q.mpn === succeededMpn);
+      // After the hide is applied, the successful row will fall out of `queue`
+      // on the next render. Until then, skip it explicitly.
+      const candidates = queue.filter((q) => q.mpn !== succeededMpn);
+      if (candidates.length === 0) {
+        onClose();
+        return;
+      }
+      const nextIdx = Math.min(Math.max(idx, 0), candidates.length - 1);
+      onNavigate(candidates[nextIdx].mpn);
+    },
+    [queue, onClose, onNavigate],
+  );
 
   const navigate = useCallback(
     (dir: 1 | -1) => {
@@ -80,24 +119,39 @@ export default function CockpitDrawer({
   const runDecision = useCallback(
     async (kind: "approve" | "deny" | "hold") => {
       if (!item || readOnly || busy) return;
+      const mpn = item.mpn;
       setBusy(true);
+      clearRowError(mpn);
       try {
         if (kind === "hold") {
-          await buyerHold(item.mpn, "Held from Cockpit Drawer (TALLY-146 PR 2)");
+          await buyerHold(mpn, "Held from Cockpit Drawer (TALLY-146 PR 2)");
         } else {
-          await buyerAction(item.mpn, kind);
+          await buyerAction(mpn, kind);
         }
+        showToast({
+          message: `${DECISION_LABEL[kind]} succeeded for ${mpn}.`,
+          variant: "success",
+        });
+        onRowSuccess(mpn);
         onActionComplete();
-        // close-on-decision OFF; instead auto-advance to next in queue.
-        advance();
+        // close-on-decision OFF; instead auto-advance to next visible item.
+        advance(mpn);
       } catch (e) {
         console.error("[cockpit drawer] action failed:", e);
-        alert("Action failed. See console.");
+        const code = extractErrorCode(e);
+        const msg = extractErrorMessage(e);
+        onRowFailure(mpn, msg);
+        showToast({
+          message: msg,
+          variant: "error",
+          persistent: isPersistentErrorCode(code),
+        });
+        // Drawer stays open on the failed item; do NOT advance.
       } finally {
         setBusy(false);
       }
     },
-    [item, readOnly, busy, onActionComplete, advance],
+    [item, readOnly, busy, onActionComplete, advance, onRowSuccess, onRowFailure, clearRowError],
   );
 
   // Focus the panel when it opens (focus trap baseline).
@@ -289,6 +343,11 @@ export default function CockpitDrawer({
           </div>
 
           {/* 5. Actions */}
+          {inlineError && (
+            <div className="text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+              {inlineError}
+            </div>
+          )}
           <div className="flex gap-2">
             <button
               disabled={readOnly || busy}
