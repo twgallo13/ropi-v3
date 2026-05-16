@@ -13,12 +13,14 @@
  * Selection cap surface: server-side hard cap is 100 per request. Bar shows
  * "Max 100 per request" hint when count > 100 and disables Apply.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BulkConfirmModal, { type BulkActionKind } from "./BulkConfirmModal";
 import {
   useCockpitSelection,
   type CockpitTabId,
 } from "./cockpitSelection";
+import { useAuth } from "../../contexts/AuthContext";
+import { canCallBulkAssignSupport } from "../../lib/roleGates";
 
 interface Props {
   activeTab: CockpitTabId;
@@ -40,19 +42,32 @@ const HARD_CAP = 100;
 
 export default function BulkActionBar({ activeTab, readOnly, onCommitted }: Props) {
   const sel = useCockpitSelection();
+  const { role } = useAuth();
   const selected = sel.selectedFor(activeTab);
   const count = selected.length;
 
-  const actions = TAB_ACTIONS[activeTab];
+  // TALLY-146 PR 2 v2.5 — per-action role gate. The BE `bulk/assign-support`
+  // endpoint (products.ts:1907) is `requireRole(["admin","owner"])`; the bar
+  // dropdown was previously surfacing "Assign support buyer" to buyer +
+  // head_buyer roles (Anomaly C in prior fix-up STOP). Filter it out at the
+  // dropdown level via the canonical role-gate helper.
+  const actions = useMemo(() => {
+    const all = TAB_ACTIONS[activeTab];
+    return all.filter((a) => {
+      if (a.kind === "assign_support") return canCallBulkAssignSupport(role);
+      return true;
+    });
+  }, [activeTab, role]);
+
   const [pendingAction, setPendingAction] =
     useState<BulkActionKind["kind"] | null>(actions[0]?.kind ?? null);
   const [modalAction, setModalAction] = useState<BulkActionKind | null>(null);
 
-  // Keep pendingAction valid when active tab changes.
+  // Keep pendingAction valid when active tab or available actions change.
   useEffect(() => {
-    const valid = TAB_ACTIONS[activeTab].some((a) => a.kind === pendingAction);
-    if (!valid) setPendingAction(TAB_ACTIONS[activeTab][0]?.kind ?? null);
-  }, [activeTab, pendingAction]);
+    const valid = actions.some((a) => a.kind === pendingAction);
+    if (!valid) setPendingAction(actions[0]?.kind ?? null);
+  }, [activeTab, actions, pendingAction]);
 
   // Hide when nothing selected. Per Marge: anchored to viewport (sticky)
   // directly under CockpitTabs.
