@@ -1,33 +1,41 @@
 /**
  * Track 3 Cockpit V1 — BuyerReviewPage shell.
+ * TALLY-146 PR 2 — adds CockpitSelectionProvider, sticky BulkActionBar, and
+ * universal CockpitDrawer wiring (j/k queue navigation on the cadence tab).
  *
  * Composes:
  *   - ViewAsBar (sets X-View-As-Uid via localStorage; triggers re-fetch)
  *   - KpiHeader (5 tiles)
- *   - CockpitCadenceSection
- *   - CockpitMapSection
- *   - CockpitPricingSection
+ *   - CockpitTabs (sticky)
+ *   - BulkActionBar (sticky directly under tabs; per-tab actions)
+ *   - CockpitCadenceSection / CockpitMapSection / CockpitPricingSection
+ *   - CockpitDrawer (right-anchored, opens on row click; cadence tab only)
  *
  * readOnly = !meta.can_write — disables write actions when an unprivileged
  * caller is viewing-as another user.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchCockpit } from "../lib/api";
-import type { CockpitResponse } from "../lib/api";
+import type { CockpitResponse, CadenceReviewItem } from "../lib/api";
 import KpiHeader from "../components/cockpit/KpiHeader";
 import ViewAsBar from "../components/cockpit/ViewAsBar";
 import CockpitTabs from "../components/cockpit/CockpitTabs";
 import CockpitCadenceSection from "../components/cockpit/CockpitCadenceSection";
 import CockpitMapSection from "../components/cockpit/CockpitMapSection";
 import CockpitPricingSection from "../components/cockpit/CockpitPricingSection";
-
-type CockpitTabId = "cadence" | "map" | "pricing";
+import BulkActionBar from "../components/cockpit/BulkActionBar";
+import CockpitDrawer from "../components/cockpit/CockpitDrawer";
+import {
+  CockpitSelectionProvider,
+  type CockpitTabId,
+} from "../components/cockpit/cockpitSelection";
 
 export default function BuyerReviewPage() {
   const [data, setData] = useState<CockpitResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CockpitTabId>("cadence");
+  const [drawerMpn, setDrawerMpn] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,6 +55,18 @@ export default function BuyerReviewPage() {
     load();
   }, [load]);
 
+  // Drawer queue = current cadence items (already in their displayed order).
+  // PR 2 surfaces the drawer on the cadence tab (the only tab with the full
+  // CadenceReviewItem shape and Approve/Deny/Hold per-item flow).
+  const cadenceQueue: CadenceReviewItem[] = useMemo(
+    () => (data ? (data.cadence as CadenceReviewItem[]) : []),
+    [data],
+  );
+  const drawerItem = useMemo(
+    () => cadenceQueue.find((i) => i.mpn === drawerMpn) ?? null,
+    [cadenceQueue, drawerMpn],
+  );
+
   if (loading && !data) {
     return <div className="p-4 text-sm text-slate-500">Loading cockpit…</div>;
   }
@@ -62,28 +82,53 @@ export default function BuyerReviewPage() {
   const readOnly = !data.meta.can_write;
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold mb-3">Buyer Cockpit</h1>
-      <ViewAsBar meta={data.meta} onChange={load} />
-      <KpiHeader kpis={data.kpis} />
-      <CockpitTabs<CockpitTabId>
-        tabs={[
-          { id: "cadence", label: "Cadence Review", count: data.cadence.length },
-          { id: "map", label: "MAP Conflicts", count: data.map.length },
-          { id: "pricing", label: "Pricing Discrepancies", count: data.pricing.length },
-        ]}
-        active={activeTab}
-        onChange={setActiveTab}
-      />
-      {activeTab === "cadence" && (
-        <CockpitCadenceSection items={data.cadence} readOnly={readOnly} onAction={load} />
-      )}
-      {activeTab === "map" && (
-        <CockpitMapSection items={data.map} readOnly={readOnly} onAction={load} />
-      )}
-      {activeTab === "pricing" && (
-        <CockpitPricingSection items={data.pricing} readOnly={readOnly} onAction={load} />
-      )}
-    </div>
+    <CockpitSelectionProvider>
+      <div className="p-4 max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold mb-3">Buyer Cockpit</h1>
+        <ViewAsBar meta={data.meta} onChange={load} />
+        <KpiHeader kpis={data.kpis} />
+
+        {/* Sticky tab strip (PR 2: sticky top:0 so tabs stay visible during scroll). */}
+        <div className="sticky top-0 z-20 bg-white">
+          <CockpitTabs<CockpitTabId>
+            tabs={[
+              { id: "cadence", label: "Cadence Review", count: data.cadence.length },
+              { id: "map", label: "MAP Conflicts", count: data.map.length },
+              { id: "pricing", label: "Pricing Discrepancies", count: data.pricing.length },
+            ]}
+            active={activeTab}
+            onChange={setActiveTab}
+          />
+        </div>
+
+        {/* Sticky bulk action bar — directly under tabs (Marge binding). */}
+        <BulkActionBar activeTab={activeTab} readOnly={readOnly} onCommitted={load} />
+
+        {activeTab === "cadence" && (
+          <CockpitCadenceSection
+            items={cadenceQueue}
+            readOnly={readOnly}
+            onAction={load}
+            onOpenDrawer={setDrawerMpn}
+          />
+        )}
+        {activeTab === "map" && (
+          <CockpitMapSection items={data.map} readOnly={readOnly} onAction={load} />
+        )}
+        {activeTab === "pricing" && (
+          <CockpitPricingSection items={data.pricing} readOnly={readOnly} onAction={load} />
+        )}
+
+        <CockpitDrawer
+          open={drawerMpn !== null && drawerItem !== null}
+          item={drawerItem}
+          queue={cadenceQueue}
+          readOnly={readOnly}
+          onClose={() => setDrawerMpn(null)}
+          onNavigate={(next) => setDrawerMpn(next)}
+          onActionComplete={load}
+        />
+      </div>
+    </CockpitSelectionProvider>
   );
 }

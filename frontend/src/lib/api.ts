@@ -3622,3 +3622,94 @@ export async function runAdminCadenceEvaluation(
   if (!res.ok) throw data;
   return data;
 }
+
+// ── TALLY-146 PR 2 — Bulk action client helpers ──
+// PR 1 endpoints (deployed in ropi-aoss-api-00215-gzd):
+//   POST /api/v1/products/bulk/markdown          (admin|owner|buyer)
+//   POST /api/v1/products/bulk/assign-support    (admin|owner|head_buyer|buyer)
+// Both: hard cap 100 MPNs per request. Response always includes per-MPN results.
+
+export type BulkMarkdownAction = "approve" | "reject" | "adjust" | "off_sale";
+
+export interface BulkAdjustment {
+  type: "pct" | "dollar" | "price";
+  value: number;
+  effective_date?: string | null;
+}
+
+export interface BulkMarkdownRequest {
+  mpns: string[];
+  action_type: BulkMarkdownAction;
+  adjustment?: BulkAdjustment;
+}
+
+export type BulkAssignMode = "replace" | "append";
+
+export interface BulkAssignSupportRequest {
+  mpns: string[];
+  mode: BulkAssignMode;
+  support_user_ids: string[];
+}
+
+export interface BulkItemResult {
+  mpn: string;
+  status: "ok" | "error";
+  error_code?: string;
+  error_message?: string;
+  // Backend may surface action_type back per item (NB: "deny" may appear when
+  // request was "reject" — do not assert literal equality client-side).
+  action_type?: string;
+  [extra: string]: unknown;
+}
+
+export interface BulkResponse {
+  results: BulkItemResult[];
+  summary: { ok: number; error: number };
+  // Optional top-level diagnostics, e.g. assign-support invalid_uids[].
+  [extra: string]: unknown;
+}
+
+export async function bulkMarkdown(req: BulkMarkdownRequest): Promise<BulkResponse> {
+  // BE bulk endpoint (products.ts:1791, :1817) requires { items: [{ mpn, action_type, adjustment? }] }.
+  // FE callers pass the flat convenience shape { mpns, action_type, adjustment? }; translate here.
+  // TALLY-146 PR 2 v2.5 Matt-VQA Fix #1: shape mismatch was producing 400
+  // "items array required and must be non-empty" on bulk Approve and bulk Deny.
+  const body = {
+    items: req.mpns.map((mpn) => ({
+      mpn,
+      action_type: req.action_type,
+      ...(req.adjustment !== undefined ? { adjustment: req.adjustment } : {}),
+    })),
+  };
+  const res = await fetch(`${BASE}/api/v1/products/bulk/markdown`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data as BulkResponse;
+}
+
+export async function bulkAssignSupport(
+  req: BulkAssignSupportRequest,
+): Promise<BulkResponse> {
+  // BE bulk endpoint (products.ts:1791, :1907) requires { items: [{ mpn, support_user_ids }], mode }.
+  // Translate from the flat convenience shape { mpns, mode, support_user_ids }.
+  // TALLY-146 PR 2 v2.5 Matt-VQA Fix #1 (assign-support arm).
+  const body = {
+    mode: req.mode,
+    items: req.mpns.map((mpn) => ({
+      mpn,
+      support_user_ids: req.support_user_ids,
+    })),
+  };
+  const res = await fetch(`${BASE}/api/v1/products/bulk/assign-support`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data as BulkResponse;
+}
