@@ -28,7 +28,8 @@ const COCKPIT_ROLES = ["admin", "owner", "buyer", "head_buyer"] as const;
 
 export function canCallBulkMarkdown(role: string | null | undefined): boolean {
   if (!role) return false;
-  return ["admin", "owner", "buyer", "head_buyer"].includes(role);
+  // BE: requireRole(["admin","owner","buyer","head_buyer"]) (products.ts:1803–1807, PR 3).
+  return (COCKPIT_ROLES as readonly string[]).includes(role);
 }
 
 export function canCallBulkAssignSupport(role: string | null | undefined): boolean {

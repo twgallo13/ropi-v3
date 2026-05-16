@@ -31,7 +31,8 @@ interface Props {
 const TAB_ACTIONS: Record<CockpitTabId, Array<{ kind: BulkActionKind["kind"]; label: string }>> = {
   cadence: [
     { kind: "markdown_approve", label: "Approve markdown" },
-    { kind: "markdown_reject", label: "Reject markdown" },
+    // TALLY-146 PR 2 v2.5 Matt-VQA Fix #4: surface label canonicalized to "Deny".
+    { kind: "markdown_reject", label: "Deny markdown" },
     { kind: "assign_support", label: "Assign support buyer" },
   ],
   map: [{ kind: "markdown_approve", label: "Approve markdown" }],

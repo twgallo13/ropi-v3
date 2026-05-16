@@ -40,7 +40,11 @@ interface Props {
 
 const ACTION_LABELS: Record<BulkActionKind["kind"], string> = {
   markdown_approve: "Approve markdown",
-  markdown_reject: "Reject markdown",
+  // TALLY-146 PR 2 v2.5 Matt-VQA Fix #4: surface label canonicalized to "Deny".
+  // The internal kind id stays `markdown_reject` and the wire `action_type`
+  // stays "reject" (BE bulk endpoint normalizes reject→deny at products.ts:1843);
+  // only the user-visible label changes.
+  markdown_reject: "Deny markdown",
   assign_support: "Assign support buyer",
 };
 

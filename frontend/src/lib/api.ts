@@ -3670,10 +3670,21 @@ export interface BulkResponse {
 }
 
 export async function bulkMarkdown(req: BulkMarkdownRequest): Promise<BulkResponse> {
+  // BE bulk endpoint (products.ts:1791, :1817) requires { items: [{ mpn, action_type, adjustment? }] }.
+  // FE callers pass the flat convenience shape { mpns, action_type, adjustment? }; translate here.
+  // TALLY-146 PR 2 v2.5 Matt-VQA Fix #1: shape mismatch was producing 400
+  // "items array required and must be non-empty" on bulk Approve and bulk Deny.
+  const body = {
+    items: req.mpns.map((mpn) => ({
+      mpn,
+      action_type: req.action_type,
+      ...(req.adjustment !== undefined ? { adjustment: req.adjustment } : {}),
+    })),
+  };
   const res = await fetch(`${BASE}/api/v1/products/bulk/markdown`, {
     method: "POST",
     headers: await headers(),
-    body: JSON.stringify(req),
+    body: JSON.stringify(body),
   });
   const data = await res.json();
   if (!res.ok) throw data;
@@ -3683,10 +3694,20 @@ export async function bulkMarkdown(req: BulkMarkdownRequest): Promise<BulkRespon
 export async function bulkAssignSupport(
   req: BulkAssignSupportRequest,
 ): Promise<BulkResponse> {
+  // BE bulk endpoint (products.ts:1791, :1907) requires { items: [{ mpn, support_user_ids }], mode }.
+  // Translate from the flat convenience shape { mpns, mode, support_user_ids }.
+  // TALLY-146 PR 2 v2.5 Matt-VQA Fix #1 (assign-support arm).
+  const body = {
+    mode: req.mode,
+    items: req.mpns.map((mpn) => ({
+      mpn,
+      support_user_ids: req.support_user_ids,
+    })),
+  };
   const res = await fetch(`${BASE}/api/v1/products/bulk/assign-support`, {
     method: "POST",
     headers: await headers(),
-    body: JSON.stringify(req),
+    body: JSON.stringify(body),
   });
   const data = await res.json();
   if (!res.ok) throw data;

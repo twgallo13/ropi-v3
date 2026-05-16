@@ -155,14 +155,26 @@ function CadenceRow({
           {item.brand} • {item.department} / {item.class} • Step {item.current_step} •{" "}
           {item.days_in_queue}d in queue
         </div>
-        <div className="mt-1">
-          <ReasonBadges ctx={item} surface="main" />
-        </div>
         {isSupport && item.primary_display_name && (
           <div className="text-xs text-slate-500 mt-0.5">
             Shared by {item.primary_display_name}
           </div>
         )}
+      </div>
+      {/*
+        TALLY-146 PR 2 v2.5 Matt-VQA Fix #5 — CSS Guardrail #2.
+        Reason Badges lifted out of the subtitle flow and placed in a dedicated
+        right-aligned column so they align on the X-axis across rows. Fixed
+        ~360px width accommodates up to 3 badges + a `+N more` overflow chip
+        (per ReasonBadge.tsx density cap). `flex-none` keeps the middle text
+        column truncating cleanly. py-2 row padding (Guardrail #1) and the
+        clickable row affordance (Guardrail #3) are preserved.
+      */}
+      <div
+        className="flex-none w-[360px] hidden md:flex justify-end items-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ReasonBadges ctx={item} surface="main" />
       </div>
       <div
         className="flex gap-1 flex-none"
