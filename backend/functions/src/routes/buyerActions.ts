@@ -1,10 +1,12 @@
 import { Router, Response } from "express";
 import admin from "firebase-admin";
-import { apply99Rounding } from "../services/pricingUtils";
 import { mpnToDocId } from "../services/mpnUtils";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth";
-import { queueForPricingExport } from "../services/pricingExportQueue";
 import { computeBuyerPerformanceMatrix } from "../services/buyerPerformanceMatrix";
+import {
+  performBuyerMarkdownAction,
+  type BuyerMarkdownActionType,
+} from "../services/buyerMarkdownAction";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -18,193 +20,50 @@ function refreshBuyerPerformanceMatrix(): void {
 }
 
 // ── POST /api/v1/buyer-actions/markdown ──
+// TALLY-146 PR 1 — per-MPN logic extracted to
+// services/buyerMarkdownAction.ts so the bulk endpoint
+// (POST /api/v1/products/bulk/markdown) and this single-product
+// handler share one canonical code path. Response shape is preserved
+// for FE compatibility.
 router.post("/markdown", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { mpn, action_type, adjustment } = req.body;
-
-    if (!mpn || !action_type) {
-      res.status(400).json({ error: "mpn and action_type are required" });
-      return;
-    }
-
-    if (!["approve", "deny", "adjust", "off_sale"].includes(action_type)) {
-      res.status(400).json({ error: "action_type must be approve, deny, adjust, or off_sale" });
-      return;
-    }
-
-    const docId = mpnToDocId(mpn);
-    const productRef = db().collection("products").doc(docId);
-    const doc = await productRef.get();
-
-    if (!doc.exists) {
-      res.status(404).json({ error: "Product not found" });
-      return;
-    }
-
-    const product = doc.data()!;
-
-    // Step 2.1 Part 3 — buyer cannot approve a markdown on a MAP-conflicted product.
-    // TALLY-PHASE-3.9 Track 2A — Deny bypasses MAP gate per PO 2026-05-07 (Q1=1A).
-    // Phase 3.10 Track 2C — D2 surgical exception: allow adjust when buyer explicitly
-    // matches MAP floor (adjust.type==="price" && adjust.value===map_floor).
-    // map_price is the raw doc field (same source as buyerReview.ts mapFloor derivation).
-    const mapFloorRaw: number | null =
-      product.map_price ?? product.map_state?.map_price ?? null;
-    const isMatchMap =
-      action_type === "adjust" &&
-      adjustment?.type === "price" &&
-      mapFloorRaw !== null &&
-      adjustment?.value === mapFloorRaw;
-
-    if (
-      product.map_conflict_active === true &&
-      action_type !== "deny" &&
-      !isMatchMap
-    ) {
-      res.status(400).json({
-        error: "MAP conflict must be resolved before markdown",
-      });
-      return;
-    }
-
-    // Validate product is in buyer-review-eligible state
-    const eligibleStates = ["Pricing Current", "Loss-Leader Review Pending"];
-    if (!eligibleStates.includes(product.pricing_domain_state)) {
-      res.status(400).json({
-        error: `Product pricing_domain_state is "${product.pricing_domain_state}" — must be in ${eligibleStates.join(" or ")} for buyer action`,
-      });
-      return;
-    }
-
-    const ricsRetail = product.rics_retail || 0;
-    const currentOffer = product.rics_offer || 0;
+    const { mpn, action_type, adjustment } = req.body || {};
     const buyerUserId = req.user?.uid;
     if (!buyerUserId) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
 
-    if (action_type === "deny") {
-      // Deny — no price calculation needed
-      const actionRef = await db().collection("buyer_actions").add({
-        mpn,
-        buyer_user_id: buyerUserId,
-        action_type: "deny",
-        original_rics_offer: currentOffer,
-        new_rics_offer: null,
-        export_rics_offer: null,
-        effective_date: null,
-        pricing_domain_state_after: "Buyer Denied",
-        created_at: ts(),
-      });
+    const result = await performBuyerMarkdownAction({
+      mpn,
+      action_type: action_type as BuyerMarkdownActionType,
+      adjustment,
+      buyerUserId,
+    });
 
-      await productRef.set(
-        {
-          pricing_domain_state: "Buyer Denied",
-          buyer_action_taken_at: ts(),
-          last_buyer_action_id: actionRef.id,
-        },
-        { merge: true }
-      );
-
-      await db().collection("audit_log").add({
-        product_mpn: mpn,
-        event_type: "buyer_action",
-        action_type: "deny",
-        acting_user_id: buyerUserId,
-        created_at: ts(),
-      });
-
-      res.json({
-        status: "success",
-        mpn,
-        action_type: "deny",
-        pricing_domain_state: "Buyer Denied",
-      });
-      refreshBuyerPerformanceMatrix();
+    if (result.status === "error") {
+      res.status(result.http_status).json({ error: result.error_message });
       return;
     }
 
-    // Approve or Adjust — calculate prices
-    let newRicsOffer: number;
-
-    if (action_type === "approve") {
-      // 15% default markdown
-      newRicsOffer = Math.round(ricsRetail * 0.85 * 100) / 100;
-    } else if (action_type === "off_sale") {
-      // Section 14.7 — revert rics_offer to rics_retail
-      newRicsOffer = Math.round(ricsRetail * 100) / 100;
+    if (result.action_type === "deny") {
+      res.json({
+        status: "success",
+        mpn: result.mpn,
+        action_type: "deny",
+        pricing_domain_state: result.pricing_domain_state,
+      });
     } else {
-      // adjust
-      if (!adjustment) {
-        res.status(400).json({ error: "adjustment object required for adjust action" });
-        return;
-      }
-
-      if (adjustment.type === "pct") {
-        newRicsOffer = Math.round(ricsRetail * (1 - adjustment.value / 100) * 100) / 100;
-      } else if (adjustment.type === "dollar") {
-        newRicsOffer = Math.round((ricsRetail - adjustment.value) * 100) / 100;
-      } else if (adjustment.type === "price") {
-        newRicsOffer = Math.round(adjustment.value * 100) / 100;
-      } else {
-        res.status(400).json({ error: "adjustment.type must be pct, dollar, or price" });
-        return;
-      }
+      res.json({
+        status: "success",
+        mpn: result.mpn,
+        action_type: result.action_type,
+        new_rics_offer: result.new_rics_offer,
+        export_rics_offer: result.export_rics_offer,
+        pricing_domain_state: result.pricing_domain_state,
+        buyer_action_id: result.buyer_action_id,
+      });
     }
-
-    const exportPrice = apply99Rounding(newRicsOffer);
-    const effectiveDate = adjustment?.effective_date || null;
-    const stateAfter = effectiveDate ? "Scheduled" : "Export Ready";
-
-    const actionRef = await db().collection("buyer_actions").add({
-      mpn,
-      buyer_user_id: buyerUserId,
-      action_type,
-      original_rics_offer: currentOffer,
-      new_rics_offer: newRicsOffer,
-      export_rics_offer: exportPrice,
-      effective_date: effectiveDate,
-      pricing_domain_state_after: stateAfter,
-      created_at: ts(),
-    });
-
-    await productRef.set(
-      {
-        pricing_domain_state: stateAfter,
-        buyer_action_taken_at: ts(),
-        last_buyer_action_id: actionRef.id,
-      },
-      { merge: true }
-    );
-
-    await db().collection("audit_log").add({
-      product_mpn: mpn,
-      event_type: "buyer_action",
-      action_type,
-      new_rics_offer: newRicsOffer,
-      export_rics_offer: exportPrice,
-      effective_date: effectiveDate,
-      acting_user_id: buyerUserId,
-      created_at: ts(),
-    });
-
-    // Step 2.1 / TALLY-112 — buyer markdown feeds the RICS Pricing Export queue
-    try {
-      await queueForPricingExport(mpn, "buyer_markdown", buyerUserId, effectiveDate);
-    } catch (qerr: any) {
-      console.error("queueForPricingExport (buyer_markdown) failed:", qerr);
-    }
-
-    res.json({
-      status: "success",
-      mpn,
-      action_type,
-      new_rics_offer: newRicsOffer,
-      export_rics_offer: exportPrice,
-      pricing_domain_state: stateAfter,
-      buyer_action_id: actionRef.id,
-    });
     refreshBuyerPerformanceMatrix();
   } catch (err: any) {
     console.error("POST /buyer-actions/markdown error:", err);

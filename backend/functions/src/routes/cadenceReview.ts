@@ -1,9 +1,13 @@
 /**
  * Step 2.2 — Cadence Review + Assignments routes.
- *  GET  /api/v1/cadence-review                  — in-queue review cards
  *  GET  /api/v1/cadence-assignments/unassigned  — unassigned products
  *  POST /api/v1/cadence-assignments/:mpn/assign — manual rule assignment
  *  POST /api/v1/cadence-assignments/:mpn/exclude — exclude product from cadence
+ *
+ * TALLY-146 PR 1 — GET /cadence-review handler retired (v2.2 narrowed
+ * scope). FE caller fetchCadenceReview removed from frontend/src/lib/api.ts.
+ * The /cadence-review → /buyer-review redirect in frontend/src/App.tsx
+ * remains in place.
  */
 import { Router, Response } from "express";
 import admin from "firebase-admin";
@@ -17,101 +21,6 @@ const db = () => admin.firestore();
 const ts = () => admin.firestore.FieldValue.serverTimestamp();
 
 const buyerRoles = ["buyer", "head_buyer", "admin"];
-
-async function getUserRole(req: AuthenticatedRequest): Promise<string | null> {
-  const claim = (req.user as any)?.role;
-  if (claim) return claim;
-  const uid = req.user?.uid;
-  if (!uid) return null;
-  const doc = await db().collection("users").doc(uid).get();
-  return doc.data()?.role || null;
-}
-
-// GET /api/v1/cadence-review
-router.get(
-  "/cadence-review",
-  requireAuth,
-  requireRole(buyerRoles),
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const uid = req.user!.uid;
-      const role = await getUserRole(req);
-
-      // Gather owned rule ids for non-admin / non-head_buyer
-      let ownedRuleIds: string[] | null = null;
-      if (role !== "head_buyer" && role !== "admin") {
-        const rulesSnap = await db()
-          .collection("cadence_rules")
-          .where("owner_buyer_id", "==", uid)
-          .get();
-        ownedRuleIds = rulesSnap.docs.map((d) => d.id);
-        if (ownedRuleIds.length === 0) {
-          res.json({ items: [], total: 0 });
-          return;
-        }
-      }
-
-      const assignSnap = await db()
-        .collection("cadence_assignments")
-        .where("in_cadence_review_queue", "==", true)
-        .get();
-
-      const items: any[] = [];
-      for (const d of assignSnap.docs) {
-        const a = d.data();
-        if (a.cadence_state !== "assigned" || !a.recommendation) continue;
-        if (ownedRuleIds && !ownedRuleIds.includes(a.matched_rule_id)) continue;
-
-        const pSnap = await db()
-          .collection("products")
-          .doc(mpnToDocId(a.mpn))
-          .get();
-        if (!pSnap.exists) continue;
-        const p = pSnap.data()!;
-
-        const entered = a.buyer_queue_entered_at?.toDate?.();
-        const daysInQueue = entered
-          ? Math.floor((Date.now() - entered.getTime()) / (24 * 60 * 60 * 1000))
-          : 0;
-
-        const invTotal =
-          (Number(p.inventory_store) || 0) +
-          (Number(p.inventory_warehouse) || 0) +
-          (Number(p.inventory_whs) || 0);
-
-        items.push({
-          mpn: a.mpn,
-          name: p.name || "",
-          brand: p.brand || "",
-          department: p.department || "",
-          class: p.class || "",
-          site_owner: p.site_owner || "",
-          rics_retail: Number(p.rics_retail) || 0,
-          rics_offer: Number(p.rics_offer) || 0,
-          scom: Number(p.scom) || 0,
-          scom_sale: Number(p.scom_sale) || 0,
-          is_map_protected: p.is_map_protected === true,
-          map_price: Number(p.map_price) || null,
-          map_conflict_active: p.map_conflict_active === true,
-          str_pct: p.str_pct != null ? Number(p.str_pct) : null,
-          wos: p.wos != null ? Number(p.wos) : null,
-          store_gm_pct: p.store_gm_pct != null ? Number(p.store_gm_pct) : null,
-          web_gm_pct: p.web_gm_pct != null ? Number(p.web_gm_pct) : null,
-          inventory_total: invTotal,
-          is_slow_moving: p.is_slow_moving === true,
-          recommendation: a.recommendation,
-          current_step: a.current_step,
-          days_in_queue: daysInQueue,
-        });
-      }
-
-      res.json({ items, total: items.length });
-    } catch (err: any) {
-      console.error("GET /cadence-review error:", err);
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
 
 // GET /api/v1/cadence-assignments/unassigned
 router.get(
