@@ -1133,13 +1133,9 @@ export async function deactivateCadenceRule(ruleId: string): Promise<void> {
   if (!res.ok) throw new Error(`API ${res.status}`);
 }
 
-// ── Cadence Review + Assignments ──
-
-export async function fetchCadenceReview(): Promise<{ items: CadenceReviewItem[]; total: number }> {
-  const res = await fetch(`${BASE}/api/v1/cadence-review`, { headers: await headers() });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json();
-}
+// ── Cadence Assignments ──
+// TALLY-146 PR 1 — fetchCadenceReview retired (v2.2 narrowed scope).
+// The CadenceReviewItem type is preserved (still used by cockpit section).
 
 export async function fetchCadenceUnassigned(): Promise<{
   items: CadenceUnassignedItem[];

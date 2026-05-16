@@ -6,12 +6,13 @@ import { requireRole } from "../middleware/roles";
 import { mpnToDocId, docIdToMpn } from "../services/mpnUtils";
 import { queueForPricingExport } from "../services/pricingExportQueue";
 import {
-  resolvePricing,
-  writePricingSnapshot,
-  type PricingInputs,
-} from "../services/pricingResolution";
-import { getMapState } from "../services/mapState";
-import { getAdminSettings } from "../services/adminSettings";
+  reflowPricingDomainStateForMpn,
+  reflowPricingDomainStateBatch,
+} from "../services/pricingDomainReflow";
+import {
+  performBuyerMarkdownAction,
+  type BuyerMarkdownActionType,
+} from "../services/buyerMarkdownAction";
 import { deriveVerificationState, getStalenessThresholdDays, StalenessCache } from "../lib/staleness";
 import { parseAdditionalImageUrls } from "../lib/parseAdditionalImageUrls";
 import {
@@ -1105,68 +1106,11 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
     // TALLY-3.8-DEFECT-1 — Pricing Domain State reflow on price edits.
     // FA11 (comment 35645ee1-ec5a-814c-a9f9-001d34b7358d) + FA11.7
     // (comment 35645ee1-ec5a-81e5-94f2-001d0f96d8a8) on parent DEFECT-1.
-    // Re-runs the pricing engine after a price-input mirror so terminal
-    // states (e.g. "Buyer Denied") and stale projection booleans
-    // (Channel Disparity, MAP conflict, is_loss_leader) are refreshed.
-    // Fire-and-forget — failure must NEVER fail the saveField response
-    // (matches existing queueForPricingExport try/catch pattern).
-    const reflowPricingDomainState = async (): Promise<void> => {
-      try {
-        const batchId = `manual_edit_${userId}_${Date.now()}`;
-        const freshSnap = await productRef.get();
-        const pdata = freshSnap.data() || {};
-        const pricingInputs: PricingInputs = {
-          rics_retail: Number(pdata.rics_retail) || 0,
-          rics_offer: Number(pdata.rics_offer) || 0,
-          scom: Number(pdata.scom) || 0,
-          scom_sale: Number(pdata.scom_sale) || 0,
-          actual_cost: pdata.actual_cost ?? null,
-        };
-        const [mapState, adminSettings] = await Promise.all([
-          getMapState(mpn),
-          getAdminSettings(),
-        ]);
-        const result = await resolvePricing(
-          mpn,
-          pricingInputs,
-          mapState,
-          adminSettings
-        );
-        // Option D resolution (Lisa-asserted reconciliation): match
-        // importWeeklyOperations.ts:328 canonical pattern, which writes
-        // the snapshot UNCONDITIONALLY. writePricingSnapshot is the
-        // canonical writer for the projection booleans (is_loss_leader,
-        // is_map_constrained, map_conflict_active,
-        // is_store_sale_web_full, is_web_sale_store_full) and refreshes
-        // them atomically inside a single productRef.set merge.
-        await writePricingSnapshot(mpn, batchId, result);
-        if (result.status === "Pricing Current") {
-          // FA11.7 caveat: writePricingSnapshot does NOT clear the four
-          // payload fields written by routeToLossLeaderReview /
-          // routeToPricingDiscrepancy. Without this explicit clear,
-          // executiveProjections.ts:388-397 reads stale values and shows
-          // the product as still flagged despite is_loss_leader=false.
-          await productRef.set(
-            {
-              loss_leader_payload: null,
-              loss_leader_flagged_at: null,
-              discrepancy_reasons: null,
-              discrepancy_flagged_at: null,
-            },
-            { merge: true }
-          );
-        }
-        // "Loss-Leader Review Pending" / "Pricing Discrepancy" branches:
-        // routeToLossLeaderReview / routeToPricingDiscrepancy inside
-        // resolvePricing already wrote pricing_domain_state and the
-        // relevant payload fields. No caller-side action needed.
-      } catch (rerr: any) {
-        console.error(
-          "resolvePricing reflow (manual_edit) failed:",
-          rerr
-        );
-      }
-    };
+    // TALLY-146 PR 1 — closure extracted to
+    // services/pricingDomainReflow.ts so the bulk endpoints (Step 2)
+    // can issue ONE reflow per request via the batch wrapper. Per-MPN
+    // semantics here are unchanged: fire-and-forget, never throws to
+    // the saveField response (matches queueForPricingExport pattern).
 
     // 4. If field_key is the name field — also update the top-level product document
     if (fieldKey === "name" || fieldKey === "product_name") {
@@ -1261,7 +1205,7 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
         console.error("queueForPricingExport (scom_edit) failed:", qerr);
       }
       // TALLY-3.8-DEFECT-1 — reflow pricing domain state after scom/scom_sale edit.
-      await reflowPricingDomainState();
+      await reflowPricingDomainStateForMpn(mpn, userId);
     }
 
     // 4d. TALLY-SHIPPING-OVERRIDE-CLEANUP — shipping override mirror.
@@ -1346,7 +1290,7 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
           mapAutoPopulate = { triggered: true, rics_retail: ricsRetail };
           // TALLY-3.8-DEFECT-1 — reflow pricing domain state after MAP
           // auto-populate writes scom/scom_sale.
-          await reflowPricingDomainState();
+          await reflowPricingDomainStateForMpn(mpn, userId);
         }
       }
     }
@@ -1827,6 +1771,314 @@ router.delete(
     } catch (err: any) {
       console.error("DELETE /products/:mpn error:", err);
       res.status(500).json({ error: err.message || "Failed to delete product" });
+    }
+  }
+);
+
+// ────────────────────────────────────────────────
+//  TALLY-146 PR 1 — Bulk Action Backends
+// ────────────────────────────────────────────────
+//
+// POST /api/v1/products/bulk/markdown
+//   - Body: { items: [{ mpn, action_type: "approve"|"reject"|"deny"|"adjust"|"off_sale", adjustment? }] }
+//   - Roles: admin | owner | buyer
+//   - Behavior: iterates items, delegates per-MPN to
+//     performBuyerMarkdownAction (same logic as single endpoint).
+//     "reject" is normalized to "deny" for back-compat with FE bulk UI.
+//     NEVER short-circuits on per-item errors. After the loop, fires
+//     ONE reflowPricingDomainStateBatch call for all changed MPNs.
+//   - Hard cap: 100 items per request.
+//
+// POST /api/v1/products/bulk/assign-support
+//   - Body: { items: [{ mpn, support_user_ids: string[] }], mode: "replace"|"append" }
+//   - Roles: admin | owner
+//   - Behavior: validates each support uid (must be user with role
+//     buyer|head_buyer), locates cadence_assignments doc by mpn,
+//     replaces or unions support_user_ids. Per-item audit_log write.
+//     No reflow.
+//   - Hard cap: 100 items per request.
+
+const BULK_BATCH_MAX = 100;
+
+router.post(
+  "/bulk/markdown",
+  requireAuth,
+  requireRole(["admin", "owner", "buyer"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const body = req.body || {};
+      const items: any[] = Array.isArray(body.items) ? body.items : [];
+
+      if (items.length === 0) {
+        res
+          .status(400)
+          .json({ error: "items array required and must be non-empty" });
+        return;
+      }
+      if (items.length > BULK_BATCH_MAX) {
+        res.status(400).json({
+          error: "BATCH_SIZE_EXCEEDED",
+          message: `items.length=${items.length} exceeds max=${BULK_BATCH_MAX}`,
+        });
+        return;
+      }
+
+      const results: Array<Record<string, any>> = [];
+      const changedMpns: string[] = [];
+      let okCount = 0;
+      let errorCount = 0;
+
+      for (const raw of items) {
+        const mpn = String(raw?.mpn || "").trim();
+        let action: string = String(raw?.action_type || "").trim();
+        const adjustment = raw?.adjustment;
+
+        // Bulk FE may send "reject" — normalize to canonical "deny".
+        if (action === "reject") action = "deny";
+
+        const result = await performBuyerMarkdownAction({
+          mpn,
+          action_type: action as BuyerMarkdownActionType,
+          adjustment,
+          buyerUserId: userId,
+        });
+
+        if (result.status === "ok") {
+          okCount++;
+          changedMpns.push(result.mpn);
+          results.push({
+            mpn: result.mpn,
+            status: "ok",
+            action_type: result.action_type,
+            pricing_domain_state: result.pricing_domain_state,
+            new_rics_offer: result.new_rics_offer,
+            export_rics_offer: result.export_rics_offer,
+            buyer_action_id: result.buyer_action_id,
+            effective_date: result.effective_date,
+          });
+        } else {
+          errorCount++;
+          results.push({
+            mpn: result.mpn,
+            status: "error",
+            error_code: result.error_code,
+            error_message: result.error_message,
+          });
+        }
+      }
+
+      // Exactly ONE reflow call at end-of-batch for all successful MPNs.
+      const batchTag = `bulk_markdown_${randomUUID()}`;
+      try {
+        await reflowPricingDomainStateBatch({
+          mpns: changedMpns,
+          userId,
+          batchTag,
+        });
+      } catch (reflowErr: any) {
+        console.error(
+          `[bulk/markdown] reflowPricingDomainStateBatch tag=${batchTag} failed:`,
+          reflowErr
+        );
+      }
+
+      res.json({
+        results,
+        summary: { ok: okCount, error: errorCount },
+      });
+    } catch (err: any) {
+      console.error("POST /products/bulk/markdown error:", err);
+      res
+        .status(500)
+        .json({ error: err?.message || "bulk/markdown internal error" });
+    }
+  }
+);
+
+router.post(
+  "/bulk/assign-support",
+  requireAuth,
+  requireRole(["admin", "owner"]),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const body = req.body || {};
+      const items: any[] = Array.isArray(body.items) ? body.items : [];
+      const mode: string = body.mode === "append" ? "append" : "replace";
+
+      if (items.length === 0) {
+        res
+          .status(400)
+          .json({ error: "items array required and must be non-empty" });
+        return;
+      }
+      if (items.length > BULK_BATCH_MAX) {
+        res.status(400).json({
+          error: "BATCH_SIZE_EXCEEDED",
+          message: `items.length=${items.length} exceeds max=${BULK_BATCH_MAX}`,
+        });
+        return;
+      }
+
+      const firestore = db();
+      const ts = admin.firestore.FieldValue.serverTimestamp;
+      const results: Array<Record<string, any>> = [];
+      let okCount = 0;
+      let errorCount = 0;
+
+      // Cache resolved uid -> {role, valid} within the request to avoid
+      // re-reading the same user doc per item.
+      const uidValidationCache: Map<string, { valid: boolean; role: string | null }> =
+        new Map();
+
+      async function validateUid(
+        uid: string
+      ): Promise<{ valid: boolean; role: string | null }> {
+        if (uidValidationCache.has(uid)) {
+          return uidValidationCache.get(uid)!;
+        }
+        const uDoc = await firestore.collection("users").doc(uid).get();
+        if (!uDoc.exists) {
+          const r = { valid: false, role: null };
+          uidValidationCache.set(uid, r);
+          return r;
+        }
+        const role = (uDoc.data()?.role as string | undefined) || null;
+        const valid = role === "buyer" || role === "head_buyer";
+        const r = { valid, role };
+        uidValidationCache.set(uid, r);
+        return r;
+      }
+
+      for (const raw of items) {
+        const mpn = String(raw?.mpn || "").trim();
+        const requested: string[] = Array.isArray(raw?.support_user_ids)
+          ? raw.support_user_ids
+              .map((u: any) => String(u || "").trim())
+              .filter((u: string) => u.length > 0)
+          : [];
+
+        if (!mpn) {
+          errorCount++;
+          results.push({
+            mpn: "",
+            status: "error",
+            error_code: "MISSING_MPN",
+            error_message: "mpn is required",
+          });
+          continue;
+        }
+
+        // Validate each support uid (dedupe first).
+        const dedupedRequested = Array.from(new Set(requested));
+        const invalidUids: string[] = [];
+        for (const uid of dedupedRequested) {
+          const v = await validateUid(uid);
+          if (!v.valid) invalidUids.push(uid);
+        }
+        if (invalidUids.length > 0) {
+          errorCount++;
+          results.push({
+            mpn,
+            status: "error",
+            error_code: "INVALID_SUPPORT_UID",
+            error_message: `support_user_ids contain non-buyer uid(s): ${invalidUids.join(
+              ","
+            )}`,
+            invalid_uids: invalidUids,
+          });
+          continue;
+        }
+
+        const docId = mpnToDocId(mpn);
+        const assignRef = firestore
+          .collection("cadence_assignments")
+          .doc(docId);
+        const assignDoc = await assignRef.get();
+        if (!assignDoc.exists) {
+          errorCount++;
+          results.push({
+            mpn,
+            status: "error",
+            error_code: "NO_ASSIGNMENT",
+            error_message: "no cadence_assignments doc for this mpn",
+          });
+          continue;
+        }
+
+        const existing: string[] = Array.isArray(
+          assignDoc.data()?.support_user_ids
+        )
+          ? (assignDoc.data()!.support_user_ids as string[])
+          : [];
+
+        const nextSupport: string[] =
+          mode === "append"
+            ? Array.from(new Set([...existing, ...dedupedRequested]))
+            : dedupedRequested;
+
+        try {
+          await assignRef.set(
+            {
+              support_user_ids: nextSupport,
+              last_support_updated_at: ts(),
+              last_support_updated_by: userId,
+            },
+            { merge: true }
+          );
+
+          await firestore.collection("audit_log").add({
+            product_mpn: mpn,
+            event_type: "bulk_assign_support",
+            mode,
+            support_user_ids_before: existing,
+            support_user_ids_after: nextSupport,
+            acting_user_id: userId,
+            created_at: ts(),
+          });
+
+          okCount++;
+          results.push({
+            mpn,
+            status: "ok",
+            mode,
+            support_user_ids: nextSupport,
+          });
+        } catch (writeErr: any) {
+          console.error(
+            `bulk/assign-support write failed mpn=${mpn}:`,
+            writeErr
+          );
+          errorCount++;
+          results.push({
+            mpn,
+            status: "error",
+            error_code: "INTERNAL_ERROR",
+            error_message: writeErr?.message || "write failed",
+          });
+        }
+      }
+
+      res.json({
+        results,
+        summary: { ok: okCount, error: errorCount },
+      });
+    } catch (err: any) {
+      console.error("POST /products/bulk/assign-support error:", err);
+      res
+        .status(500)
+        .json({ error: err?.message || "bulk/assign-support internal error" });
     }
   }
 );
