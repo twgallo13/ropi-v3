@@ -12,6 +12,18 @@
  *
  * Selection cap surface: server-side hard cap is 100 per request. Bar shows
  * "Max 100 per request" hint when count > 100 and disables Apply.
+ *
+ * TALLY-155 — Partial-result handling:
+ *   - Receives full BulkResponse from BulkConfirmModal.onCommitted.
+ *   - Successful MPNs are de-selected (selection.setMany(tab, okMpns, false))
+ *     and forwarded to the parent via onResults so they can be hidden + their
+ *     row errors cleared.
+ *   - Failed MPNs stay selected so the buyer can fix-and-retry.
+ *   - One aggregate toast is emitted per submission:
+ *       all-ok      → success "Action applied to N items."
+ *       partial     → warning "X of N applied; Y failed (see results)."
+ *       all-failed  → error  "Action failed on all N items."
+ *       throw       → error  extractErrorMessage(...)
  */
 import { useEffect, useMemo, useState } from "react";
 import BulkConfirmModal, { type BulkActionKind } from "./BulkConfirmModal";
@@ -21,11 +33,16 @@ import {
 } from "./cockpitSelection";
 import { useAuth } from "../../contexts/AuthContext";
 import { canCallBulkAssignSupport } from "../../lib/roleGates";
+import { showToast } from "../../lib/toast";
+import type { BulkItemResult, BulkResponse } from "../../lib/api";
 
 interface Props {
   activeTab: CockpitTabId;
   readOnly?: boolean;
   onCommitted: () => void;
+  /** TALLY-155 — full per-MPN results forwarded to the page so it can apply
+   *  optimistic hide (OK rows) and stamp per-row error text (failed rows). */
+  onResults?: (tab: CockpitTabId, results: BulkItemResult[]) => void;
 }
 
 const TAB_ACTIONS: Record<CockpitTabId, Array<{ kind: BulkActionKind["kind"]; label: string }>> = {
@@ -39,9 +56,15 @@ const TAB_ACTIONS: Record<CockpitTabId, Array<{ kind: BulkActionKind["kind"]; la
   pricing: [{ kind: "markdown_approve", label: "Approve markdown" }],
 };
 
+const ACTION_PAST_TENSE: Record<BulkActionKind["kind"], string> = {
+  markdown_approve: "Approve markdown",
+  markdown_reject: "Deny markdown",
+  assign_support: "Assign support buyer",
+};
+
 const HARD_CAP = 100;
 
-export default function BulkActionBar({ activeTab, readOnly, onCommitted }: Props) {
+export default function BulkActionBar({ activeTab, readOnly, onCommitted, onResults }: Props) {
   const sel = useCockpitSelection();
   const { role } = useAuth();
   const selected = sel.selectedFor(activeTab);
@@ -82,6 +105,54 @@ export default function BulkActionBar({ activeTab, readOnly, onCommitted }: Prop
   function handleApply() {
     if (!canApply || !pendingAction) return;
     setModalAction({ kind: pendingAction } as BulkActionKind);
+  }
+
+  function handleModalCommitted(response: BulkResponse | null, err?: string | null) {
+    const actionKind = modalAction?.kind ?? "markdown_approve";
+    const actionLabel = ACTION_PAST_TENSE[actionKind];
+
+    if (!response) {
+      // Pre-per-MPN throw: selection preserved, no rows to hide.
+      showToast({
+        message: err || `${actionLabel} failed.`,
+        variant: "error",
+      });
+      onCommitted();
+      return;
+    }
+
+    const results = response.results ?? [];
+    const okMpns = results.filter((r) => r.status === "ok").map((r) => r.mpn);
+    const okCount = okMpns.length;
+    const errCount = results.length - okCount;
+
+    // De-select only the rows that succeeded so the user can fix-and-retry the
+    // failed ones from the same selection.
+    if (okMpns.length > 0) {
+      sel.setMany(activeTab, okMpns, false);
+    }
+
+    // Forward to parent so it can hide OK rows + persist per-row error text.
+    onResults?.(activeTab, results);
+
+    if (errCount === 0) {
+      showToast({
+        message: `${actionLabel} applied to ${okCount} item${okCount === 1 ? "" : "s"}.`,
+        variant: "success",
+      });
+    } else if (okCount === 0) {
+      showToast({
+        message: `${actionLabel} failed on all ${errCount} item${errCount === 1 ? "" : "s"}.`,
+        variant: "error",
+      });
+    } else {
+      showToast({
+        message: `${actionLabel}: ${okCount} of ${results.length} applied; ${errCount} failed (see results).`,
+        variant: "warning",
+      });
+    }
+
+    onCommitted();
   }
 
   return (
@@ -150,12 +221,7 @@ export default function BulkActionBar({ activeTab, readOnly, onCommitted }: Prop
         action={modalAction ?? { kind: "markdown_approve" }}
         mpns={selected}
         onClose={() => setModalAction(null)}
-        onCommitted={() => {
-          // Clear THIS tab's selection on a successful commit; parent
-          // refetches cockpit data via onCommitted hook.
-          sel.clear(activeTab);
-          onCommitted();
-        }}
+        onCommitted={handleModalCommitted}
       />
     </>
   );

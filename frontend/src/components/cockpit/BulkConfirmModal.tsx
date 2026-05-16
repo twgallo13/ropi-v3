@@ -5,8 +5,15 @@
  *   1. CONFIRM — show action label, MPN count, scrollable MPN list. Confirm / Cancel.
  *   2. RESULT  — show per-MPN result chips (ok / error) + summary counts. Close.
  *
- * Wires to bulkMarkdown / bulkAssignSupport. On success, calls onCommitted()
- * so the parent can refetch cockpit data and clear selection.
+ * Wires to bulkMarkdown / bulkAssignSupport. On success, calls onCommitted
+ * with the full BulkResponse so the parent can apply optimistic hide to
+ * successful MPNs and persist per-MPN errors against the failed ones. On
+ * throw (network / envelope-shaped error before any per-MPN work), calls
+ * onCommitted(null) so the parent still refetches.
+ *
+ * TALLY-155 — onCommitted signature widened to (response | null); modal also
+ * emits no UI toast (BulkActionBar owns the aggregate toast based on the
+ * full response).
  *
  * Hard cap of 100 is enforced server-side (PR 1). UI shows error envelope verbatim.
  *
@@ -35,7 +42,13 @@ interface Props {
   action: BulkActionKind;
   mpns: string[];
   onClose: () => void;
-  onCommitted: () => void;
+  /**
+   * Called once per submission attempt. `response` is the full bulk envelope
+   * on success (including partial-result rows) or `null` when the call threw
+   * before any per-MPN work could be done. Caller is responsible for emitting
+   * the aggregate toast and applying per-MPN optimistic state.
+   */
+  onCommitted: (response: BulkResponse | null, err?: string | null) => void;
 }
 
 const ACTION_LABELS: Record<BulkActionKind["kind"], string> = {
@@ -130,12 +143,16 @@ export default function BulkConfirmModal({
       }
       setResponse(res);
       setStage("result");
-      // Refresh cockpit data immediately so badges/queue counts reflect the
-      // batch even if the user lingers on the result view.
-      onCommitted();
+      // Hand the full response back to the bar so it can apply optimistic
+      // hide on the OK rows + persist per-MPN error text on the failed ones,
+      // and emit the single aggregate toast.
+      onCommitted(res, null);
     } catch (e: any) {
-      setError(e?.error_message || e?.error || e?.message || "Bulk action failed.");
+      const msg =
+        e?.error_message || e?.error || e?.message || "Bulk action failed.";
+      setError(msg);
       setStage("result");
+      onCommitted(null, msg);
     }
   }
 
