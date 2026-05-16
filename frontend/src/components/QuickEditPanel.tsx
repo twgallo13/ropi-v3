@@ -223,7 +223,16 @@ export default function QuickEditPanel({
       const key = dirtyKeys[i];
       setSaveProgress({ idx: i + 1, of: dirtyKeys.length });
       try {
-        await saveField(mpn, key, coerceForSave(key, values[key]));
+        // TALLY-144-2F — Department edits must write the canonical
+        // `department_key` field, not the legacy `department` field. The
+        // UI keeps "department" as the form state key (label, dropdown
+        // source, prepopulation), but the wire field key is remapped to
+        // `department_key` so the backend writes attribute_values/
+        // department_key + root.department_key and never mutates the
+        // quarantined legacy `attribute_values/department` doc. PO ruling
+        // 6 (2026-05-16).
+        const saveKey = key === "department" ? "department_key" : key;
+        await saveField(mpn, saveKey, coerceForSave(key, values[key]));
         succeeded += 1;
       } catch (err: any) {
         if (err?.status === 404 || /not found/i.test(err?.error || "")) {

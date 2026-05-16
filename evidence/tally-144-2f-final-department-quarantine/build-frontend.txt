@@ -1,0 +1,21 @@
+
+> ropi-v3-frontend@1.0.0 build
+> tsc -b && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 902 modules transformed.
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /workspaces/ropi-v3/frontend/src/hooks/useWorkState.ts is dynamically imported by /workspaces/ropi-v3/frontend/src/App.tsx but also statically imported by /workspaces/ropi-v3/frontend/src/pages/DashboardPage.tsx, dynamic import will not move module into another chunk.
+
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.89 kB │ gzip:   0.45 kB
+dist/assets/index-CHX2P5cA.css     42.12 kB │ gzip:   7.19 kB
+dist/assets/index-B0OIJ6Fs.js   1,598.80 kB │ gzip: 420.33 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.92s
