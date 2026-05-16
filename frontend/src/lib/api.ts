@@ -3622,3 +3622,73 @@ export async function runAdminCadenceEvaluation(
   if (!res.ok) throw data;
   return data;
 }
+
+// ── TALLY-146 PR 2 — Bulk action client helpers ──
+// PR 1 endpoints (deployed in ropi-aoss-api-00215-gzd):
+//   POST /api/v1/products/bulk/markdown          (admin|owner|buyer)
+//   POST /api/v1/products/bulk/assign-support    (admin|owner|head_buyer|buyer)
+// Both: hard cap 100 MPNs per request. Response always includes per-MPN results.
+
+export type BulkMarkdownAction = "approve" | "reject" | "adjust" | "off_sale";
+
+export interface BulkAdjustment {
+  type: "pct" | "dollar" | "price";
+  value: number;
+  effective_date?: string | null;
+}
+
+export interface BulkMarkdownRequest {
+  mpns: string[];
+  action_type: BulkMarkdownAction;
+  adjustment?: BulkAdjustment;
+}
+
+export type BulkAssignMode = "replace" | "append";
+
+export interface BulkAssignSupportRequest {
+  mpns: string[];
+  mode: BulkAssignMode;
+  support_user_ids: string[];
+}
+
+export interface BulkItemResult {
+  mpn: string;
+  status: "ok" | "error";
+  error_code?: string;
+  error_message?: string;
+  // Backend may surface action_type back per item (NB: "deny" may appear when
+  // request was "reject" — do not assert literal equality client-side).
+  action_type?: string;
+  [extra: string]: unknown;
+}
+
+export interface BulkResponse {
+  results: BulkItemResult[];
+  summary: { ok: number; error: number };
+  // Optional top-level diagnostics, e.g. assign-support invalid_uids[].
+  [extra: string]: unknown;
+}
+
+export async function bulkMarkdown(req: BulkMarkdownRequest): Promise<BulkResponse> {
+  const res = await fetch(`${BASE}/api/v1/products/bulk/markdown`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(req),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data as BulkResponse;
+}
+
+export async function bulkAssignSupport(
+  req: BulkAssignSupportRequest,
+): Promise<BulkResponse> {
+  const res = await fetch(`${BASE}/api/v1/products/bulk/assign-support`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify(req),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data as BulkResponse;
+}
