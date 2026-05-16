@@ -1,0 +1,38 @@
+{
+  "tally": "TALLY-144-2F",
+  "mode": "dry-run",
+  "project_id": "ropi-aoss-dev",
+  "timestamp": "2026-05-16T00:34:26.813Z",
+  "preconditions": {
+    "registry_department_exists": true,
+    "registry_department_key_exists": true,
+    "registry_department_active_before": true,
+    "registry_department_status_before": "active",
+    "registry_department_is_editable_before": true,
+    "registry_department_key_active": true,
+    "registry_department_key_is_editable": false
+  },
+  "planned_write": {
+    "doc_path": "attribute_registry/department",
+    "payload_keys": [
+      "active",
+      "status",
+      "is_editable",
+      "superseded_by",
+      "hidden_reason",
+      "updated_at",
+      "updated_by"
+    ],
+    "payload_preview": {
+      "active": false,
+      "status": "superseded",
+      "is_editable": false,
+      "superseded_by": "department_key",
+      "hidden_reason": "Superseded by department_key",
+      "updated_at": "<server ts>",
+      "updated_by": "system:tally-144-2f-soft-retire-department-registry"
+    }
+  },
+  "unassigned_before": 0,
+  "note": "DRY-RUN — no writes. Pass --apply to soft-retire attribute_registry/department."
+}

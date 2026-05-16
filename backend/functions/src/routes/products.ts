@@ -584,8 +584,15 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
     const exportableAttrs = await loadExportableAttrs();
     const exportableAttrMap = new Map(exportableAttrs.map((a) => [a.field_key, a]));
     const hardcodedColumnSet = new Set<string>(EXPORT_COLUMNS as readonly string[]);
+    // TALLY-144-2F — `department_key` is the canonical Department field, but
+    // the export's hardcoded "department" column already represents Department
+    // in the output. Suppress `department_key` from the dynamic-attr column
+    // list so the CSV emits exactly one Department column (sourced from
+    // department_key, see deptVal resolution below). PO ruling 5 (2026-05-16).
+    const SUPPRESSED_DYNAMIC_KEYS = new Set<string>(["department_key"]);
     const dynamicAttrKeys = exportableAttrs
       .filter((a) => !hardcodedColumnSet.has(a.field_key))
+      .filter((a) => !SUPPRESSED_DYNAMIC_KEYS.has(a.field_key))
       .map((a) => a.field_key);
     const allColumns: string[] = [...EXPORT_COLUMNS as readonly string[], ...dynamicAttrKeys];
 
@@ -622,9 +629,17 @@ router.get("/export.csv", requireAuth, async (req: AuthenticatedRequest, res: Re
       }
 
       // department fallback (check product doc first, then attrs map)
-      let deptVal = typeof data.department === "string" && data.department ? data.department : "";
+      // TALLY-144-2F — source from canonical department_key (root mirror
+      // first, then attribute_values/department_key). Legacy
+      // attribute_values/department docs are quarantined and must not be
+      // read here. PO ruling 5 (2026-05-16).
+      let deptVal: string =
+        typeof data.department_key === "string" && data.department_key
+          ? data.department_key
+          : "";
       if (!deptVal) {
-        deptVal = attrs["department"]?.value || "";
+        const dkVal = attrs["department_key"]?.value;
+        deptVal = typeof dkVal === "string" ? dkVal : "";
       }
 
       const scomVal = attrs["scom"]?.value ?? null;
@@ -1184,6 +1199,21 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
         { merge: true }
       );
     } else if (fieldKey === "department" && matchedDeptEntry) {
+      await productRef.set(
+        {
+          department: matchedDeptEntry.display_name,
+          department_key: matchedDeptEntry.key,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } else if (fieldKey === "department_key" && matchedDeptEntry) {
+      // TALLY-144-2F — Department edits flow through the canonical
+      // `department_key` field. attribute_values/department_key is the
+      // canonical source; root.department mirrors the display label and
+      // root.department_key mirrors the canonical key. Legacy
+      // attribute_values/department is NOT touched here (PO ruling 7,
+      // 2026-05-16) — those docs remain quarantined per TALLY-144-2D.
       await productRef.set(
         {
           department: matchedDeptEntry.display_name,
