@@ -203,6 +203,23 @@ export async function performBuyerMarkdownAction(
         { merge: true }
       );
 
+      // TALLY-159 — clear cadence queue flag at the canonical buyer-action
+      // transition point so processed items do not leave stale
+      // in_cadence_review_queue=true residue on cadence_assignments.
+      // Mirrors the pattern used by routes/buyerActions.ts (hold /
+      // save-for-season / postpone-review) which writes the same trio.
+      await db()
+        .collection("cadence_assignments")
+        .doc(docId)
+        .set(
+          {
+            in_cadence_review_queue: false,
+            last_buyer_action: "deny",
+            last_buyer_action_at: ts(),
+          },
+          { merge: true }
+        );
+
       await db().collection("audit_log").add({
         product_mpn: mpn,
         event_type: "buyer_action",
@@ -285,6 +302,23 @@ export async function performBuyerMarkdownAction(
       },
       { merge: true }
     );
+
+    // TALLY-159 — clear cadence queue flag at the canonical buyer-action
+    // transition point. stateAfter is always one of {"Export Ready",
+    // "Scheduled"} in this branch, both of which are terminal /
+    // non-actionable for the Cadence queue. Mirrors the pattern used
+    // by routes/buyerActions.ts.
+    await db()
+      .collection("cadence_assignments")
+      .doc(docId)
+      .set(
+        {
+          in_cadence_review_queue: false,
+          last_buyer_action: action_type,
+          last_buyer_action_at: ts(),
+        },
+        { merge: true }
+      );
 
     await db().collection("audit_log").add({
       product_mpn: mpn,
