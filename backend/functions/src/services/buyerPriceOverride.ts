@@ -45,6 +45,15 @@ export type BuyerPriceOverrideParams = {
   scom_sale?: number | null;
   /** Optional governance note. */
   reason?: string | null;
+  /**
+   * TALLY-157 R1 — Optional future-effective date (YYYY-MM-DD).
+   *   - Absent / null / ""  → immediate path (Export Ready now).
+   *   - Present            → scheduled path. Must be a valid date
+   *     strictly in the future and within 30 days of today.
+   *     scheduledPromotion (cron) promotes Scheduled → Export Ready
+   *     on/after effective_date.
+   */
+  effective_date?: string | null;
   buyerUserId: string;
 };
 
@@ -53,12 +62,12 @@ export type BuyerPriceOverrideOk = {
   http_status: 200;
   mpn: string;
   action_type: "buyer_price_override";
-  pricing_domain_state: "Export Ready";
+  pricing_domain_state: "Export Ready" | "Scheduled";
   new_rics_offer: number;
   export_rics_offer: number;
   scom_sale: number | null;
   buyer_action_id: string;
-  effective_date: null;
+  effective_date: string | null;
 };
 
 export type BuyerPriceOverrideError = {
@@ -69,6 +78,8 @@ export type BuyerPriceOverrideError = {
     | "MISSING_FIELDS"
     | "INVALID_VALUE"
     | "INVALID_SCOM_SALE"
+    | "INVALID_EFFECTIVE_DATE"
+    | "EFFECTIVE_DATE_OUT_OF_WINDOW"
     | "NOT_FOUND"
     | "MAP_CONFLICT_BLOCKED"
     | "INELIGIBLE_STATE"
@@ -83,7 +94,7 @@ export type BuyerPriceOverrideResult =
 export async function performBuyerPriceOverride(
   params: BuyerPriceOverrideParams
 ): Promise<BuyerPriceOverrideResult> {
-  const { mpn, value, scom_sale, reason, buyerUserId } = params;
+  const { mpn, value, scom_sale, reason, effective_date, buyerUserId } = params;
 
   try {
     if (!mpn || !buyerUserId) {
@@ -118,6 +129,65 @@ export async function performBuyerPriceOverride(
         error_code: "INVALID_SCOM_SALE",
         error_message: "scom_sale must be a positive number when provided",
       };
+    }
+
+    // TALLY-157 R1 — effective_date validation. Absent/null/"" =>
+    // immediate path. Otherwise must be a valid YYYY-MM-DD (or any
+    // Date.parse-able ISO date), strictly in the future, and within
+    // 30 days from today (inclusive). All other inputs are rejected
+    // with explicit error codes.
+    let normalizedEffectiveDate: string | null = null;
+    const rawDate =
+      typeof effective_date === "string" ? effective_date.trim() : null;
+    if (rawDate) {
+      // Strict YYYY-MM-DD only — avoids timezone/format ambiguity.
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+        return {
+          status: "error",
+          http_status: 400,
+          mpn,
+          error_code: "INVALID_EFFECTIVE_DATE",
+          error_message:
+            "effective_date must be in YYYY-MM-DD format",
+        };
+      }
+      const parsed = new Date(rawDate + "T00:00:00Z");
+      if (isNaN(parsed.getTime())) {
+        return {
+          status: "error",
+          http_status: 400,
+          mpn,
+          error_code: "INVALID_EFFECTIVE_DATE",
+          error_message: "effective_date is not a valid date",
+        };
+      }
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const todayMs = today.getTime();
+      const parsedMs = parsed.getTime();
+      const dayMs = 24 * 60 * 60 * 1000;
+      const maxMs = todayMs + 30 * dayMs;
+      if (parsedMs <= todayMs) {
+        return {
+          status: "error",
+          http_status: 400,
+          mpn,
+          error_code: "INVALID_EFFECTIVE_DATE",
+          error_message:
+            "effective_date must be strictly in the future (omit for immediate)",
+        };
+      }
+      if (parsedMs > maxMs) {
+        return {
+          status: "error",
+          http_status: 400,
+          mpn,
+          error_code: "EFFECTIVE_DATE_OUT_OF_WINDOW",
+          error_message:
+            "effective_date must be within 30 days from today",
+        };
+      }
+      normalizedEffectiveDate = rawDate;
     }
 
     const docId = mpnToDocId(mpn);
@@ -199,9 +269,16 @@ export async function performBuyerPriceOverride(
         ? Math.round(scom_sale * 100) / 100
         : null;
 
-    // Immediate path only (per dispatch). No effective_date, no
-    // Scheduled state, no promotion-job wiring.
-    const stateAfter: "Export Ready" = "Export Ready";
+    // TALLY-157 R1 — branch on effective_date.
+    //   normalizedEffectiveDate === null → immediate path (Export Ready,
+    //     mutate products doc, queue export).
+    //   normalizedEffectiveDate !== null → scheduled path (write
+    //     buyer_actions only with pricing_domain_state_after="Scheduled";
+    //     scheduledPromotion cron promotes on/after effective_date).
+    const isScheduled = normalizedEffectiveDate !== null;
+    const stateAfter: "Export Ready" | "Scheduled" = isScheduled
+      ? "Scheduled"
+      : "Export Ready";
 
     const actionRef = await db().collection("buyer_actions").add({
       mpn,
@@ -212,23 +289,44 @@ export async function performBuyerPriceOverride(
       export_rics_offer: exportPrice,
       scom_sale: normalizedScomSale,
       reason: reason || null,
-      effective_date: null,
+      effective_date: normalizedEffectiveDate,
       pricing_domain_state_after: stateAfter,
       created_at: ts(),
     });
 
-    const productUpdates: Record<string, any> = {
-      rics_offer: newRicsOffer,
-      export_rics_offer: exportPrice,
-      pricing_domain_state: stateAfter,
-      buyer_action_taken_at: ts(),
-      last_buyer_action_id: actionRef.id,
-    };
-    if (normalizedScomSale !== null) {
-      productUpdates.scom_sale = normalizedScomSale;
-    }
-    await productRef.set(productUpdates, { merge: true });
+    if (!isScheduled) {
+      // Immediate path: mutate products pricing + queue export.
+      const productUpdates: Record<string, any> = {
+        rics_offer: newRicsOffer,
+        export_rics_offer: exportPrice,
+        pricing_domain_state: stateAfter,
+        buyer_action_taken_at: ts(),
+        last_buyer_action_id: actionRef.id,
+      };
+      if (normalizedScomSale !== null) {
+        productUpdates.scom_sale = normalizedScomSale;
+      }
+      await productRef.set(productUpdates, { merge: true });
 
+      try {
+        await queueForPricingExport(
+          mpn,
+          "buyer_price_override",
+          buyerUserId,
+          null
+        );
+      } catch (qerr: any) {
+        console.error(
+          "queueForPricingExport (buyer_price_override) failed:",
+          qerr
+        );
+      }
+    }
+    // Scheduled path: do NOT mutate products.pricing_domain_state
+    // or rics_offer. scheduledPromotion will do that on effective_date.
+    // The pending action is visible on PDP via pending_buyer_actions[].
+
+    // R3 — audit_log entry for BOTH paths (immediate + scheduled).
     await db().collection("audit_log").add({
       product_mpn: mpn,
       event_type: "buyer_action",
@@ -238,23 +336,12 @@ export async function performBuyerPriceOverride(
       export_rics_offer: exportPrice,
       scom_sale: normalizedScomSale,
       reason: reason || null,
+      effective_date: normalizedEffectiveDate,
+      pricing_domain_state_after: stateAfter,
       acting_user_id: buyerUserId,
+      buyer_action_id: actionRef.id,
       created_at: ts(),
     });
-
-    try {
-      await queueForPricingExport(
-        mpn,
-        "buyer_price_override",
-        buyerUserId,
-        null
-      );
-    } catch (qerr: any) {
-      console.error(
-        "queueForPricingExport (buyer_price_override) failed:",
-        qerr
-      );
-    }
 
     return {
       status: "ok",
@@ -266,7 +353,7 @@ export async function performBuyerPriceOverride(
       export_rics_offer: exportPrice,
       scom_sale: normalizedScomSale,
       buyer_action_id: actionRef.id,
-      effective_date: null,
+      effective_date: normalizedEffectiveDate,
     };
   } catch (err: any) {
     console.error(

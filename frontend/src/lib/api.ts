@@ -178,6 +178,22 @@ export interface ProductDetail extends ProductListItem {
   source_inputs: Record<string, unknown>;
   primary_site_key: string | null;
   site_verification: SiteVerificationMap;
+  // TALLY-157 R2 — scheduled/future-dated buyer price actions awaiting
+  // go-live. Backend filter: buyer_actions WHERE mpn==X AND
+  // pricing_domain_state_after=="Scheduled".
+  pending_buyer_actions?: Array<{
+    id: string;
+    action_type: string | null;
+    buyer_user_id: string | null;
+    original_rics_offer: number | null;
+    new_rics_offer: number | null;
+    export_rics_offer: number | null;
+    scom_sale: number | null;
+    effective_date: string | null;
+    pricing_domain_state_after: string | null;
+    reason: string | null;
+    created_at: string | null;
+  }>;
 }
 
 // ── Site Verification per-site entry (Task 2 GET /:mpn response shape) ──

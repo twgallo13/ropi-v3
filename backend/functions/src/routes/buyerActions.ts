@@ -240,7 +240,8 @@ router.post(
   requireAuth,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { mpn, value, scom_sale, reason } = req.body || {};
+      // TALLY-157 R1 — effective_date is optional. Absent => immediate.
+      const { mpn, value, scom_sale, reason, effective_date } = req.body || {};
       const buyerUserId = req.user?.uid;
       if (!buyerUserId) {
         res.status(401).json({ error: "Authentication required" });
@@ -252,6 +253,7 @@ router.post(
         value,
         scom_sale,
         reason,
+        effective_date,
         buyerUserId,
       });
 
