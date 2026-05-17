@@ -8,6 +8,7 @@ import { mpnToDocId } from "./mpnUtils";
 
 export type PricingExportReason =
   | "buyer_markdown"
+  | "buyer_price_override" // TALLY-157 — governed buyer-set custom price
   | "scom_edit"
   | "map_change"
   | "cadence"
