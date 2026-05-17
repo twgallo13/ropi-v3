@@ -245,6 +245,9 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [mapAutoMsg, setMapAutoMsg] = useState("");
+  // TALLY-157 R2 (UI revision) — popover open state for the inline
+  // pending-scheduled-action indicator inside the Retail Sale Price card.
+  const [pendingPopoverOpen, setPendingPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (!mpn) return;
@@ -473,71 +476,91 @@ export default function ProductDetailPage() {
         <InfoCard label="Web Regular Price" value={`$${p.scom.toFixed(2)}`} />
         <InfoCard label="Web Sale Price" value={`$${p.scom_sale.toFixed(2)}`} />
         <InfoCard label="Retail Price" value={`$${p.rics_retail.toFixed(2)}`} />
-        <InfoCard label="Retail Sale Price" value={`$${p.rics_offer.toFixed(2)}`} />
-      </div>
-
-      {/* TALLY-157 R2 — Pricing section: pending scheduled buyer price
-          actions awaiting go-live. Backend filter:
-          pricing_domain_state_after=="Scheduled". */}
-      {(p.pending_buyer_actions?.length ?? 0) > 0 && (
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-3">
-            Pricing — Pending Scheduled Actions
-          </h2>
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide">
-                <tr>
-                  <th className="text-left px-3 py-2">Effective Date</th>
-                  <th className="text-left px-3 py-2">Action</th>
-                  <th className="text-right px-3 py-2">From</th>
-                  <th className="text-right px-3 py-2">To (Offer)</th>
-                  <th className="text-right px-3 py-2">Export Price</th>
-                  <th className="text-right px-3 py-2">Web Sale</th>
-                  <th className="text-left px-3 py-2">Reason</th>
-                  <th className="text-left px-3 py-2">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {p.pending_buyer_actions!.map((a) => (
-                  <tr key={a.id} className="border-t">
-                    <td className="px-3 py-2 font-medium">
-                      {a.effective_date || "—"}
-                    </td>
-                    <td className="px-3 py-2">{a.action_type || "—"}</td>
-                    <td className="px-3 py-2 text-right">
-                      {a.original_rics_offer != null
-                        ? `$${a.original_rics_offer.toFixed(2)}`
-                        : "—"}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {a.new_rics_offer != null
-                        ? `$${a.new_rics_offer.toFixed(2)}`
-                        : "—"}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {a.export_rics_offer != null
-                        ? `$${a.export_rics_offer.toFixed(2)}`
-                        : "—"}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {a.scom_sale != null ? `$${a.scom_sale.toFixed(2)}` : "—"}
-                    </td>
-                    <td className="px-3 py-2 text-gray-600">
-                      {a.reason || "—"}
-                    </td>
-                    <td className="px-3 py-2 text-gray-500">
-                      {a.created_at
-                        ? new Date(a.created_at).toLocaleString()
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* TALLY-157 R2 (UI revision) — Retail Sale Price card with inline
+            pending-scheduled-action indicator. Buyer price overrides target
+            rics_offer, so the indicator lives in this card only. Backend
+            data shape (pending_buyer_actions[]) is unchanged. */}
+        <div className="bg-white rounded border p-3 relative">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-400">Retail Sale Price</p>
+            {(p.pending_buyer_actions?.length ?? 0) > 0 && (
+              <button
+                type="button"
+                aria-label={`${p.pending_buyer_actions!.length} pending scheduled price change(s)`}
+                title={
+                  p.pending_buyer_actions!
+                    .map(
+                      (a) =>
+                        `${a.effective_date || "—"}: ${
+                          a.new_rics_offer != null
+                            ? `$${a.new_rics_offer.toFixed(2)}`
+                            : "—"
+                        }${a.reason ? ` (${a.reason})` : ""}`
+                    )
+                    .join(" • ")
+                }
+                onClick={() => setPendingPopoverOpen((v) => !v)}
+                className="ml-2 inline-flex items-center justify-center h-4 w-4 rounded-full bg-amber-100 text-amber-700 text-[10px] leading-none hover:bg-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-400"
+              >
+                ⏳
+              </button>
+            )}
           </div>
+          <p className="text-sm font-semibold">{`$${p.rics_offer.toFixed(2)}`}</p>
+          {pendingPopoverOpen &&
+            (p.pending_buyer_actions?.length ?? 0) > 0 && (
+              <div
+                role="dialog"
+                aria-label="Pending scheduled price changes"
+                className="absolute z-20 right-0 mt-1 w-72 rounded-md border border-gray-200 bg-white shadow-lg p-3 text-xs"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-gray-700">
+                    Pending scheduled change
+                    {p.pending_buyer_actions!.length > 1 ? "s" : ""}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    className="text-gray-400 hover:text-gray-600 text-sm leading-none"
+                    onClick={() => setPendingPopoverOpen(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+                <ul className="space-y-2">
+                  {p.pending_buyer_actions!.map((a) => (
+                    <li
+                      key={a.id}
+                      className="border-t border-gray-100 pt-2 first:border-0 first:pt-0"
+                    >
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Effective</span>
+                        <span className="font-medium text-gray-800">
+                          {a.effective_date || "—"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">New offer</span>
+                        <span className="font-medium text-gray-800">
+                          {a.new_rics_offer != null
+                            ? `$${a.new_rics_offer.toFixed(2)}`
+                            : "—"}
+                        </span>
+                      </div>
+                      {a.reason && (
+                        <div className="mt-1 text-gray-600">
+                          <span className="text-gray-500">Reason: </span>
+                          {a.reason}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
         </div>
-      )}
+      </div>
 
       {/* Site Targets */}
       {p.site_targets.length > 0 && (
