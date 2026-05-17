@@ -164,6 +164,7 @@ export async function performBuyerMarkdownAction(
       "Pricing Current",
       "Loss-Leader Review Pending",
       "Exported",
+      "Buyer Denied",
     ];
     if (!eligibleStates.includes(product.pricing_domain_state)) {
       return {

@@ -36,6 +36,13 @@ export default function BuyerReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CockpitTabId>("cadence");
   const [drawerMpn, setDrawerMpn] = useState<string | null>(null);
+  // TALLY-158 Phase 1.6 — optimistic per-mpn removal from the cadence queue.
+  // On successful Approve/Deny/Hold the row is dropped locally before the
+  // refetch lands, preventing the stale row from being clicked again and
+  // triggering a follow-on 400 against an already-transitioned item.
+  const [removedCadenceMpns, setRemovedCadenceMpns] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,6 +50,9 @@ export default function BuyerReviewPage() {
     try {
       const d = await fetchCockpit();
       setData(d);
+      // Fresh server truth lands — clear local optimistic removals so the
+      // queue reflects the canonical cadence response.
+      setRemovedCadenceMpns(new Set());
     } catch (e: any) {
       console.error("[cockpit] fetch failed:", e);
       setError(e?.error || e?.message || "Failed to load cockpit.");
@@ -59,8 +69,33 @@ export default function BuyerReviewPage() {
   // PR 2 surfaces the drawer on the cadence tab (the only tab with the full
   // CadenceReviewItem shape and Approve/Deny/Hold per-item flow).
   const cadenceQueue: CadenceReviewItem[] = useMemo(
-    () => (data ? (data.cadence as CadenceReviewItem[]) : []),
-    [data],
+    () =>
+      data
+        ? (data.cadence as CadenceReviewItem[]).filter(
+            (i) => !removedCadenceMpns.has(i.mpn),
+          )
+        : [],
+    [data, removedCadenceMpns],
+  );
+
+  // TALLY-158 Phase 1.6 — onAction handler for the cadence queue. Optimistically
+  // drops the acted mpn from the local list, then triggers the existing refetch
+  // so server truth reconciles shortly after.
+  const handleCadenceAction = useCallback(
+    (mpn?: string) => {
+      if (mpn) {
+        setRemovedCadenceMpns((prev) => {
+          const next = new Set(prev);
+          next.add(mpn);
+          return next;
+        });
+        // If the drawer is open on the acted item, close it so the user is
+        // not left looking at a stale detail view.
+        setDrawerMpn((cur) => (cur === mpn ? null : cur));
+      }
+      load();
+    },
+    [load],
   );
   const drawerItem = useMemo(
     () => cadenceQueue.find((i) => i.mpn === drawerMpn) ?? null,
@@ -108,7 +143,7 @@ export default function BuyerReviewPage() {
           <CockpitCadenceSection
             items={cadenceQueue}
             readOnly={readOnly}
-            onAction={load}
+            onAction={handleCadenceAction}
             onOpenDrawer={setDrawerMpn}
           />
         )}

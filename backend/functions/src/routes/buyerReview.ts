@@ -102,6 +102,19 @@ router.get(
         }
       }
 
+      // TALLY-158 Phase 1.7 — Backend Queue Filtering.
+      // The cadence_assignments doc can retain in_cadence_review_queue=true
+      // after a buyer action transitions the product to a terminal /
+      // non-actionable pricing_domain_state (e.g. an Export Ready item whose
+      // assignment flag was not cleared on transition). Exclude those items
+      // from the Cockpit Cadence response so processed records do not
+      // re-surface on fresh page load.
+      const CADENCE_EXCLUDED_STATES = new Set([
+        "Export Ready",
+        "Buyer Denied",
+        "Scheduled",
+      ]);
+
       for (const d of assignmentDocs) {
         const a = d.data();
         if (a.cadence_state !== "assigned" || !a.recommendation) continue;
@@ -112,6 +125,10 @@ router.get(
           .get();
         if (!pSnap.exists) continue;
         const p = pSnap.data() as any;
+
+        // TALLY-158 Phase 1.7 — exclude items already in terminal /
+        // non-actionable pricing states from the Cadence queue feed.
+        if (CADENCE_EXCLUDED_STATES.has(p.pricing_domain_state)) continue;
 
         const queueEnteredAt =
           a.buyer_queue_entered_at?.toDate?.()?.getTime?.() ?? null;

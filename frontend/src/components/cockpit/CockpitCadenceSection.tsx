@@ -22,7 +22,9 @@ import { useCockpitSelection } from "./cockpitSelection";
 interface Props {
   items: CadenceReviewItem[];
   readOnly?: boolean;
-  onAction: () => void;
+  // TALLY-158 Phase 1.6 — receives the acted mpn so the parent can
+  // optimistically drop it from the visible queue before the refetch lands.
+  onAction: (mpn?: string) => void;
   onOpenDrawer: (mpn: string) => void;
 }
 
@@ -84,7 +86,7 @@ function CadenceRow({
 }: {
   item: CadenceReviewItem;
   readOnly?: boolean;
-  onAction: () => void;
+  onAction: (mpn?: string) => void;
   onOpenDrawer: (mpn: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -102,7 +104,11 @@ function CadenceRow({
     setBusy(true);
     try {
       await fn();
-      onAction();
+      // TALLY-158 Phase 1.6 — pass the acted mpn so the parent removes the
+      // row from the local cadence list immediately on success. Prevents the
+      // stale row from being clicked again before the refetch lands and
+      // triggering a follow-on 400.
+      onAction(item.mpn);
     } catch (e) {
       console.error("[cockpit cadence] action failed:", e);
       alert("Action failed. See console.");
