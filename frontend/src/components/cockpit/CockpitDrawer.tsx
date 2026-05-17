@@ -19,13 +19,26 @@
  *     inline rose error block above the action buttons, do NOT advance.
  *   - alert("Action failed. See console.") removed.
  *
+ * TALLY-156 — Deep-dive exception controls:
+ *   - Custom Price block: buyer can set an explicit override price via the
+ *     existing POST /api/v1/buyer-actions/markdown contract with
+ *     action_type="adjust", adjustment={ type:"price", value:<number> }.
+ *     Same feedback model as quick actions (busy disable, success toast +
+ *     onRowSuccess + advance, failure persistent toast + inline error).
+ *   - Step Override is INTENTIONALLY OMITTED: no buyer-scoped backend
+ *     contract exists for manually changing cadence step. cadenceEngine
+ *     mutates current_step internally; the only manual trigger is
+ *     POST /api/v1/admin/cadence/run-evaluation (admin-only, runs whole
+ *     evaluation, not per-MPN step set). See dispatch Step 0 gap report.
+ *
  * Hierarchy blocks (whitespace-separated, no dividers):
- *   1. Header  : MPN, name, brand
- *   2. Badges  : full taxonomy incl. MAP Protected
- *   3. Pricing : RICS retail / RICS offer / SCOM / SCOM sale / MAP floor
- *   4. Metrics : STR% / WOS / GM% (store, web) / inventory / days_in_queue
- *   5. Actions : Approve / Reject(Deny) / Hold (single-item, not bulk)
- *   6. Footer  : keyboard cheatsheet
+ *   1. Header     : MPN, name, brand
+ *   2. Badges     : full taxonomy incl. MAP Protected
+ *   3. Pricing    : RICS retail / RICS offer / SCOM / SCOM sale / MAP floor
+ *   4. Metrics    : STR% / WOS / GM% (store, web) / inventory / days_in_queue
+ *   5. Quick acts : Approve / Reject(Deny) / Hold (single-item)
+ *   6. Deep dive  : Custom Price (TALLY-156)
+ *   7. Footer     : keyboard cheatsheet
  *
  * NOTE: drawer remains compatible with the existing single-item
  * buyerAction("approve"|"deny") / buyerHold() endpoints. The "Reject" label
@@ -81,9 +94,17 @@ export default function CockpitDrawer({
   clearRowError,
 }: Props) {
   const [busy, setBusy] = useState(false);
+  // TALLY-156 — deep-dive Custom Price input (string for free entry; parsed on submit).
+  const [customPrice, setCustomPrice] = useState<string>("");
   const panelRef = useRef<HTMLDivElement | null>(null);
   const currentMpn = item?.mpn ?? null;
   const inlineError = currentMpn ? getRowError(currentMpn) : undefined;
+
+  // Reset the Custom Price input whenever the drawer switches to a new item
+  // so a stale value from item A can never be submitted against item B.
+  useEffect(() => {
+    setCustomPrice("");
+  }, [currentMpn]);
 
   // Auto-advance helper: move to NEXT visible item in queue, or close if at end.
   // The parent strips successful rows out of `queue` before passing it down,
@@ -152,6 +173,59 @@ export default function CockpitDrawer({
       }
     },
     [item, readOnly, busy, onActionComplete, advance, onRowSuccess, onRowFailure, clearRowError],
+  );
+
+  // TALLY-156 — Custom Price submission.
+  // Wires the existing buyerAction("adjust", { type: "price", value }) contract.
+  // Same feedback model as runDecision: optimistic hide + success toast +
+  // advance on success; inline error + persistent toast on failure.
+  const runCustomPrice = useCallback(
+    async () => {
+      if (!item || readOnly || busy) return;
+      const mpn = item.mpn;
+      const parsed = Number(customPrice);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        const msg = "Enter a valid price greater than 0.";
+        onRowFailure(mpn, msg);
+        showToast({ message: msg, variant: "error" });
+        return;
+      }
+      setBusy(true);
+      clearRowError(mpn);
+      try {
+        await buyerAction(mpn, "adjust", { type: "price", value: parsed });
+        showToast({
+          message: `Custom price $${parsed.toFixed(2)} applied to ${mpn}.`,
+          variant: "success",
+        });
+        onRowSuccess(mpn);
+        onActionComplete();
+        advance(mpn);
+      } catch (e) {
+        console.error("[cockpit drawer] custom price failed:", e);
+        const code = extractErrorCode(e);
+        const msg = extractErrorMessage(e);
+        onRowFailure(mpn, msg);
+        showToast({
+          message: msg,
+          variant: "error",
+          persistent: isPersistentErrorCode(code),
+        });
+      } finally {
+        setBusy(false);
+      }
+    },
+    [
+      item,
+      readOnly,
+      busy,
+      customPrice,
+      onActionComplete,
+      advance,
+      onRowSuccess,
+      onRowFailure,
+      clearRowError,
+    ],
   );
 
   // Focus the panel when it opens (focus trap baseline).
@@ -375,7 +449,87 @@ export default function CockpitDrawer({
             </button>
           </div>
 
-          {/* 6. Footer / cheatsheet */}
+          {/* 6. Deep dive — exception controls (TALLY-156)
+               Visually separated from quick actions by extra top margin +
+               a small label. NOT keyboard-shortcutted to prevent accidental
+               price entry. Click-only. */}
+          <div className="pt-2 border-t border-slate-100">
+            <div className="text-[11px] uppercase tracking-wide text-slate-400 mb-2">
+              Deep dive — exception controls
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-slate-600">
+                <span className="font-medium">Custom price</span>
+                <span className="text-slate-400">
+                  &nbsp;— override RICS offer with an explicit price.
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-500 space-y-0.5">
+                <div>
+                  Current RICS offer:&nbsp;
+                  <span className="font-mono text-slate-700">{fmt$(item.rics_offer)}</span>
+                  &nbsp;·&nbsp;Recommended ({"-15%"}):&nbsp;
+                  <span className="font-mono text-slate-700">
+                    {fmt$(
+                      typeof item.rics_retail === "number"
+                        ? Math.round(item.rics_retail * 0.85 * 100) / 100
+                        : null,
+                    )}
+                  </span>
+                </div>
+                <div>
+                  MAP floor:&nbsp;
+                  <span className="font-mono text-slate-700">
+                    {item.map_price != null ? fmt$(item.map_price) : "—"}
+                  </span>
+                  {item.map_price != null && (
+                    <span className="text-slate-400">
+                      &nbsp;— price below MAP will be blocked unless it
+                      exactly matches the floor.
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={customPrice}
+                    onChange={(e) => setCustomPrice(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !busy && !readOnly) {
+                        e.preventDefault();
+                        void runCustomPrice();
+                      }
+                    }}
+                    placeholder="Override price"
+                    disabled={readOnly || busy}
+                    aria-label="Custom override price"
+                    className="w-full pl-5 pr-2 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <button
+                  disabled={readOnly || busy || customPrice.trim() === ""}
+                  onClick={() => void runCustomPrice()}
+                  className="px-3 py-1.5 text-sm rounded bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-slate-300 disabled:cursor-not-allowed"
+                >
+                  Apply custom price
+                </button>
+              </div>
+              <div className="text-[11px] text-slate-400 leading-tight">
+                Step Override is not yet available — no buyer-scoped backend
+                contract exists for manually changing cadence step.
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Footer / cheatsheet */}
           <div className="text-[11px] text-slate-400 leading-tight">
             Keyboard:&nbsp;
             <kbd className="px-1 border border-slate-200 rounded">j</kbd>/<kbd className="px-1 border border-slate-200 rounded">k</kbd> next/prev,&nbsp;
@@ -383,7 +537,8 @@ export default function CockpitDrawer({
             <kbd className="px-1 border border-slate-200 rounded">Esc</kbd> close.
             <br />
             Decisions advance to next item automatically; drawer stays open
-            until queue end or Esc.
+            until queue end or Esc. Custom price input is click-only (no
+            keyboard shortcut) to prevent accidental entry.
           </div>
         </div>
       </div>
