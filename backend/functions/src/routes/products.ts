@@ -722,13 +722,23 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
 
     // Fetch subcollections in parallel
     const stalenessCache: StalenessCache = {};
-    const [avSnap, stSnap, requiredFields, launchWindowDays, activeRegistrySnap, stalenessThreshold] = await Promise.all([
+    const [avSnap, stSnap, requiredFields, launchWindowDays, activeRegistrySnap, stalenessThreshold, pendingBuyerActionsSnap] = await Promise.all([
       productRef.collection("attribute_values").get(),
       productRef.collection("site_targets").get(),
       getRequiredFieldKeys(firestore),
       getLaunchWindowDays(firestore),
       firestore.collection("site_registry").where("is_active", "==", true).get(),
       getStalenessThresholdDays(stalenessCache),
+      // TALLY-157 — pending buyer actions for this MPN. "Pending" =
+      // pricing_domain_state_after === "Scheduled" (per existing
+      // scheduledPromotion convention — these are buyer-approved
+      // actions whose effective_date has not yet been promoted to
+      // Export Ready by the daily promotion job).
+      firestore
+        .collection("buyer_actions")
+        .where("mpn", "==", mpn)
+        .where("pricing_domain_state_after", "==", "Scheduled")
+        .get(),
     ]);
 
     // Build attribute_values map
@@ -867,6 +877,24 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
       site_verification[key] = entry;
     }
 
+    // TALLY-157 — serialize pending_buyer_actions[] for PDP.
+    const pending_buyer_actions = pendingBuyerActionsSnap.docs.map((d) => {
+      const a = d.data();
+      return {
+        id: d.id,
+        action_type: a.action_type ?? null,
+        buyer_user_id: a.buyer_user_id ?? null,
+        original_rics_offer: a.original_rics_offer ?? null,
+        new_rics_offer: a.new_rics_offer ?? null,
+        export_rics_offer: a.export_rics_offer ?? null,
+        scom_sale: a.scom_sale ?? null,
+        effective_date: a.effective_date ?? null,
+        pricing_domain_state_after: a.pricing_domain_state_after ?? null,
+        reason: a.reason ?? null,
+        created_at: serializeTs(a.created_at),
+      };
+    });
+
     res.status(200).json({
       mpn: data.mpn || docIdToMpn(docId),
       doc_id: docId,
@@ -928,6 +956,7 @@ router.get("/:mpn", requireAuth, async (req: AuthenticatedRequest, res: Response
       site_targets,
       source_inputs,
       site_verification,
+      pending_buyer_actions,
     });
   } catch (err: any) {
     console.error("GET /products/:mpn error:", err);

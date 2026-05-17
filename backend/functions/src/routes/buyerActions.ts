@@ -7,6 +7,8 @@ import {
   performBuyerMarkdownAction,
   type BuyerMarkdownActionType,
 } from "../services/buyerMarkdownAction";
+import { performBuyerPriceOverride } from "../services/buyerPriceOverride";
+import { applyStepOverride } from "../services/applyStepOverride";
 
 const router = Router();
 const db = () => admin.firestore();
@@ -226,5 +228,108 @@ router.post("/postpone-review", requireAuth, async (req: AuthenticatedRequest, r
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── TALLY-157 — POST /api/v1/buyer-actions/custom-price ──
+// Governed buyer-set custom pricing (immediate path only).
+// Delegates to services/buyerPriceOverride.ts; writes a buyer_actions
+// doc with action_type="buyer_price_override" (NOT "custom_price" —
+// per dispatch constraint, "custom_price" is reserved for cadence
+// markdown_steps and must not appear in buyer_actions documents).
+router.post(
+  "/custom-price",
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mpn, value, scom_sale, reason } = req.body || {};
+      const buyerUserId = req.user?.uid;
+      if (!buyerUserId) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const result = await performBuyerPriceOverride({
+        mpn,
+        value,
+        scom_sale,
+        reason,
+        buyerUserId,
+      });
+
+      if (result.status === "error") {
+        res.status(result.http_status).json({
+          error: result.error_message,
+          error_code: result.error_code,
+        });
+        return;
+      }
+
+      res.json({
+        status: "success",
+        mpn: result.mpn,
+        action_type: result.action_type,
+        new_rics_offer: result.new_rics_offer,
+        export_rics_offer: result.export_rics_offer,
+        scom_sale: result.scom_sale,
+        pricing_domain_state: result.pricing_domain_state,
+        buyer_action_id: result.buyer_action_id,
+        effective_date: result.effective_date,
+      });
+      refreshBuyerPerformanceMatrix();
+    } catch (err: any) {
+      console.error("POST /buyer-actions/custom-price error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ── TALLY-157 — POST /api/v1/buyer-actions/step-override ──
+// Immediate Step Override path (no scheduling, no cadence lock).
+// All mutations to cadence_assignments.current_step from buyer-initiated
+// flows MUST route through services/applyStepOverride.ts — this handler
+// is the only HTTP surface that calls it.
+router.post(
+  "/step-override",
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mpn, target_step_number, reason } = req.body || {};
+      const buyerUserId = req.user?.uid;
+      if (!buyerUserId) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const result = await applyStepOverride({
+        mpn,
+        target_step_number,
+        reason,
+        buyerUserId,
+      });
+
+      if (result.status === "error") {
+        res.status(result.http_status).json({
+          error: result.error_message,
+          error_code: result.error_code,
+        });
+        return;
+      }
+
+      res.json({
+        status: "success",
+        mpn: result.mpn,
+        previous_step: result.previous_step,
+        current_step: result.current_step,
+        matched_rule_id: result.matched_rule_id,
+        matched_rule_version: result.matched_rule_version,
+        buyer_action_id: result.buyer_action_id,
+        action_type: "buyer_step_override",
+      });
+      refreshBuyerPerformanceMatrix();
+    } catch (err: any) {
+      console.error("POST /buyer-actions/step-override error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 export default router;
