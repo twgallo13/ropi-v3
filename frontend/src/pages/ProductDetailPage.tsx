@@ -408,7 +408,20 @@ export default function ProductDetailPage() {
       {/* Header */}
       <div className="mt-4 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{p.name || p.mpn}</h1>
+          <h1 className="text-2xl font-bold">
+            {p.name || p.mpn}
+            {/* TALLY-157 R2 — pending buyer price action indicator. Shown
+                whenever there is at least one scheduled (future-dated)
+                buyer price action awaiting go-live. */}
+            {(p.pending_buyer_actions?.length ?? 0) > 0 && (
+              <span
+                title={`${p.pending_buyer_actions!.length} pending buyer action(s) scheduled`}
+                className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 align-middle"
+              >
+                🔔 {p.pending_buyer_actions!.length} pending
+              </span>
+            )}
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             MPN: <span className="font-mono">{p.mpn}</span> · SKU: {p.sku} · Brand: {p.brand}
           </p>
@@ -462,6 +475,69 @@ export default function ProductDetailPage() {
         <InfoCard label="Retail Price" value={`$${p.rics_retail.toFixed(2)}`} />
         <InfoCard label="Retail Sale Price" value={`$${p.rics_offer.toFixed(2)}`} />
       </div>
+
+      {/* TALLY-157 R2 — Pricing section: pending scheduled buyer price
+          actions awaiting go-live. Backend filter:
+          pricing_domain_state_after=="Scheduled". */}
+      {(p.pending_buyer_actions?.length ?? 0) > 0 && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-3">
+            Pricing — Pending Scheduled Actions
+          </h2>
+          <div className="bg-white rounded-lg border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide">
+                <tr>
+                  <th className="text-left px-3 py-2">Effective Date</th>
+                  <th className="text-left px-3 py-2">Action</th>
+                  <th className="text-right px-3 py-2">From</th>
+                  <th className="text-right px-3 py-2">To (Offer)</th>
+                  <th className="text-right px-3 py-2">Export Price</th>
+                  <th className="text-right px-3 py-2">Web Sale</th>
+                  <th className="text-left px-3 py-2">Reason</th>
+                  <th className="text-left px-3 py-2">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.pending_buyer_actions!.map((a) => (
+                  <tr key={a.id} className="border-t">
+                    <td className="px-3 py-2 font-medium">
+                      {a.effective_date || "—"}
+                    </td>
+                    <td className="px-3 py-2">{a.action_type || "—"}</td>
+                    <td className="px-3 py-2 text-right">
+                      {a.original_rics_offer != null
+                        ? `$${a.original_rics_offer.toFixed(2)}`
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {a.new_rics_offer != null
+                        ? `$${a.new_rics_offer.toFixed(2)}`
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {a.export_rics_offer != null
+                        ? `$${a.export_rics_offer.toFixed(2)}`
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {a.scom_sale != null ? `$${a.scom_sale.toFixed(2)}` : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {a.reason || "—"}
+                    </td>
+                    <td className="px-3 py-2 text-gray-500">
+                      {a.created_at
+                        ? new Date(a.created_at).toLocaleString()
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Site Targets */}
       {p.site_targets.length > 0 && (
