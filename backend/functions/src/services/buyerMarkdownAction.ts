@@ -208,17 +208,30 @@ export async function performBuyerMarkdownAction(
       // in_cadence_review_queue=true residue on cadence_assignments.
       // Mirrors the pattern used by routes/buyerActions.ts (hold /
       // save-for-season / postpone-review) which writes the same trio.
-      await db()
-        .collection("cadence_assignments")
-        .doc(docId)
-        .set(
-          {
-            in_cadence_review_queue: false,
-            last_buyer_action: "deny",
-            last_buyer_action_at: ts(),
-          },
-          { merge: true }
+      // TALLY-160 — inner try/catch: this cleanup is best-effort and the
+      // Phase 1.7 read-side filter already hides any stale residue from the
+      // queue UI. A transient Firestore failure here must NOT turn a
+      // successful state transition into a 500 (which would also skip the
+      // audit_log write below). Mirrors the queueForPricingExport pattern
+      // used later in this handler.
+      try {
+        await db()
+          .collection("cadence_assignments")
+          .doc(docId)
+          .set(
+            {
+              in_cadence_review_queue: false,
+              last_buyer_action: "deny",
+              last_buyer_action_at: ts(),
+            },
+            { merge: true }
+          );
+      } catch (cerr: any) {
+        console.error(
+          `TALLY-159 cadence_assignments cleanup (deny) failed mpn=${mpn} docId=${docId}:`,
+          cerr
         );
+      }
 
       await db().collection("audit_log").add({
         product_mpn: mpn,
@@ -308,17 +321,27 @@ export async function performBuyerMarkdownAction(
     // "Scheduled"} in this branch, both of which are terminal /
     // non-actionable for the Cadence queue. Mirrors the pattern used
     // by routes/buyerActions.ts.
-    await db()
-      .collection("cadence_assignments")
-      .doc(docId)
-      .set(
-        {
-          in_cadence_review_queue: false,
-          last_buyer_action: action_type,
-          last_buyer_action_at: ts(),
-        },
-        { merge: true }
+    // TALLY-160 — inner try/catch: see deny-branch rationale above. A
+    // failure here must NOT skip audit_log or queueForPricingExport below,
+    // nor surface a 500 for a transition that has already succeeded.
+    try {
+      await db()
+        .collection("cadence_assignments")
+        .doc(docId)
+        .set(
+          {
+            in_cadence_review_queue: false,
+            last_buyer_action: action_type,
+            last_buyer_action_at: ts(),
+          },
+          { merge: true }
+        );
+    } catch (cerr: any) {
+      console.error(
+        `TALLY-159 cadence_assignments cleanup (${action_type}) failed mpn=${mpn} docId=${docId}:`,
+        cerr
       );
+    }
 
     await db().collection("audit_log").add({
       product_mpn: mpn,
