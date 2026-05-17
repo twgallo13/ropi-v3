@@ -95,18 +95,22 @@ router.post("/hold", requireAuth, async (req: AuthenticatedRequest, res: Respons
       res.status(404).json({ error: "Product not found" });
       return;
     }
-    await productRef.set({ cadence_hold: true, updated_at: ts() }, { merge: true });
-    await db()
-      .collection("cadence_assignments")
-      .doc(docId)
-      .set(
-        {
-          in_cadence_review_queue: false,
-          last_buyer_action: "hold",
-          last_buyer_action_at: ts(),
-        },
-        { merge: true }
-      );
+    const batch = db().batch();
+    batch.set(
+      productRef,
+      { cadence_hold: true, updated_at: ts() },
+      { merge: true }
+    );
+    batch.set(
+      db().collection("cadence_assignments").doc(docId),
+      {
+        in_cadence_review_queue: false,
+        last_buyer_action: "hold",
+        last_buyer_action_at: ts(),
+      },
+      { merge: true }
+    );
+    await batch.commit();
     await db().collection("audit_log").add({
       product_mpn: mpn,
       event_type: "buyer_action_hold",
