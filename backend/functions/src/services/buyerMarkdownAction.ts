@@ -153,7 +153,18 @@ export async function performBuyerMarkdownAction(
       };
     }
 
-    const eligibleStates = ["Pricing Current", "Loss-Leader Review Pending"];
+    // TALLY-158 Phase 1 — include "Exported" as an eligible steady-state for
+    // buyer markdown actions. The cadence engine re-surfaces already-exported
+    // products in the Buyer Cockpit Cadence queue whenever a new markdown step
+    // matches (next cycle in the markdown ladder). Approve/Deny on those queue
+    // items previously returned 400 INELIGIBLE_STATE because the gate omitted
+    // "Exported", even though the engine intentionally surfaces them and the
+    // intended behavior is to re-queue the new price for the next daily export.
+    const eligibleStates = [
+      "Pricing Current",
+      "Loss-Leader Review Pending",
+      "Exported",
+    ];
     if (!eligibleStates.includes(product.pricing_domain_state)) {
       return {
         status: "error",
