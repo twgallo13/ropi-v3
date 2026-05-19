@@ -814,6 +814,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
           //   brand         ← identity.brand
           //   sku           ← identity.sku
           //   department / gender / age_group / class / category /
+          //   sub_category /
           //   primary_color / descriptive_color / material_fabric /
           //   tax_class     ← mapped.attributes (taxonomy + colors)
           //   website       ← first parsed site from the Website column
@@ -846,6 +847,7 @@ router.post("/:batch_id/commit", async (req: Request, res: Response) => {
             age_group: ageGroupValue,
             class: mapped.attributes.class,
             category: mapped.attributes.category,
+            sub_category: mapped.attributes.sub_category,
             primary_color: mapped.attributes.primary_color,
             descriptive_color: mapped.attributes.descriptive_color,
             material_fabric: mapped.attributes.material_fabric,

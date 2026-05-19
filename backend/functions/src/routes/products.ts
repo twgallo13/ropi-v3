@@ -1195,6 +1195,18 @@ router.post("/:mpn/attributes/:field_key", requireAuth, async (req: Authenticate
         },
         { merge: true }
       );
+    } else if (
+      fieldKey === "class" ||
+      fieldKey === "category" ||
+      fieldKey === "sub_category"
+    ) {
+      await productRef.set(
+        {
+          [fieldKey]: finalValue,
+          updated_at: db.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
     } else if (fieldKey === "sku") {
       await productRef.set(
         {

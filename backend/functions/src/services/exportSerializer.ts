@@ -20,6 +20,7 @@ export interface ExportRow {
     department: string | null;
     class: string | null;
     category: string | null;
+    sub_category: string | null;
   };
   colors: {
     primary: string | null;
@@ -77,6 +78,7 @@ export async function buildExportCsv(rows: ExportRow[]): Promise<ExportCsvBuildR
     department: r.hierarchy.department || "",
     class: r.hierarchy.class || "",
     category: r.hierarchy.category || "",
+    sub_category: r.hierarchy.sub_category || "",
     primary_color: r.colors.primary || "",
     descriptive_color: r.colors.descriptive || "",
     scom: r.pricing.scom,
@@ -104,6 +106,7 @@ export async function buildExportCsv(rows: ExportRow[]): Promise<ExportCsvBuildR
     "department",
     "class",
     "category",
+    "sub_category",
     "primary_color",
     "descriptive_color",
     "scom",
@@ -229,6 +232,7 @@ export async function serializeProduct(mpn: string): Promise<ExportRow> {
       department: attrs["department"] || null,
       class: attrs["class"] || null,
       category: attrs["category"] || null,
+      sub_category: attrs["sub_category"] || null,
     },
     colors: {
       primary: attrs["primary_color"] || null,

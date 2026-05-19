@@ -18,6 +18,7 @@ export interface RicsParsed {
   department?: string;
   class?: string;
   category?: string;
+  sub_category?: string;
 }
 
 const FOOTWEAR_DEPT_ALIASES = new Set([
@@ -51,6 +52,7 @@ export function parseRicsCategory(ricsCategory: string): RicsParsed {
     result.gender = normalizeGender(segments[1] || "");
     result.class = segments[2] || undefined;
     result.category = segments[3] || undefined;
+    result.sub_category = segments[4] || undefined;
     return result;
   }
 
@@ -63,6 +65,7 @@ export function parseRicsCategory(ricsCategory: string): RicsParsed {
     }
     result.class = segments[2] || undefined;
     result.category = segments[3] || undefined;
+    result.sub_category = segments[4] || undefined;
     return result;
   }
 
@@ -77,9 +80,11 @@ export function parseRicsCategory(ricsCategory: string): RicsParsed {
       result.department = "Footwear";
       result.class = segments[deptIdx + 1] || undefined;
       result.category = segments[deptIdx + 2] || undefined;
+      result.sub_category = segments[deptIdx + 3] || undefined;
     } else {
       result.class = segments[2] || undefined;
       result.category = segments[3] || undefined;
+      result.sub_category = segments[4] || undefined;
     }
     return result;
   }
@@ -93,6 +98,7 @@ export function parseRicsCategory(ricsCategory: string): RicsParsed {
       : segments[1] || undefined;
     result.class = segments[2] || undefined;
     result.category = segments[3] || undefined;
+    result.sub_category = segments[4] || undefined;
     return result;
   }
 
@@ -227,6 +233,8 @@ export const FULL_PRODUCT_ROW_MAP: Record<string, string> = {
   Department: "department_raw",
   Class: "class",
   Category: "category",
+  "Sub-Category": "sub_category",
+  "Sub Category": "sub_category",
   "Primary Color": "primary_color",
   "Descriptive Color": "descriptive_color",
   TaxClass: "tax_class",
@@ -353,7 +361,7 @@ export function mapFullProductRow(row: Record<string, string>): {
 
   // RICS parser fills any gaps
   const ricsParsed = parseRicsCategory(String(attributes.rics_category || ""));
-  for (const ricsKey of ["gender", "department", "class", "category", "age_group_detail"] as const) {
+  for (const ricsKey of ["gender", "department", "class", "category", "sub_category", "age_group_detail"] as const) {
     const current = attributes[ricsKey];
     if ((current === undefined || current === "" || current === null) && ricsParsed[ricsKey]) {
       attributes[ricsKey] = ricsParsed[ricsKey];
@@ -386,6 +394,7 @@ export function mapFullProductRow(row: Record<string, string>): {
     "gender",
     "class",
     "category",
+    "sub_category",
     "age_group_detail",
     "brand",
     "mpn",

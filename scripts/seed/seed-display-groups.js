@@ -20,7 +20,8 @@ const DISPLAY_GROUPS = {
     ["age_group",       3],
     ["class",           4],
     ["category",        5],
-    ["style_code",      6],
+    ["sub_category",    6],
+    ["style_code",      7],
   ],
   "Naming & Identity": [
     ["product_name",    1, true],

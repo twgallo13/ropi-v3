@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Seed: attribute_registry — 72 docs
+ * Seed: attribute_registry — 73 docs
  * SPEC-compliant schema: field_key, display_label, field_type, destination_tab,
  * required_for_completion, include_in_ai_prompt, include_in_cadence_targeting,
  * active, export_enabled, dropdown_options, created_at.
@@ -9,6 +9,7 @@
 "use strict";
 const admin = require("firebase-admin");
 const { initApp } = require("./utils");
+const { fetchCanonicalTaxonomy } = require("../lib/tally163-taxonomy");
 
 const COLLECTION = "attribute_registry";
 
@@ -47,69 +48,74 @@ function attr(field_key, display_label, field_type, destination_tab, opts = {}) 
 }
 
 // ────────────────────────────────────────────────
-//  Core Information tab (18 docs) — TALLY-083
+//  Core Information tab (19 docs) — TALLY-083 + TALLY-163
 //  Visible on every product; operators see these first.
 // ────────────────────────────────────────────────
-const CORE_INFORMATION = [
-  attr("product_name",     "Name",                 "text",     "core_information", { required: true,  ai_prompt: true, cadence: false, display_group: "Identity", display_order: 1 }),
-  attr("sku",              "SKU",                  "text",     "core_information", { required: true, display_group: "Identity", display_order: 2 }),
-  attr("upc",              "UPC / Barcode",        "text",     "core_information", { display_group: "Identity", display_order: 3 }),
-  attr("brand",            "Brand",                "text",     "core_information", { required: true,  ai_prompt: true, cadence: true, display_group: "Identity", display_order: 4, enum_source: "brand_registry" }),
-  attr("category",         "Category",             "dropdown", "core_information", {
-    required: true,  ai_prompt: true, cadence: true, display_group: "Classification", display_order: 5,
-    options: ["Basketball", "Bootcut", "Fitted Hat", "Flat", "Jersey",
-      "Lifestyle", "Low Heel", "Mini Dress", "Pullover Hoodie",
-      "Pumps", "Short Sleeve", "Short Sleeve Graphic Tees",
-      "Slides", "Socks", "Varsity", "Winter Vests"],
-  }),
-  attr("class",             "Class",                "dropdown", "core_information", {
-    required: true,  ai_prompt: true, display_group: "Classification", display_order: 6,
-    options: ["Boots", "Dresses", "Hats", "High Heels", "Jackets",
-      "Jerseys", "Pants", "Sandals", "Sneakers",
-      "Socks & Underwear", "Sweatshirts", "T-shirts", "Vests"],
-  }),
-  attr("department",        "Department",           "dropdown", "core_information", {
-    required: true, ai_prompt: true, display_group: "Classification", display_order: 7,
-    options: ["Footwear", "Clothing", "Accessories", "Home & Tech"],
-    enum_source: "department_registry",
-  }),
-  // TALLY-PRODUCT-LIST-UX Phase 4B — site_owner is a dropdown sourced from
-  // site_registry. dropdown_source preserves the legacy TALLY-125 hint
-  // (UI lookup); enum_source is the new POST-time validator gate.
-  attr("site_owner",        "Site Owner",           "dropdown", "core_information", {
-    display_group: "Identity", display_order: 99,
-    enum_source: "site_registry",
-    dropdown_source: "site_registry",
-  }),
-  attr("gender",           "Gender",               "dropdown", "core_information", {
-    required: true, ai_prompt: true, cadence: true, display_group: "Classification", display_order: 8,
-    options: ["Mens", "Womens", "Unisex", "Boys", "Girls", "Toddler"],
-  }),
-  attr("age_group",        "Age Group",            "dropdown", "core_information", {
-    required: true, ai_prompt: true, cadence: true, display_group: "Classification", display_order: 9,
-    options: ["Adult", "Grade-School", "Pre-School", "Toddler"],
-  }),
-  attr("primary_color",    "Primary Color",        "dropdown", "core_information", {
-    ai_prompt: true, display_group: "Classification", display_order: 10,
-    options: ["Black", "White", "Grey", "Brown", "Tan", "Beige", "Navy", "Blue",
-      "Royal Blue", "Sky Blue", "Teal", "Green", "Olive", "Lime", "Yellow", "Gold",
-      "Orange", "Red", "Pink", "Purple", "Burgundy", "Cream", "Multi", "Clear",
-      "Metallic", "Silver", "Rose Gold", "Camo", "Tie Dye", "Natural", "Iridescent", "Other"],
-  }),
-  attr("color_family",     "Color Family",         "dropdown", "core_information", {
-    display_group: "Classification", display_order: 11,
-    options: ["black", "white", "red", "blue", "green", "brown", "grey", "pink", "yellow", "orange", "purple", "multi"],
-  }),
-  attr("size",             "Size / Size Type",     "text",     "core_information", { display_group: "Classification", display_order: 12 }),
-  attr("style_code",       "Style Code",           "text",     "core_information", { required: false, display_group: "Identity", display_order: 13 }),
-  attr("website",          "Website",              "multi_select", "core_information", {
-    required: true, display_group: "Visibility", display_order: 14,
-    options: ["fbrkclothing.com", "karmaloop.com", "mltd.com", "plndr.com", "shiekh.com", "shiekhshoes.com", "trendswap.com"],
-  }),
-  attr("site_ids",         "Site Owner",           "text",     "core_information", { display_group: "Visibility", display_order: 15 }),
-  attr("is_in_stock",      "Product Is Active",    "toggle",   "core_information", { required: true, display_group: "Visibility", display_order: 16 }),
-  attr("image_status",     "Image Status",         "text",     "core_information", { display_group: "Visibility", display_order: 17 }),
-];
+function buildCoreInformation(taxonomy) {
+  return [
+    attr("product_name",     "Name",                 "text",     "core_information", { required: true,  ai_prompt: true, cadence: false, display_group: "Identity", display_order: 1 }),
+    attr("sku",              "SKU",                  "text",     "core_information", { required: true, display_group: "Identity", display_order: 2 }),
+    attr("upc",              "UPC / Barcode",        "text",     "core_information", { display_group: "Identity", display_order: 3 }),
+    attr("brand",            "Brand",                "text",     "core_information", { required: true,  ai_prompt: true, cadence: true, display_group: "Identity", display_order: 4, enum_source: "brand_registry" }),
+    attr("category",         "Category",             "dropdown", "core_information", {
+      required: true, ai_prompt: true, cadence: true, display_group: "Classification", display_order: 5,
+      options: taxonomy.categories,
+    }),
+    attr("class",            "Class",                "dropdown", "core_information", {
+      required: true, ai_prompt: true, display_group: "Classification", display_order: 6,
+      options: taxonomy.classes,
+    }),
+    attr("department",       "Department",           "dropdown", "core_information", {
+      required: true, ai_prompt: true, display_group: "Classification", display_order: 7,
+      // TALLY-163 — preserve legacy Home & Tech until Lisa approves the
+      // explicit contraction. Runtime authority still comes from
+      // department_registry via enum_source/dropdown_source.
+      options: ["Footwear", "Clothing", "Accessories", "Home & Tech"],
+      enum_source: "department_registry",
+      dropdown_source: "department_registry",
+    }),
+    attr("gender",           "Gender",               "dropdown", "core_information", {
+      required: true, ai_prompt: true, cadence: true, display_group: "Classification", display_order: 8,
+      options: ["Mens", "Womens", "Unisex", "Boys", "Girls", "Toddler"],
+    }),
+    attr("age_group",        "Age Group",            "dropdown", "core_information", {
+      required: true, ai_prompt: true, cadence: true, display_group: "Classification", display_order: 9,
+      options: ["Adult", "Grade-School", "Pre-School", "Toddler"],
+    }),
+    attr("sub_category",     "Sub-Category",         "dropdown", "core_information", {
+      required: true, ai_prompt: true, display_group: "Classification", display_order: 10,
+      options: taxonomy.sub_categories,
+    }),
+    // TALLY-PRODUCT-LIST-UX Phase 4B — site_owner is a dropdown sourced from
+    // site_registry. dropdown_source preserves the legacy TALLY-125 hint
+    // (UI lookup); enum_source is the new POST-time validator gate.
+    attr("site_owner",        "Site Owner",           "dropdown", "core_information", {
+      display_group: "Identity", display_order: 99,
+      enum_source: "site_registry",
+      dropdown_source: "site_registry",
+    }),
+    attr("primary_color",    "Primary Color",        "dropdown", "core_information", {
+      ai_prompt: true, display_group: "Classification", display_order: 11,
+      options: ["Black", "White", "Grey", "Brown", "Tan", "Beige", "Navy", "Blue",
+        "Royal Blue", "Sky Blue", "Teal", "Green", "Olive", "Lime", "Yellow", "Gold",
+        "Orange", "Red", "Pink", "Purple", "Burgundy", "Cream", "Multi", "Clear",
+        "Metallic", "Silver", "Rose Gold", "Camo", "Tie Dye", "Natural", "Iridescent", "Other"],
+    }),
+    attr("color_family",     "Color Family",         "dropdown", "core_information", {
+      display_group: "Classification", display_order: 12,
+      options: ["black", "white", "red", "blue", "green", "brown", "grey", "pink", "yellow", "orange", "purple", "multi"],
+    }),
+    attr("size",             "Size / Size Type",     "text",     "core_information", { display_group: "Classification", display_order: 13 }),
+    attr("style_code",       "Style Code",           "text",     "core_information", { required: false, display_group: "Identity", display_order: 14 }),
+    attr("website",          "Website",              "multi_select", "core_information", {
+      required: true, display_group: "Visibility", display_order: 15,
+      options: ["fbrkclothing.com", "karmaloop.com", "mltd.com", "plndr.com", "shiekh.com", "shiekhshoes.com", "trendswap.com"],
+    }),
+    attr("site_ids",         "Site Owner",           "text",     "core_information", { display_group: "Visibility", display_order: 16 }),
+    attr("is_in_stock",      "Product Is Active",    "toggle",   "core_information", { required: true, display_group: "Visibility", display_order: 17 }),
+    attr("image_status",     "Image Status",         "text",     "core_information", { display_group: "Visibility", display_order: 18 }),
+  ];
+}
 
 // ────────────────────────────────────────────────
 //  Product Attributes tab (31 docs)
@@ -245,20 +251,28 @@ const SYSTEM = [
   attr("last_ai_enrichment",  "Last AI Enrichment",  "date",   "system", { export_disabled: true, display_group: "System", display_order: 2 }),
 ];
 
-const ATTRIBUTES = [
-  ...CORE_INFORMATION,      // 18
-  ...PRODUCT_ATTRIBUTES,    // 36
-  ...DESCRIPTIONS_SEO,      // 11
-  ...LAUNCH_MEDIA,          //  7
-  ...SYSTEM,                //  2
-  // Total: 73
-];
+function buildAttributes(taxonomy) {
+  return [
+    ...buildCoreInformation(taxonomy),
+    ...PRODUCT_ATTRIBUTES,
+    ...DESCRIPTIONS_SEO,
+    ...LAUNCH_MEDIA,
+    ...SYSTEM,
+  ];
+}
 
 async function main() {
   const app = initApp();
   const db = admin.firestore(app);
+  const taxonomy = await fetchCanonicalTaxonomy();
+  const ATTRIBUTES = buildAttributes(taxonomy);
 
   console.log(`\n🌱  Seeding "${COLLECTION}" (${ATTRIBUTES.length} docs) …`);
+  console.log(
+    `   ↳ canonical taxonomy: ${taxonomy.source.sheet_name} (gid=${taxonomy.source.gid}) | ` +
+      `class=${taxonomy.counts.classes}, category=${taxonomy.counts.categories}, ` +
+      `sub_category=${taxonomy.counts.sub_categories}`
+  );
 
   // Verify count matches spec before writing anything
   if (ATTRIBUTES.length !== 73) {
