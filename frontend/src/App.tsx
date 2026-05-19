@@ -11,8 +11,9 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import BuyerReviewPage from "./pages/BuyerReviewPage";
 import ExportCenterPage from "./pages/ExportCenterPage";
 import ImportHubPage from "./pages/ImportHubPage";
-import MapConflictReviewPage from "./pages/MapConflictReviewPage";
-import MapRemovalReviewPage from "./pages/MapRemovalReviewPage";
+// TALLY-165 — MAP Policy consolidation shell (wraps MapConflictReviewPage +
+// MapRemovalReviewPage internally; App.tsx no longer mounts those directly).
+import MapPolicyPage from "./pages/MapPolicyPage";
 import CadenceUnassignedPage from "./pages/CadenceUnassignedPage";
 import CadenceRulesAdminPage from "./pages/CadenceRulesAdminPage";
 import ReviewActiveOverridesPage from "./pages/ReviewActiveOverridesPage";
@@ -149,15 +150,24 @@ function AppInner() {
             <Route path="/admin/smart-rules" element={<Navigate to="/admin/ai-automation/smart-rules" replace />} />
             <Route path="/admin/smart-rules/new" element={<Navigate to="/admin/ai-automation/smart-rules/new" replace />} />
             <Route path="/admin/smart-rules/:ruleId" element={<SmartRuleRedirect />} />
-            <Route path="/map-conflict-review" element={<MapConflictReviewPage />} />
-            <Route path="/map-removal-review" element={<MapRemovalReviewPage />} />
+            {/* TALLY-165 — MAP Policy consolidates MAP Conflict + MAP Removal
+                under one page with tabs. Legacy URLs redirect with a tab
+                query param so existing dashboard links/bookmarks land on the
+                correct tab. */}
+            <Route path="/map-policy" element={<MapPolicyPage />} />
+            <Route path="/map-conflict-review" element={<Navigate to="/map-policy?tab=conflict" replace />} />
+            <Route path="/map-removal-review" element={<Navigate to="/map-policy?tab=removal" replace />} />
             <Route path="/export-center" element={<ExportCenterPage />} />
             <Route path="/launch-admin" element={<LaunchAdminListPage />} />
             <Route path="/launch-admin/:launchId" element={<LaunchAdminDetailPage />} />
             <Route path="/products/:mpn" element={<ProductDetailPage />} />
             <Route path="/products/:mpn/review" element={<AIContentReviewPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/pricing-discrepancy" element={<PricingDiscrepancyPage />} />
+            {/* TALLY-165 — Pricing Discrepancy workflow lives inside Buyer
+                Cockpit (?tab=pricing). Legacy /pricing-discrepancy URL is
+                kept as a redirect so existing dashboard tiles still resolve. */}
+            <Route path="/pricing-discrepancy" element={<Navigate to="/buyer-review?tab=pricing" replace />} />
+            <Route path="/pricing-discrepancy-legacy" element={<PricingDiscrepancyPage />} />
             <Route path="/site-verification" element={<SiteVerificationReviewPage />} />
             {/* TALLY-PHASE-3.7-OPERATIONAL-POLISH — Review Active Overrides moved to top-level Product Operations */}
             <Route path="/review-active-overrides" element={<ReviewActiveOverridesPage />} />

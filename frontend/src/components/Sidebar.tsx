@@ -30,8 +30,12 @@ const NAV_TREE: NavNode[] = [
     icon: "📦",
     children: [
       { label: "Completion Queue", path: "/queue/completion" },
-      { label: "Buyer Review", path: "/buyer-review" },
-      { label: "Cadence Review", path: "/cadence-review" },
+      // TALLY-165 — "Buyer Review" renamed to "Buyer Cockpit"; standalone
+      // "Cadence Review" and "Pricing Discrepancy" nav items removed because
+      // both workflows now live inside Buyer Cockpit as tabs. The legacy
+      // /cadence-review and /pricing-discrepancy routes still redirect
+      // (see App.tsx) so existing bookmarks/dashboard links keep working.
+      { label: "Buyer Cockpit", path: "/buyer-review" },
       { label: "Cadence Unassigned", path: "/cadence-unassigned" },
       { label: "Channel Disparity", path: "/channel-disparity" },
     ],
@@ -43,9 +47,10 @@ const NAV_TREE: NavNode[] = [
       { label: "Import Hub", path: "/import-hub" },
       { label: "Export Center", path: "/export-center" },
       { label: "Launch Admin", path: "/launch-admin" },
-      { label: "MAP Conflict", path: "/map-conflict-review" },
-      { label: "MAP Removal", path: "/map-removal-review" },
-      { label: "Pricing Discrepancy", path: "/pricing-discrepancy" },
+      // TALLY-165 — MAP Conflict + MAP Removal consolidated under MAP Policy
+      // (single page, two tabs). Standalone "Pricing Discrepancy" removed
+      // (lives in Buyer Cockpit > Pricing Discrepancies tab).
+      { label: "MAP Policy", path: "/map-policy" },
       { label: "Site Verification", path: "/site-verification" },
       // PHASE-3.7 — Review Active Overrides (moved from Admin > Data Pipeline & Workflow)
       { label: "Review Active Overrides", path: "/review-active-overrides" },

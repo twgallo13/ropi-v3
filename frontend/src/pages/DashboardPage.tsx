@@ -8,9 +8,11 @@ const KPI_DEFS: Record<
   { label: string; route: string; color: string }
 > = {
   incomplete_count: { label: "Incomplete Products", route: "/queue/completion", color: "bg-blue-50 text-blue-800" },
-  cadence_review_count: { label: "Cadence Review", route: "/cadence-review", color: "bg-amber-50 text-amber-800" },
-  map_conflict_count: { label: "MAP Conflict Items", route: "/map-conflict-review", color: "bg-red-50 text-red-800" },
-  pricing_discrepancy_count: { label: "Pricing Discrepancy", route: "/pricing-discrepancy", color: "bg-red-50 text-red-800" },
+  // TALLY-165 — Cadence Review + Pricing Discrepancy now route into Buyer Cockpit
+  // tabs; MAP Conflict KPI routes into the consolidated MAP Policy page.
+  cadence_review_count: { label: "Cadence Review", route: "/buyer-review?tab=cadence", color: "bg-amber-50 text-amber-800" },
+  map_conflict_count: { label: "MAP Conflict Items", route: "/map-policy?tab=conflict", color: "bg-red-50 text-red-800" },
+  pricing_discrepancy_count: { label: "Pricing Discrepancy", route: "/buyer-review?tab=pricing", color: "bg-red-50 text-red-800" },
   site_verification_count: { label: "Site Verification", route: "/site-verification", color: "bg-purple-50 text-purple-800" },
 };
 

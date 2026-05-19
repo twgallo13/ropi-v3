@@ -15,6 +15,7 @@
  * caller is viewing-as another user.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchCockpit } from "../lib/api";
 import type { CockpitResponse, CadenceReviewItem } from "../lib/api";
 import KpiHeader from "../components/cockpit/KpiHeader";
@@ -34,7 +35,25 @@ export default function BuyerReviewPage() {
   const [data, setData] = useState<CockpitResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<CockpitTabId>("cadence");
+  // TALLY-165 — initial tab honors ?tab=cadence|map|pricing so deep links from
+  // the Dashboard KPI tiles and legacy /pricing-discrepancy /cadence-review
+  // redirects land on the correct tab inside Buyer Cockpit.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab: CockpitTabId = (() => {
+    const t = searchParams.get("tab");
+    return t === "map" || t === "pricing" || t === "cadence" ? t : "cadence";
+  })();
+  const [activeTab, setActiveTab] = useState<CockpitTabId>(initialTab);
+  // Keep the URL ?tab=... in sync with user clicks on the tab strip.
+  const handleTabChange = useCallback(
+    (next: CockpitTabId) => {
+      setActiveTab(next);
+      const sp = new URLSearchParams(searchParams);
+      sp.set("tab", next);
+      setSearchParams(sp, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
   const [drawerMpn, setDrawerMpn] = useState<string | null>(null);
   // TALLY-158 Phase 1.6 — optimistic per-mpn removal from the cadence queue.
   // On successful Approve/Deny/Hold the row is dropped locally before the
@@ -132,7 +151,7 @@ export default function BuyerReviewPage() {
               { id: "pricing", label: "Pricing Discrepancies", count: data.pricing.length },
             ]}
             active={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
           />
         </div>
 
