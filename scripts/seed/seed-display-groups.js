@@ -34,11 +34,11 @@ const DISPLAY_GROUPS = {
     ["primary_color",   1],
     ["color_family",    2],
   ],
+  // TALLY-167 — site_ids removed from this group (legacy registry shadow).
   "Commerce & Status": [
     ["website",         1],
-    ["site_ids",        2],
-    ["is_in_stock",     3],
-    ["image_status",    4],
+    ["is_in_stock",     2],
+    ["image_status",    3],
   ],
 
   // ── Tab: product_attributes ──────────────────────────────────

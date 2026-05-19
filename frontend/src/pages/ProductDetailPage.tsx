@@ -26,12 +26,15 @@ const TABS: { key: string; label: string }[] = [
   { key: "launch_media",      label: "Launch & Media" },
 ];
 
-// TALLY-164 — UI-only hidden fields. Data + admin tools remain unaffected;
-// these are filtered out of the operator Product Edit render only.
+// TALLY-164 / TALLY-167 — UI-only hidden fields. Data + admin tools remain
+// unaffected; these are filtered out of the operator Product Edit render only.
 //   • color_family / size / upc / style_code / technology — newly seeded
 //     fields not yet ready for operator entry.
-//   • site_ids — duplicate "Site Owner" entry; the canonical Site Owner
-//     dropdown (field_key=site_owner) is the one we keep visible.
+//   • site_ids — legacy registry shadow of "Site Owner". TALLY-167 removes the
+//     entry from seed-attribute-registry + display-groups and purges the
+//     attribute_registry/site_ids doc; the canonical Site Owner dropdown
+//     (field_key=site_owner) remains the only visible one. Retained here as
+//     defense-in-depth until the purge has propagated to all envs.
 const UI_HIDDEN_FIELDS = new Set<string>([
   "color_family",
   "size",
@@ -580,20 +583,9 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* TALLY-164 — Site Targets hidden from Product Edit. Data is still
-          preserved on the product doc and available via admin + API. */}
-      {false && p.site_targets.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-2">Site Targets</h2>
-          <div className="flex gap-2">
-            {p.site_targets.map((st) => (
-              <span key={st.site_id} className="bg-blue-50 text-blue-700 px-3 py-1 rounded text-sm">
-                {st.site_id} ({st.domain})
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* TALLY-167 — Site Targets render path removed from Product Edit per
+          TALLY-164 product decision. Data is still preserved on the product
+          doc and available via admin + API. */}
 
       {/* ── Top-level tab bar — Details | History ──────────────── */}
       <div className="mt-8 border-b flex gap-2">

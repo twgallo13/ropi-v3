@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 /**
- * Seed: attribute_registry — 73 docs
+ * Seed: attribute_registry — 72 docs
  * SPEC-compliant schema: field_key, display_label, field_type, destination_tab,
  * required_for_completion, include_in_ai_prompt, include_in_cadence_targeting,
  * active, export_enabled, dropdown_options, created_at.
  * Idempotent (set-with-merge). Existing created_at is preserved.
+ *
+ * TALLY-167 — removed legacy site_ids attr (shadow duplicate of site_owner).
+ * The attribute_registry/site_ids doc is purged via
+ * scripts/seed/purge-tally167-site-ids-registry.js.
  */
 "use strict";
 const admin = require("firebase-admin");
@@ -111,7 +115,7 @@ function buildCoreInformation(taxonomy) {
       required: true, display_group: "Visibility", display_order: 15,
       options: ["fbrkclothing.com", "karmaloop.com", "mltd.com", "plndr.com", "shiekh.com", "shiekhshoes.com", "trendswap.com"],
     }),
-    attr("site_ids",         "Site Owner",           "text",     "core_information", { display_group: "Visibility", display_order: 16 }),
+    // TALLY-167 — site_ids removed (legacy shadow duplicate of site_owner).
     attr("is_in_stock",      "Product Is Active",    "toggle",   "core_information", { required: true, display_group: "Visibility", display_order: 17 }),
     attr("image_status",     "Image Status",         "text",     "core_information", { display_group: "Visibility", display_order: 18 }),
   ];
