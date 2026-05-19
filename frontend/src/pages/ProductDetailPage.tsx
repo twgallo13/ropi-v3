@@ -26,6 +26,21 @@ const TABS: { key: string; label: string }[] = [
   { key: "launch_media",      label: "Launch & Media" },
 ];
 
+// TALLY-164 — UI-only hidden fields. Data + admin tools remain unaffected;
+// these are filtered out of the operator Product Edit render only.
+//   • color_family / size / upc / style_code / technology — newly seeded
+//     fields not yet ready for operator entry.
+//   • site_ids — duplicate "Site Owner" entry; the canonical Site Owner
+//     dropdown (field_key=site_owner) is the one we keep visible.
+const UI_HIDDEN_FIELDS = new Set<string>([
+  "color_family",
+  "size",
+  "upc",
+  "style_code",
+  "technology",
+  "site_ids",
+]);
+
 // Context to pass mpn down through the tree without prop drilling
 import { createContext } from "react";
 const MpnContext = createContext<string>("");
@@ -351,6 +366,9 @@ export default function ProductDetailPage() {
   for (const entry of registry) {
     if (entry.active !== true) continue;
     if (!entry.destination_tab || !ALLOWED_TABS.has(entry.destination_tab)) continue;
+    // TALLY-164 — hide not-ready seeded fields + duplicate Site Owner
+    // from operator Product Edit. Data + admin views remain unaffected.
+    if (UI_HIDDEN_FIELDS.has(entry.field_key)) continue;
     byTab[entry.destination_tab].push(entry);
   }
 
@@ -562,8 +580,9 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Site Targets */}
-      {p.site_targets.length > 0 && (
+      {/* TALLY-164 — Site Targets hidden from Product Edit. Data is still
+          preserved on the product doc and available via admin + API. */}
+      {false && p.site_targets.length > 0 && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-2">Site Targets</h2>
           <div className="flex gap-2">
@@ -668,9 +687,13 @@ export default function ProductDetailPage() {
             Object.entries(groupedTabEntries).map(([groupName, groupFields]) => {
 
               // ── Fast Fashion special case — toggle + inline drawer ──
-              if (groupName === 'Fast Fashion') {
-                const toggleEntry = groupFields.find(e => e.field_key === 'is_fast_fashion');
-                if (!toggleEntry) return null;
+              // TALLY-164 — detect by field_key, not display_group name. The
+              // registry may seed is_fast_fashion under any display_group
+              // (e.g. "Category Flags"); the custom drawer must follow the
+              // field, not the group label. Any other group siblings render
+              // normally below the drawer.
+              const toggleEntry = groupFields.find(e => e.field_key === 'is_fast_fashion');
+              if (toggleEntry) {
 
                 const ffAttr = p.attribute_values['is_fast_fashion'];
                 const isEnabled = liveValues['is_fast_fashion'] === 'true';
@@ -680,10 +703,15 @@ export default function ProductDetailPage() {
                   e => e.depends_on?.field === 'is_fast_fashion'
                 );
 
+                // Remaining group members (non-toggle siblings) render in a
+                // normal grid below the drawer so we don't suppress unrelated
+                // fields that happen to share the display_group.
+                const siblingFields = groupFields.filter(e => e.field_key !== 'is_fast_fashion');
+
                 return (
                   <div key={groupName}>
                     <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 pb-1 border-b border-gray-200 dark:border-gray-700">
-                      Fast Fashion
+                      {groupName}
                     </h4>
 
                     {/* Toggle row */}
@@ -732,6 +760,35 @@ export default function ProductDetailPage() {
                             );
                           })}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Sibling fields (any other members of this display_group) */}
+                    {siblingFields.length > 0 && (
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        {siblingFields.map((entry, idx) => {
+                          const sAttr = p.attribute_values[entry.field_key];
+                          const rawValue = sAttr?.value;
+                          const initial = rawValue !== undefined && rawValue !== null
+                            ? String(rawValue) : '';
+                          return (
+                            <AttributeField
+                              key={entry.field_key}
+                              mpn={p.mpn}
+                              fieldKey={entry.field_key}
+                              label={entry.display_label}
+                              initialValue={initial}
+                              isVerified={sAttr?.verification_state === 'Human-Verified'}
+                              verificationState={sAttr?.verification_state ?? undefined}
+                              fieldType={entry.field_type as "text" | "textarea" | "select" | "dropdown" | "multi_select" | "number" | "toggle" | "date"}
+                              options={entry.dropdown_options || []}
+                              dropdownSource={entry.dropdown_source ?? undefined}
+                              fullWidth={entry.full_width === true}
+                              tabIndex={idx + 1}
+                              onSaved={handleFieldSaved}
+                            />
+                          );
+                        })}
                       </div>
                     )}
                   </div>

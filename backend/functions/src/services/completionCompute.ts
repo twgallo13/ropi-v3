@@ -116,6 +116,14 @@ export function computeCompletionProgressPure(
   let completed = 0;
   let effectiveTotal = 0; // fields whose depends_on predicates are met
 
+  // TALLY-164 — AI Describe-owned SEO fields (ai_seo_title = "Meta Name",
+  // ai_seo_meta = "Meta Description") are populated by the AI Describe flow
+  // and must not block manual completion. When a value is present we count
+  // them as completed regardless of verification_state; they are also
+  // excluded from ai_blockers so the "Approve AI content" hint doesn't
+  // permanently fire on these fields.
+  const AI_DESCRIBE_OWNED_FIELDS = new Set<string>(["ai_seo_title", "ai_seo_meta"]);
+
   for (const rf of required) {
     // depends_on gate: skip field if its predicate is not met
     if (rf.depends_on) {
@@ -137,7 +145,8 @@ export function computeCompletionProgressPure(
       const isVerified =
         attr!.verification_state === "Human-Verified" ||
         attr!.verification_state === "Rule-Verified";
-      if (isVerified) {
+      const isAiDescribeOwned = AI_DESCRIBE_OWNED_FIELDS.has(rf.field_key);
+      if (isVerified || isAiDescribeOwned) {
         completed++;
         present.push(rf.field_key);
       } else {
@@ -154,9 +163,11 @@ export function computeCompletionProgressPure(
   // origin_type === "AI" AND verification_state !== "Human-Verified".
   // This is a separate scan from required-field gating — an AI-origin field
   // can be "AI blocker" even if it isn't on the required list.
+  // TALLY-164 — exclude AI Describe-owned SEO fields from this count.
   const ai_blockers: string[] = [];
   for (const av of attributeValues) {
     if (av.id === "source_inputs") continue;
+    if (AI_DESCRIBE_OWNED_FIELDS.has(av.id)) continue;
     if (av.origin_type === "AI" && av.verification_state !== "Human-Verified") {
       ai_blockers.push(av.id);
     }
