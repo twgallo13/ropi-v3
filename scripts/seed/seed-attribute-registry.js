@@ -278,9 +278,12 @@ async function main() {
       `sub_category=${taxonomy.counts.sub_categories}`
   );
 
-  // Verify count matches spec before writing anything
-  if (ATTRIBUTES.length !== 73) {
-    console.error(`❌  Expected 73 attributes, got ${ATTRIBUTES.length}. Aborting.`);
+  // Verify count matches spec before writing anything.
+  // TALLY-167 — expected count lowered 73 -> 72 after removing the legacy
+  // site_ids shadow attr (see seed-attribute-registry.js header note and
+  // scripts/seed/purge-tally167-site-ids-registry.js).
+  if (ATTRIBUTES.length !== 72) {
+    console.error(`❌  Expected 72 attributes, got ${ATTRIBUTES.length}. Aborting.`);
     process.exit(1);
   }
 
