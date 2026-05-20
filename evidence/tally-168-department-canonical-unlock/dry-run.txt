@@ -1,0 +1,44 @@
+🔑  Authenticating via GCP_SA_KEY_DEV env var → project ropi-aoss-dev
+
+=== TALLY-168 — DRY-RUN ===
+Project: ropi-aoss-dev
+
+--- attribute_registry/department_key
+    purpose: Unlock the canonical Department dropdown (the one the UI actually binds to)
+    BEFORE:
+      field_key: "department_key"
+      active: true
+      is_editable: false
+      status: "active"
+      superseded_by: <absent>
+      hidden_reason: <absent>
+      display_label: "Department"
+      display_group: "Other"
+      tab_group_order: 5
+      display_order: 99
+      updated_by: "6gMinTuk8LNFUxYp8yB20H6LNw83"
+    PLAN:
+      SET is_editable = true  (was false)
+      SET updated_by = "system:tally-168-department-canonical-unlock"  (was "6gMinTuk8LNFUxYp8yB20H6LNw83")
+      SET updated_at = serverTimestamp()
+
+--- attribute_registry/department
+    purpose: Deactivate the legacy phantom Department entry (field_key=undefined, cannot save) so PDP no longer renders a duplicate Department control
+    BEFORE:
+      field_key: <absent>
+      active: true
+      is_editable: true
+      status: <absent>
+      superseded_by: <absent>
+      hidden_reason: <absent>
+      display_label: "Department"
+      display_group: "Taxonomy"
+      tab_group_order: 99
+      display_order: 1
+      updated_by: "system:tally-168-restore-department-editability"
+    PLAN:
+      SET active = false  (was true)
+      SET updated_by = "system:tally-168-department-canonical-unlock"  (was "system:tally-168-restore-department-editability")
+      SET updated_at = serverTimestamp()
+
+(dry-run) No writes performed. Re-run with --apply to commit.

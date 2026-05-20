@@ -1,0 +1,101 @@
+{
+  "attribute_registry/department_key": {
+    "field_type": "dropdown",
+    "severity": null,
+    "depends_on": null,
+    "why_it_matters": null,
+    "required_for_completion": true,
+    "data_type": "enum",
+    "destination_tab": "core_information",
+    "group": "core",
+    "is_searchable": false,
+    "is_filterable": true,
+    "include_in_cadence_targeting": false,
+    "include_in_ai_prompt": true,
+    "full_width": false,
+    "is_ai_generated": false,
+    "is_required": false,
+    "active": true,
+    "status": "active",
+    "default_value": null,
+    "allowed_values": [
+      "footwear",
+      "apparel",
+      "accessory",
+      "equipment"
+    ],
+    "dropdown_options": [],
+    "export_enabled": true,
+    "sort_order": 8,
+    "label": "Product Type",
+    "field_key": "department_key",
+    "display_name": "Department",
+    "display_label": "Department",
+    "enum_source": "department_registry",
+    "dropdown_source": "department_registry",
+    "created_by": "system:tally-144-2c0-seed-department-key-registry",
+    "created_at": {
+      "_seconds": 1778725453,
+      "_nanoseconds": 727000000
+    },
+    "tab_group_order": 5,
+    "display_order": 99,
+    "display_group": "Other",
+    "updated_at": {
+      "_seconds": 1779227196,
+      "_nanoseconds": 618000000
+    },
+    "updated_by": "system:tally-168-department-canonical-unlock",
+    "is_editable": true
+  },
+  "attribute_registry/department": {
+    "allowed_values": [
+      "footwear",
+      "apparel",
+      "accessory",
+      "equipment"
+    ],
+    "is_searchable": false,
+    "created_at": {
+      "_seconds": 1776301283,
+      "_nanoseconds": 449000000
+    },
+    "default_value": null,
+    "label": "Product Type",
+    "required_for_completion": true,
+    "display_label": "Department",
+    "destination_tab": "core_information",
+    "export_enabled": true,
+    "is_ai_generated": false,
+    "is_required": false,
+    "data_type": "enum",
+    "is_filterable": true,
+    "field_type": "dropdown",
+    "include_in_cadence_targeting": false,
+    "sort_order": 8,
+    "group": "core",
+    "include_in_ai_prompt": true,
+    "full_width": false,
+    "enum_source": "department_registry",
+    "dropdown_source": "department_registry",
+    "severity": null,
+    "depends_on": null,
+    "tab_group_order": 99,
+    "why_it_matters": null,
+    "dropdown_options": [
+      "Footwear",
+      "Clothing",
+      "Accessories",
+      "Home & Tech"
+    ],
+    "display_order": 1,
+    "display_group": "Taxonomy",
+    "is_editable": true,
+    "updated_at": {
+      "_seconds": 1779227197,
+      "_nanoseconds": 61000000
+    },
+    "updated_by": "system:tally-168-department-canonical-unlock",
+    "active": false
+  }
+}
