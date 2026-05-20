@@ -24,7 +24,7 @@
  *       display_name         = "Department"          (also keep display_label)
  *       enum_source          = "department_registry"
  *       dropdown_source      = "department_registry" (mirror of enum_source)
- *       is_editable          = false                  (canonical key — system-derived)
+ *       is_editable          = true                   (canonical key — operator-editable dropdown)
  *       created_at/updated_at = serverTimestamp
  *       created_by/updated_by = ACTOR
  *
@@ -96,7 +96,7 @@ function buildForceOverrides() {
     display_label: "Department",
     enum_source: "department_registry",
     dropdown_source: "department_registry",
-    is_editable: false,
+    is_editable: true,
     created_at: admin.firestore.FieldValue.serverTimestamp(),
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
     created_by: ACTOR,
@@ -384,7 +384,7 @@ async function main() {
       console.log(
         `DRY-RUN: target attribute_registry/${TARGET_DOC} MISSING. ` +
           `Apply will create with ${preserved.length} preserved + ${overridden.length} overridden fields. ` +
-          `field_key=${TARGET_DOC} enum_source=department_registry is_editable=false`
+          `field_key=${TARGET_DOC} enum_source=department_registry is_editable=true`
       );
     }
     console.log("Wrote", dryFile);
