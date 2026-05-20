@@ -15,8 +15,8 @@
  * No other fields touched. No code change. No other docs touched.
  *
  * Usage:
- *   node scripts/tally-168-restore-department-editability.js           # dry-run (default)
- *   node scripts/tally-168-restore-department-editability.js --apply   # commit
+ *   node scripts/seed/tally-168-restore-department-editability.js           # dry-run (default)
+ *   node scripts/seed/tally-168-restore-department-editability.js --apply   # commit
  */
 
 "use strict";

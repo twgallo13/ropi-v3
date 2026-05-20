@@ -1,4 +1,3 @@
-🔑  Authenticating via GCP_SA_KEY_DEV env var → project ropi-aoss-dev
 {
   "attribute_registry/department_key": {
     "field_type": "dropdown",
