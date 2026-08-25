@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Grep", "Glob", "LS",
+      "Write(docs/recovery/overnight/**)",
+      "Edit(docs/recovery/overnight/**)",
+      "Bash(npm install:*)", "Bash(npm ci:*)", "Bash(npm run build:*)", "Bash(npm test:*)",
+      "Bash(node:*)", "Bash(npx tsc:*)",
+      "Bash(git status:*)", "Bash(git log:*)", "Bash(git diff:*)", "Bash(git show:*)",
+      "Bash(git branch -r:*)", "Bash(git rev-parse:*)", "Bash(git fetch:*)",
+      "Bash(grep:*)", "Bash(rg:*)", "Bash(find:*)", "Bash(cat:*)", "Bash(sed -n:*)", "Bash(wc:*)", "Bash(ls:*)"
+    ],
+    "deny": [
+      "Bash(git commit:*)", "Bash(git push:*)", "Bash(git checkout:*)", "Bash(git merge:*)", "Bash(git rebase:*)", "Bash(git reset:*)",
+      "Bash(firebase deploy:*)", "Bash(gcloud run deploy:*)", "Bash(bash scripts/deploy:*)", "Bash(sh scripts/deploy:*)",
+      "Bash(rm -rf:*)", "Bash(curl -X POST:*)", "Bash(curl -X PUT:*)", "Bash(curl -X DELETE:*)",
+      "Write(backend/**)", "Write(frontend/**)", "Write(scripts/**)", "Write(firebase/**)",
+      "Edit(backend/**)", "Edit(frontend/**)", "Edit(scripts/**)", "Edit(firebase/**)"
+    ]
+  }
+}

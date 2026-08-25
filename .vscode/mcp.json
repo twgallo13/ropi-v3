@@ -1,0 +1,20 @@
+{
+	"inputs": [
+		{
+			"type": "promptString",
+			"id": "notion-token",
+			"description": "Notion internal integration token (starts with ntn_)",
+			"password": true
+		}
+	],
+	"servers": {
+		"notion": {
+			"type": "stdio",
+			"command": "npx",
+			"args": ["-y", "@notionhq/notion-mcp-server"],
+			"env": {
+				"NOTION_TOKEN": "${input:notion-token}"
+			}
+		}
+	}
+}
