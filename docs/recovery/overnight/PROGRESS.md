@@ -35,15 +35,23 @@ Independently corroborates prior session `session_01XVH5nedtACXy42jSLyHV5P`
 
 | Task | Status | Timestamp (UTC) |
 |---|---|---|
-| §2 Setup + baseline | DONE | 2026-08-25T18:05Z |
-| B1 department / department_key | IN PROGRESS | 2026-08-25T18:05Z |
-| B2 site model | PENDING | — |
-| B3 brand / brand_key | PENDING | — |
-| A Gate 2 maps (P1–P5) | PENDING | — |
-| C Contradiction sweep | BLOCKED (see BLOCK-01) | — |
-| D Sequencing | PENDING | — |
-| E Open questions E1–E9 | PARTIAL-BLOCKED (E3, E4) | — |
-| G UX defects | PARTIAL-BLOCKED (G3, G7) | — |
-| H Security | PENDING | — |
-| I–O | PENDING (L fully blocked) | — |
-| F Self-check + SUMMARY | PENDING | — |
+| §2 Setup + baseline | DONE (this container) | 2026-08-25T18:05Z |
+| B–O, F (all 15 tasks) | **DONE — recovered from the local run at `2698e48`** | 2026-08-25T18:40Z |
+
+## Run status: COMPLETE via recovery
+
+The full 15-task audit was executed **locally** at commit `2698e48` with live Firestore
+access, and its `SUMMARY.md` has been recovered and committed here. This container's
+re-run was superseded and stopped after the baseline — see SUMMARY.md provenance.
+
+That local run hit only 2 blockers (the two missing `docs/recovery/` files). BLOCK-03
+below (no Firestore credentials) applies to THIS container only; the local run had
+credentials and completed every live-data task, including Task L in full.
+
+Only `SUMMARY.md` was recovered. The per-task files it summarises — `deep-map-*.md`,
+`gate2-phase1..5.md`, `contradictions.md`, `sequencing.md`, `open-questions.md`,
+`ux-defects.md`, `security.md`, `dead-ends.md`, `workflows.md`,
+`settings-and-hardcoding.md`, `data-integrity.md`,
+`background-and-silent-failures.md`, `tests-and-dependencies.md`,
+`contracts-and-roles.md` — remain **only on the machine that ran the audit**, untracked.
+They are the evidence behind every count above and are not yet preserved anywhere.
