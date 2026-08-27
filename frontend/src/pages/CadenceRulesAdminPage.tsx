@@ -21,6 +21,11 @@ import {
 } from "../lib/api";
 import { ConfirmModal } from "../components/admin";
 
+// Phase 3.11 — Clean Break: legacy display-name fields ("department", "brand")
+// removed in favor of registry-canonical keys ("department_key", "brand_key").
+// Existing rules persisted under the legacy keys still evaluate at the engine
+// (cadenceEngine.ts:getProductField is field-string agnostic) but cannot be
+// re-selected from the UI dropdown — forcing migration to V3 registry keys.
 const TARGET_FIELDS = [
   "department_key",
   "brand_key",
