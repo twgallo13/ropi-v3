@@ -1,0 +1,644 @@
+Direction,Reference ID,Source or primary path,Uncertainty,Next action
+Source / Department review,L001, >  > ,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L002,0 > 0 > 0,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L003,0 > 0 > Rain Boots,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L004,0 > Boots > Combat Boots,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L005,0 > Sandal > Thong,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L006,0 > Sandals > Flats,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Product detail,L011,Accessories > Backpacks > Backpack,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L013,Accessories > Bag > Backpack,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L014,Accessories > Bags > Backbacks,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L015,Accessories > Bags > Backpack,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L016,Accessories > Bags > Backpacks,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L020,Accessories > Bags > Cross Body Bags,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L021,Accessories > Bags > Crossbody,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L022,Accessories > Bags > Duffle Bag,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L023,Accessories > Bags > Duffle Bags,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L025,Accessories > Bags > Fanny Pack,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L032,Accessories > Bags > Tote,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L033,Accessories > Bags > Tote Bags,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L034,Accessories > Bags & Backpacks > Backpacks,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L035,Accessories > Belts > Belt,Belt purpose/material missing.,Product Ops: inspect product detail
+Product detail,L036,Accessories > Belts > Belts,Belt purpose/material missing.,Product Ops: inspect product detail
+Source / Department review,L037,Accessories > Belts > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L039,Accessories > Bra > Bralette,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L040,Accessories > Bra > Sports bra,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L041,Accessories > Bras > Sports bra,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L045,Accessories > Footwear > Sneakers,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L048,Accessories > Gloves > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L052,Accessories > Handbags > Cross Body Bags,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L053,Accessories > Handbags > Crossbody,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L058,Accessories > Handbags > Tote,Material/style/purpose missing.,Product Ops: inspect product detail
+Product detail,L059,Accessories > Handbags > Tote Bags,Material/style/purpose missing.,Product Ops: inspect product detail
+Source / Department review,L062,Accessories > Hat Care > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L064,Accessories > Hats > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L065,Accessories > Hats > 5 Panels & Volleys,Mixed 5-panels/volleys source requires confirmation; not a proven synonym.,Product Ops: inspect product detail
+Product detail,L066,Accessories > Hats > Accessories,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L067,Accessories > Hats > Adjustable,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L068,Accessories > Hats > Beanie,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L069,Accessories > Hats > Beanies,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L070,Accessories > Hats > Bucket,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L071,Accessories > Hats > Bucket Hats,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L072,Accessories > Hats > Corduroy,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L075,Accessories > Hats > Face,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L079,Accessories > Hats > Fleece,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L080,Accessories > Hats > Hats,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L081,Accessories > Hats > Racing,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L084,Accessories > Hats > Strapback,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L085,Accessories > Hats > Strapbacks,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L087,Accessories > Hats > Twill,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L089,Accessories > Headwear > Beanie,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Product detail,L090,Accessories > Headwear > Caps - Adjustable,Hat style/material not sufficiently specified.,Product Ops: inspect product detail
+Source / Department review,L092,Accessories > Hot Shit > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L093,Accessories > Jewelry > Bracelets,Bracelet material missing.,Product Ops: inspect product detail
+Product detail,L096,Accessories > Purses > Crossbody,Material/style/purpose missing.,Product Ops: inspect product detail
+Source / Department review,L101,Accessories > Shoe Care > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L102,Accessories > Shoe Care > Shoe Care,Shoe care generic label does not identify the item.,Product Ops: inspect product detail
+Product detail,L105,Accessories > Shoe Care & Hardware > Shoe Care,Shoe care generic label does not identify the item.,Product Ops: inspect product detail
+Source / Department review,L107,Accessories > Shoe Cleaner > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L109,Accessories > Shoe Cleaner > Shoe Care,Shoe care generic label does not identify the item.,Product Ops: inspect product detail
+Product detail,L112,Accessories > Shoe Laces > Shoe Care,Shoe care generic label does not identify the item.,Product Ops: inspect product detail
+Source / Department review,L114,Accessories > Socks > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L115,Accessories > Socks > Ankle Sock,"Length is known, athletic versus casual is not; do not auto-promote.",Product Ops: inspect product detail
+Product detail,L116,Accessories > Socks > Athletic Socks,Sock purpose/length not fully specified.,Product Ops: inspect product detail
+Product detail,L117,Accessories > Socks > Basketball,Sock purpose/length not fully specified.,Product Ops: inspect product detail
+Product detail,L118,Accessories > Socks > Crew,"Length is known, athletic versus casual is not; do not auto-promote.",Product Ops: inspect product detail
+Product detail,L119,Accessories > Socks > Crew Cut,"Length is known, athletic versus casual is not; do not auto-promote.",Product Ops: inspect product detail
+Product detail,L120,Accessories > Socks > Lifestyle,Sock purpose/length not fully specified.,Product Ops: inspect product detail
+Product detail,L121,Accessories > Socks > No show,"Length is known, athletic versus casual is not; do not auto-promote.",Product Ops: inspect product detail
+Product detail,L122,Accessories > Socks > Socks,Sock purpose/length not fully specified.,Product Ops: inspect product detail
+Product detail,L123,Accessories > Socks > Socks & Underwear,Sock purpose/length not fully specified.,Product Ops: inspect product detail
+Product detail,L124,Accessories > Socks > Tennis,Sock purpose/length not fully specified.,Product Ops: inspect product detail
+Product detail,L125,Accessories > Socks > Tube,Sock purpose/length not fully specified.,Product Ops: inspect product detail
+Source / Department review,L126,Accessories > Socks & Underwear > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L127,Accessories > Socks & Underwear > Boxer Brief,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L128,Accessories > Socks & Underwear > Boy short,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L129,Accessories > Sunglasses > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L130,Accessories > Sunglasses > New Accessories,Generic source subtype needs product confirmation.,Product Ops: inspect product detail
+Source / Department review,L131,Accessories > Sunglasses > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L134,Accessories > Tops > Sports Bras,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L135,Accessories > Underwear > Boxer Brief,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L136,Accessories > Underwear > Boxers,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L137,Accessories > Underwear > Boy short,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L138,Accessories > Underwear > Bra,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L139,Accessories > Underwear > Briefs,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L140,Accessories > Underwear > Socks & Underwear,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,Lisa: verify source/Department; PO only for business policy
+Product detail,L142,Clothing > Activewear > Body Suit,Sleeve/style or leggings subtype not supplied.,Product Ops: inspect product detail
+Product detail,L143,Clothing > Activewear > Leg-tights,Sleeve/style or leggings subtype not supplied.,Product Ops: inspect product detail
+Product detail,L144,Clothing > Activewear > Shorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L146,Clothing > Bottoms > Cargo,Cargo identifies a feature; Bottoms does not establish pants versus shorts.,Product Ops: inspect product detail
+Product detail,L147,Clothing > Bottoms > Jeans,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L148,Clothing > Bottoms > Pants,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L149,Clothing > Bottoms > Shorts,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L150,Clothing > Bottoms > Skirt,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L151,Clothing > Bottoms > Skirts,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L152,Clothing > Bottoms > Skort,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L156,Clothing > Clothing > Shorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L157,Clothing > Crop Top > Cropped Tee,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L158,Clothing > Crop Top > Long Sleeve,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L159,Clothing > Crop Top > Short Sleeve,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L160,Clothing > Denim > Denim,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L161,Clothing > Denim > Shorts,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L162,Clothing > Dress > Athletic,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L163,Clothing > Dress > Cardigan,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L164,Clothing > Dress > Dress,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L165,Clothing > Dress > Dresses,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L166,Clothing > Dress > Long Dresses,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L167,Clothing > Dress > Mid,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L168,Clothing > Dresses > Knitted dress,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L169,Clothing > Dresses > Long Dresses,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L170,Clothing > Dresses > Long Sleeve,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Product detail,L174,Clothing > Dresses > Tank,Dress length/style not fully established; long or mid is not silently translated.,Product Ops: inspect product detail
+Source / Department review,L175,Clothing > High Heels > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L176,Clothing > Hoodies > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L177,Clothing > Hoodies > Cropped,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L185,Clothing > Hoodies & Sweatshirts > Hoodies,Pullover versus zip-up is missing.,Product Ops: inspect product detail
+Product detail,L186,Clothing > Jacket > Satin,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Source / Department review,L188,Clothing > Jackets > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L189,Clothing > Jackets > Active,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L191,Clothing > Jackets > Athletic,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L192,Clothing > Jackets > Baseball,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L196,Clothing > Jackets > Coaches,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L197,Clothing > Jackets > Coaches Jacket,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L198,Clothing > Jackets > Cropped,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L200,Clothing > Jackets > Fleece,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L201,Clothing > Jackets > Fur,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L202,Clothing > Jackets > Hoodie,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L203,Clothing > Jackets > Jacket,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L204,Clothing > Jackets > Jackets,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Source / Department review,L206,Clothing > Jackets > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L207,Clothing > Jackets > Outerwear,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L209,Clothing > Jackets > Puffer,Puffer jacket versus coat needs product evidence.,Product Ops: inspect product detail
+Product detail,L210,Clothing > Jackets > Pullover,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L213,Clothing > Jackets > Reflective,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L214,Clothing > Jackets > Reversible,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L215,Clothing > Jackets > Satin,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L216,Clothing > Jackets > Shacket,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L217,Clothing > Jackets > Thermal,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L225,Clothing > Jackets > Windrunner,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L226,Clothing > Jackets > Woven,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L227,Clothing > Jackets > Zip-Up,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Source / Department review,L228,Clothing > Jeans > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L229,Clothing > Jeans > Cargo,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L230,Clothing > Jeans > Denim,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L231,Clothing > Jeans > Flare,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L232,Clothing > Jeans > Jeans,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L233,Clothing > Jeans > Pants,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L235,Clothing > Jeans > Slim & Straight,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Source / Department review,L237,Clothing > Jerseys > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L240,Clothing > Jerseys > Jersey,Jersey sport missing or unsupported.,Product Ops: inspect product detail
+Product detail,L241,Clothing > Jerseys > Long Sleeve,Jersey sport missing or unsupported.,Product Ops: inspect product detail
+Product detail,L242,Clothing > Jerseys > Shirts,Jersey sport missing or unsupported.,Product Ops: inspect product detail
+Product detail,L245,Clothing > Knit Tops > Crewnecks,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L246,Clothing > Knit Tops > Sweaters,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L247,Clothing > Leggings > Straight,Leggings purpose/subtype is not supplied.,Product Ops: inspect product detail
+Product detail,L249,Clothing > Outerwear > Flannel,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L250,Clothing > Outerwear > Jackets,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L251,Clothing > Outerwear > Outerwear,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Product detail,L252,Clothing > Outerwear > Shirts,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,Product Ops: inspect product detail
+Source / Department review,L256,Clothing > Pants > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L257,Clothing > Pants > Active,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L258,Clothing > Pants > Basketball,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L259,Clothing > Pants > Basketball Pants,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L260,Clothing > Pants > Bootcut,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L261,Clothing > Pants > Bottoms,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L263,Clothing > Pants > Casual,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L265,Clothing > Pants > Denim,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L266,Clothing > Pants > Flare,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L267,Clothing > Pants > Fleece,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L268,Clothing > Pants > Jeans,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L271,Clothing > Pants > Jumpers,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L272,Clothing > Pants > Leggings,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L273,Clothing > Pants > Pants,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L274,Clothing > Pants > Relaxed,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L275,Clothing > Pants > Skateboarding,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L276,Clothing > Pants > Skinny,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L277,Clothing > Pants > Skirt,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L278,Clothing > Pants > Slim & Straight,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L279,Clothing > Pants > Sweatpants,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L282,Clothing > Pants > Wideleg,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L283,Clothing > Pants > Windbreakers,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L284,Clothing > Pants > Windrunner,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L285,Clothing > Pants > Woven,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L286,Clothing > Pants > Wovens,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L289,Clothing > Running > Tights,Leggings purpose/subtype is not supplied.,Product Ops: inspect product detail
+Product detail,L290,Clothing > Shirts > Bodysuit,Bodysuit sleeve detail missing.,Product Ops: inspect product detail
+Product detail,L291,Clothing > Shirts > Button Up,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L292,Clothing > Shirts > Button-up,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L293,Clothing > Shirts > Crew,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L294,Clothing > Shirts > Cropped Tee,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L295,Clothing > Shirts > Denim,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L297,Clothing > Shirts > Jersey,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L298,Clothing > Shirts > Long Sleeve,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L300,Clothing > Shirts > Long Sleeve Graphic Tees,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L301,Clothing > Shirts > Long sleeves,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L303,Clothing > Shirts > Shacket,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L304,Clothing > Shirts > Short Sleeve,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L306,Clothing > Shirts > Short Sleeve Graphic Tees,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L307,Clothing > Shirts > Soccer,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L309,Clothing > Shirts > Tank Tops,Tank/sleeveless overlap requires product evidence.,Product Ops: inspect product detail
+Source / Department review,L310,Clothing > Shoes > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L311,Clothing > Shoes > Sneakers,Clothing Department conflicts with source product family; inspect product before changing Department.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L312,Clothing > Shorts > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L313,Clothing > Shorts > Active,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L317,Clothing > Shorts > Bike Shorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L318,Clothing > Shorts > Boardshorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L319,Clothing > Shorts > Boy short,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L320,Clothing > Shorts > Cargo,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L324,Clothing > Shorts > Fleece,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L325,Clothing > Shorts > High Waisted,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L327,Clothing > Shorts > Jersey,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L328,Clothing > Shorts > Running Shorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L329,Clothing > Shorts > Shorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L330,Clothing > Shorts > Sweatpants,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L332,Clothing > Shorts > Swimwear,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L333,Clothing > Shorts > Track,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L334,Clothing > Shorts > Track Shorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L335,Clothing > Shorts > Twill,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L336,Clothing > Shorts > Twills,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L337,Clothing > Shorts > Varsity,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L338,Clothing > Shorts > Volley Shorts,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L339,Clothing > Shorts > Windrunner,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L340,Clothing > Shorts > Woven,Shorts type/detail is incomplete or not represented exactly.,Product Ops: inspect product detail
+Product detail,L341,Clothing > Skirt > Skirt,Skirt length missing.,Product Ops: inspect product detail
+Product detail,L342,Clothing > Skirt > Tennis,Skirt length missing.,Product Ops: inspect product detail
+Source / Department review,L343,Clothing > Skirts > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L344,Clothing > Skirts > Active,Skirt length missing.,Product Ops: inspect product detail
+Product detail,L345,Clothing > Skirts > Athletic,Skirt length missing.,Product Ops: inspect product detail
+Product detail,L346,Clothing > Skirts > Fleece,Skirt length missing.,Product Ops: inspect product detail
+Product detail,L347,Clothing > Skirts > Skirt,Skirt length missing.,Product Ops: inspect product detail
+Product detail,L348,Clothing > Skirts > Skirts,Skirt length missing.,Product Ops: inspect product detail
+Product detail,L349,Clothing > Skirts > Windrunner,Skirt length missing.,Product Ops: inspect product detail
+Source / Department review,L350,Clothing > Slippers > Slip On,Clothing Department conflicts with source product family; inspect product before changing Department.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L351,Clothing > Sneakers > Basketball Shoe,Clothing Department conflicts with source product family; inspect product before changing Department.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L352,Clothing > Socks > Socks,Clothing Department conflicts with source product family; inspect product before changing Department.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L353,Clothing > Socks & Underwear > Socks,Clothing Department conflicts with source product family; inspect product before changing Department.,Lisa: verify source/Department; PO only for business policy
+Product detail,L360,Clothing > Sweaters > Fleece,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L361,Clothing > Sweaters > Hoodies,Pullover versus zip-up is missing.,Product Ops: inspect product detail
+Product detail,L362,Clothing > Sweaters > Pullover,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L363,Clothing > Sweaters > Sweatshirts,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L364,Clothing > Sweaters > Track,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L365,Clothing > Sweaters > Windbreaker,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Source / Department review,L366,Clothing > Sweatpants > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L368,Clothing > Sweatpants > Flare,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L372,Clothing > Sweatpants > Pants,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L373,Clothing > Sweatpants > Slim & Straight,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L374,Clothing > Sweatpants > Straight,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L375,Clothing > Sweatpants > Sweatpants,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L377,Clothing > Sweatpants > Woven,Source garment/fit needs additional detail or overlaps several approved leaves.,Product Ops: inspect product detail
+Product detail,L378,Clothing > Sweatshirt > Long Sleeve Graphic Tees,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Source / Department review,L379,Clothing > Sweatshirts > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L383,Clothing > Sweatshirts > Cropped,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L384,Clothing > Sweatshirts > Fleece,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L387,Clothing > Sweatshirts > V-Neck,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L388,Clothing > Sweatshirts > Windbreakers,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L391,Clothing > Sweatshirts > Zip-up,Source does not establish one sweater/sweatshirt/hoodie leaf.,Product Ops: inspect product detail
+Product detail,L392,Clothing > Swimwear > Swimwear,Swim garment and subtype missing.,Product Ops: inspect product detail
+Source / Department review,L393,Clothing > T-shirts > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L394,Clothing > T-shirts > Activewear,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L396,Clothing > T-shirts > Basic Tees,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L397,Clothing > T-shirts > Button Up,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L398,Clothing > T-shirts > Crewneck,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L399,Clothing > T-shirts > Cropped,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L400,Clothing > T-shirts > Cropped Tee,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L402,Clothing > T-shirts > Jersey,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Source / Department review,L404,Clothing > T-shirts > Long Sleeve Buttondown Shirts,T-shirts conflicts with Long Sleeve Buttondown Shirts; inspect garment before prioritizing the child label.,Lisa: verify source/Department; PO only for business policy
+Product detail,L407,Clothing > T-shirts > Shirts,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L411,Clothing > T-shirts > Sleeveless,Tank/sleeveless overlap requires product evidence.,Product Ops: inspect product detail
+Product detail,L413,Clothing > T-shirts > Tank Tops,Tank/sleeveless overlap requires product evidence.,Product Ops: inspect product detail
+Product detail,L414,Clothing > T-shirts > Varsity,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L415,Clothing > Tank Tops > Cropped,Athletic versus casual tank not supplied.,Product Ops: inspect product detail
+Product detail,L416,Clothing > Tank Tops > Graphic Tank Tops,Athletic versus casual tank not supplied.,Product Ops: inspect product detail
+Product detail,L417,Clothing > Tank Tops > Jersey,Athletic versus casual tank not supplied.,Product Ops: inspect product detail
+Product detail,L418,Clothing > Tops > Bodysuit,Bodysuit sleeve detail missing.,Product Ops: inspect product detail
+Product detail,L419,Clothing > Tops > Bra,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L420,Clothing > Tops > Button-up,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L422,Clothing > Tops > Crew,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L423,Clothing > Tops > Crewneck,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L424,Clothing > Tops > Crewnecks,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L425,Clothing > Tops > Cropped,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L426,Clothing > Tops > Cropped Tee,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Source / Department review,L427,Clothing > Tops > FALSE,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L429,Clothing > Tops > Jacket,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L430,Clothing > Tops > Jersey,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L431,Clothing > Tops > Knit Tops,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L432,Clothing > Tops > Long Sleeve,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L434,Clothing > Tops > Long Sleeve Graphic Tees,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L435,Clothing > Tops > Long sleeves,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L436,Clothing > Tops > Polos,Polo sleeve length missing.,Product Ops: inspect product detail
+Product detail,L437,Clothing > Tops > Short Sleeve,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L439,Clothing > Tops > Short Sleeve Graphic Tees,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L440,Clothing > Tops > Short sleeves,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L442,Clothing > Tops > Sweatshirts,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L443,Clothing > Tops > T-Shirts,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L444,Clothing > Tops > T-shirt,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L445,Clothing > Tops > Tank,Tank/sleeveless overlap requires product evidence.,Product Ops: inspect product detail
+Product detail,L446,Clothing > Tops > Tank Tops,Tank/sleeveless overlap requires product evidence.,Product Ops: inspect product detail
+Product detail,L447,Clothing > Tops > Tees,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L448,Clothing > Tops > Tops,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L449,Clothing > Tops > Track,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L450,Clothing > Tops > Tube,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L451,Clothing > Tops > Winter Vests,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L452,Clothing > Tops > Woven,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L453,Clothing > Tops > Wovens,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L454,Clothing > Tops > Zip-Up,Old top label does not prove one full approved path.,Product Ops: inspect product detail
+Product detail,L458,Clothing > Vests > Outerwear,Vest insulation/material needs evidence.,Product Ops: inspect product detail
+Product detail,L460,Clothing > Vests > Winter Vests,Vest insulation/material needs evidence.,Product Ops: inspect product detail
+Source / Department review,L461,Footwear >  > ,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L462,Footwear > 0 > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L463,Footwear > Athletic > Basketball,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L464,Footwear > Athletic > Basketball Shoe,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Source / Department review,L465,Footwear > Athletic > FALSE,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L466,Footwear > Athletic > Lifestyle,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L467,Footwear > Athletic > Running,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L469,Footwear > Boat Shoes > Boat,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L470,Footwear > Boat Shoes > Boat Shoes,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Source / Department review,L471,Footwear > Boots > ,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L472,Footwear > Boots > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L473,Footwear > Boots > 6 Inch Premium,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L474,Footwear > Boots > 6-Inch Boot,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L475,Footwear > Boots > Ankle Boots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L476,Footwear > Boots > Athletic,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Source / Department review,L477,Footwear > Boots > Basketball Shoe,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,Lisa: verify source/Department; PO only for business policy
+Product detail,L478,Footwear > Boots > Block Heel,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L480,Footwear > Boots > Boots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L481,Footwear > Boots > Chelsea,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L483,Footwear > Boots > Chunky,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Source / Department review,L484,Footwear > Boots > Clogs,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,Lisa: verify source/Department; PO only for business policy
+Product detail,L485,Footwear > Boots > Combat Boot,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L486,Footwear > Boots > Combat Boots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L487,Footwear > Boots > Core,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L489,Footwear > Boots > Duck Boots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L490,Footwear > Boots > Fashion Boots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L491,Footwear > Boots > Flat,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Source / Department review,L492,Footwear > Boots > Flats,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,Lisa: verify source/Department; PO only for business policy
+Product detail,L493,Footwear > Boots > Fringe,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L496,Footwear > Boots > Gravity Wedge,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L497,Footwear > Boots > Heel,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L498,Footwear > Boots > Heels,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L499,Footwear > Boots > High Heel,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L500,Footwear > Boots > High Heels,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Source / Department review,L501,Footwear > Boots > Jeans,Footwear source contains a garment/conflicting label; inspect product.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L504,Footwear > Boots > Leggings,Footwear source contains a garment/conflicting label; inspect product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L505,Footwear > Boots > Lifestyle,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L506,Footwear > Boots > Low Heel,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L507,Footwear > Boots > Mid,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Source / Department review,L511,Footwear > Boots > Oxfords,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,Lisa: verify source/Department; PO only for business policy
+Product detail,L512,Footwear > Boots > Platform,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L513,Footwear > Boots > Platforms,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L514,Footwear > Boots > Puffer,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L515,Footwear > Boots > Rain,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L516,Footwear > Boots > Rain & Snow,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L517,Footwear > Boots > Rain Boots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L518,Footwear > Boots > Rainboots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Source / Department review,L520,Footwear > Boots > Sneaker,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L521,Footwear > Boots > Sneakers,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,Lisa: verify source/Department; PO only for business policy
+Product detail,L522,Footwear > Boots > Stiletto,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L524,Footwear > Boots > Water Proof,Waterproof alone does not prove Winter & Weather use; review context.,Product Ops: inspect product detail
+Product detail,L525,Footwear > Boots > Wedges,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L527,Footwear > Boots > Work Boots,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,Product Ops: inspect product detail
+Product detail,L528,Footwear > Casual > Flat,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L529,Footwear > Casual > Flats,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L530,Footwear > Casual > Footwear,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L531,Footwear > Casual > Lifestyle,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L532,Footwear > Casual > Loafer,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L533,Footwear > Casual > Loafers,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L534,Footwear > Casual > Moccasins,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L535,Footwear > Casual > Oxfords,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L536,Footwear > Casual > Slip On,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L537,Footwear > Casual > Slipper,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L538,Footwear > Casual > Slippers,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L539,Footwear > Casual > Sneaker,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Product detail,L540,Footwear > Casual > Sneakers,Old Casual class spans several new footwear families.,Product Ops: inspect product detail
+Source / Department review,L541,Footwear > Clogs > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L542,Footwear > Clogs > Casual,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L543,Footwear > Clogs > Mules,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L544,Footwear > Clogs > Slide,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L545,Footwear > Clogs > Slip On,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L546,Footwear > Clogs > Slipper,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L547,Footwear > Dress > Heels,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L548,Footwear > Dress > Low Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L549,Footwear > Dressy > Heels,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L550,Footwear > Dressy > High Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L551,Footwear > Dressy > High Heels,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L552,Footwear > Dressy > Low Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L553,Footwear > Dressy > Oxfords,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,Product Ops: inspect product detail
+Product detail,L554,Footwear > Dressy > Platform,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L555,Footwear > Dressy > Strappy Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L556,Footwear > Dressy > Wedge,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,Product Ops: inspect product detail
+Source / Department review,L557,Footwear > Flats > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L570,Footwear > Footwear > Basketball,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L571,Footwear > Footwear > Casual,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L572,Footwear > Footwear > Footwear,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L573,Footwear > Footwear > Lifestyle,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Source / Department review,L574,Footwear > High Heels > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L575,Footwear > High Heels > Adjustable,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L576,Footwear > High Heels > Block Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L577,Footwear > High Heels > Booties,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L578,Footwear > High Heels > Boots,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L579,Footwear > High Heels > Chunky,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L580,Footwear > High Heels > Dress Shoes,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L581,Footwear > High Heels > Dresses,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L582,Footwear > High Heels > Dressy,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L583,Footwear > High Heels > Exotic,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L584,Footwear > High Heels > Fur boots,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L585,Footwear > High Heels > Gladiator,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L586,Footwear > High Heels > Heels,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L587,Footwear > High Heels > High Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L588,Footwear > High Heels > High Heels,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L589,Footwear > High Heels > Jeweled,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L590,Footwear > High Heels > Knee High Boots,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L591,Footwear > High Heels > Lace up,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L592,Footwear > High Heels > Lifestyle,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L593,Footwear > High Heels > Loafers,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L594,Footwear > High Heels > Low Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L595,Footwear > High Heels > Mules,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L596,Footwear > High Heels > Open Toe,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L597,Footwear > High Heels > Peep Toe,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L598,Footwear > High Heels > Platform,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L599,Footwear > High Heels > Platforms,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L600,Footwear > High Heels > Pump,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L601,Footwear > High Heels > Pumps,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L602,Footwear > High Heels > Pumps & Stilettos,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L603,Footwear > High Heels > Sandals,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L604,Footwear > High Heels > Slingback,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L605,Footwear > High Heels > Slip On,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L606,Footwear > High Heels > Stiletto,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L607,Footwear > High Heels > Stocking,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L608,Footwear > High Heels > Strappy,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L609,Footwear > High Heels > Strappy Heel,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L610,Footwear > High Heels > Thigh High Boots,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L611,Footwear > High Heels > Thong,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L612,Footwear > High Heels > Wedge,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L613,Footwear > High Heels > Wedges,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L614,Footwear > High Heels > Wrap Around,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L615,Footwear > Knee High Boots > High Heels,Height/class conflict or heel detail requires product review.,Product Ops: inspect product detail
+Product detail,L616,Footwear > Knee High Boots > Knee High Boots,Height/class conflict or heel detail requires product review.,Product Ops: inspect product detail
+Product detail,L617,Footwear > Knee High Boots > Platform,Height/class conflict or heel detail requires product review.,Product Ops: inspect product detail
+Product detail,L618,Footwear > Knee High Boots > Stiletto,Height/class conflict or heel detail requires product review.,Product Ops: inspect product detail
+Product detail,L619,Footwear > Knee High Boots > Thigh High Boots,Height/class conflict or heel detail requires product review.,Product Ops: inspect product detail
+Product detail,L620,Footwear > Knee High Boots > Western,Height/class conflict or heel detail requires product review.,Product Ops: inspect product detail
+Source / Department review,L621,Footwear > Lifestyle > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L622,Footwear > Moccasin > Moccasins,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L623,Footwear > Moccasin > Slip On,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L624,Footwear > Oxford > Casual,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L625,Footwear > Oxford > Dress Shoes,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L626,Footwear > Oxford > Flats,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L627,Footwear > Oxford > Lace up,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L628,Footwear > Oxford > Lifestyle,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L629,Footwear > Oxford > Oxfords,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L630,Footwear > Oxford > Sneakers,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L631,Footwear > Oxford > Toddler,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Source / Department review,L632,Footwear > Pants > Joggers,Footwear source contains a garment/conflicting label; inspect product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L633,Footwear > Platform > Booties,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,Product Ops: inspect product detail
+Product detail,L634,Footwear > Platform > High Heels,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L635,Footwear > Platform > Lifestyle,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Product detail,L636,Footwear > Platform > Loafers,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,Product Ops: inspect product detail
+Product detail,L637,Footwear > Platform > Pumps,Heel description does not prove one pump/platform construction; avoid narrowing by default.,Product Ops: inspect product detail
+Source / Department review,L638,Footwear > Running > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L639,Footwear > Sandal > Clogs,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L643,Footwear > Sandal > Jelly,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L644,Footwear > Sandal > Lifestyle,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L645,Footwear > Sandal > Mules,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L646,Footwear > Sandal > Platform,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L647,Footwear > Sandal > Sandals,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L648,Footwear > Sandal > Slide,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L649,Footwear > Sandal > Slides,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L650,Footwear > Sandal > Slip On,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L652,Footwear > Sandal > Thong,Thong sandal is not necessarily a flip-flop; inspect product.,Product Ops: inspect product detail
+Product detail,L653,Footwear > Sandal > Wedge,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L654,Footwear > Sandal > Wrap Around,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Source / Department review,L655,Footwear > Sandals > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L656,Footwear > Sandals > Animal Print,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L657,Footwear > Sandals > Bandals,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L658,Footwear > Sandals > Casual,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L659,Footwear > Sandals > Clogs,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L660,Footwear > Sandals > Exotic,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L665,Footwear > Sandals > Heels,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L666,Footwear > Sandals > High Heels,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L667,Footwear > Sandals > Jelly,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L668,Footwear > Sandals > Jeweled,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L669,Footwear > Sandals > Lace up,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L670,Footwear > Sandals > Lifestyle,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L671,Footwear > Sandals > Loafers,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L672,Footwear > Sandals > Low Heel,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L673,Footwear > Sandals > Mules,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L674,Footwear > Sandals > Open Toe,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L675,Footwear > Sandals > Platform,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L676,Footwear > Sandals > Platforms,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L677,Footwear > Sandals > Sandals,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L678,Footwear > Sandals > Slide,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L679,Footwear > Sandals > Slides,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L680,Footwear > Sandals > Slingback,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L681,Footwear > Sandals > Slip On,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L683,Footwear > Sandals > Strappy Heel,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L684,Footwear > Sandals > Thong,Thong sandal is not necessarily a flip-flop; inspect product.,Product Ops: inspect product detail
+Product detail,L685,Footwear > Sandals > Toddler,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L686,Footwear > Sandals > Wedge,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L687,Footwear > Sandals > Wedges,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L688,Footwear > Sandals > Wrap Around,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,Product Ops: inspect product detail
+Product detail,L689,Footwear > Shoes > Athletic,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L691,Footwear > Shoes > Basketball,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L694,Footwear > Shoes > Casual,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L702,Footwear > Shoes > Lifestyle,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Source / Department review,L706,Footwear > Shoes > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L713,Footwear > Shoes > Shoes,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L714,Footwear > Shoes > Skate,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L716,Footwear > Shoes > Sneaker,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L717,Footwear > Shoes > Sneakers,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L720,Footwear > Slip-on > Booties,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L721,Footwear > Slip-on > Clogs,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L722,Footwear > Slip-on > Lifestyle,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L723,Footwear > Slip-on > New Shoes,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L724,Footwear > Slip-on > Slides,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L725,Footwear > Slippers > Casual,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L726,Footwear > Slippers > Clogs,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L727,Footwear > Slippers > Moccasins,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L728,Footwear > Slippers > Platform,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L729,Footwear > Slippers > Sandals,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L730,Footwear > Slippers > Slides,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L731,Footwear > Slippers > Slip On,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L732,Footwear > Slippers > Slipper,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L733,Footwear > Slippers > Slippers,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Source / Department review,L734,Footwear > Sneakers > 0,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Product detail,L735,Footwear > Sneakers > Action Sport,Action Sport does not prove Skate; sport/use and subtype need evidence.,Product Ops: inspect product detail
+Product detail,L736,Footwear > Sneakers > Active,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L737,Footwear > Sneakers > Athletic,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Source / Department review,L738,Footwear > Sneakers > Ballet,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L740,Footwear > Sneakers > Basics,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L741,Footwear > Sneakers > Basketball,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L742,Footwear > Sneakers > Basketball Shoe,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L743,Footwear > Sneakers > Casual,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Source / Department review,L745,Footwear > Sneakers > Coaches Jacket,Footwear source contains a garment/conflicting label; inspect product.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L746,Footwear > Sneakers > Exotic,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L747,Footwear > Sneakers > Flats,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L748,Footwear > Sneakers > Footwear,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Source / Department review,L749,Footwear > Sneakers > Heels,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L750,Footwear > Sneakers > High-tops,High-top construction does not establish Lifestyle versus basketball/other sport.,Product Ops: inspect product detail
+Source / Department review,L751,Footwear > Sneakers > Knee High Boots,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L752,Footwear > Sneakers > Lace up,"Construction, generic label or age does not establish sneaker sport/style; product evidence needed.",Product Ops: inspect product detail
+Product detail,L753,Footwear > Sneakers > Lifestyle,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Source / Department review,L754,Footwear > Sneakers > Loafer,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L756,Footwear > Sneakers > Moccasins,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L757,Footwear > Sneakers > New Shoes,"Construction, generic label or age does not establish sneaker sport/style; product evidence needed.",Product Ops: inspect product detail
+Source / Department review,L758,Footwear > Sneakers > None,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",Lisa: verify source/Department; PO only for business policy
+Source / Department review,L759,Footwear > Sneakers > Oxfords,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L763,Footwear > Sneakers > Reversible,Footwear source contains a garment/conflicting label; inspect product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L764,Footwear > Sneakers > Running,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L765,Footwear > Sneakers > Runnins,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L766,Footwear > Sneakers > Shoes,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L767,Footwear > Sneakers > Skate,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L768,Footwear > Sneakers > Skateboarding,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L769,Footwear > Sneakers > Slip On,Slip-on construction does not establish Lifestyle versus skate/other use.,Product Ops: inspect product detail
+Product detail,L770,Footwear > Sneakers > Sneaker,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L771,Footwear > Sneakers > Sneakers,Generic shoe/sneaker type does not establish full path.,Product Ops: inspect product detail
+Product detail,L773,Footwear > Sneakers > Tennis,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Product detail,L774,Footwear > Sneakers > Toddler,"Construction, generic label or age does not establish sneaker sport/style; product evidence needed.",Product Ops: inspect product detail
+Product detail,L775,Footwear > Sneakers > Training,"Sport/family supplied, but required performance/style subtype absent.",Product Ops: inspect product detail
+Source / Department review,L776,Footwear > Sneakers > Wedges,Sneaker class conflicts with the source subtype; inspect the actual product.,Lisa: verify source/Department; PO only for business policy
+Product detail,L778,Footwear > Wedges > Platforms,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L779,Footwear > Wedges > Sandals,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L780,Footwear > Wedges > Strappy,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Product detail,L781,Footwear > Wedges > Wedges,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,Product Ops: inspect product detail
+Source / Department review,L782,Intimates > Accessories > Sports bra,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L783,Intimates > Bra > Bralette,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L784,Intimates > Bras > Sports bra,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L785,Intimates > Shorts > Boy short,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L786,Intimates > Socks & Underwear > Boxer Brief,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L787,Intimates > Underwear > 0,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L788,Intimates > Underwear > Boxer Brief,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L789,Intimates > Underwear > Boy short,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L790,Intimates > Underwear > Thong,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L791,MEN > Accessories > Backpacks,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L792,MEN > Accessories > Beanies,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L793,MEN > Accessories > Crossbody Bags,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L794,MEN > Accessories > Hats,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L795,MEN > Accessories > Socks,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L796,MEN > Accessories > Watches,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L797,MEN > Clothing > Hoodies & Sweatshirts,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L798,MEN > Clothing > Jackets,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L799,MEN > Clothing > Jeans,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L800,MEN > Clothing > Jerseys,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L801,MEN > Clothing > Joggers,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L802,MEN > Clothing > Shorts,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L803,MEN > Clothing > T-Shirts,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L804,MEN > Clothing > Track Pants,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L805,MEN > SHOES > Basketball,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L806,MEN > SHOES > Boots,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L807,MEN > SHOES > Running,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L808,MEN > SHOES > Skate,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L809,MEN > SHOES > Slides,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L810,MEN > SHOES > Sneakers,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L811,Subscription > Bags > Handbags and Purses,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L812,WOMEN > Clothing > Leggings,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L813,WOMEN > Clothing > Sports Bras,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Source / Department review,L814,WOMEN > Clothing > Tank Top,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,Lisa: verify source/Department; PO only for business policy
+Website fill,T013,Accessories > Bags & Backpacks > Wallets & Card Holders > Wallets,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T014,Accessories > Beauty & Grooming > Fragrance > Body Mist,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T015,Accessories > Beauty & Grooming > Fragrance > Cologne,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T016,Accessories > Beauty & Grooming > Grooming > Beard Care,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T017,Accessories > Beauty & Grooming > Grooming > Hair Care,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T018,Accessories > Beauty & Grooming > Makeup > Eye Color,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T019,Accessories > Beauty & Grooming > Makeup > Lip Color,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T020,Accessories > Beauty & Grooming > Skincare > Cleansers,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T021,Accessories > Beauty & Grooming > Skincare > Moisturizers,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T022,Accessories > Beauty & Grooming > Sun Care > After Sun,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T023,Accessories > Beauty & Grooming > Sun Care > Sunscreen,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T027,Accessories > Gear & Misc > Personal & Small Accessories > Keychains,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T029,Accessories > Gear & Misc > Personal & Small Accessories > Wallet Chains,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T033,Accessories > Hair Accessories > Clips & Pins > Bobby Pins,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T034,Accessories > Hair Accessories > Clips & Pins > Hair Clips,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T035,Accessories > Hair Accessories > Headbands & Ties > Hair Ties,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T036,Accessories > Hair Accessories > Headbands & Ties > Headbands,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T054,Accessories > Jewelry & Watches > Necklaces > Chains,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T055,Accessories > Jewelry & Watches > Necklaces > Pendants,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T056,Accessories > Jewelry & Watches > Rings > Bands,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T057,Accessories > Jewelry & Watches > Watches > Analog,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T059,Accessories > Jewelry & Watches > Watches > Smartwatches,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T065,Accessories > Tech Accessories > Phone Cases > Leather,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T066,Accessories > Tech Accessories > Phone Cases > Silicone,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T096,Clothing > Dresses & Rompers > Rompers & Jumpsuits > Jumpsuits,Old Jumpers > Pants/Bottoms does not prove rompers or one-piece jumpsuits; no forced target.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T097,Clothing > Dresses & Rompers > Rompers & Jumpsuits > Rompers,Old Jumpers > Pants/Bottoms does not prove rompers or one-piece jumpsuits; no forced target.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T104,Clothing > Intimates & Sleepwear > Sleepwear > Nightgowns,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T105,Clothing > Intimates & Sleepwear > Sleepwear > Pajama Sets,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T106,Clothing > Intimates & Sleepwear > Sleepwear > Robes,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T109,Clothing > Intimates & Sleepwear > Underwear > Briefs,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T110,Clothing > Matching Sets > Tracksuits > Full Zip,Box Set > Clothing and Apparel does not prove tracksuits or matching sets; verify an approved old output.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T111,Clothing > Matching Sets > Tracksuits > Pullover,Box Set > Clothing and Apparel does not prove tracksuits or matching sets; verify an approved old output.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T112,Clothing > Matching Sets > Two-Piece Sets > Crop Top Sets,Box Set > Clothing and Apparel does not prove tracksuits or matching sets; verify an approved old output.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T113,Clothing > Matching Sets > Two-Piece Sets > Shorts Sets,Box Set > Clothing and Apparel does not prove tracksuits or matching sets; verify an approved old output.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T122,Clothing > Outerwear & Jackets > Jackets > Leather/Moto Jackets,Plausible legacy candidate has a different/broader family label; confirm website/report meaning before selecting it.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T191,Footwear > Boots > Winter & Weather > Snow Boots,A broader Boots output exists; confirm generic grouping versus product-specific legacy type. Snow also has observed Rain & Snow (L516) as a candidate.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T195,Footwear > Casual Shoes > Espadrilles > Slip-On,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T200,Footwear > Clogs > Classic Clogs > Classic,No clean generic Clogs > Clogs old tuple; available Clogs values imply other forms or 0. Choose external output with evidence.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T201,Footwear > Clogs > Platform Clogs > Platform,No clean generic Clogs > Clogs old tuple; available Clogs values imply other forms or 0. Choose external output with evidence.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T202,Footwear > Dress Shoes > Derbies > Classic,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T206,Footwear > Dress Shoes > Monk Straps > Double,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T207,Footwear > Dress Shoes > Monk Straps > Single,No defensible same-Department legacy tuple selected from the observed old source; verify missing coverage or required product detail.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T223,Footwear > Sandals & Wedges > Slides & Flip-Flops > Beach,Beach or Leather does not distinguish slide from flip-flop; product detail is needed.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T226,Footwear > Sandals & Wedges > Slides & Flip-Flops > Leather,Beach or Leather does not distinguish slide from flip-flop; product detail is needed.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T231,Footwear > Shoe Accessories > Shoe Care & Accessories > Insoles,Plausible legacy candidate has a different/broader family label; confirm website/report meaning before selecting it.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T232,Footwear > Shoe Accessories > Shoe Care & Accessories > Lace Kits,Plausible legacy candidate has a different/broader family label; confirm website/report meaning before selecting it.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T233,Footwear > Slip-Ons > Canvas Slip-Ons > Canvas,No generic Slip-on > Slip On old tuple; existing values imply other footwear families. Do not choose New Shoes/Lifestyle by default.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T234,Footwear > Slip-Ons > Knit Slip-Ons > Knit,No generic Slip-on > Slip On old tuple; existing values imply other footwear families. Do not choose New Shoes/Lifestyle by default.,Lisa: confirm valid existing legacy output; selected target remains blank
+Website fill,T264,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Charms,The only shoe-charms outputs say Jibbitz (L106/L009); a generic Shoe Charms path does not establish that brand-specific label. Confirm an accepted generic legacy output/meaning before selecting it.,Lisa: confirm valid existing legacy output; selected target remains blank

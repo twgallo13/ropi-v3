@@ -1,0 +1,271 @@
+Path ID,Department,Class,Category,Sub-Category,Full four-level path
+T001,Accessories,Bags & Backpacks,Backpacks,Mini Backpacks,Accessories > Bags & Backpacks > Backpacks > Mini Backpacks
+T002,Accessories,Bags & Backpacks,Backpacks,School Backpacks,Accessories > Bags & Backpacks > Backpacks > School Backpacks
+T003,Accessories,Bags & Backpacks,Backpacks,Travel,Accessories > Bags & Backpacks > Backpacks > Travel
+T004,Accessories,Bags & Backpacks,Crossbody & Messenger,Messenger Bags,Accessories > Bags & Backpacks > Crossbody & Messenger > Messenger Bags
+T005,Accessories,Bags & Backpacks,Crossbody Bags,Casual,Accessories > Bags & Backpacks > Crossbody Bags > Casual
+T006,Accessories,Bags & Backpacks,Crossbody Bags,Sport,Accessories > Bags & Backpacks > Crossbody Bags > Sport
+T007,Accessories,Bags & Backpacks,Duffle Bags,Gym Bags,Accessories > Bags & Backpacks > Duffle Bags > Gym Bags
+T008,Accessories,Bags & Backpacks,Duffle Bags,Travel,Accessories > Bags & Backpacks > Duffle Bags > Travel
+T009,Accessories,Bags & Backpacks,Fanny Packs,Shoulder,Accessories > Bags & Backpacks > Fanny Packs > Shoulder
+T010,Accessories,Bags & Backpacks,Fanny Packs,Waist,Accessories > Bags & Backpacks > Fanny Packs > Waist
+T011,Accessories,Bags & Backpacks,Tote Bags,Canvas,Accessories > Bags & Backpacks > Tote Bags > Canvas
+T012,Accessories,Bags & Backpacks,Tote Bags,Leather,Accessories > Bags & Backpacks > Tote Bags > Leather
+T013,Accessories,Bags & Backpacks,Wallets & Card Holders,Wallets,Accessories > Bags & Backpacks > Wallets & Card Holders > Wallets
+T014,Accessories,Beauty & Grooming,Fragrance,Body Mist,Accessories > Beauty & Grooming > Fragrance > Body Mist
+T015,Accessories,Beauty & Grooming,Fragrance,Cologne,Accessories > Beauty & Grooming > Fragrance > Cologne
+T016,Accessories,Beauty & Grooming,Grooming,Beard Care,Accessories > Beauty & Grooming > Grooming > Beard Care
+T017,Accessories,Beauty & Grooming,Grooming,Hair Care,Accessories > Beauty & Grooming > Grooming > Hair Care
+T018,Accessories,Beauty & Grooming,Makeup,Eye Color,Accessories > Beauty & Grooming > Makeup > Eye Color
+T019,Accessories,Beauty & Grooming,Makeup,Lip Color,Accessories > Beauty & Grooming > Makeup > Lip Color
+T020,Accessories,Beauty & Grooming,Skincare,Cleansers,Accessories > Beauty & Grooming > Skincare > Cleansers
+T021,Accessories,Beauty & Grooming,Skincare,Moisturizers,Accessories > Beauty & Grooming > Skincare > Moisturizers
+T022,Accessories,Beauty & Grooming,Sun Care,After Sun,Accessories > Beauty & Grooming > Sun Care > After Sun
+T023,Accessories,Beauty & Grooming,Sun Care,Sunscreen,Accessories > Beauty & Grooming > Sun Care > Sunscreen
+T024,Accessories,Belts,Casual,Leather,Accessories > Belts > Casual > Leather
+T025,Accessories,Belts,Casual,Webbed,Accessories > Belts > Casual > Webbed
+T026,Accessories,Belts,Dress,Leather,Accessories > Belts > Dress > Leather
+T027,Accessories,Gear & Misc,Personal & Small Accessories,Keychains,Accessories > Gear & Misc > Personal & Small Accessories > Keychains
+T028,Accessories,Gear & Misc,Personal & Small Accessories,Sunglasses,Accessories > Gear & Misc > Personal & Small Accessories > Sunglasses
+T029,Accessories,Gear & Misc,Personal & Small Accessories,Wallet Chains,Accessories > Gear & Misc > Personal & Small Accessories > Wallet Chains
+T030,Accessories,Gear & Misc,Shoe Care & Accessories,Crease Guards,Accessories > Gear & Misc > Shoe Care & Accessories > Crease Guards
+T031,Accessories,Gear & Misc,Shoe Care & Accessories,Shoe Cleaner,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Cleaner
+T032,Accessories,Gear & Misc,Shoe Care & Accessories,Shoe Laces,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Laces
+T033,Accessories,Hair Accessories,Clips & Pins,Bobby Pins,Accessories > Hair Accessories > Clips & Pins > Bobby Pins
+T034,Accessories,Hair Accessories,Clips & Pins,Hair Clips,Accessories > Hair Accessories > Clips & Pins > Hair Clips
+T035,Accessories,Hair Accessories,Headbands & Ties,Hair Ties,Accessories > Hair Accessories > Headbands & Ties > Hair Ties
+T036,Accessories,Hair Accessories,Headbands & Ties,Headbands,Accessories > Hair Accessories > Headbands & Ties > Headbands
+T037,Accessories,Headwear,Beanies,Balaclava,Accessories > Headwear > Beanies > Balaclava
+T038,Accessories,Headwear,Beanies,Cuffed Beanies,Accessories > Headwear > Beanies > Cuffed Beanies
+T039,Accessories,Headwear,Beanies,Pom,Accessories > Headwear > Beanies > Pom
+T040,Accessories,Headwear,Beanies,Slouch Beanies,Accessories > Headwear > Beanies > Slouch Beanies
+T041,Accessories,Headwear,Bucket Hats,Canvas,Accessories > Headwear > Bucket Hats > Canvas
+T042,Accessories,Headwear,Bucket Hats,Nylon,Accessories > Headwear > Bucket Hats > Nylon
+T043,Accessories,Headwear,Caps,5-Panel Caps,Accessories > Headwear > Caps > 5-Panel Caps
+T044,Accessories,Headwear,Caps,Dad Hats,Accessories > Headwear > Caps > Dad Hats
+T045,Accessories,Headwear,Caps,Fitted,Accessories > Headwear > Caps > Fitted
+T046,Accessories,Headwear,Caps,Snapbacks,Accessories > Headwear > Caps > Snapbacks
+T047,Accessories,Headwear,Caps,Trucker Hats,Accessories > Headwear > Caps > Trucker Hats
+T048,Accessories,Headwear,Licensed Fanwear,MLB,Accessories > Headwear > Licensed Fanwear > MLB
+T049,Accessories,Headwear,Licensed Fanwear,NBA,Accessories > Headwear > Licensed Fanwear > NBA
+T050,Accessories,Headwear,Licensed Fanwear,NFL,Accessories > Headwear > Licensed Fanwear > NFL
+T051,Accessories,Headwear,Visors,Sport,Accessories > Headwear > Visors > Sport
+T052,Accessories,Jewelry & Watches,Bracelets,Leather,Accessories > Jewelry & Watches > Bracelets > Leather
+T053,Accessories,Jewelry & Watches,Bracelets,Metal,Accessories > Jewelry & Watches > Bracelets > Metal
+T054,Accessories,Jewelry & Watches,Necklaces,Chains,Accessories > Jewelry & Watches > Necklaces > Chains
+T055,Accessories,Jewelry & Watches,Necklaces,Pendants,Accessories > Jewelry & Watches > Necklaces > Pendants
+T056,Accessories,Jewelry & Watches,Rings,Bands,Accessories > Jewelry & Watches > Rings > Bands
+T057,Accessories,Jewelry & Watches,Watches,Analog,Accessories > Jewelry & Watches > Watches > Analog
+T058,Accessories,Jewelry & Watches,Watches,Digital,Accessories > Jewelry & Watches > Watches > Digital
+T059,Accessories,Jewelry & Watches,Watches,Smartwatches,Accessories > Jewelry & Watches > Watches > Smartwatches
+T060,Accessories,Socks,Athletic,Ankle,Accessories > Socks > Athletic > Ankle
+T061,Accessories,Socks,Athletic,Crew,Accessories > Socks > Athletic > Crew
+T062,Accessories,Socks,Athletic,No-Show,Accessories > Socks > Athletic > No-Show
+T063,Accessories,Socks,Casual,Dress,Accessories > Socks > Casual > Dress
+T064,Accessories,Socks,Casual,Novelty,Accessories > Socks > Casual > Novelty
+T065,Accessories,Tech Accessories,Phone Cases,Leather,Accessories > Tech Accessories > Phone Cases > Leather
+T066,Accessories,Tech Accessories,Phone Cases,Silicone,Accessories > Tech Accessories > Phone Cases > Silicone
+T067,Clothing,Bottoms,Jeans,Bootcut,Clothing > Bottoms > Jeans > Bootcut
+T068,Clothing,Bottoms,Jeans,Relaxed,Clothing > Bottoms > Jeans > Relaxed
+T069,Clothing,Bottoms,Jeans,Skinny,Clothing > Bottoms > Jeans > Skinny
+T070,Clothing,Bottoms,Jeans,Slim,Clothing > Bottoms > Jeans > Slim
+T071,Clothing,Bottoms,Jeans,Straight,Clothing > Bottoms > Jeans > Straight
+T072,Clothing,Bottoms,Leggings,Athletic,Clothing > Bottoms > Leggings > Athletic
+T073,Clothing,Bottoms,Leggings,Casual,Clothing > Bottoms > Leggings > Casual
+T074,Clothing,Bottoms,Leggings,Compression,Clothing > Bottoms > Leggings > Compression
+T075,Clothing,Bottoms,Leggings,Performance,Clothing > Bottoms > Leggings > Performance
+T076,Clothing,Bottoms,Pants,Cargo Pants,Clothing > Bottoms > Pants > Cargo Pants
+T077,Clothing,Bottoms,Pants,Chinos,Clothing > Bottoms > Pants > Chinos
+T078,Clothing,Bottoms,Pants,Dress Pants,Clothing > Bottoms > Pants > Dress Pants
+T079,Clothing,Bottoms,Pants,Joggers,Clothing > Bottoms > Pants > Joggers
+T080,Clothing,Bottoms,Pants,Track Pants,Clothing > Bottoms > Pants > Track Pants
+T081,Clothing,Bottoms,Pants,Twill Pants,Clothing > Bottoms > Pants > Twill Pants
+T082,Clothing,Bottoms,Shorts,Athletic Shorts,Clothing > Bottoms > Shorts > Athletic Shorts
+T083,Clothing,Bottoms,Shorts,Casual Shorts,Clothing > Bottoms > Shorts > Casual Shorts
+T084,Clothing,Bottoms,Shorts,Cut-Off Shorts,Clothing > Bottoms > Shorts > Cut-Off Shorts
+T085,Clothing,Bottoms,Shorts,Denim Shorts,Clothing > Bottoms > Shorts > Denim Shorts
+T086,Clothing,Bottoms,Shorts,Sweatshorts,Clothing > Bottoms > Shorts > Sweatshorts
+T087,Clothing,Bottoms,Skirts,Maxi,Clothing > Bottoms > Skirts > Maxi
+T088,Clothing,Bottoms,Skirts,Midi,Clothing > Bottoms > Skirts > Midi
+T089,Clothing,Bottoms,Skirts,Mini,Clothing > Bottoms > Skirts > Mini
+T090,Clothing,Bottoms,Sweatpants,Fleece,Clothing > Bottoms > Sweatpants > Fleece
+T091,Clothing,Bottoms,Sweatpants,French Terry,Clothing > Bottoms > Sweatpants > French Terry
+T092,Clothing,Dresses & Rompers,Dresses,Bodycon,Clothing > Dresses & Rompers > Dresses > Bodycon
+T093,Clothing,Dresses & Rompers,Dresses,Maxi,Clothing > Dresses & Rompers > Dresses > Maxi
+T094,Clothing,Dresses & Rompers,Dresses,Midi,Clothing > Dresses & Rompers > Dresses > Midi
+T095,Clothing,Dresses & Rompers,Dresses,Mini,Clothing > Dresses & Rompers > Dresses > Mini
+T096,Clothing,Dresses & Rompers,Rompers & Jumpsuits,Jumpsuits,Clothing > Dresses & Rompers > Rompers & Jumpsuits > Jumpsuits
+T097,Clothing,Dresses & Rompers,Rompers & Jumpsuits,Rompers,Clothing > Dresses & Rompers > Rompers & Jumpsuits > Rompers
+T098,Clothing,Hoodies & Sweatshirts,Hoodies,Pullover Hoodies,Clothing > Hoodies & Sweatshirts > Hoodies > Pullover Hoodies
+T099,Clothing,Hoodies & Sweatshirts,Hoodies,Zip-Up Hoodies,Clothing > Hoodies & Sweatshirts > Hoodies > Zip-Up Hoodies
+T100,Clothing,Hoodies & Sweatshirts,Sweatshirts,Crewneck Sweatshirts,Clothing > Hoodies & Sweatshirts > Sweatshirts > Crewneck Sweatshirts
+T101,Clothing,Hoodies & Sweatshirts,Sweatshirts,Quarter-Zip,Clothing > Hoodies & Sweatshirts > Sweatshirts > Quarter-Zip
+T102,Clothing,Intimates & Sleepwear,Bras,Everyday Bras,Clothing > Intimates & Sleepwear > Bras > Everyday Bras
+T103,Clothing,Intimates & Sleepwear,Bras,Sports Bras,Clothing > Intimates & Sleepwear > Bras > Sports Bras
+T104,Clothing,Intimates & Sleepwear,Sleepwear,Nightgowns,Clothing > Intimates & Sleepwear > Sleepwear > Nightgowns
+T105,Clothing,Intimates & Sleepwear,Sleepwear,Pajama Sets,Clothing > Intimates & Sleepwear > Sleepwear > Pajama Sets
+T106,Clothing,Intimates & Sleepwear,Sleepwear,Robes,Clothing > Intimates & Sleepwear > Sleepwear > Robes
+T107,Clothing,Intimates & Sleepwear,Underwear,Boxer Briefs,Clothing > Intimates & Sleepwear > Underwear > Boxer Briefs
+T108,Clothing,Intimates & Sleepwear,Underwear,Boxers,Clothing > Intimates & Sleepwear > Underwear > Boxers
+T109,Clothing,Intimates & Sleepwear,Underwear,Briefs,Clothing > Intimates & Sleepwear > Underwear > Briefs
+T110,Clothing,Matching Sets,Tracksuits,Full Zip,Clothing > Matching Sets > Tracksuits > Full Zip
+T111,Clothing,Matching Sets,Tracksuits,Pullover,Clothing > Matching Sets > Tracksuits > Pullover
+T112,Clothing,Matching Sets,Two-Piece Sets,Crop Top Sets,Clothing > Matching Sets > Two-Piece Sets > Crop Top Sets
+T113,Clothing,Matching Sets,Two-Piece Sets,Shorts Sets,Clothing > Matching Sets > Two-Piece Sets > Shorts Sets
+T114,Clothing,Outerwear & Jackets,Coats & Parkas,Anoraks,Clothing > Outerwear & Jackets > Coats & Parkas > Anoraks
+T115,Clothing,Outerwear & Jackets,Coats & Parkas,Parkas,Clothing > Outerwear & Jackets > Coats & Parkas > Parkas
+T116,Clothing,Outerwear & Jackets,Coats & Parkas,Peacoats,Clothing > Outerwear & Jackets > Coats & Parkas > Peacoats
+T117,Clothing,Outerwear & Jackets,Coats & Parkas,Puffer Coats,Clothing > Outerwear & Jackets > Coats & Parkas > Puffer Coats
+T118,Clothing,Outerwear & Jackets,Coats & Parkas,Trench Coats,Clothing > Outerwear & Jackets > Coats & Parkas > Trench Coats
+T119,Clothing,Outerwear & Jackets,Jackets,Athletic Jackets,Clothing > Outerwear & Jackets > Jackets > Athletic Jackets
+T120,Clothing,Outerwear & Jackets,Jackets,Bomber Jackets,Clothing > Outerwear & Jackets > Jackets > Bomber Jackets
+T121,Clothing,Outerwear & Jackets,Jackets,Denim Jackets,Clothing > Outerwear & Jackets > Jackets > Denim Jackets
+T122,Clothing,Outerwear & Jackets,Jackets,Leather/Moto Jackets,Clothing > Outerwear & Jackets > Jackets > Leather/Moto Jackets
+T123,Clothing,Outerwear & Jackets,Jackets,Racing Jackets,Clothing > Outerwear & Jackets > Jackets > Racing Jackets
+T124,Clothing,Outerwear & Jackets,Jackets,Track Jackets,Clothing > Outerwear & Jackets > Jackets > Track Jackets
+T125,Clothing,Outerwear & Jackets,Jackets,Varsity Jackets,Clothing > Outerwear & Jackets > Jackets > Varsity Jackets
+T126,Clothing,Outerwear & Jackets,Jackets,Windbreakers,Clothing > Outerwear & Jackets > Jackets > Windbreakers
+T127,Clothing,Outerwear & Jackets,Vests,Fleece Vests,Clothing > Outerwear & Jackets > Vests > Fleece Vests
+T128,Clothing,Outerwear & Jackets,Vests,Puffer Vests,Clothing > Outerwear & Jackets > Vests > Puffer Vests
+T129,Clothing,Outerwear & Jackets,Vests,Utility Vests,Clothing > Outerwear & Jackets > Vests > Utility Vests
+T130,Clothing,Swimwear,Bikinis,Bandeau,Clothing > Swimwear > Bikinis > Bandeau
+T131,Clothing,Swimwear,Bikinis,Triangle,Clothing > Swimwear > Bikinis > Triangle
+T132,Clothing,Swimwear,Boardshorts,Hybrid,Clothing > Swimwear > Boardshorts > Hybrid
+T133,Clothing,Swimwear,Boardshorts,Regular,Clothing > Swimwear > Boardshorts > Regular
+T134,Clothing,Swimwear,Briefs,Competition,Clothing > Swimwear > Briefs > Competition
+T135,Clothing,Swimwear,Briefs,Fashion,Clothing > Swimwear > Briefs > Fashion
+T136,Clothing,Swimwear,Cover-Ups,Dress,Clothing > Swimwear > Cover-Ups > Dress
+T137,Clothing,Swimwear,Cover-Ups,Kimono,Clothing > Swimwear > Cover-Ups > Kimono
+T138,Clothing,Swimwear,One-Piece,Classic,Clothing > Swimwear > One-Piece > Classic
+T139,Clothing,Swimwear,One-Piece,Sporty,Clothing > Swimwear > One-Piece > Sporty
+T140,Clothing,Swimwear,Trunks,Classic,Clothing > Swimwear > Trunks > Classic
+T141,Clothing,Swimwear,Trunks,Print,Clothing > Swimwear > Trunks > Print
+T142,Clothing,Team Gear & Licensed,Jerseys,Baseball Jerseys,Clothing > Team Gear & Licensed > Jerseys > Baseball Jerseys
+T143,Clothing,Team Gear & Licensed,Jerseys,Basketball Jerseys,Clothing > Team Gear & Licensed > Jerseys > Basketball Jerseys
+T144,Clothing,Team Gear & Licensed,Jerseys,Football Jerseys,Clothing > Team Gear & Licensed > Jerseys > Football Jerseys
+T145,Clothing,Tops,Bodysuits,Long Sleeve,Clothing > Tops > Bodysuits > Long Sleeve
+T146,Clothing,Tops,Bodysuits,Sleeveless,Clothing > Tops > Bodysuits > Sleeveless
+T147,Clothing,Tops,Button-Down Shirts,Casual,Clothing > Tops > Button-Down Shirts > Casual
+T148,Clothing,Tops,Button-Down Shirts,Dress,Clothing > Tops > Button-Down Shirts > Dress
+T149,Clothing,Tops,Polos,Long Sleeve,Clothing > Tops > Polos > Long Sleeve
+T150,Clothing,Tops,Polos,Short Sleeve,Clothing > Tops > Polos > Short Sleeve
+T151,Clothing,Tops,Shirts & Blouses,Flannel,Clothing > Tops > Shirts & Blouses > Flannel
+T152,Clothing,Tops,Shirts & Blouses,Long Sleeve Button-Up Shirts,Clothing > Tops > Shirts & Blouses > Long Sleeve Button-Up Shirts
+T153,Clothing,Tops,Shirts & Blouses,Long Sleeve Wovens,Clothing > Tops > Shirts & Blouses > Long Sleeve Wovens
+T154,Clothing,Tops,Shirts & Blouses,Short Sleeve Button-Up Shirts,Clothing > Tops > Shirts & Blouses > Short Sleeve Button-Up Shirts
+T155,Clothing,Tops,Shirts & Blouses,Short Sleeve Wovens,Clothing > Tops > Shirts & Blouses > Short Sleeve Wovens
+T156,Clothing,Tops,Sweaters & Knits,Cardigans,Clothing > Tops > Sweaters & Knits > Cardigans
+T157,Clothing,Tops,Sweaters & Knits,Crewneck Sweaters,Clothing > Tops > Sweaters & Knits > Crewneck Sweaters
+T158,Clothing,Tops,Sweaters & Knits,Rugby Shirts,Clothing > Tops > Sweaters & Knits > Rugby Shirts
+T159,Clothing,Tops,Sweaters & Knits,Turtleneck Sweaters,Clothing > Tops > Sweaters & Knits > Turtleneck Sweaters
+T160,Clothing,Tops,Sweaters & Knits,V-Neck Sweaters,Clothing > Tops > Sweaters & Knits > V-Neck Sweaters
+T161,Clothing,Tops,T-Shirts,Baseball Tees,Clothing > Tops > T-Shirts > Baseball Tees
+T162,Clothing,Tops,T-Shirts,Graphic Tees,Clothing > Tops > T-Shirts > Graphic Tees
+T163,Clothing,Tops,T-Shirts,Long Sleeve,Clothing > Tops > T-Shirts > Long Sleeve
+T164,Clothing,Tops,T-Shirts,Muscle Tees,Clothing > Tops > T-Shirts > Muscle Tees
+T165,Clothing,Tops,T-Shirts,Performance Tees,Clothing > Tops > T-Shirts > Performance Tees
+T166,Clothing,Tops,T-Shirts,Short Sleeve,Clothing > Tops > T-Shirts > Short Sleeve
+T167,Clothing,Tops,T-Shirts,Sleeveless Shirts,Clothing > Tops > T-Shirts > Sleeveless Shirts
+T168,Clothing,Tops,T-Shirts,Striped & Pattern Tees,Clothing > Tops > T-Shirts > Striped & Pattern Tees
+T169,Clothing,Tops,T-Shirts,Thermals,Clothing > Tops > T-Shirts > Thermals
+T170,Clothing,Tops,Tank Tops,Athletic,Clothing > Tops > Tank Tops > Athletic
+T171,Clothing,Tops,Tank Tops,Casual,Clothing > Tops > Tank Tops > Casual
+T172,Footwear,Boots,Casual Boots,Chukka Boots,Footwear > Boots > Casual Boots > Chukka Boots
+T173,Footwear,Boots,Chelsea Boots,Leather,Footwear > Boots > Chelsea Boots > Leather
+T174,Footwear,Boots,Chelsea Boots,Suede,Footwear > Boots > Chelsea Boots > Suede
+T175,Footwear,Boots,Combat & Work Boots,Lace-Up Boots,Footwear > Boots > Combat & Work Boots > Lace-Up Boots
+T176,Footwear,Boots,Combat & Work Boots,Lug Sole Boots,Footwear > Boots > Combat & Work Boots > Lug Sole Boots
+T177,Footwear,Boots,Combat & Work Boots,Zip-Up Boots,Footwear > Boots > Combat & Work Boots > Zip-Up Boots
+T178,Footwear,Boots,Fashion Boots,Booties,Footwear > Boots > Fashion Boots > Booties
+T179,Footwear,Boots,Fashion Boots,Fur Boots,Footwear > Boots > Fashion Boots > Fur Boots
+T180,Footwear,Boots,Fashion Boots,Knee-High,Footwear > Boots > Fashion Boots > Knee-High
+T181,Footwear,Boots,Fashion Boots,Lace-Up,Footwear > Boots > Fashion Boots > Lace-Up
+T182,Footwear,Boots,Fashion Boots,Mid-Calf Boots,Footwear > Boots > Fashion Boots > Mid-Calf Boots
+T183,Footwear,Boots,Fashion Boots,Over-The-Knee,Footwear > Boots > Fashion Boots > Over-The-Knee
+T184,Footwear,Boots,Fashion Boots,Riding Boots,Footwear > Boots > Fashion Boots > Riding Boots
+T185,Footwear,Boots,Fashion Boots,Slouch Boots,Footwear > Boots > Fashion Boots > Slouch Boots
+T186,Footwear,Boots,Fashion Boots,Thigh-High,Footwear > Boots > Fashion Boots > Thigh-High
+T187,Footwear,Boots,Rain Boots,Short,Footwear > Boots > Rain Boots > Short
+T188,Footwear,Boots,Rain Boots,Tall,Footwear > Boots > Rain Boots > Tall
+T189,Footwear,Boots,Western Boots,Cowboy Boots,Footwear > Boots > Western Boots > Cowboy Boots
+T190,Footwear,Boots,Winter & Weather,Insulated,Footwear > Boots > Winter & Weather > Insulated
+T191,Footwear,Boots,Winter & Weather,Snow Boots,Footwear > Boots > Winter & Weather > Snow Boots
+T192,Footwear,Boots,Winter & Weather,Waterproof,Footwear > Boots > Winter & Weather > Waterproof
+T193,Footwear,Casual Shoes,Boat Shoes,Canvas,Footwear > Casual Shoes > Boat Shoes > Canvas
+T194,Footwear,Casual Shoes,Boat Shoes,Leather,Footwear > Casual Shoes > Boat Shoes > Leather
+T195,Footwear,Casual Shoes,Espadrilles,Slip-On,Footwear > Casual Shoes > Espadrilles > Slip-On
+T196,Footwear,Casual Shoes,Espadrilles,Wedge,Footwear > Casual Shoes > Espadrilles > Wedge
+T197,Footwear,Casual Shoes,Flats,Ballet,Footwear > Casual Shoes > Flats > Ballet
+T198,Footwear,Casual Shoes,Flats,Slip-On,Footwear > Casual Shoes > Flats > Slip-On
+T199,Footwear,Casual Shoes,Moccasins,Suede,Footwear > Casual Shoes > Moccasins > Suede
+T200,Footwear,Clogs,Classic Clogs,Classic,Footwear > Clogs > Classic Clogs > Classic
+T201,Footwear,Clogs,Platform Clogs,Platform,Footwear > Clogs > Platform Clogs > Platform
+T202,Footwear,Dress Shoes,Derbies,Classic,Footwear > Dress Shoes > Derbies > Classic
+T203,Footwear,Dress Shoes,Loafers,Bit,Footwear > Dress Shoes > Loafers > Bit
+T204,Footwear,Dress Shoes,Loafers,Penny,Footwear > Dress Shoes > Loafers > Penny
+T205,Footwear,Dress Shoes,Loafers,Tassel,Footwear > Dress Shoes > Loafers > Tassel
+T206,Footwear,Dress Shoes,Monk Straps,Double,Footwear > Dress Shoes > Monk Straps > Double
+T207,Footwear,Dress Shoes,Monk Straps,Single,Footwear > Dress Shoes > Monk Straps > Single
+T208,Footwear,Dress Shoes,Oxfords,Cap Toe,Footwear > Dress Shoes > Oxfords > Cap Toe
+T209,Footwear,Dress Shoes,Oxfords,Plain Toe,Footwear > Dress Shoes > Oxfords > Plain Toe
+T210,Footwear,Dress Shoes,Oxfords,Wingtip,Footwear > Dress Shoes > Oxfords > Wingtip
+T211,Footwear,High Heels,Platform Heels,Chunky Heel,Footwear > High Heels > Platform Heels > Chunky Heel
+T212,Footwear,High Heels,Platform Heels,Double Platform,Footwear > High Heels > Platform Heels > Double Platform
+T213,Footwear,High Heels,Pumps & Stilettos,Ankle Strap,Footwear > High Heels > Pumps & Stilettos > Ankle Strap
+T214,Footwear,High Heels,Pumps & Stilettos,Clear/Rhinestone,Footwear > High Heels > Pumps & Stilettos > Clear/Rhinestone
+T215,Footwear,High Heels,Pumps & Stilettos,Low Heel,Footwear > High Heels > Pumps & Stilettos > Low Heel
+T216,Footwear,High Heels,Pumps & Stilettos,Open Toe,Footwear > High Heels > Pumps & Stilettos > Open Toe
+T217,Footwear,High Heels,Pumps & Stilettos,Pointy Toe,Footwear > High Heels > Pumps & Stilettos > Pointy Toe
+T218,Footwear,Sandals & Wedges,Sandals,Double Strap Sandals,Footwear > Sandals & Wedges > Sandals > Double Strap Sandals
+T219,Footwear,Sandals & Wedges,Sandals,Flat,Footwear > Sandals & Wedges > Sandals > Flat
+T220,Footwear,Sandals & Wedges,Sandals,Gladiator,Footwear > Sandals & Wedges > Sandals > Gladiator
+T221,Footwear,Sandals & Wedges,Sandals,Heeled,Footwear > Sandals & Wedges > Sandals > Heeled
+T222,Footwear,Sandals & Wedges,Sandals,Strappy,Footwear > Sandals & Wedges > Sandals > Strappy
+T223,Footwear,Sandals & Wedges,Slides & Flip-Flops,Beach,Footwear > Sandals & Wedges > Slides & Flip-Flops > Beach
+T224,Footwear,Sandals & Wedges,Slides & Flip-Flops,Fashion Slides,Footwear > Sandals & Wedges > Slides & Flip-Flops > Fashion Slides
+T225,Footwear,Sandals & Wedges,Slides & Flip-Flops,Flip-Flops,Footwear > Sandals & Wedges > Slides & Flip-Flops > Flip-Flops
+T226,Footwear,Sandals & Wedges,Slides & Flip-Flops,Leather,Footwear > Sandals & Wedges > Slides & Flip-Flops > Leather
+T227,Footwear,Sandals & Wedges,Slides & Flip-Flops,Sport Slides,Footwear > Sandals & Wedges > Slides & Flip-Flops > Sport Slides
+T228,Footwear,Sandals & Wedges,Wedges,Espadrille Wedges,Footwear > Sandals & Wedges > Wedges > Espadrille Wedges
+T229,Footwear,Sandals & Wedges,Wedges,Gravity Wedge,Footwear > Sandals & Wedges > Wedges > Gravity Wedge
+T230,Footwear,Sandals & Wedges,Wedges,Platform Wedges,Footwear > Sandals & Wedges > Wedges > Platform Wedges
+T231,Footwear,Shoe Accessories,Shoe Care & Accessories,Insoles,Footwear > Shoe Accessories > Shoe Care & Accessories > Insoles
+T232,Footwear,Shoe Accessories,Shoe Care & Accessories,Lace Kits,Footwear > Shoe Accessories > Shoe Care & Accessories > Lace Kits
+T233,Footwear,Slip-Ons,Canvas Slip-Ons,Canvas,Footwear > Slip-Ons > Canvas Slip-Ons > Canvas
+T234,Footwear,Slip-Ons,Knit Slip-Ons,Knit,Footwear > Slip-Ons > Knit Slip-Ons > Knit
+T235,Footwear,Slippers,Booties,Knit,Footwear > Slippers > Booties > Knit
+T236,Footwear,Slippers,Mules,Fleece-Lined,Footwear > Slippers > Mules > Fleece-Lined
+T237,Footwear,Slippers,Scuffs,Open-Toe,Footwear > Slippers > Scuffs > Open-Toe
+T238,Footwear,Sneakers,Basketball,Performance,Footwear > Sneakers > Basketball > Performance
+T239,Footwear,Sneakers,Basketball,Retro,Footwear > Sneakers > Basketball > Retro
+T240,Footwear,Sneakers,Basketball,Signature Basketball,Footwear > Sneakers > Basketball > Signature Basketball
+T241,Footwear,Sneakers,Lifestyle,Chunky Sneakers,Footwear > Sneakers > Lifestyle > Chunky Sneakers
+T242,Footwear,Sneakers,Lifestyle,High-Top,Footwear > Sneakers > Lifestyle > High-Top
+T243,Footwear,Sneakers,Lifestyle,Low Profile Sneakers,Footwear > Sneakers > Lifestyle > Low Profile Sneakers
+T244,Footwear,Sneakers,Lifestyle,Low-Top,Footwear > Sneakers > Lifestyle > Low-Top
+T245,Footwear,Sneakers,Lifestyle,Mary Jane,Footwear > Sneakers > Lifestyle > Mary Jane
+T246,Footwear,Sneakers,Lifestyle,Mid-Top,Footwear > Sneakers > Lifestyle > Mid-Top
+T247,Footwear,Sneakers,Lifestyle,Platform,Footwear > Sneakers > Lifestyle > Platform
+T248,Footwear,Sneakers,Lifestyle,Slip-On,Footwear > Sneakers > Lifestyle > Slip-On
+T249,Footwear,Sneakers,Running,Road Running,Footwear > Sneakers > Running > Road Running
+T250,Footwear,Sneakers,Running,Track & Field,Footwear > Sneakers > Running > Track & Field
+T251,Footwear,Sneakers,Running,Trail Running,Footwear > Sneakers > Running > Trail Running
+T252,Footwear,Sneakers,Skate,Classics,Footwear > Sneakers > Skate > Classics
+T253,Footwear,Sneakers,Skate,Pro Models,Footwear > Sneakers > Skate > Pro Models
+T254,Footwear,Sneakers,Tennis,Clay Court,Footwear > Sneakers > Tennis > Clay Court
+T255,Footwear,Sneakers,Tennis,Hard Court,Footwear > Sneakers > Tennis > Hard Court
+T256,Footwear,Sneakers,Training,Cross Training,Footwear > Sneakers > Training > Cross Training
+T257,Footwear,Sneakers,Training,Weightlifting,Footwear > Sneakers > Training > Weightlifting
+T258,Accessories,Bags & Backpacks,Handbags & Purses,Handbags,Accessories > Bags & Backpacks > Handbags & Purses > Handbags
+T259,Accessories,Bags & Backpacks,Handbags & Purses,Clutches,Accessories > Bags & Backpacks > Handbags & Purses > Clutches
+T260,Accessories,Bags & Backpacks,Handbags & Purses,Evening Bags,Accessories > Bags & Backpacks > Handbags & Purses > Evening Bags
+T261,Accessories,Bags & Backpacks,Handbags & Purses,Shoulder Bags,Accessories > Bags & Backpacks > Handbags & Purses > Shoulder Bags
+T262,Accessories,Beauty & Grooming,Fragrance,Perfume,Accessories > Beauty & Grooming > Fragrance > Perfume
+T263,Accessories,Gear & Misc,Personal & Small Accessories,Face Masks,Accessories > Gear & Misc > Personal & Small Accessories > Face Masks
+T264,Accessories,Gear & Misc,Shoe Care & Accessories,Shoe Charms,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Charms
+T265,Accessories,Gear & Misc,Personal & Small Accessories,Blue-Light Glasses,Accessories > Gear & Misc > Personal & Small Accessories > Blue-Light Glasses
+T266,Accessories,Headwear,Hat Care,Hat Cleaner,Accessories > Headwear > Hat Care > Hat Cleaner
+T267,Accessories,Neckwear,Scarves & Wraps,Scarves,Accessories > Neckwear > Scarves & Wraps > Scarves
+T268,Footwear,Athletic Footwear,Field Sports,Soccer Footwear,Footwear > Athletic Footwear > Field Sports > Soccer Footwear
+T269,Footwear,Athletic Footwear,Field Sports,Baseball Footwear,Footwear > Athletic Footwear > Field Sports > Baseball Footwear
+T270,Footwear,Casual Shoes,Flats,Jelly Flats,Footwear > Casual Shoes > Flats > Jelly Flats
