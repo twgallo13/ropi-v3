@@ -1,0 +1,815 @@
+Old ID,Raw old combined value,Department,Legacy Class,Legacy Category,Source row numbers,Occurrence count
+L001,>  >,,,,424,1
+L002,0 > 0 > 0,0,0,0,486,1
+L003,0 > 0 > Rain Boots,0,0,Rain Boots,897,1
+L004,0 > Boots > Combat Boots,0,Boots,Combat Boots,891,1
+L005,0 > Sandal > Thong,0,Sandal,Thong,828,1
+L006,0 > Sandals > Flats,0,Sandals,Flats,759,1
+L007,Accessories > Accessories > Basketball,Accessories,Accessories,Basketball,593,1
+L008,Accessories > Accessories > Face,Accessories,Accessories,Face,121,1
+L009,Accessories > Accessories > Jibbitz,Accessories,Accessories,Jibbitz,458,1
+L010,Accessories > Accessories > Shoe Cleaner,Accessories,Accessories,Shoe Cleaner,875,1
+L011,Accessories > Backpacks > Backpack,Accessories,Backpacks,Backpack,139,1
+L012,Accessories > Backpacks > Mini,Accessories,Backpacks,Mini,677,1
+L013,Accessories > Bag > Backpack,Accessories,Bag,Backpack,791,1
+L014,Accessories > Bags > Backbacks,Accessories,Bags,Backbacks,266,1
+L015,Accessories > Bags > Backpack,Accessories,Bags,Backpack,471,1
+L016,Accessories > Bags > Backpacks,Accessories,Bags,Backpacks,885,1
+L017,Accessories > Bags > Bags,Accessories,Bags,Bags,830,1
+L018,Accessories > Bags > Clutch,Accessories,Bags,Clutch,767,1
+L019,Accessories > Bags > Clutches,Accessories,Bags,Clutches,108,1
+L020,Accessories > Bags > Cross Body Bags,Accessories,Bags,Cross Body Bags,141,1
+L021,Accessories > Bags > Crossbody,Accessories,Bags,Crossbody,619,1
+L022,Accessories > Bags > Duffle Bag,Accessories,Bags,Duffle Bag,805,1
+L023,Accessories > Bags > Duffle Bags,Accessories,Bags,Duffle Bags,216,1
+L024,Accessories > Bags > Evening Bag,Accessories,Bags,Evening Bag,812,1
+L025,Accessories > Bags > Fanny Pack,Accessories,Bags,Fanny Pack,131,1
+L026,Accessories > Bags > Handbags,Accessories,Bags,Handbags,648,1
+L027,Accessories > Bags > Handbags and Purses,Accessories,Bags,Handbags and Purses,159,1
+L028,Accessories > Bags > Messenger Bags,Accessories,Bags,Messenger Bags,612,1
+L029,Accessories > Bags > Purses,Accessories,Bags,Purses,258,1
+L030,Accessories > Bags > Shoulder Bags,Accessories,Bags,Shoulder Bags,742,1
+L031,Accessories > Bags > Slingback,Accessories,Bags,Slingback,552,1
+L032,Accessories > Bags > Tote,Accessories,Bags,Tote,270,1
+L033,Accessories > Bags > Tote Bags,Accessories,Bags,Tote Bags,578,1
+L034,Accessories > Bags & Backpacks > Backpacks,Accessories,Bags & Backpacks,Backpacks,35,1
+L035,Accessories > Belts > Belt,Accessories,Belts,Belt,213,1
+L036,Accessories > Belts > Belts,Accessories,Belts,Belts,822,1
+L037,Accessories > Belts > None,Accessories,Belts,None,183,1
+L038,Accessories > Body > Perfumes,Accessories,Body,Perfumes,276,1
+L039,Accessories > Bra > Bralette,Accessories,Bra,Bralette,222,1
+L040,Accessories > Bra > Sports bra,Accessories,Bra,Sports bra,845,1
+L041,Accessories > Bras > Sports bra,Accessories,Bras,Sports bra,660,1
+L042,Accessories > Eyewear > Sunglasses,Accessories,Eyewear,Sunglasses,137,1
+L043,Accessories > Face Mask > Face,Accessories,Face Mask,Face,898,1
+L044,Accessories > Face Mask > Reusable,Accessories,Face Mask,Reusable,580,1
+L045,Accessories > Footwear > Sneakers,Accessories,Footwear,Sneakers,777,1
+L046,Accessories > Gear & Misc > Sporting Goods,Accessories,Gear & Misc,Sporting Goods,38,1
+L047,Accessories > Glasses > Blue Light,Accessories,Glasses,Blue Light,263,1
+L048,Accessories > Gloves > None,Accessories,Gloves,None,686,1
+L049,Accessories > Handbags > Bags,Accessories,Handbags,Bags,262,1
+L050,Accessories > Handbags > Clutch,Accessories,Handbags,Clutch,238,1
+L051,Accessories > Handbags > Clutches,Accessories,Handbags,Clutches,596,1
+L052,Accessories > Handbags > Cross Body Bags,Accessories,Handbags,Cross Body Bags,809,1
+L053,Accessories > Handbags > Crossbody,Accessories,Handbags,Crossbody,214,1
+L054,Accessories > Handbags > Handbags,Accessories,Handbags,Handbags,866,1
+L055,Accessories > Handbags > Handbags and Purses,Accessories,Handbags,Handbags and Purses,599,1
+L056,Accessories > Handbags > Purses,Accessories,Handbags,Purses,869,1
+L057,Accessories > Handbags > Shoulder Bags,Accessories,Handbags,Shoulder Bags,746,1
+L058,Accessories > Handbags > Tote,Accessories,Handbags,Tote,608,1
+L059,Accessories > Handbags > Tote Bags,Accessories,Handbags,Tote Bags,887,1
+L060,Accessories > Hat > Fitted Hat,Accessories,Hat,Fitted Hat,571,1
+L061,Accessories > Hat > Snapback,Accessories,Hat,Snapback,451,1
+L062,Accessories > Hat Care > 0,Accessories,Hat Care,0,867,1
+L063,Accessories > Hat Care > Cleaner,Accessories,Hat Care,Cleaner,643,1
+L064,Accessories > Hats > 0,Accessories,Hats,0,465,1
+L065,Accessories > Hats > 5 Panels & Volleys,Accessories,Hats,5 Panels & Volleys,789,1
+L066,Accessories > Hats > Accessories,Accessories,Hats,Accessories,636,1
+L067,Accessories > Hats > Adjustable,Accessories,Hats,Adjustable,666,1
+L068,Accessories > Hats > Beanie,Accessories,Hats,Beanie,86,1
+L069,Accessories > Hats > Beanies,Accessories,Hats,Beanies,815,1
+L070,Accessories > Hats > Bucket,Accessories,Hats,Bucket,546,1
+L071,Accessories > Hats > Bucket Hats,Accessories,Hats,Bucket Hats,232,1
+L072,Accessories > Hats > Corduroy,Accessories,Hats,Corduroy,511,1
+L073,Accessories > Hats > Dad Cap,Accessories,Hats,Dad Cap,692,1
+L074,Accessories > Hats > Dad Hat,Accessories,Hats,Dad Hat,535,1
+L075,Accessories > Hats > Face,Accessories,Hats,Face,836,1
+L076,Accessories > Hats > Fitted,Accessories,Hats,Fitted,431,1
+L077,Accessories > Hats > Fitted Hat,Accessories,Hats,Fitted Hat,425,1
+L078,Accessories > Hats > Fitted Hats,Accessories,Hats,Fitted Hats,71,1
+L079,Accessories > Hats > Fleece,Accessories,Hats,Fleece,711,1
+L080,Accessories > Hats > Hats,Accessories,Hats,Hats,190,1
+L081,Accessories > Hats > Racing,Accessories,Hats,Racing,813,1
+L082,Accessories > Hats > Snapback,Accessories,Hats,Snapback,51,1
+L083,Accessories > Hats > Snapbacks,Accessories,Hats,Snapbacks,750,1
+L084,Accessories > Hats > Strapback,Accessories,Hats,Strapback,474,1
+L085,Accessories > Hats > Strapbacks,Accessories,Hats,Strapbacks,654,1
+L086,Accessories > Hats > Trucker Hat,Accessories,Hats,Trucker Hat,162,1
+L087,Accessories > Hats > Twill,Accessories,Hats,Twill,763,1
+L088,Accessories > Headwear > Balaclava,Accessories,Headwear,Balaclava,706,1
+L089,Accessories > Headwear > Beanie,Accessories,Headwear,Beanie,422,1
+L090,Accessories > Headwear > Caps - Adjustable,Accessories,Headwear,Caps - Adjustable,34,1
+L091,Accessories > Home Decor > Towels,Accessories,Home Decor,Towels,827,1
+L092,Accessories > Hot Shit > None,Accessories,Hot Shit,None,585,1
+L093,Accessories > Jewelry > Bracelets,Accessories,Jewelry,Bracelets,278,1
+L094,Accessories > Keychains > Wallet,Accessories,Keychains,Wallet,748,1
+L095,Accessories > Purses > Clutch,Accessories,Purses,Clutch,713,1
+L096,Accessories > Purses > Crossbody,Accessories,Purses,Crossbody,859,1
+L097,Accessories > Purses > Denim,Accessories,Purses,Denim,675,1
+L098,Accessories > Purses > Handbags,Accessories,Purses,Handbags,695,1
+L099,Accessories > Purses > New Accessories,Accessories,Purses,New Accessories,250,1
+L100,Accessories > Scarves > Outerwear,Accessories,Scarves,Outerwear,128,1
+L101,Accessories > Shoe Care > 0,Accessories,Shoe Care,0,591,1
+L102,Accessories > Shoe Care > Shoe Care,Accessories,Shoe Care,Shoe Care,774,1
+L103,Accessories > Shoe Care > Shoe Cleaner,Accessories,Shoe Care,Shoe Cleaner,775,1
+L104,Accessories > Shoe Care > Shoe Laces,Accessories,Shoe Care,Shoe Laces,256,1
+L105,Accessories > Shoe Care & Hardware > Shoe Care,Accessories,Shoe Care & Hardware,Shoe Care,37,1
+L106,Accessories > Shoe Charms > Jibbitz,Accessories,Shoe Charms,Jibbitz,118,1
+L107,Accessories > Shoe Cleaner > 0,Accessories,Shoe Cleaner,0,247,1
+L108,Accessories > Shoe Cleaner > Cleaner,Accessories,Shoe Cleaner,Cleaner,751,1
+L109,Accessories > Shoe Cleaner > Shoe Care,Accessories,Shoe Cleaner,Shoe Care,856,1
+L110,Accessories > Shoe Cleaner > Shoe Cleaner,Accessories,Shoe Cleaner,Shoe Cleaner,171,1
+L111,Accessories > Shoe Laces > Flat,Accessories,Shoe Laces,Flat,592,1
+L112,Accessories > Shoe Laces > Shoe Care,Accessories,Shoe Laces,Shoe Care,863,1
+L113,Accessories > Shoe Laces > Shoe Laces,Accessories,Shoe Laces,Shoe Laces,555,1
+L114,Accessories > Socks > 0,Accessories,Socks,0,75,1
+L115,Accessories > Socks > Ankle Sock,Accessories,Socks,Ankle Sock,150,1
+L116,Accessories > Socks > Athletic Socks,Accessories,Socks,Athletic Socks,36,1
+L117,Accessories > Socks > Basketball,Accessories,Socks,Basketball,126,1
+L118,Accessories > Socks > Crew,Accessories,Socks,Crew,456,1
+L119,Accessories > Socks > Crew Cut,Accessories,Socks,Crew Cut,106,1
+L120,Accessories > Socks > Lifestyle,Accessories,Socks,Lifestyle,587,1
+L121,Accessories > Socks > No show,Accessories,Socks,No show,241,1
+L122,Accessories > Socks > Socks,Accessories,Socks,Socks,109,1
+L123,Accessories > Socks > Socks & Underwear,Accessories,Socks,Socks & Underwear,428,1
+L124,Accessories > Socks > Tennis,Accessories,Socks,Tennis,524,1
+L125,Accessories > Socks > Tube,Accessories,Socks,Tube,821,1
+L126,Accessories > Socks & Underwear > 0,Accessories,Socks & Underwear,0,280,1
+L127,Accessories > Socks & Underwear > Boxer Brief,Accessories,Socks & Underwear,Boxer Brief,594,1
+L128,Accessories > Socks & Underwear > Boy short,Accessories,Socks & Underwear,Boy short,868,1
+L129,Accessories > Sunglasses > 0,Accessories,Sunglasses,0,725,1
+L130,Accessories > Sunglasses > New Accessories,Accessories,Sunglasses,New Accessories,760,1
+L131,Accessories > Sunglasses > None,Accessories,Sunglasses,None,879,1
+L132,Accessories > Sunglasses > Polarized,Accessories,Sunglasses,Polarized,563,1
+L133,Accessories > Sunglasses > Sunglasses,Accessories,Sunglasses,Sunglasses,178,1
+L134,Accessories > Tops > Sports Bras,Accessories,Tops,Sports Bras,841,1
+L135,Accessories > Underwear > Boxer Brief,Accessories,Underwear,Boxer Brief,58,1
+L136,Accessories > Underwear > Boxers,Accessories,Underwear,Boxers,731,1
+L137,Accessories > Underwear > Boy short,Accessories,Underwear,Boy short,488,1
+L138,Accessories > Underwear > Bra,Accessories,Underwear,Bra,729,1
+L139,Accessories > Underwear > Briefs,Accessories,Underwear,Briefs,583,1
+L140,Accessories > Underwear > Socks & Underwear,Accessories,Underwear,Socks & Underwear,186,1
+L141,Accessories > Watches > Digital,Accessories,Watches,Digital,613,1
+L142,Clothing > Activewear > Body Suit,Clothing,Activewear,Body Suit,264,1
+L143,Clothing > Activewear > Leg-tights,Clothing,Activewear,Leg-tights,658,1
+L144,Clothing > Activewear > Shorts,Clothing,Activewear,Shorts,240,1
+L145,Clothing > Activewear > Sports Bras,Clothing,Activewear,Sports Bras,811,1
+L146,Clothing > Bottoms > Cargo,Clothing,Bottoms,Cargo,614,1
+L147,Clothing > Bottoms > Jeans,Clothing,Bottoms,Jeans,728,1
+L148,Clothing > Bottoms > Pants,Clothing,Bottoms,Pants,31,1
+L149,Clothing > Bottoms > Shorts,Clothing,Bottoms,Shorts,681,1
+L150,Clothing > Bottoms > Skirt,Clothing,Bottoms,Skirt,119,1
+L151,Clothing > Bottoms > Skirts,Clothing,Bottoms,Skirts,737,1
+L152,Clothing > Bottoms > Skort,Clothing,Bottoms,Skort,544,1
+L153,Clothing > Box Set > Clothing and Apparel,Clothing,Box Set,Clothing and Apparel,532,1
+L154,Clothing > Bras > Bra,Clothing,Bras,Bra,721,1
+L155,Clothing > Bras > Sports bra,Clothing,Bras,Sports bra,220,1
+L156,Clothing > Clothing > Shorts,Clothing,Clothing,Shorts,804,1
+L157,Clothing > Crop Top > Cropped Tee,Clothing,Crop Top,Cropped Tee,823,1
+L158,Clothing > Crop Top > Long Sleeve,Clothing,Crop Top,Long Sleeve,849,1
+L159,Clothing > Crop Top > Short Sleeve,Clothing,Crop Top,Short Sleeve,786,1
+L160,Clothing > Denim > Denim,Clothing,Denim,Denim,120,1
+L161,Clothing > Denim > Shorts,Clothing,Denim,Shorts,611,1
+L162,Clothing > Dress > Athletic,Clothing,Dress,Athletic,840,1
+L163,Clothing > Dress > Cardigan,Clothing,Dress,Cardigan,275,1
+L164,Clothing > Dress > Dress,Clothing,Dress,Dress,850,1
+L165,Clothing > Dress > Dresses,Clothing,Dress,Dresses,816,1
+L166,Clothing > Dress > Long Dresses,Clothing,Dress,Long Dresses,829,1
+L167,Clothing > Dress > Mid,Clothing,Dress,Mid,271,1
+L168,Clothing > Dresses > Knitted dress,Clothing,Dresses,Knitted dress,753,1
+L169,Clothing > Dresses > Long Dresses,Clothing,Dresses,Long Dresses,218,1
+L170,Clothing > Dresses > Long Sleeve,Clothing,Dresses,Long Sleeve,607,1
+L171,Clothing > Dresses > Maxi,Clothing,Dresses,Maxi,865,1
+L172,Clothing > Dresses > Mini,Clothing,Dresses,Mini,671,1
+L173,Clothing > Dresses > Mini Dress,Clothing,Dresses,Mini Dress,780,1
+L174,Clothing > Dresses > Tank,Clothing,Dresses,Tank,526,1
+L175,Clothing > High Heels > 0,Clothing,High Heels,0,181,1
+L176,Clothing > Hoodies > 0,Clothing,Hoodies,0,138,1
+L177,Clothing > Hoodies > Cropped,Clothing,Hoodies,Cropped,796,1
+L178,Clothing > Hoodies > Pullover,Clothing,Hoodies,Pullover,436,1
+L179,Clothing > Hoodies > Pullover Hoodie,Clothing,Hoodies,Pullover Hoodie,376,1
+L180,Clothing > Hoodies > Pullover Hoodies,Clothing,Hoodies,Pullover Hoodies,556,1
+L181,Clothing > Hoodies > Zip Up Hoodie,Clothing,Hoodies,Zip Up Hoodie,62,1
+L182,Clothing > Hoodies > Zip Up Hoodies,Clothing,Hoodies,Zip Up Hoodies,685,1
+L183,Clothing > Hoodies > Zip hoodie,Clothing,Hoodies,Zip hoodie,794,1
+L184,Clothing > Hoodies > Zip-up,Clothing,Hoodies,Zip-up,413,1
+L185,Clothing > Hoodies & Sweatshirts > Hoodies,Clothing,Hoodies & Sweatshirts,Hoodies,33,1
+L186,Clothing > Jacket > Satin,Clothing,Jacket,Satin,712,1
+L187,Clothing > Jacket > Track,Clothing,Jacket,Track,870,1
+L188,Clothing > Jackets > 0,Clothing,Jackets,0,620,1
+L189,Clothing > Jackets > Active,Clothing,Jackets,Active,522,1
+L190,Clothing > Jackets > Anaorak,Clothing,Jackets,Anaorak,864,1
+L191,Clothing > Jackets > Athletic,Clothing,Jackets,Athletic,844,1
+L192,Clothing > Jackets > Baseball,Clothing,Jackets,Baseball,269,1
+L193,Clothing > Jackets > Bomber,Clothing,Jackets,Bomber,174,1
+L194,Clothing > Jackets > Bombers,Clothing,Jackets,Bombers,876,1
+L195,Clothing > Jackets > Cardigan,Clothing,Jackets,Cardigan,878,1
+L196,Clothing > Jackets > Coaches,Clothing,Jackets,Coaches,569,1
+L197,Clothing > Jackets > Coaches Jacket,Clothing,Jackets,Coaches Jacket,245,1
+L198,Clothing > Jackets > Cropped,Clothing,Jackets,Cropped,576,1
+L199,Clothing > Jackets > Denim,Clothing,Jackets,Denim,212,1
+L200,Clothing > Jackets > Fleece,Clothing,Jackets,Fleece,688,1
+L201,Clothing > Jackets > Fur,Clothing,Jackets,Fur,606,1
+L202,Clothing > Jackets > Hoodie,Clothing,Jackets,Hoodie,252,1
+L203,Clothing > Jackets > Jacket,Clothing,Jackets,Jacket,160,1
+L204,Clothing > Jackets > Jackets,Clothing,Jackets,Jackets,709,1
+L205,Clothing > Jackets > Motor,Clothing,Jackets,Motor,261,1
+L206,Clothing > Jackets > None,Clothing,Jackets,None,143,1
+L207,Clothing > Jackets > Outerwear,Clothing,Jackets,Outerwear,801,1
+L208,Clothing > Jackets > Parka,Clothing,Jackets,Parka,808,1
+L209,Clothing > Jackets > Puffer,Clothing,Jackets,Puffer,170,1
+L210,Clothing > Jackets > Pullover,Clothing,Jackets,Pullover,528,1
+L211,Clothing > Jackets > Racing,Clothing,Jackets,Racing,182,1
+L212,Clothing > Jackets > Racing Jacket,Clothing,Jackets,Racing Jacket,846,1
+L213,Clothing > Jackets > Reflective,Clothing,Jackets,Reflective,519,1
+L214,Clothing > Jackets > Reversible,Clothing,Jackets,Reversible,521,1
+L215,Clothing > Jackets > Satin,Clothing,Jackets,Satin,228,1
+L216,Clothing > Jackets > Shacket,Clothing,Jackets,Shacket,601,1
+L217,Clothing > Jackets > Thermal,Clothing,Jackets,Thermal,847,1
+L218,Clothing > Jackets > Track,Clothing,Jackets,Track,85,1
+L219,Clothing > Jackets > Track Jackets,Clothing,Jackets,Track Jackets,652,1
+L220,Clothing > Jackets > Trench,Clothing,Jackets,Trench,833,1
+L221,Clothing > Jackets > Varsity,Clothing,Jackets,Varsity,60,1
+L222,Clothing > Jackets > Varsity Jacket,Clothing,Jackets,Varsity Jacket,225,1
+L223,Clothing > Jackets > Windbreaker,Clothing,Jackets,Windbreaker,173,1
+L224,Clothing > Jackets > Windbreakers,Clothing,Jackets,Windbreakers,632,1
+L225,Clothing > Jackets > Windrunner,Clothing,Jackets,Windrunner,215,1
+L226,Clothing > Jackets > Woven,Clothing,Jackets,Woven,662,1
+L227,Clothing > Jackets > Zip-Up,Clothing,Jackets,Zip-Up,540,1
+L228,Clothing > Jeans > 0,Clothing,Jeans,0,539,1
+L229,Clothing > Jeans > Cargo,Clothing,Jeans,Cargo,443,1
+L230,Clothing > Jeans > Denim,Clothing,Jeans,Denim,644,1
+L231,Clothing > Jeans > Flare,Clothing,Jeans,Flare,633,1
+L232,Clothing > Jeans > Jeans,Clothing,Jeans,Jeans,579,1
+L233,Clothing > Jeans > Pants,Clothing,Jeans,Pants,640,1
+L234,Clothing > Jeans > Skinny,Clothing,Jeans,Skinny,196,1
+L235,Clothing > Jeans > Slim & Straight,Clothing,Jeans,Slim & Straight,279,1
+L236,Clothing > Jeans > Straight,Clothing,Jeans,Straight,122,1
+L237,Clothing > Jerseys > 0,Clothing,Jerseys,0,557,1
+L238,Clothing > Jerseys > Baseball,Clothing,Jerseys,Baseball,129,1
+L239,Clothing > Jerseys > Basketball,Clothing,Jerseys,Basketball,469,1
+L240,Clothing > Jerseys > Jersey,Clothing,Jerseys,Jersey,384,1
+L241,Clothing > Jerseys > Long Sleeve,Clothing,Jerseys,Long Sleeve,684,1
+L242,Clothing > Jerseys > Shirts,Clothing,Jerseys,Shirts,705,1
+L243,Clothing > Jumpers > Bottoms,Clothing,Jumpers,Bottoms,195,1
+L244,Clothing > Jumpers > Pants,Clothing,Jumpers,Pants,209,1
+L245,Clothing > Knit Tops > Crewnecks,Clothing,Knit Tops,Crewnecks,253,1
+L246,Clothing > Knit Tops > Sweaters,Clothing,Knit Tops,Sweaters,680,1
+L247,Clothing > Leggings > Straight,Clothing,Leggings,Straight,769,1
+L248,Clothing > Outerwear > Cardigans,Clothing,Outerwear,Cardigans,115,1
+L249,Clothing > Outerwear > Flannel,Clothing,Outerwear,Flannel,97,1
+L250,Clothing > Outerwear > Jackets,Clothing,Outerwear,Jackets,112,1
+L251,Clothing > Outerwear > Outerwear,Clothing,Outerwear,Outerwear,574,1
+L252,Clothing > Outerwear > Shirts,Clothing,Outerwear,Shirts,564,1
+L253,Clothing > Outerwear > Track Jackets,Clothing,Outerwear,Track Jackets,693,1
+L254,Clothing > Outerwear > Windbreakers,Clothing,Outerwear,Windbreakers,765,1
+L255,Clothing > Outerwear & Jackets > Jackets,Clothing,Outerwear & Jackets,Jackets,32,1
+L256,Clothing > Pants > 0,Clothing,Pants,0,177,1
+L257,Clothing > Pants > Active,Clothing,Pants,Active,166,1
+L258,Clothing > Pants > Basketball,Clothing,Pants,Basketball,676,1
+L259,Clothing > Pants > Basketball Pants,Clothing,Pants,Basketball Pants,226,1
+L260,Clothing > Pants > Bootcut,Clothing,Pants,Bootcut,277,1
+L261,Clothing > Pants > Bottoms,Clothing,Pants,Bottoms,259,1
+L262,Clothing > Pants > Cargo,Clothing,Pants,Cargo,48,1
+L263,Clothing > Pants > Casual,Clothing,Pants,Casual,200,1
+L264,Clothing > Pants > Chino,Clothing,Pants,Chino,529,1
+L265,Clothing > Pants > Denim,Clothing,Pants,Denim,445,1
+L266,Clothing > Pants > Flare,Clothing,Pants,Flare,678,1
+L267,Clothing > Pants > Fleece,Clothing,Pants,Fleece,101,1
+L268,Clothing > Pants > Jeans,Clothing,Pants,Jeans,84,1
+L269,Clothing > Pants > Jogger,Clothing,Pants,Jogger,419,1
+L270,Clothing > Pants > Joggers,Clothing,Pants,Joggers,44,1
+L271,Clothing > Pants > Jumpers,Clothing,Pants,Jumpers,858,1
+L272,Clothing > Pants > Leggings,Clothing,Pants,Leggings,164,1
+L273,Clothing > Pants > Pants,Clothing,Pants,Pants,661,1
+L274,Clothing > Pants > Relaxed,Clothing,Pants,Relaxed,113,1
+L275,Clothing > Pants > Skateboarding,Clothing,Pants,Skateboarding,861,1
+L276,Clothing > Pants > Skinny,Clothing,Pants,Skinny,107,1
+L277,Clothing > Pants > Skirt,Clothing,Pants,Skirt,527,1
+L278,Clothing > Pants > Slim & Straight,Clothing,Pants,Slim & Straight,566,1
+L279,Clothing > Pants > Sweatpants,Clothing,Pants,Sweatpants,69,1
+L280,Clothing > Pants > Track,Clothing,Pants,Track,104,1
+L281,Clothing > Pants > Track Pants,Clothing,Pants,Track Pants,114,1
+L282,Clothing > Pants > Wideleg,Clothing,Pants,Wideleg,647,1
+L283,Clothing > Pants > Windbreakers,Clothing,Pants,Windbreakers,134,1
+L284,Clothing > Pants > Windrunner,Clothing,Pants,Windrunner,655,1
+L285,Clothing > Pants > Woven,Clothing,Pants,Woven,233,1
+L286,Clothing > Pants > Wovens,Clothing,Pants,Wovens,249,1
+L287,Clothing > Polo > Long Sleeve,Clothing,Polo,Long Sleeve,642,1
+L288,Clothing > Polo > Short Sleeve,Clothing,Polo,Short Sleeve,156,1
+L289,Clothing > Running > Tights,Clothing,Running,Tights,255,1
+L290,Clothing > Shirts > Bodysuit,Clothing,Shirts,Bodysuit,542,1
+L291,Clothing > Shirts > Button Up,Clothing,Shirts,Button Up,506,1
+L292,Clothing > Shirts > Button-up,Clothing,Shirts,Button-up,410,1
+L293,Clothing > Shirts > Crew,Clothing,Shirts,Crew,267,1
+L294,Clothing > Shirts > Cropped Tee,Clothing,Shirts,Cropped Tee,810,1
+L295,Clothing > Shirts > Denim,Clothing,Shirts,Denim,758,1
+L296,Clothing > Shirts > Flannel,Clothing,Shirts,Flannel,702,1
+L297,Clothing > Shirts > Jersey,Clothing,Shirts,Jersey,87,1
+L298,Clothing > Shirts > Long Sleeve,Clothing,Shirts,Long Sleeve,176,1
+L299,Clothing > Shirts > Long Sleeve Buttondown Shirts,Clothing,Shirts,Long Sleeve Buttondown Shirts,509,1
+L300,Clothing > Shirts > Long Sleeve Graphic Tees,Clothing,Shirts,Long Sleeve Graphic Tees,475,1
+L301,Clothing > Shirts > Long sleeves,Clothing,Shirts,Long sleeves,560,1
+L302,Clothing > Shirts > Rugbys,Clothing,Shirts,Rugbys,664,1
+L303,Clothing > Shirts > Shacket,Clothing,Shirts,Shacket,210,1
+L304,Clothing > Shirts > Short Sleeve,Clothing,Shirts,Short Sleeve,586,1
+L305,Clothing > Shirts > Short Sleeve Buttondown Shirts,Clothing,Shirts,Short Sleeve Buttondown Shirts,400,1
+L306,Clothing > Shirts > Short Sleeve Graphic Tees,Clothing,Shirts,Short Sleeve Graphic Tees,646,1
+L307,Clothing > Shirts > Soccer,Clothing,Shirts,Soccer,208,1
+L308,Clothing > Shirts > Striped or Pattern Tees,Clothing,Shirts,Striped or Pattern Tees,787,1
+L309,Clothing > Shirts > Tank Tops,Clothing,Shirts,Tank Tops,687,1
+L310,Clothing > Shoes > None,Clothing,Shoes,None,154,1
+L311,Clothing > Shoes > Sneakers,Clothing,Shoes,Sneakers,246,1
+L312,Clothing > Shorts > 0,Clothing,Shorts,0,461,1
+L313,Clothing > Shorts > Active,Clothing,Shorts,Active,442,1
+L314,Clothing > Shorts > Athletic,Clothing,Shorts,Athletic,98,1
+L315,Clothing > Shorts > Basketball,Clothing,Shorts,Basketball,72,1
+L316,Clothing > Shorts > Basketball Short,Clothing,Shorts,Basketball Short,590,1
+L317,Clothing > Shorts > Bike Shorts,Clothing,Shorts,Bike Shorts,155,1
+L318,Clothing > Shorts > Boardshorts,Clothing,Shorts,Boardshorts,99,1
+L319,Clothing > Shorts > Boy short,Clothing,Shorts,Boy short,710,1
+L320,Clothing > Shorts > Cargo,Clothing,Shorts,Cargo,81,1
+L321,Clothing > Shorts > Casual,Clothing,Shorts,Casual,819,1
+L322,Clothing > Shorts > Cut Off,Clothing,Shorts,Cut Off,890,1
+L323,Clothing > Shorts > Denim,Clothing,Shorts,Denim,110,1
+L324,Clothing > Shorts > Fleece,Clothing,Shorts,Fleece,46,1
+L325,Clothing > Shorts > High Waisted,Clothing,Shorts,High Waisted,559,1
+L326,Clothing > Shorts > Jeans,Clothing,Shorts,Jeans,420,1
+L327,Clothing > Shorts > Jersey,Clothing,Shorts,Jersey,772,1
+L328,Clothing > Shorts > Running Shorts,Clothing,Shorts,Running Shorts,168,1
+L329,Clothing > Shorts > Shorts,Clothing,Shorts,Shorts,88,1
+L330,Clothing > Shorts > Sweatpants,Clothing,Shorts,Sweatpants,426,1
+L331,Clothing > Shorts > Sweatshorts,Clothing,Shorts,Sweatshorts,64,1
+L332,Clothing > Shorts > Swimwear,Clothing,Shorts,Swimwear,570,1
+L333,Clothing > Shorts > Track,Clothing,Shorts,Track,776,1
+L334,Clothing > Shorts > Track Shorts,Clothing,Shorts,Track Shorts,199,1
+L335,Clothing > Shorts > Twill,Clothing,Shorts,Twill,492,1
+L336,Clothing > Shorts > Twills,Clothing,Shorts,Twills,797,1
+L337,Clothing > Shorts > Varsity,Clothing,Shorts,Varsity,738,1
+L338,Clothing > Shorts > Volley Shorts,Clothing,Shorts,Volley Shorts,873,1
+L339,Clothing > Shorts > Windrunner,Clothing,Shorts,Windrunner,665,1
+L340,Clothing > Shorts > Woven,Clothing,Shorts,Woven,382,1
+L341,Clothing > Skirt > Skirt,Clothing,Skirt,Skirt,703,1
+L342,Clothing > Skirt > Tennis,Clothing,Skirt,Tennis,837,1
+L343,Clothing > Skirts > 0,Clothing,Skirts,0,720,1
+L344,Clothing > Skirts > Active,Clothing,Skirts,Active,517,1
+L345,Clothing > Skirts > Athletic,Clothing,Skirts,Athletic,487,1
+L346,Clothing > Skirts > Fleece,Clothing,Skirts,Fleece,807,1
+L347,Clothing > Skirts > Skirt,Clothing,Skirts,Skirt,133,1
+L348,Clothing > Skirts > Skirts,Clothing,Skirts,Skirts,793,1
+L349,Clothing > Skirts > Windrunner,Clothing,Skirts,Windrunner,736,1
+L350,Clothing > Slippers > Slip On,Clothing,Slippers,Slip On,638,1
+L351,Clothing > Sneakers > Basketball Shoe,Clothing,Sneakers,Basketball Shoe,515,1
+L352,Clothing > Socks > Socks,Clothing,Socks,Socks,127,1
+L353,Clothing > Socks & Underwear > Socks,Clothing,Socks & Underwear,Socks,416,1
+L354,Clothing > Sport Bras > Bralette,Clothing,Sport Bras,Bralette,205,1
+L355,Clothing > Sport Bras > Sports Bras,Clothing,Sport Bras,Sports Bras,577,1
+L356,Clothing > Sweaters > Cardigan,Clothing,Sweaters,Cardigan,198,1
+L357,Clothing > Sweaters > Crew,Clothing,Sweaters,Crew,536,1
+L358,Clothing > Sweaters > Crewneck,Clothing,Sweaters,Crewneck,179,1
+L359,Clothing > Sweaters > Crewnecks,Clothing,Sweaters,Crewnecks,694,1
+L360,Clothing > Sweaters > Fleece,Clothing,Sweaters,Fleece,582,1
+L361,Clothing > Sweaters > Hoodies,Clothing,Sweaters,Hoodies,103,1
+L362,Clothing > Sweaters > Pullover,Clothing,Sweaters,Pullover,180,1
+L363,Clothing > Sweaters > Sweatshirts,Clothing,Sweaters,Sweatshirts,641,1
+L364,Clothing > Sweaters > Track,Clothing,Sweaters,Track,855,1
+L365,Clothing > Sweaters > Windbreaker,Clothing,Sweaters,Windbreaker,260,1
+L366,Clothing > Sweatpants > 0,Clothing,Sweatpants,0,568,1
+L367,Clothing > Sweatpants > Cargo,Clothing,Sweatpants,Cargo,615,1
+L368,Clothing > Sweatpants > Flare,Clothing,Sweatpants,Flare,175,1
+L369,Clothing > Sweatpants > Fleece,Clothing,Sweatpants,Fleece,463,1
+L370,Clothing > Sweatpants > Jogger,Clothing,Sweatpants,Jogger,468,1
+L371,Clothing > Sweatpants > Joggers,Clothing,Sweatpants,Joggers,401,1
+L372,Clothing > Sweatpants > Pants,Clothing,Sweatpants,Pants,169,1
+L373,Clothing > Sweatpants > Slim & Straight,Clothing,Sweatpants,Slim & Straight,231,1
+L374,Clothing > Sweatpants > Straight,Clothing,Sweatpants,Straight,682,1
+L375,Clothing > Sweatpants > Sweatpants,Clothing,Sweatpants,Sweatpants,514,1
+L376,Clothing > Sweatpants > Track Pants,Clothing,Sweatpants,Track Pants,683,1
+L377,Clothing > Sweatpants > Woven,Clothing,Sweatpants,Woven,609,1
+L378,Clothing > Sweatshirt > Long Sleeve Graphic Tees,Clothing,Sweatshirt,Long Sleeve Graphic Tees,853,1
+L379,Clothing > Sweatshirts > 0,Clothing,Sweatshirts,0,755,1
+L380,Clothing > Sweatshirts > Crew,Clothing,Sweatshirts,Crew,762,1
+L381,Clothing > Sweatshirts > Crewneck,Clothing,Sweatshirts,Crewneck,80,1
+L382,Clothing > Sweatshirts > Crewnecks,Clothing,Sweatshirts,Crewnecks,700,1
+L383,Clothing > Sweatshirts > Cropped,Clothing,Sweatshirts,Cropped,265,1
+L384,Clothing > Sweatshirts > Fleece,Clothing,Sweatshirts,Fleece,243,1
+L385,Clothing > Sweatshirts > Pullover Hoodie,Clothing,Sweatshirts,Pullover Hoodie,55,1
+L386,Clothing > Sweatshirts > Pullover Hoodies,Clothing,Sweatshirts,Pullover Hoodies,478,1
+L387,Clothing > Sweatshirts > V-Neck,Clothing,Sweatshirts,V-Neck,257,1
+L388,Clothing > Sweatshirts > Windbreakers,Clothing,Sweatshirts,Windbreakers,790,1
+L389,Clothing > Sweatshirts > Zip Up Hoodie,Clothing,Sweatshirts,Zip Up Hoodie,450,1
+L390,Clothing > Sweatshirts > Zip Up Hoodies,Clothing,Sweatshirts,Zip Up Hoodies,523,1
+L391,Clothing > Sweatshirts > Zip-up,Clothing,Sweatshirts,Zip-up,242,1
+L392,Clothing > Swimwear > Swimwear,Clothing,Swimwear,Swimwear,281,1
+L393,Clothing > T-shirts > 0,Clothing,T-shirts,0,90,1
+L394,Clothing > T-shirts > Activewear,Clothing,T-shirts,Activewear,197,1
+L395,Clothing > T-shirts > Baseball Tees,Clothing,T-shirts,Baseball Tees,573,1
+L396,Clothing > T-shirts > Basic Tees,Clothing,T-shirts,Basic Tees,224,1
+L397,Clothing > T-shirts > Button Up,Clothing,T-shirts,Button Up,899,1
+L398,Clothing > T-shirts > Crewneck,Clothing,T-shirts,Crewneck,784,1
+L399,Clothing > T-shirts > Cropped,Clothing,T-shirts,Cropped,499,1
+L400,Clothing > T-shirts > Cropped Tee,Clothing,T-shirts,Cropped Tee,152,1
+L401,Clothing > T-shirts > Graphics,Clothing,T-shirts,Graphics,689,1
+L402,Clothing > T-shirts > Jersey,Clothing,T-shirts,Jersey,477,1
+L403,Clothing > T-shirts > Long Sleeve,Clothing,T-shirts,Long Sleeve,135,1
+L404,Clothing > T-shirts > Long Sleeve Buttondown Shirts,Clothing,T-shirts,Long Sleeve Buttondown Shirts,561,1
+L405,Clothing > T-shirts > Long Sleeve Graphic Tees,Clothing,T-shirts,Long Sleeve Graphic Tees,630,1
+L406,Clothing > T-shirts > Long sleeves,Clothing,T-shirts,Long sleeves,761,1
+L407,Clothing > T-shirts > Shirts,Clothing,T-shirts,Shirts,219,1
+L408,Clothing > T-shirts > Short Sleeve,Clothing,T-shirts,Short Sleeve,374,1
+L409,Clothing > T-shirts > Short Sleeve Graphic Tees,Clothing,T-shirts,Short Sleeve Graphic Tees,50,1
+L410,Clothing > T-shirts > Short sleeves,Clothing,T-shirts,Short sleeves,405,1
+L411,Clothing > T-shirts > Sleeveless,Clothing,T-shirts,Sleeveless,549,1
+L412,Clothing > T-shirts > T-long sleeve,Clothing,T-shirts,T-long sleeve,581,1
+L413,Clothing > T-shirts > Tank Tops,Clothing,T-shirts,Tank Tops,669,1
+L414,Clothing > T-shirts > Varsity,Clothing,T-shirts,Varsity,798,1
+L415,Clothing > Tank Tops > Cropped,Clothing,Tank Tops,Cropped,857,1
+L416,Clothing > Tank Tops > Graphic Tank Tops,Clothing,Tank Tops,Graphic Tank Tops,834,1
+L417,Clothing > Tank Tops > Jersey,Clothing,Tank Tops,Jersey,172,1
+L418,Clothing > Tops > Bodysuit,Clothing,Tops,Bodysuit,604,1
+L419,Clothing > Tops > Bra,Clothing,Tops,Bra,851,1
+L420,Clothing > Tops > Button-up,Clothing,Tops,Button-up,668,1
+L421,Clothing > Tops > Cardigans,Clothing,Tops,Cardigans,862,1
+L422,Clothing > Tops > Crew,Clothing,Tops,Crew,757,1
+L423,Clothing > Tops > Crewneck,Clothing,Tops,Crewneck,747,1
+L424,Clothing > Tops > Crewnecks,Clothing,Tops,Crewnecks,207,1
+L425,Clothing > Tops > Cropped,Clothing,Tops,Cropped,184,1
+L426,Clothing > Tops > Cropped Tee,Clothing,Tops,Cropped Tee,550,1
+L427,Clothing > Tops > FALSE,Clothing,Tops,FALSE,726,1
+L428,Clothing > Tops > Flannel,Clothing,Tops,Flannel,881,1
+L429,Clothing > Tops > Jacket,Clothing,Tops,Jacket,446,1
+L430,Clothing > Tops > Jersey,Clothing,Tops,Jersey,59,1
+L431,Clothing > Tops > Knit Tops,Clothing,Tops,Knit Tops,283,1
+L432,Clothing > Tops > Long Sleeve,Clothing,Tops,Long Sleeve,503,1
+L433,Clothing > Tops > Long Sleeve Buttondown Shirts,Clothing,Tops,Long Sleeve Buttondown Shirts,639,1
+L434,Clothing > Tops > Long Sleeve Graphic Tees,Clothing,Tops,Long Sleeve Graphic Tees,189,1
+L435,Clothing > Tops > Long sleeves,Clothing,Tops,Long sleeves,188,1
+L436,Clothing > Tops > Polos,Clothing,Tops,Polos,831,1
+L437,Clothing > Tops > Short Sleeve,Clothing,Tops,Short Sleeve,525,1
+L438,Clothing > Tops > Short Sleeve Buttondown Shirts,Clothing,Tops,Short Sleeve Buttondown Shirts,94,1
+L439,Clothing > Tops > Short Sleeve Graphic Tees,Clothing,Tops,Short Sleeve Graphic Tees,496,1
+L440,Clothing > Tops > Short sleeves,Clothing,Tops,Short sleeves,697,1
+L441,Clothing > Tops > Sports Bras,Clothing,Tops,Sports Bras,575,1
+L442,Clothing > Tops > Sweatshirts,Clothing,Tops,Sweatshirts,624,1
+L443,Clothing > Tops > T-Shirts,Clothing,Tops,T-Shirts,30,1
+L444,Clothing > Tops > T-shirt,Clothing,Tops,T-shirt,817,1
+L445,Clothing > Tops > Tank,Clothing,Tops,Tank,622,1
+L446,Clothing > Tops > Tank Tops,Clothing,Tops,Tank Tops,116,1
+L447,Clothing > Tops > Tees,Clothing,Tops,Tees,274,1
+L448,Clothing > Tops > Tops,Clothing,Tops,Tops,254,1
+L449,Clothing > Tops > Track,Clothing,Tops,Track,852,1
+L450,Clothing > Tops > Tube,Clothing,Tops,Tube,65,1
+L451,Clothing > Tops > Winter Vests,Clothing,Tops,Winter Vests,273,1
+L452,Clothing > Tops > Woven,Clothing,Tops,Woven,202,1
+L453,Clothing > Tops > Wovens,Clothing,Tops,Wovens,629,1
+L454,Clothing > Tops > Zip-Up,Clothing,Tops,Zip-Up,838,1
+L455,Clothing > Underwear > Boxer Brief,Clothing,Underwear,Boxer Brief,483,1
+L456,Clothing > Underwear > Boxers,Clothing,Underwear,Boxers,848,1
+L457,Clothing > Underwear > Socks & Underwear,Clothing,Underwear,Socks & Underwear,718,1
+L458,Clothing > Vests > Outerwear,Clothing,Vests,Outerwear,727,1
+L459,Clothing > Vests > Utility Vests,Clothing,Vests,Utility Vests,538,1
+L460,Clothing > Vests > Winter Vests,Clothing,Vests,Winter Vests,558,1
+L461,Footwear >  >,Footwear,,,381,1
+L462,Footwear > 0 > 0,Footwear,0,0,562,1
+L463,Footwear > Athletic > Basketball,Footwear,Athletic,Basketball,123,1
+L464,Footwear > Athletic > Basketball Shoe,Footwear,Athletic,Basketball Shoe,501,1
+L465,Footwear > Athletic > FALSE,Footwear,Athletic,FALSE,"248, 361",2
+L466,Footwear > Athletic > Lifestyle,Footwear,Athletic,Lifestyle,"206, 360",2
+L467,Footwear > Athletic > Running,Footwear,Athletic,Running,185,1
+L468,Footwear > Athletic > Soccer,Footwear,Athletic,Soccer,543,1
+L469,Footwear > Boat Shoes > Boat,Footwear,Boat Shoes,Boat,733,1
+L470,Footwear > Boat Shoes > Boat Shoes,Footwear,Boat Shoes,Boat Shoes,"268, 362",2
+L471,Footwear > Boots >,Footwear,Boots,,824,1
+L472,Footwear > Boots > 0,Footwear,Boots,0,"91, 284",2
+L473,Footwear > Boots > 6 Inch Premium,Footwear,Boots,6 Inch Premium,"68, 286",2
+L474,Footwear > Boots > 6-Inch Boot,Footwear,Boots,6-Inch Boot,"192, 285",2
+L475,Footwear > Boots > Ankle Boots,Footwear,Boots,Ankle Boots,"45, 287",2
+L476,Footwear > Boots > Athletic,Footwear,Boots,Athletic,745,1
+L477,Footwear > Boots > Basketball Shoe,Footwear,Boots,Basketball Shoe,818,1
+L478,Footwear > Boots > Block Heel,Footwear,Boots,Block Heel,730,1
+L479,Footwear > Boots > Booties,Footwear,Boots,Booties,"77, 288",2
+L480,Footwear > Boots > Boots,Footwear,Boots,Boots,"149, 289",2
+L481,Footwear > Boots > Chelsea,Footwear,Boots,Chelsea,551,1
+L482,Footwear > Boots > Chukka,Footwear,Boots,Chukka,"157, 290",2
+L483,Footwear > Boots > Chunky,Footwear,Boots,Chunky,409,1
+L484,Footwear > Boots > Clogs,Footwear,Boots,Clogs,531,1
+L485,Footwear > Boots > Combat Boot,Footwear,Boots,Combat Boot,447,1
+L486,Footwear > Boots > Combat Boots,Footwear,Boots,Combat Boots,387,1
+L487,Footwear > Boots > Core,Footwear,Boots,Core,839,1
+L488,Footwear > Boots > Cowboy Boots,Footwear,Boots,Cowboy Boots,510,1
+L489,Footwear > Boots > Duck Boots,Footwear,Boots,Duck Boots,493,1
+L490,Footwear > Boots > Fashion Boots,Footwear,Boots,Fashion Boots,28,1
+L491,Footwear > Boots > Flat,Footwear,Boots,Flat,466,1
+L492,Footwear > Boots > Flats,Footwear,Boots,Flats,396,1
+L493,Footwear > Boots > Fringe,Footwear,Boots,Fringe,764,1
+L494,Footwear > Boots > Fur,Footwear,Boots,Fur,490,1
+L495,Footwear > Boots > Fur boots,Footwear,Boots,Fur boots,"61, 291",2
+L496,Footwear > Boots > Gravity Wedge,Footwear,Boots,Gravity Wedge,749,1
+L497,Footwear > Boots > Heel,Footwear,Boots,Heel,781,1
+L498,Footwear > Boots > Heels,Footwear,Boots,Heels,440,1
+L499,Footwear > Boots > High Heel,Footwear,Boots,High Heel,616,1
+L500,Footwear > Boots > High Heels,Footwear,Boots,High Heels,"78, 292",2
+L501,Footwear > Boots > Jeans,Footwear,Boots,Jeans,441,1
+L502,Footwear > Boots > Knee Boot,Footwear,Boots,Knee Boot,826,1
+L503,Footwear > Boots > Knee High Boots,Footwear,Boots,Knee High Boots,"105, 293",2
+L504,Footwear > Boots > Leggings,Footwear,Boots,Leggings,634,1
+L505,Footwear > Boots > Lifestyle,Footwear,Boots,Lifestyle,393,1
+L506,Footwear > Boots > Low Heel,Footwear,Boots,Low Heel,370,1
+L507,Footwear > Boots > Mid,Footwear,Boots,Mid,832,1
+L508,Footwear > Boots > Mid Calf Boots,Footwear,Boots,Mid Calf Boots,"83, 294",2
+L509,Footwear > Boots > Mid-Calf,Footwear,Boots,Mid-Calf,892,1
+L510,Footwear > Boots > Over The Knee,Footwear,Boots,Over The Knee,460,1
+L511,Footwear > Boots > Oxfords,Footwear,Boots,Oxfords,723,1
+L512,Footwear > Boots > Platform,Footwear,Boots,Platform,553,1
+L513,Footwear > Boots > Platforms,Footwear,Boots,Platforms,653,1
+L514,Footwear > Boots > Puffer,Footwear,Boots,Puffer,"136, 295",2
+L515,Footwear > Boots > Rain,Footwear,Boots,Rain,"239, 296",2
+L516,Footwear > Boots > Rain & Snow,Footwear,Boots,Rain & Snow,439,1
+L517,Footwear > Boots > Rain Boots,Footwear,Boots,Rain Boots,"57, 297",2
+L518,Footwear > Boots > Rainboots,Footwear,Boots,Rainboots,"223, 298",2
+L519,Footwear > Boots > Riding Boots,Footwear,Boots,Riding Boots,"92, 299",2
+L520,Footwear > Boots > Sneaker,Footwear,Boots,Sneaker,708,1
+L521,Footwear > Boots > Sneakers,Footwear,Boots,Sneakers,778,1
+L522,Footwear > Boots > Stiletto,Footwear,Boots,Stiletto,423,1
+L523,Footwear > Boots > Thigh High Boots,Footwear,Boots,Thigh High Boots,"95, 300",2
+L524,Footwear > Boots > Water Proof,Footwear,Boots,Water Proof,"111, 301",2
+L525,Footwear > Boots > Wedges,Footwear,Boots,Wedges,597,1
+L526,Footwear > Boots > Western,Footwear,Boots,Western,389,1
+L527,Footwear > Boots > Work Boots,Footwear,Boots,Work Boots,"244, 302",2
+L528,Footwear > Casual > Flat,Footwear,Casual,Flat,495,1
+L529,Footwear > Casual > Flats,Footwear,Casual,Flats,"93, 303",2
+L530,Footwear > Casual > Footwear,Footwear,Casual,Footwear,724,1
+L531,Footwear > Casual > Lifestyle,Footwear,Casual,Lifestyle,"53, 304",2
+L532,Footwear > Casual > Loafer,Footwear,Casual,Loafer,732,1
+L533,Footwear > Casual > Loafers,Footwear,Casual,Loafers,452,1
+L534,Footwear > Casual > Moccasins,Footwear,Casual,Moccasins,900,1
+L535,Footwear > Casual > Oxfords,Footwear,Casual,Oxfords,651,1
+L536,Footwear > Casual > Slip On,Footwear,Casual,Slip On,645,1
+L537,Footwear > Casual > Slipper,Footwear,Casual,Slipper,605,1
+L538,Footwear > Casual > Slippers,Footwear,Casual,Slippers,"52, 307",2
+L539,Footwear > Casual > Sneaker,Footwear,Casual,Sneaker,"96, 305",2
+L540,Footwear > Casual > Sneakers,Footwear,Casual,Sneakers,"153, 306",2
+L541,Footwear > Clogs > 0,Footwear,Clogs,0,752,1
+L542,Footwear > Clogs > Casual,Footwear,Clogs,Casual,"151, 308",2
+L543,Footwear > Clogs > Mules,Footwear,Clogs,Mules,"227, 309",2
+L544,Footwear > Clogs > Slide,Footwear,Clogs,Slide,717,1
+L545,Footwear > Clogs > Slip On,Footwear,Clogs,Slip On,788,1
+L546,Footwear > Clogs > Slipper,Footwear,Clogs,Slipper,771,1
+L547,Footwear > Dress > Heels,Footwear,Dress,Heels,820,1
+L548,Footwear > Dress > Low Heel,Footwear,Dress,Low Heel,888,1
+L549,Footwear > Dressy > Heels,Footwear,Dressy,Heels,803,1
+L550,Footwear > Dressy > High Heel,Footwear,Dressy,High Heel,565,1
+L551,Footwear > Dressy > High Heels,Footwear,Dressy,High Heels,411,1
+L552,Footwear > Dressy > Low Heel,Footwear,Dressy,Low Heel,554,1
+L553,Footwear > Dressy > Oxfords,Footwear,Dressy,Oxfords,842,1
+L554,Footwear > Dressy > Platform,Footwear,Dressy,Platform,"82, 363",2
+L555,Footwear > Dressy > Strappy Heel,Footwear,Dressy,Strappy Heel,874,1
+L556,Footwear > Dressy > Wedge,Footwear,Dressy,Wedge,779,1
+L557,Footwear > Flats > 0,Footwear,Flats,0,743,1
+L558,Footwear > Flats > Ballerina,Footwear,Flats,Ballerina,"221, 310",2
+L559,Footwear > Flats > Casual,Footwear,Flats,Casual,"203, 311",2
+L560,Footwear > Flats > Flats,Footwear,Flats,Flats,507,1
+L561,Footwear > Flats > Jelly,Footwear,Flats,Jelly,600,1
+L562,Footwear > Flats > Lifestyle,Footwear,Flats,Lifestyle,617,1
+L563,Footwear > Flats > Loafer,Footwear,Flats,Loafer,584,1
+L564,Footwear > Flats > Mules,Footwear,Flats,Mules,"201, 312",2
+L565,Footwear > Flats > Pumps,Footwear,Flats,Pumps,481,1
+L566,Footwear > Flats > Sandals,Footwear,Flats,Sandals,530,1
+L567,Footwear > Flats > Slip On,Footwear,Flats,Slip On,"39, 313",2
+L568,Footwear > Flats > Slippers,Footwear,Flats,Slippers,782,1
+L569,Footwear > Flats > Toddler,Footwear,Flats,Toddler,637,1
+L570,Footwear > Footwear > Basketball,Footwear,Footwear,Basketball,714,1
+L571,Footwear > Footwear > Casual,Footwear,Footwear,Casual,795,1
+L572,Footwear > Footwear > Footwear,Footwear,Footwear,Footwear,"272, 364",2
+L573,Footwear > Footwear > Lifestyle,Footwear,Footwear,Lifestyle,"217, 365",2
+L574,Footwear > High Heels > 0,Footwear,High Heels,0,470,1
+L575,Footwear > High Heels > Adjustable,Footwear,High Heels,Adjustable,476,1
+L576,Footwear > High Heels > Block Heel,Footwear,High Heels,Block Heel,375,1
+L577,Footwear > High Heels > Booties,Footwear,High Heels,Booties,437,1
+L578,Footwear > High Heels > Boots,Footwear,High Heels,Boots,603,1
+L579,Footwear > High Heels > Chunky,Footwear,High Heels,Chunky,438,1
+L580,Footwear > High Heels > Dress Shoes,Footwear,High Heels,Dress Shoes,621,1
+L581,Footwear > High Heels > Dresses,Footwear,High Heels,Dresses,479,1
+L582,Footwear > High Heels > Dressy,Footwear,High Heels,Dressy,545,1
+L583,Footwear > High Heels > Exotic,Footwear,High Heels,Exotic,691,1
+L584,Footwear > High Heels > Fur boots,Footwear,High Heels,Fur boots,418,1
+L585,Footwear > High Heels > Gladiator,Footwear,High Heels,Gladiator,884,1
+L586,Footwear > High Heels > Heels,Footwear,High Heels,Heels,391,1
+L587,Footwear > High Heels > High Heel,Footwear,High Heels,High Heel,482,1
+L588,Footwear > High Heels > High Heels,Footwear,High Heels,High Heels,"43, 314",2
+L589,Footwear > High Heels > Jeweled,Footwear,High Heels,Jeweled,417,1
+L590,Footwear > High Heels > Knee High Boots,Footwear,High Heels,Knee High Boots,500,1
+L591,Footwear > High Heels > Lace up,Footwear,High Heels,Lace up,494,1
+L592,Footwear > High Heels > Lifestyle,Footwear,High Heels,Lifestyle,435,1
+L593,Footwear > High Heels > Loafers,Footwear,High Heels,Loafers,625,1
+L594,Footwear > High Heels > Low Heel,Footwear,High Heels,Low Heel,383,1
+L595,Footwear > High Heels > Mules,Footwear,High Heels,Mules,449,1
+L596,Footwear > High Heels > Open Toe,Footwear,High Heels,Open Toe,379,1
+L597,Footwear > High Heels > Peep Toe,Footwear,High Heels,Peep Toe,766,1
+L598,Footwear > High Heels > Platform,Footwear,High Heels,Platform,421,1
+L599,Footwear > High Heels > Platforms,Footwear,High Heels,Platforms,394,1
+L600,Footwear > High Heels > Pump,Footwear,High Heels,Pump,508,1
+L601,Footwear > High Heels > Pumps,Footwear,High Heels,Pumps,"47, 315",2
+L602,Footwear > High Heels > Pumps & Stilettos,Footwear,High Heels,Pumps & Stilettos,29,1
+L603,Footwear > High Heels > Sandals,Footwear,High Heels,Sandals,395,1
+L604,Footwear > High Heels > Slingback,Footwear,High Heels,Slingback,610,1
+L605,Footwear > High Heels > Slip On,Footwear,High Heels,Slip On,367,1
+L606,Footwear > High Heels > Stiletto,Footwear,High Heels,Stiletto,390,1
+L607,Footwear > High Heels > Stocking,Footwear,High Heels,Stocking,679,1
+L608,Footwear > High Heels > Strappy,Footwear,High Heels,Strappy,404,1
+L609,Footwear > High Heels > Strappy Heel,Footwear,High Heels,Strappy Heel,"76, 316",2
+L610,Footwear > High Heels > Thigh High Boots,Footwear,High Heels,Thigh High Boots,883,1
+L611,Footwear > High Heels > Thong,Footwear,High Heels,Thong,588,1
+L612,Footwear > High Heels > Wedge,Footwear,High Heels,Wedge,734,1
+L613,Footwear > High Heels > Wedges,Footwear,High Heels,Wedges,498,1
+L614,Footwear > High Heels > Wrap Around,Footwear,High Heels,Wrap Around,444,1
+L615,Footwear > Knee High Boots > High Heels,Footwear,Knee High Boots,High Heels,756,1
+L616,Footwear > Knee High Boots > Knee High Boots,Footwear,Knee High Boots,Knee High Boots,628,1
+L617,Footwear > Knee High Boots > Platform,Footwear,Knee High Boots,Platform,618,1
+L618,Footwear > Knee High Boots > Stiletto,Footwear,Knee High Boots,Stiletto,484,1
+L619,Footwear > Knee High Boots > Thigh High Boots,Footwear,Knee High Boots,Thigh High Boots,667,1
+L620,Footwear > Knee High Boots > Western,Footwear,Knee High Boots,Western,699,1
+L621,Footwear > Lifestyle > 0,Footwear,Lifestyle,0,"161, 366",2
+L622,Footwear > Moccasin > Moccasins,Footwear,Moccasin,Moccasins,882,1
+L623,Footwear > Moccasin > Slip On,Footwear,Moccasin,Slip On,889,1
+L624,Footwear > Oxford > Casual,Footwear,Oxford,Casual,455,1
+L625,Footwear > Oxford > Dress Shoes,Footwear,Oxford,Dress Shoes,589,1
+L626,Footwear > Oxford > Flats,Footwear,Oxford,Flats,802,1
+L627,Footwear > Oxford > Lace up,Footwear,Oxford,Lace up,598,1
+L628,Footwear > Oxford > Lifestyle,Footwear,Oxford,Lifestyle,489,1
+L629,Footwear > Oxford > Oxfords,Footwear,Oxford,Oxfords,533,1
+L630,Footwear > Oxford > Sneakers,Footwear,Oxford,Sneakers,"148, 317",2
+L631,Footwear > Oxford > Toddler,Footwear,Oxford,Toddler,"89, 318",2
+L632,Footwear > Pants > Joggers,Footwear,Pants,Joggers,896,1
+L633,Footwear > Platform > Booties,Footwear,Platform,Booties,696,1
+L634,Footwear > Platform > High Heels,Footwear,Platform,High Heels,800,1
+L635,Footwear > Platform > Lifestyle,Footwear,Platform,Lifestyle,872,1
+L636,Footwear > Platform > Loafers,Footwear,Platform,Loafers,516,1
+L637,Footwear > Platform > Pumps,Footwear,Platform,Pumps,773,1
+L638,Footwear > Running > 0,Footwear,Running,0,860,1
+L639,Footwear > Sandal > Clogs,Footwear,Sandal,Clogs,"125, 319",2
+L640,Footwear > Sandal > Flat,Footwear,Sandal,Flat,377,1
+L641,Footwear > Sandal > Flip Flop,Footwear,Sandal,Flip Flop,429,1
+L642,Footwear > Sandal > Gladiator,Footwear,Sandal,Gladiator,541,1
+L643,Footwear > Sandal > Jelly,Footwear,Sandal,Jelly,672,1
+L644,Footwear > Sandal > Lifestyle,Footwear,Sandal,Lifestyle,547,1
+L645,Footwear > Sandal > Mules,Footwear,Sandal,Mules,877,1
+L646,Footwear > Sandal > Platform,Footwear,Sandal,Platform,408,1
+L647,Footwear > Sandal > Sandals,Footwear,Sandal,Sandals,397,1
+L648,Footwear > Sandal > Slide,Footwear,Sandal,Slide,520,1
+L649,Footwear > Sandal > Slides,Footwear,Sandal,Slides,378,1
+L650,Footwear > Sandal > Slip On,Footwear,Sandal,Slip On,"167, 320",2
+L651,Footwear > Sandal > Strappy,Footwear,Sandal,Strappy,497,1
+L652,Footwear > Sandal > Thong,Footwear,Sandal,Thong,433,1
+L653,Footwear > Sandal > Wedge,Footwear,Sandal,Wedge,513,1
+L654,Footwear > Sandal > Wrap Around,Footwear,Sandal,Wrap Around,835,1
+L655,Footwear > Sandals > 0,Footwear,Sandals,0,673,1
+L656,Footwear > Sandals > Animal Print,Footwear,Sandals,Animal Print,886,1
+L657,Footwear > Sandals > Bandals,Footwear,Sandals,Bandals,740,1
+L658,Footwear > Sandals > Casual,Footwear,Sandals,Casual,369,1
+L659,Footwear > Sandals > Clogs,Footwear,Sandals,Clogs,"79, 321",2
+L660,Footwear > Sandals > Exotic,Footwear,Sandals,Exotic,448,1
+L661,Footwear > Sandals > Flat,Footwear,Sandals,Flat,373,1
+L662,Footwear > Sandals > Flats,Footwear,Sandals,Flats,371,1
+L663,Footwear > Sandals > Flip Flop,Footwear,Sandals,Flip Flop,454,1
+L664,Footwear > Sandals > Gladiator,Footwear,Sandals,Gladiator,407,1
+L665,Footwear > Sandals > Heels,Footwear,Sandals,Heels,768,1
+L666,Footwear > Sandals > High Heels,Footwear,Sandals,High Heels,402,1
+L667,Footwear > Sandals > Jelly,Footwear,Sandals,Jelly,"63, 322",2
+L668,Footwear > Sandals > Jeweled,Footwear,Sandals,Jeweled,895,1
+L669,Footwear > Sandals > Lace up,Footwear,Sandals,Lace up,480,1
+L670,Footwear > Sandals > Lifestyle,Footwear,Sandals,Lifestyle,430,1
+L671,Footwear > Sandals > Loafers,Footwear,Sandals,Loafers,631,1
+L672,Footwear > Sandals > Low Heel,Footwear,Sandals,Low Heel,386,1
+L673,Footwear > Sandals > Mules,Footwear,Sandals,Mules,722,1
+L674,Footwear > Sandals > Open Toe,Footwear,Sandals,Open Toe,505,1
+L675,Footwear > Sandals > Platform,Footwear,Sandals,Platform,464,1
+L676,Footwear > Sandals > Platforms,Footwear,Sandals,Platforms,388,1
+L677,Footwear > Sandals > Sandals,Footwear,Sandals,Sandals,385,1
+L678,Footwear > Sandals > Slide,Footwear,Sandals,Slide,372,1
+L679,Footwear > Sandals > Slides,Footwear,Sandals,Slides,"41, 323",2
+L680,Footwear > Sandals > Slingback,Footwear,Sandals,Slingback,"40, 324",2
+L681,Footwear > Sandals > Slip On,Footwear,Sandals,Slip On,415,1
+L682,Footwear > Sandals > Strappy,Footwear,Sandals,Strappy,403,1
+L683,Footwear > Sandals > Strappy Heel,Footwear,Sandals,Strappy Heel,715,1
+L684,Footwear > Sandals > Thong,Footwear,Sandals,Thong,399,1
+L685,Footwear > Sandals > Toddler,Footwear,Sandals,Toddler,670,1
+L686,Footwear > Sandals > Wedge,Footwear,Sandals,Wedge,427,1
+L687,Footwear > Sandals > Wedges,Footwear,Sandals,Wedges,406,1
+L688,Footwear > Sandals > Wrap Around,Footwear,Sandals,Wrap Around,453,1
+L689,Footwear > Shoes > Athletic,Footwear,Shoes,Athletic,893,1
+L690,Footwear > Shoes > Baseball,Footwear,Shoes,Baseball,"235, 325",2
+L691,Footwear > Shoes > Basketball,Footwear,Shoes,Basketball,"194, 326",2
+L692,Footwear > Shoes > Booties,Footwear,Shoes,Booties,462,1
+L693,Footwear > Shoes > Boots,Footwear,Shoes,Boots,567,1
+L694,Footwear > Shoes > Casual,Footwear,Shoes,Casual,"158, 327",2
+L695,Footwear > Shoes > Chunky,Footwear,Shoes,Chunky,741,1
+L696,Footwear > Shoes > Clogs,Footwear,Shoes,Clogs,716,1
+L697,Footwear > Shoes > Exotic,Footwear,Shoes,Exotic,690,1
+L698,Footwear > Shoes > Flat,Footwear,Shoes,Flat,"187, 328",2
+L699,Footwear > Shoes > Flats,Footwear,Shoes,Flats,491,1
+L700,Footwear > Shoes > High Heels,Footwear,Shoes,High Heels,504,1
+L701,Footwear > Shoes > Lace up,Footwear,Shoes,Lace up,457,1
+L702,Footwear > Shoes > Lifestyle,Footwear,Shoes,Lifestyle,"142, 329",2
+L703,Footwear > Shoes > Loafers,Footwear,Shoes,Loafers,"54, 330",2
+L704,Footwear > Shoes > Low Heel,Footwear,Shoes,Low Heel,894,1
+L705,Footwear > Shoes > Moccasins,Footwear,Shoes,Moccasins,"237, 331",2
+L706,Footwear > Shoes > None,Footwear,Shoes,None,434,1
+L707,Footwear > Shoes > Open Toe,Footwear,Shoes,Open Toe,392,1
+L708,Footwear > Shoes > Oxfords,Footwear,Shoes,Oxfords,704,1
+L709,Footwear > Shoes > Platform,Footwear,Shoes,Platform,627,1
+L710,Footwear > Shoes > Platforms,Footwear,Shoes,Platforms,467,1
+L711,Footwear > Shoes > Pumps,Footwear,Shoes,Pumps,"70, 332",2
+L712,Footwear > Shoes > Sandals,Footwear,Shoes,Sandals,398,1
+L713,Footwear > Shoes > Shoes,Footwear,Shoes,Shoes,"282, 333",2
+L714,Footwear > Shoes > Skate,Footwear,Shoes,Skate,"211, 334",2
+L715,Footwear > Shoes > Slip On,Footwear,Shoes,Slip On,"145, 335",2
+L716,Footwear > Shoes > Sneaker,Footwear,Shoes,Sneaker,659,1
+L717,Footwear > Shoes > Sneakers,Footwear,Shoes,Sneakers,635,1
+L718,Footwear > Shoes > Strappy Heel,Footwear,Shoes,Strappy Heel,485,1
+L719,Footwear > Shoes > Wedges,Footwear,Shoes,Wedges,432,1
+L720,Footwear > Slip-on > Booties,Footwear,Slip-on,Booties,"74, 336",2
+L721,Footwear > Slip-on > Clogs,Footwear,Slip-on,Clogs,799,1
+L722,Footwear > Slip-on > Lifestyle,Footwear,Slip-on,Lifestyle,"229, 337",2
+L723,Footwear > Slip-on > New Shoes,Footwear,Slip-on,New Shoes,"251, 338",2
+L724,Footwear > Slip-on > Slides,Footwear,Slip-on,Slides,623,1
+L725,Footwear > Slippers > Casual,Footwear,Slippers,Casual,843,1
+L726,Footwear > Slippers > Clogs,Footwear,Slippers,Clogs,663,1
+L727,Footwear > Slippers > Moccasins,Footwear,Slippers,Moccasins,650,1
+L728,Footwear > Slippers > Platform,Footwear,Slippers,Platform,770,1
+L729,Footwear > Slippers > Sandals,Footwear,Slippers,Sandals,674,1
+L730,Footwear > Slippers > Slides,Footwear,Slippers,Slides,518,1
+L731,Footwear > Slippers > Slip On,Footwear,Slippers,Slip On,"146, 339",2
+L732,Footwear > Slippers > Slipper,Footwear,Slippers,Slipper,"73, 340",2
+L733,Footwear > Slippers > Slippers,Footwear,Slippers,Slippers,"234, 341",2
+L734,Footwear > Sneakers > 0,Footwear,Sneakers,0,"56, 342",2
+L735,Footwear > Sneakers > Action Sport,Footwear,Sneakers,Action Sport,"230, 343",2
+L736,Footwear > Sneakers > Active,Footwear,Sneakers,Active,"67, 344",2
+L737,Footwear > Sneakers > Athletic,Footwear,Sneakers,Athletic,"193, 345",2
+L738,Footwear > Sneakers > Ballet,Footwear,Sneakers,Ballet,"140, 346",2
+L739,Footwear > Sneakers > Baseball,Footwear,Sneakers,Baseball,719,1
+L740,Footwear > Sneakers > Basics,Footwear,Sneakers,Basics,"236, 348",2
+L741,Footwear > Sneakers > Basketball,Footwear,Sneakers,Basketball,"26, 49, 347",3
+L742,Footwear > Sneakers > Basketball Shoe,Footwear,Sneakers,Basketball Shoe,368,1
+L743,Footwear > Sneakers > Casual,Footwear,Sneakers,Casual,"66, 349",2
+L744,Footwear > Sneakers > Chunky / Block Sneaker,Footwear,Sneakers,Chunky / Block Sneaker,412,1
+L745,Footwear > Sneakers > Coaches Jacket,Footwear,Sneakers,Coaches Jacket,806,1
+L746,Footwear > Sneakers > Exotic,Footwear,Sneakers,Exotic,754,1
+L747,Footwear > Sneakers > Flats,Footwear,Sneakers,Flats,814,1
+L748,Footwear > Sneakers > Footwear,Footwear,Sneakers,Footwear,744,1
+L749,Footwear > Sneakers > Heels,Footwear,Sneakers,Heels,707,1
+L750,Footwear > Sneakers > High-tops,Footwear,Sneakers,High-tops,698,1
+L751,Footwear > Sneakers > Knee High Boots,Footwear,Sneakers,Knee High Boots,701,1
+L752,Footwear > Sneakers > Lace up,Footwear,Sneakers,Lace up,414,1
+L753,Footwear > Sneakers > Lifestyle,Footwear,Sneakers,Lifestyle,"25, 42, 350",3
+L754,Footwear > Sneakers > Loafer,Footwear,Sneakers,Loafer,854,1
+L755,Footwear > Sneakers > Mary Jane,Footwear,Sneakers,Mary Jane,"130, 351",2
+L756,Footwear > Sneakers > Moccasins,Footwear,Sneakers,Moccasins,825,1
+L757,Footwear > Sneakers > New Shoes,Footwear,Sneakers,New Shoes,"204, 352",2
+L758,Footwear > Sneakers > None,Footwear,Sneakers,None,165,1
+L759,Footwear > Sneakers > Oxfords,Footwear,Sneakers,Oxfords,783,1
+L760,Footwear > Sneakers > Platform,Footwear,Sneakers,Platform,"163, 353",2
+L761,Footwear > Sneakers > Platform Sneakers,Footwear,Sneakers,Platform Sneakers,473,1
+L762,Footwear > Sneakers > Platforms,Footwear,Sneakers,Platforms,472,1
+L763,Footwear > Sneakers > Reversible,Footwear,Sneakers,Reversible,548,1
+L764,Footwear > Sneakers > Running,Footwear,Sneakers,Running,27,1
+L765,Footwear > Sneakers > Runnins,Footwear,Sneakers,Runnins,595,1
+L766,Footwear > Sneakers > Shoes,Footwear,Sneakers,Shoes,"144, 354",2
+L767,Footwear > Sneakers > Skate,Footwear,Sneakers,Skate,572,1
+L768,Footwear > Sneakers > Skateboarding,Footwear,Sneakers,Skateboarding,"132, 355",2
+L769,Footwear > Sneakers > Slip On,Footwear,Sneakers,Slip On,"117, 356",2
+L770,Footwear > Sneakers > Sneaker,Footwear,Sneakers,Sneaker,626,1
+L771,Footwear > Sneakers > Sneakers,Footwear,Sneakers,Sneakers,"124, 358",2
+L772,Footwear > Sneakers > Soccer,Footwear,Sneakers,Soccer,"147, 357",2
+L773,Footwear > Sneakers > Tennis,Footwear,Sneakers,Tennis,"102, 359",2
+L774,Footwear > Sneakers > Toddler,Footwear,Sneakers,Toddler,656,1
+L775,Footwear > Sneakers > Training,Footwear,Sneakers,Training,649,1
+L776,Footwear > Sneakers > Wedges,Footwear,Sneakers,Wedges,537,1
+L777,Footwear > Soles > Shoe Care,Footwear,Soles,Shoe Care,657,1
+L778,Footwear > Wedges > Platforms,Footwear,Wedges,Platforms,380,1
+L779,Footwear > Wedges > Sandals,Footwear,Wedges,Sandals,871,1
+L780,Footwear > Wedges > Strappy,Footwear,Wedges,Strappy,739,1
+L781,Footwear > Wedges > Wedges,Footwear,Wedges,Wedges,502,1
+L782,Intimates > Accessories > Sports bra,Intimates,Accessories,Sports bra,792,1
+L783,Intimates > Bra > Bralette,Intimates,Bra,Bralette,602,1
+L784,Intimates > Bras > Sports bra,Intimates,Bras,Sports bra,512,1
+L785,Intimates > Shorts > Boy short,Intimates,Shorts,Boy short,880,1
+L786,Intimates > Socks & Underwear > Boxer Brief,Intimates,Socks & Underwear,Boxer Brief,459,1
+L787,Intimates > Underwear > 0,Intimates,Underwear,0,191,1
+L788,Intimates > Underwear > Boxer Brief,Intimates,Underwear,Boxer Brief,534,1
+L789,Intimates > Underwear > Boy short,Intimates,Underwear,Boy short,100,1
+L790,Intimates > Underwear > Thong,Intimates,Underwear,Thong,785,1
+L791,MEN > Accessories > Backpacks,MEN,Accessories,Backpacks,20,1
+L792,MEN > Accessories > Beanies,MEN,Accessories,Beanies,18,1
+L793,MEN > Accessories > Crossbody Bags,MEN,Accessories,Crossbody Bags,19,1
+L794,MEN > Accessories > Hats,MEN,Accessories,Hats,16,1
+L795,MEN > Accessories > Socks,MEN,Accessories,Socks,17,1
+L796,MEN > Accessories > Watches,MEN,Accessories,Watches,21,1
+L797,MEN > Clothing > Hoodies & Sweatshirts,MEN,Clothing,Hoodies & Sweatshirts,12,1
+L798,MEN > Clothing > Jackets,MEN,Clothing,Jackets,13,1
+L799,MEN > Clothing > Jeans,MEN,Clothing,Jeans,9,1
+L800,MEN > Clothing > Jerseys,MEN,Clothing,Jerseys,14,1
+L801,MEN > Clothing > Joggers,MEN,Clothing,Joggers,10,1
+L802,MEN > Clothing > Shorts,MEN,Clothing,Shorts,15,1
+L803,MEN > Clothing > T-Shirts,MEN,Clothing,T-Shirts,8,1
+L804,MEN > Clothing > Track Pants,MEN,Clothing,Track Pants,11,1
+L805,MEN > SHOES > Basketball,MEN,SHOES,Basketball,3,1
+L806,MEN > SHOES > Boots,MEN,SHOES,Boots,7,1
+L807,MEN > SHOES > Running,MEN,SHOES,Running,4,1
+L808,MEN > SHOES > Skate,MEN,SHOES,Skate,6,1
+L809,MEN > SHOES > Slides,MEN,SHOES,Slides,5,1
+L810,MEN > SHOES > Sneakers,MEN,SHOES,Sneakers,2,1
+L811,Subscription > Bags > Handbags and Purses,Subscription,Bags,Handbags and Purses,735,1
+L812,WOMEN > Clothing > Leggings,WOMEN,Clothing,Leggings,22,1
+L813,WOMEN > Clothing > Sports Bras,WOMEN,Clothing,Sports Bras,23,1
+L814,WOMEN > Clothing > Tank Top,WOMEN,Clothing,Tank Top,24,1

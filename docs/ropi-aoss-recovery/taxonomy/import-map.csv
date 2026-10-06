@@ -1,0 +1,815 @@
+Old ID,Incoming old path,Proposed four-level path,Assessment,Reason,Issue,Proposed path ID,Candidate path IDs,Candidate count,Source sheet rows
+L001, >  > ,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,424
+L002,0 > 0 > 0,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,486
+L003,0 > 0 > Rain Boots,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,897
+L004,0 > Boots > Combat Boots,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,891
+L005,0 > Sandal > Thong,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,828
+L006,0 > Sandals > Flats,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,759
+L007,Accessories > Accessories > Basketball,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC10: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,593
+L008,Accessories > Accessories > Face,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC08: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,121
+L009,Accessories > Accessories > Jibbitz,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Charms,PO APPROVED,"PO ruling 2026-10-06, LC09: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T264,,0,458
+L010,Accessories > Accessories > Shoe Cleaner,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Cleaner,SUPPORTED DRAFT,Shoe cleaner explicitly named.,,T031,T031,1,875
+L011,Accessories > Backpacks > Backpack,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T001; T002; T003,3,139
+L012,Accessories > Backpacks > Mini,Accessories > Bags & Backpacks > Backpacks > Mini Backpacks,SUPPORTED DRAFT,Backpack type and mini size explicit.,,T001,T001,1,677
+L013,Accessories > Bag > Backpack,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T001; T002; T003,3,791
+L014,Accessories > Bags > Backbacks,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T001; T002; T003,3,266
+L015,Accessories > Bags > Backpack,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T001; T002; T003,3,471
+L016,Accessories > Bags > Backpacks,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T001; T002; T003,3,885
+L017,Accessories > Bags > Bags,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC05: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,T001; T002; T003; T004; T005; T006; T007; T008; T009; T010; T011; T012; T013,13,830
+L018,Accessories > Bags > Clutch,Accessories > Bags & Backpacks > Handbags & Purses > Clutches,PO APPROVED,"PO ruling 2026-10-06, LC02: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T259,,0,767
+L019,Accessories > Bags > Clutches,Accessories > Bags & Backpacks > Handbags & Purses > Clutches,PO APPROVED,"PO ruling 2026-10-06, LC02: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T259,,0,108
+L020,Accessories > Bags > Cross Body Bags,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T005; T006,2,141
+L021,Accessories > Bags > Crossbody,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T005; T006,2,619
+L022,Accessories > Bags > Duffle Bag,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T007; T008,2,805
+L023,Accessories > Bags > Duffle Bags,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T007; T008,2,216
+L024,Accessories > Bags > Evening Bag,Accessories > Bags & Backpacks > Handbags & Purses > Evening Bags,PO APPROVED,"PO ruling 2026-10-06, LC03: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T260,,0,812
+L025,Accessories > Bags > Fanny Pack,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T009; T010,2,131
+L026,Accessories > Bags > Handbags,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,648
+L027,Accessories > Bags > Handbags and Purses,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,159
+L028,Accessories > Bags > Messenger Bags,Accessories > Bags & Backpacks > Crossbody & Messenger > Messenger Bags,SUPPORTED DRAFT,Messenger bag type explicit.,,T004,T004,1,612
+L029,Accessories > Bags > Purses,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,258
+L030,Accessories > Bags > Shoulder Bags,Accessories > Bags & Backpacks > Handbags & Purses > Shoulder Bags,PO APPROVED,"PO ruling 2026-10-06, LC04: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T261,,0,742
+L031,Accessories > Bags > Slingback,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC05: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,T001; T002; T003; T004; T005; T006; T007; T008; T009; T010; T011; T012; T013,13,552
+L032,Accessories > Bags > Tote,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T011; T012,2,270
+L033,Accessories > Bags > Tote Bags,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T011; T012,2,578
+L034,Accessories > Bags & Backpacks > Backpacks,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T001; T002; T003,3,35
+L035,Accessories > Belts > Belt,,REVIEW,Belt purpose/material missing.,PRODUCT DETAIL,,T024; T025; T026,3,213
+L036,Accessories > Belts > Belts,,REVIEW,Belt purpose/material missing.,PRODUCT DETAIL,,T024; T025; T026,3,822
+L037,Accessories > Belts > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,183
+L038,Accessories > Body > Perfumes,Accessories > Beauty & Grooming > Fragrance > Perfume,PO APPROVED,"PO ruling 2026-10-06, LC06: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T262,,0,276
+L039,Accessories > Bra > Bralette,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,222
+L040,Accessories > Bra > Sports bra,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,845
+L041,Accessories > Bras > Sports bra,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,660
+L042,Accessories > Eyewear > Sunglasses,Accessories > Gear & Misc > Personal & Small Accessories > Sunglasses,SUPPORTED DRAFT,Sunglasses explicit.,,T028,T028,1,137
+L043,Accessories > Face Mask > Face,Accessories > Gear & Misc > Personal & Small Accessories > Face Masks,PO APPROVED,"PO ruling 2026-10-06, LC07: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T263,,0,898
+L044,Accessories > Face Mask > Reusable,Accessories > Gear & Misc > Personal & Small Accessories > Face Masks,PO APPROVED,"PO ruling 2026-10-06, LC07: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T263,,0,580
+L045,Accessories > Footwear > Sneakers,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,777
+L046,Accessories > Gear & Misc > Sporting Goods,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC10: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,38
+L047,Accessories > Glasses > Blue Light,Accessories > Gear & Misc > Personal & Small Accessories > Blue-Light Glasses,PO APPROVED,"PO ruling 2026-10-06, LC11: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T265,,0,263
+L048,Accessories > Gloves > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,686
+L049,Accessories > Handbags > Bags,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,262
+L050,Accessories > Handbags > Clutch,Accessories > Bags & Backpacks > Handbags & Purses > Clutches,PO APPROVED,"PO ruling 2026-10-06, LC02: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T259,,0,238
+L051,Accessories > Handbags > Clutches,Accessories > Bags & Backpacks > Handbags & Purses > Clutches,PO APPROVED,"PO ruling 2026-10-06, LC02: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T259,,0,596
+L052,Accessories > Handbags > Cross Body Bags,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T005; T006,2,809
+L053,Accessories > Handbags > Crossbody,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T005; T006,2,214
+L054,Accessories > Handbags > Handbags,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,866
+L055,Accessories > Handbags > Handbags and Purses,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,599
+L056,Accessories > Handbags > Purses,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,869
+L057,Accessories > Handbags > Shoulder Bags,Accessories > Bags & Backpacks > Handbags & Purses > Shoulder Bags,PO APPROVED,"PO ruling 2026-10-06, LC04: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T261,,0,746
+L058,Accessories > Handbags > Tote,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T011; T012,2,608
+L059,Accessories > Handbags > Tote Bags,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T011; T012,2,887
+L060,Accessories > Hat > Fitted Hat,Accessories > Headwear > Caps > Fitted,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T045,T045,1,571
+L061,Accessories > Hat > Snapback,Accessories > Headwear > Caps > Snapbacks,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T046,T046,1,451
+L062,Accessories > Hat Care > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,867
+L063,Accessories > Hat Care > Cleaner,Accessories > Headwear > Hat Care > Hat Cleaner,PO APPROVED,"PO ruling 2026-10-06, LC12: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T266,,0,643
+L064,Accessories > Hats > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,465
+L065,Accessories > Hats > 5 Panels & Volleys,,REVIEW,Mixed 5-panels/volleys source requires confirmation; not a proven synonym.,PRODUCT DETAIL,,T043,1,789
+L066,Accessories > Hats > Accessories,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,636
+L067,Accessories > Hats > Adjustable,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,666
+L068,Accessories > Hats > Beanie,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040,4,86
+L069,Accessories > Hats > Beanies,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040,4,815
+L070,Accessories > Hats > Bucket,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T041; T042,2,546
+L071,Accessories > Hats > Bucket Hats,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T041; T042,2,232
+L072,Accessories > Hats > Corduroy,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,511
+L073,Accessories > Hats > Dad Cap,Accessories > Headwear > Caps > Dad Hats,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T044,T044,1,692
+L074,Accessories > Hats > Dad Hat,Accessories > Headwear > Caps > Dad Hats,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T044,T044,1,535
+L075,Accessories > Hats > Face,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,836
+L076,Accessories > Hats > Fitted,Accessories > Headwear > Caps > Fitted,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T045,T045,1,431
+L077,Accessories > Hats > Fitted Hat,Accessories > Headwear > Caps > Fitted,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T045,T045,1,425
+L078,Accessories > Hats > Fitted Hats,Accessories > Headwear > Caps > Fitted,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T045,T045,1,71
+L079,Accessories > Hats > Fleece,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,711
+L080,Accessories > Hats > Hats,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,190
+L081,Accessories > Hats > Racing,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,813
+L082,Accessories > Hats > Snapback,Accessories > Headwear > Caps > Snapbacks,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T046,T046,1,51
+L083,Accessories > Hats > Snapbacks,Accessories > Headwear > Caps > Snapbacks,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T046,T046,1,750
+L084,Accessories > Hats > Strapback,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,474
+L085,Accessories > Hats > Strapbacks,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,654
+L086,Accessories > Hats > Trucker Hat,Accessories > Headwear > Caps > Trucker Hats,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T047,T047,1,162
+L087,Accessories > Hats > Twill,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,763
+L088,Accessories > Headwear > Balaclava,Accessories > Headwear > Beanies > Balaclava,SUPPORTED DRAFT,Hat form explicitly names approved type.,,T037,T037,1,706
+L089,Accessories > Headwear > Beanie,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040,4,422
+L090,Accessories > Headwear > Caps - Adjustable,,REVIEW,Hat style/material not sufficiently specified.,PRODUCT DETAIL,,T037; T038; T039; T040; T041; T042; T043; T044; T045; T046; T047; T048; T049; T050; T051,15,34
+L091,Accessories > Home Decor > Towels,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC13: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,827
+L092,Accessories > Hot Shit > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,585
+L093,Accessories > Jewelry > Bracelets,,REVIEW,Bracelet material missing.,PRODUCT DETAIL,,T052; T053,2,278
+L094,Accessories > Keychains > Wallet,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC14: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,748
+L095,Accessories > Purses > Clutch,Accessories > Bags & Backpacks > Handbags & Purses > Clutches,PO APPROVED,"PO ruling 2026-10-06, LC02: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T259,,0,713
+L096,Accessories > Purses > Crossbody,,REVIEW,Material/style/purpose missing.,PRODUCT DETAIL,,T005; T006,2,859
+L097,Accessories > Purses > Denim,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,675
+L098,Accessories > Purses > Handbags,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,695
+L099,Accessories > Purses > New Accessories,Accessories > Bags & Backpacks > Handbags & Purses > Handbags,PO APPROVED,"PO ruling 2026-10-06, LC01: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T258,,0,250
+L100,Accessories > Scarves > Outerwear,Accessories > Neckwear > Scarves & Wraps > Scarves,PO APPROVED,"PO ruling 2026-10-06, LC15: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T267,,0,128
+L101,Accessories > Shoe Care > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,591
+L102,Accessories > Shoe Care > Shoe Care,,REVIEW,Shoe care generic label does not identify the item.,PRODUCT DETAIL,,T030; T031; T032,3,774
+L103,Accessories > Shoe Care > Shoe Cleaner,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Cleaner,SUPPORTED DRAFT,Shoe cleaner explicitly named.,,T031,T031,1,775
+L104,Accessories > Shoe Care > Shoe Laces,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Laces,SUPPORTED DRAFT,Shoe laces explicitly named; shape stays source detail.,,T032,T032,1,256
+L105,Accessories > Shoe Care & Hardware > Shoe Care,,REVIEW,Shoe care generic label does not identify the item.,PRODUCT DETAIL,,T030; T031; T032,3,37
+L106,Accessories > Shoe Charms > Jibbitz,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Charms,PO APPROVED,"PO ruling 2026-10-06, LC09: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T264,,0,118
+L107,Accessories > Shoe Cleaner > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,247
+L108,Accessories > Shoe Cleaner > Cleaner,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Cleaner,SUPPORTED DRAFT,Shoe cleaner explicitly named.,,T031,T031,1,751
+L109,Accessories > Shoe Cleaner > Shoe Care,,REVIEW,Shoe care generic label does not identify the item.,PRODUCT DETAIL,,T030; T031; T032,3,856
+L110,Accessories > Shoe Cleaner > Shoe Cleaner,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Cleaner,SUPPORTED DRAFT,Shoe cleaner explicitly named.,,T031,T031,1,171
+L111,Accessories > Shoe Laces > Flat,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Laces,SUPPORTED DRAFT,Shoe laces explicitly named; shape stays source detail.,,T032,T032,1,592
+L112,Accessories > Shoe Laces > Shoe Care,,REVIEW,Shoe care generic label does not identify the item.,PRODUCT DETAIL,,T030; T031; T032,3,863
+L113,Accessories > Shoe Laces > Shoe Laces,Accessories > Gear & Misc > Shoe Care & Accessories > Shoe Laces,SUPPORTED DRAFT,Shoe laces explicitly named; shape stays source detail.,,T032,T032,1,555
+L114,Accessories > Socks > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,75
+L115,Accessories > Socks > Ankle Sock,,REVIEW,"Length is known, athletic versus casual is not; do not auto-promote.",PRODUCT DETAIL,,T060,1,150
+L116,Accessories > Socks > Athletic Socks,,REVIEW,Sock purpose/length not fully specified.,PRODUCT DETAIL,,T060; T061; T062; T063; T064,5,36
+L117,Accessories > Socks > Basketball,,REVIEW,Sock purpose/length not fully specified.,PRODUCT DETAIL,,T060; T061; T062; T063; T064,5,126
+L118,Accessories > Socks > Crew,,REVIEW,"Length is known, athletic versus casual is not; do not auto-promote.",PRODUCT DETAIL,,T061,1,456
+L119,Accessories > Socks > Crew Cut,,REVIEW,"Length is known, athletic versus casual is not; do not auto-promote.",PRODUCT DETAIL,,T061,1,106
+L120,Accessories > Socks > Lifestyle,,REVIEW,Sock purpose/length not fully specified.,PRODUCT DETAIL,,T060; T061; T062; T063; T064,5,587
+L121,Accessories > Socks > No show,,REVIEW,"Length is known, athletic versus casual is not; do not auto-promote.",PRODUCT DETAIL,,T062,1,241
+L122,Accessories > Socks > Socks,,REVIEW,Sock purpose/length not fully specified.,PRODUCT DETAIL,,T060; T061; T062; T063; T064,5,109
+L123,Accessories > Socks > Socks & Underwear,,REVIEW,Sock purpose/length not fully specified.,PRODUCT DETAIL,,T060; T061; T062; T063; T064,5,428
+L124,Accessories > Socks > Tennis,,REVIEW,Sock purpose/length not fully specified.,PRODUCT DETAIL,,T060; T061; T062; T063; T064,5,524
+L125,Accessories > Socks > Tube,,REVIEW,Sock purpose/length not fully specified.,PRODUCT DETAIL,,T060; T061; T062; T063; T064,5,821
+L126,Accessories > Socks & Underwear > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,280
+L127,Accessories > Socks & Underwear > Boxer Brief,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,594
+L128,Accessories > Socks & Underwear > Boy short,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,868
+L129,Accessories > Sunglasses > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,725
+L130,Accessories > Sunglasses > New Accessories,,REVIEW,Generic source subtype needs product confirmation.,PRODUCT DETAIL,,T028,1,760
+L131,Accessories > Sunglasses > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,879
+L132,Accessories > Sunglasses > Polarized,Accessories > Gear & Misc > Personal & Small Accessories > Sunglasses,SUPPORTED DRAFT,Sunglasses explicit.,,T028,T028,1,563
+L133,Accessories > Sunglasses > Sunglasses,Accessories > Gear & Misc > Personal & Small Accessories > Sunglasses,SUPPORTED DRAFT,Sunglasses explicit.,,T028,T028,1,178
+L134,Accessories > Tops > Sports Bras,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,841
+L135,Accessories > Underwear > Boxer Brief,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,58
+L136,Accessories > Underwear > Boxers,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,731
+L137,Accessories > Underwear > Boy short,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,488
+L138,Accessories > Underwear > Bra,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,729
+L139,Accessories > Underwear > Briefs,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,583
+L140,Accessories > Underwear > Socks & Underwear,,REVIEW,Accessory Department conflicts with garment/footwear family; no cross-Department auto-map.,DEPARTMENT,,,0,186
+L141,Accessories > Watches > Digital,Accessories > Jewelry & Watches > Watches > Digital,SUPPORTED DRAFT,Watch technology explicit.,,T058,T058,1,613
+L142,Clothing > Activewear > Body Suit,,REVIEW,Sleeve/style or leggings subtype not supplied.,PRODUCT DETAIL,,T145; T146,2,264
+L143,Clothing > Activewear > Leg-tights,,REVIEW,Sleeve/style or leggings subtype not supplied.,PRODUCT DETAIL,,T072; T073; T074; T075,4,658
+L144,Clothing > Activewear > Shorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,240
+L145,Clothing > Activewear > Sports Bras,Clothing > Intimates & Sleepwear > Bras > Sports Bras,SUPPORTED DRAFT,Sports bra is explicit; approved C2 home.,,T103,T103,1,811
+L146,Clothing > Bottoms > Cargo,,REVIEW,Cargo identifies a feature; Bottoms does not establish pants versus shorts.,PRODUCT DETAIL,,T076,1,614
+L147,Clothing > Bottoms > Jeans,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,728
+L148,Clothing > Bottoms > Pants,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,31
+L149,Clothing > Bottoms > Shorts,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,681
+L150,Clothing > Bottoms > Skirt,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T087; T088; T089,3,119
+L151,Clothing > Bottoms > Skirts,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T087; T088; T089,3,737
+L152,Clothing > Bottoms > Skort,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,544
+L153,Clothing > Box Set > Clothing and Apparel,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC17: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,532
+L154,Clothing > Bras > Bra,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC17: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,721
+L155,Clothing > Bras > Sports bra,Clothing > Intimates & Sleepwear > Bras > Sports Bras,SUPPORTED DRAFT,Explicit underwear/bra family with approved leaf.,,T103,T103,1,220
+L156,Clothing > Clothing > Shorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,804
+L157,Clothing > Crop Top > Cropped Tee,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,823
+L158,Clothing > Crop Top > Long Sleeve,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,849
+L159,Clothing > Crop Top > Short Sleeve,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,786
+L160,Clothing > Denim > Denim,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,120
+L161,Clothing > Denim > Shorts,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,611
+L162,Clothing > Dress > Athletic,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,840
+L163,Clothing > Dress > Cardigan,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,275
+L164,Clothing > Dress > Dress,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,850
+L165,Clothing > Dress > Dresses,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,816
+L166,Clothing > Dress > Long Dresses,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,829
+L167,Clothing > Dress > Mid,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,271
+L168,Clothing > Dresses > Knitted dress,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,753
+L169,Clothing > Dresses > Long Dresses,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,218
+L170,Clothing > Dresses > Long Sleeve,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,607
+L171,Clothing > Dresses > Maxi,Clothing > Dresses & Rompers > Dresses > Maxi,SUPPORTED DRAFT,Dress length named explicitly.,,T093,T093,1,865
+L172,Clothing > Dresses > Mini,Clothing > Dresses & Rompers > Dresses > Mini,SUPPORTED DRAFT,Dress length named explicitly.,,T095,T095,1,671
+L173,Clothing > Dresses > Mini Dress,Clothing > Dresses & Rompers > Dresses > Mini,SUPPORTED DRAFT,Dress length named explicitly.,,T095,T095,1,780
+L174,Clothing > Dresses > Tank,,REVIEW,Dress length/style not fully established; long or mid is not silently translated.,PRODUCT DETAIL,,T092; T093; T094; T095,4,526
+L175,Clothing > High Heels > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,181
+L176,Clothing > Hoodies > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,138
+L177,Clothing > Hoodies > Cropped,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,796
+L178,Clothing > Hoodies > Pullover,Clothing > Hoodies & Sweatshirts > Hoodies > Pullover Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T098,T098,1,436
+L179,Clothing > Hoodies > Pullover Hoodie,Clothing > Hoodies & Sweatshirts > Hoodies > Pullover Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T098,T098,1,376
+L180,Clothing > Hoodies > Pullover Hoodies,Clothing > Hoodies & Sweatshirts > Hoodies > Pullover Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T098,T098,1,556
+L181,Clothing > Hoodies > Zip Up Hoodie,Clothing > Hoodies & Sweatshirts > Hoodies > Zip-Up Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T099,T099,1,62
+L182,Clothing > Hoodies > Zip Up Hoodies,Clothing > Hoodies & Sweatshirts > Hoodies > Zip-Up Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T099,T099,1,685
+L183,Clothing > Hoodies > Zip hoodie,Clothing > Hoodies & Sweatshirts > Hoodies > Zip-Up Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T099,T099,1,794
+L184,Clothing > Hoodies > Zip-up,Clothing > Hoodies & Sweatshirts > Hoodies > Zip-Up Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T099,T099,1,413
+L185,Clothing > Hoodies & Sweatshirts > Hoodies,,REVIEW,Pullover versus zip-up is missing.,PRODUCT DETAIL,,T098; T099,2,33
+L186,Clothing > Jacket > Satin,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,712
+L187,Clothing > Jacket > Track,Clothing > Outerwear & Jackets > Jackets > Track Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T124,T124,1,870
+L188,Clothing > Jackets > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,620
+L189,Clothing > Jackets > Active,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,522
+L190,Clothing > Jackets > Anaorak,Clothing > Outerwear & Jackets > Coats & Parkas > Anoraks,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T114,T114,1,864
+L191,Clothing > Jackets > Athletic,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,844
+L192,Clothing > Jackets > Baseball,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,269
+L193,Clothing > Jackets > Bomber,Clothing > Outerwear & Jackets > Jackets > Bomber Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T120,T120,1,174
+L194,Clothing > Jackets > Bombers,Clothing > Outerwear & Jackets > Jackets > Bomber Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T120,T120,1,876
+L195,Clothing > Jackets > Cardigan,Clothing > Tops > Sweaters & Knits > Cardigans,SUPPORTED DRAFT,Source explicitly identifies cardigan; cleanup assigns sweaters one home.,,T156,T156,1,878
+L196,Clothing > Jackets > Coaches,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,569
+L197,Clothing > Jackets > Coaches Jacket,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,245
+L198,Clothing > Jackets > Cropped,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,576
+L199,Clothing > Jackets > Denim,Clothing > Outerwear & Jackets > Jackets > Denim Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T121,T121,1,212
+L200,Clothing > Jackets > Fleece,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,688
+L201,Clothing > Jackets > Fur,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,606
+L202,Clothing > Jackets > Hoodie,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,252
+L203,Clothing > Jackets > Jacket,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,160
+L204,Clothing > Jackets > Jackets,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,709
+L205,Clothing > Jackets > Motor,Clothing > Outerwear & Jackets > Jackets > Leather/Moto Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T122,T122,1,261
+L206,Clothing > Jackets > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,143
+L207,Clothing > Jackets > Outerwear,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,801
+L208,Clothing > Jackets > Parka,Clothing > Outerwear & Jackets > Coats & Parkas > Parkas,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T115,T115,1,808
+L209,Clothing > Jackets > Puffer,,REVIEW,Puffer jacket versus coat needs product evidence.,PRODUCT DETAIL,,T117,1,170
+L210,Clothing > Jackets > Pullover,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,528
+L211,Clothing > Jackets > Racing,Clothing > Outerwear & Jackets > Jackets > Racing Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T123,T123,1,182
+L212,Clothing > Jackets > Racing Jacket,Clothing > Outerwear & Jackets > Jackets > Racing Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T123,T123,1,846
+L213,Clothing > Jackets > Reflective,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,519
+L214,Clothing > Jackets > Reversible,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,521
+L215,Clothing > Jackets > Satin,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,228
+L216,Clothing > Jackets > Shacket,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,601
+L217,Clothing > Jackets > Thermal,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,847
+L218,Clothing > Jackets > Track,Clothing > Outerwear & Jackets > Jackets > Track Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T124,T124,1,85
+L219,Clothing > Jackets > Track Jackets,Clothing > Outerwear & Jackets > Jackets > Track Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T124,T124,1,652
+L220,Clothing > Jackets > Trench,Clothing > Outerwear & Jackets > Coats & Parkas > Trench Coats,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T118,T118,1,833
+L221,Clothing > Jackets > Varsity,Clothing > Outerwear & Jackets > Jackets > Varsity Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T125,T125,1,60
+L222,Clothing > Jackets > Varsity Jacket,Clothing > Outerwear & Jackets > Jackets > Varsity Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T125,T125,1,225
+L223,Clothing > Jackets > Windbreaker,Clothing > Outerwear & Jackets > Jackets > Windbreakers,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T126,T126,1,173
+L224,Clothing > Jackets > Windbreakers,Clothing > Outerwear & Jackets > Jackets > Windbreakers,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T126,T126,1,632
+L225,Clothing > Jackets > Windrunner,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,215
+L226,Clothing > Jackets > Woven,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,662
+L227,Clothing > Jackets > Zip-Up,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,540
+L228,Clothing > Jeans > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,539
+L229,Clothing > Jeans > Cargo,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,443
+L230,Clothing > Jeans > Denim,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,644
+L231,Clothing > Jeans > Flare,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,633
+L232,Clothing > Jeans > Jeans,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,579
+L233,Clothing > Jeans > Pants,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,640
+L234,Clothing > Jeans > Skinny,Clothing > Bottoms > Jeans > Skinny,SUPPORTED DRAFT,Jeans source explicitly includes the target fit.,,T069,T069,1,196
+L235,Clothing > Jeans > Slim & Straight,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,279
+L236,Clothing > Jeans > Straight,Clothing > Bottoms > Jeans > Straight,SUPPORTED DRAFT,Jeans source explicitly includes the target fit.,,T071,T071,1,122
+L237,Clothing > Jerseys > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,557
+L238,Clothing > Jerseys > Baseball,Clothing > Team Gear & Licensed > Jerseys > Baseball Jerseys,SUPPORTED DRAFT,Jersey sport is explicit.,,T142,T142,1,129
+L239,Clothing > Jerseys > Basketball,Clothing > Team Gear & Licensed > Jerseys > Basketball Jerseys,SUPPORTED DRAFT,Jersey sport is explicit.,,T143,T143,1,469
+L240,Clothing > Jerseys > Jersey,,REVIEW,Jersey sport missing or unsupported.,PRODUCT DETAIL,,T142; T143; T144,3,384
+L241,Clothing > Jerseys > Long Sleeve,,REVIEW,Jersey sport missing or unsupported.,PRODUCT DETAIL,,T142; T143; T144,3,684
+L242,Clothing > Jerseys > Shirts,,REVIEW,Jersey sport missing or unsupported.,PRODUCT DETAIL,,T142; T143; T144,3,705
+L243,Clothing > Jumpers > Bottoms,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC17: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,195
+L244,Clothing > Jumpers > Pants,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC17: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,209
+L245,Clothing > Knit Tops > Crewnecks,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,253
+L246,Clothing > Knit Tops > Sweaters,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,680
+L247,Clothing > Leggings > Straight,,REVIEW,Leggings purpose/subtype is not supplied.,PRODUCT DETAIL,,T072; T073; T074; T075,4,769
+L248,Clothing > Outerwear > Cardigans,Clothing > Tops > Sweaters & Knits > Cardigans,SUPPORTED DRAFT,Source explicitly identifies cardigan; cleanup assigns sweaters one home.,,T156,T156,1,115
+L249,Clothing > Outerwear > Flannel,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,97
+L250,Clothing > Outerwear > Jackets,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,112
+L251,Clothing > Outerwear > Outerwear,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,574
+L252,Clothing > Outerwear > Shirts,,REVIEW,Source does not establish one approved jacket/coat/vest subtype; needs product evidence.,PRODUCT DETAIL,,T114; T115; T116; T117; T118; T119; T120; T121; T122; T123; T124; T125; T126; T127; T128; T129,16,564
+L253,Clothing > Outerwear > Track Jackets,Clothing > Outerwear & Jackets > Jackets > Track Jackets,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T124,T124,1,693
+L254,Clothing > Outerwear > Windbreakers,Clothing > Outerwear & Jackets > Jackets > Windbreakers,SUPPORTED DRAFT,Source jacket/outerwear family and style support this leaf; spelling alias remains a draft.,,T126,T126,1,765
+L255,Clothing > Outerwear & Jackets > Jackets,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC17: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,32
+L256,Clothing > Pants > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,177
+L257,Clothing > Pants > Active,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,166
+L258,Clothing > Pants > Basketball,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,676
+L259,Clothing > Pants > Basketball Pants,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,226
+L260,Clothing > Pants > Bootcut,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,277
+L261,Clothing > Pants > Bottoms,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,259
+L262,Clothing > Pants > Cargo,Clothing > Bottoms > Pants > Cargo Pants,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T076,T076,1,48
+L263,Clothing > Pants > Casual,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,200
+L264,Clothing > Pants > Chino,Clothing > Bottoms > Pants > Chinos,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T077,T077,1,529
+L265,Clothing > Pants > Denim,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,445
+L266,Clothing > Pants > Flare,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,678
+L267,Clothing > Pants > Fleece,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,101
+L268,Clothing > Pants > Jeans,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071,5,84
+L269,Clothing > Pants > Jogger,Clothing > Bottoms > Pants > Joggers,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T079,T079,1,419
+L270,Clothing > Pants > Joggers,Clothing > Bottoms > Pants > Joggers,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T079,T079,1,44
+L271,Clothing > Pants > Jumpers,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,858
+L272,Clothing > Pants > Leggings,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T072; T073; T074; T075,4,164
+L273,Clothing > Pants > Pants,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,661
+L274,Clothing > Pants > Relaxed,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,113
+L275,Clothing > Pants > Skateboarding,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,861
+L276,Clothing > Pants > Skinny,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,107
+L277,Clothing > Pants > Skirt,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T087; T088; T089,3,527
+L278,Clothing > Pants > Slim & Straight,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,566
+L279,Clothing > Pants > Sweatpants,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T090; T091,2,69
+L280,Clothing > Pants > Track,Clothing > Bottoms > Pants > Track Pants,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T080,T080,1,104
+L281,Clothing > Pants > Track Pants,Clothing > Bottoms > Pants > Track Pants,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T080,T080,1,114
+L282,Clothing > Pants > Wideleg,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,647
+L283,Clothing > Pants > Windbreakers,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,134
+L284,Clothing > Pants > Windrunner,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,655
+L285,Clothing > Pants > Woven,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,233
+L286,Clothing > Pants > Wovens,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T067; T068; T069; T070; T071; T072; T073; T074; T075; T076; T077; T078; T079; T080; T081; T082; T083; T084; T085; T086; T087; T088; T089; T090; T091,25,249
+L287,Clothing > Polo > Long Sleeve,Clothing > Tops > Polos > Long Sleeve,SUPPORTED DRAFT,Polo type and sleeve length are explicit.,,T149,T149,1,642
+L288,Clothing > Polo > Short Sleeve,Clothing > Tops > Polos > Short Sleeve,SUPPORTED DRAFT,Polo type and sleeve length are explicit.,,T150,T150,1,156
+L289,Clothing > Running > Tights,,REVIEW,Leggings purpose/subtype is not supplied.,PRODUCT DETAIL,,T072; T073; T074; T075,4,255
+L290,Clothing > Shirts > Bodysuit,,REVIEW,Bodysuit sleeve detail missing.,PRODUCT DETAIL,,T145; T146,2,542
+L291,Clothing > Shirts > Button Up,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,506
+L292,Clothing > Shirts > Button-up,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,410
+L293,Clothing > Shirts > Crew,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,267
+L294,Clothing > Shirts > Cropped Tee,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,810
+L295,Clothing > Shirts > Denim,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,758
+L296,Clothing > Shirts > Flannel,Clothing > Tops > Shirts & Blouses > Flannel,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T151,T151,1,702
+L297,Clothing > Shirts > Jersey,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,87
+L298,Clothing > Shirts > Long Sleeve,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,176
+L299,Clothing > Shirts > Long Sleeve Buttondown Shirts,Clothing > Tops > Shirts & Blouses > Long Sleeve Button-Up Shirts,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T152,T152,1,509
+L300,Clothing > Shirts > Long Sleeve Graphic Tees,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,475
+L301,Clothing > Shirts > Long sleeves,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,560
+L302,Clothing > Shirts > Rugbys,Clothing > Tops > Sweaters & Knits > Rugby Shirts,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T158,T158,1,664
+L303,Clothing > Shirts > Shacket,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,210
+L304,Clothing > Shirts > Short Sleeve,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,586
+L305,Clothing > Shirts > Short Sleeve Buttondown Shirts,Clothing > Tops > Shirts & Blouses > Short Sleeve Button-Up Shirts,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T154,T154,1,400
+L306,Clothing > Shirts > Short Sleeve Graphic Tees,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,646
+L307,Clothing > Shirts > Soccer,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,208
+L308,Clothing > Shirts > Striped or Pattern Tees,Clothing > Tops > T-Shirts > Striped & Pattern Tees,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T168,T168,1,787
+L309,Clothing > Shirts > Tank Tops,,REVIEW,Tank/sleeveless overlap requires product evidence.,PRODUCT DETAIL,,T170; T171; T164; T167,4,687
+L310,Clothing > Shoes > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,154
+L311,Clothing > Shoes > Sneakers,,REVIEW,Clothing Department conflicts with source product family; inspect product before changing Department.,DEPARTMENT,,,0,246
+L312,Clothing > Shorts > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,461
+L313,Clothing > Shorts > Active,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,442
+L314,Clothing > Shorts > Athletic,Clothing > Bottoms > Shorts > Athletic Shorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T082,T082,1,98
+L315,Clothing > Shorts > Basketball,Clothing > Bottoms > Shorts > Athletic Shorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T082,T082,1,72
+L316,Clothing > Shorts > Basketball Short,Clothing > Bottoms > Shorts > Athletic Shorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T082,T082,1,590
+L317,Clothing > Shorts > Bike Shorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,155
+L318,Clothing > Shorts > Boardshorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T132; T133,2,99
+L319,Clothing > Shorts > Boy short,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,710
+L320,Clothing > Shorts > Cargo,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,81
+L321,Clothing > Shorts > Casual,Clothing > Bottoms > Shorts > Casual Shorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T083,T083,1,819
+L322,Clothing > Shorts > Cut Off,Clothing > Bottoms > Shorts > Cut-Off Shorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T084,T084,1,890
+L323,Clothing > Shorts > Denim,Clothing > Bottoms > Shorts > Denim Shorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T085,T085,1,110
+L324,Clothing > Shorts > Fleece,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,46
+L325,Clothing > Shorts > High Waisted,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,559
+L326,Clothing > Shorts > Jeans,Clothing > Bottoms > Shorts > Denim Shorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T085,T085,1,420
+L327,Clothing > Shorts > Jersey,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,772
+L328,Clothing > Shorts > Running Shorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,168
+L329,Clothing > Shorts > Shorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,88
+L330,Clothing > Shorts > Sweatpants,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,426
+L331,Clothing > Shorts > Sweatshorts,Clothing > Bottoms > Shorts > Sweatshorts,SUPPORTED DRAFT,Source explicitly supports the approved shorts family.,,T086,T086,1,64
+L332,Clothing > Shorts > Swimwear,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,570
+L333,Clothing > Shorts > Track,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,776
+L334,Clothing > Shorts > Track Shorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,199
+L335,Clothing > Shorts > Twill,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,492
+L336,Clothing > Shorts > Twills,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,797
+L337,Clothing > Shorts > Varsity,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,738
+L338,Clothing > Shorts > Volley Shorts,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,873
+L339,Clothing > Shorts > Windrunner,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,665
+L340,Clothing > Shorts > Woven,,REVIEW,Shorts type/detail is incomplete or not represented exactly.,PRODUCT DETAIL,,T082; T083; T084; T085; T086,5,382
+L341,Clothing > Skirt > Skirt,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,703
+L342,Clothing > Skirt > Tennis,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,837
+L343,Clothing > Skirts > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,720
+L344,Clothing > Skirts > Active,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,517
+L345,Clothing > Skirts > Athletic,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,487
+L346,Clothing > Skirts > Fleece,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,807
+L347,Clothing > Skirts > Skirt,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,133
+L348,Clothing > Skirts > Skirts,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,793
+L349,Clothing > Skirts > Windrunner,,REVIEW,Skirt length missing.,PRODUCT DETAIL,,T087; T088; T089,3,736
+L350,Clothing > Slippers > Slip On,,REVIEW,Clothing Department conflicts with source product family; inspect product before changing Department.,DEPARTMENT,,,0,638
+L351,Clothing > Sneakers > Basketball Shoe,,REVIEW,Clothing Department conflicts with source product family; inspect product before changing Department.,DEPARTMENT,,,0,515
+L352,Clothing > Socks > Socks,,REVIEW,Clothing Department conflicts with source product family; inspect product before changing Department.,DEPARTMENT,,,0,127
+L353,Clothing > Socks & Underwear > Socks,,REVIEW,Clothing Department conflicts with source product family; inspect product before changing Department.,DEPARTMENT,,,0,416
+L354,Clothing > Sport Bras > Bralette,Clothing > Intimates & Sleepwear > Bras > Sports Bras,PO APPROVED,"PO ruling 2026-10-06, LC16: MAP BROADER; select the approved existing full path. Planning only; implementation HOLD.",,T103,,0,205
+L355,Clothing > Sport Bras > Sports Bras,Clothing > Intimates & Sleepwear > Bras > Sports Bras,SUPPORTED DRAFT,Explicit underwear/bra family with approved leaf.,,T103,T103,1,577
+L356,Clothing > Sweaters > Cardigan,Clothing > Tops > Sweaters & Knits > Cardigans,SUPPORTED DRAFT,Cardigan family explicit.,,T156,T156,1,198
+L357,Clothing > Sweaters > Crew,Clothing > Tops > Sweaters & Knits > Crewneck Sweaters,SUPPORTED DRAFT,Source distinguishes sweater versus sweatshirt and crew neck.,,T157,T157,1,536
+L358,Clothing > Sweaters > Crewneck,Clothing > Tops > Sweaters & Knits > Crewneck Sweaters,SUPPORTED DRAFT,Source distinguishes sweater versus sweatshirt and crew neck.,,T157,T157,1,179
+L359,Clothing > Sweaters > Crewnecks,Clothing > Tops > Sweaters & Knits > Crewneck Sweaters,SUPPORTED DRAFT,Source distinguishes sweater versus sweatshirt and crew neck.,,T157,T157,1,694
+L360,Clothing > Sweaters > Fleece,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,582
+L361,Clothing > Sweaters > Hoodies,,REVIEW,Pullover versus zip-up is missing.,PRODUCT DETAIL,,T098; T099,2,103
+L362,Clothing > Sweaters > Pullover,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,180
+L363,Clothing > Sweaters > Sweatshirts,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,641
+L364,Clothing > Sweaters > Track,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,855
+L365,Clothing > Sweaters > Windbreaker,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,260
+L366,Clothing > Sweatpants > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,568
+L367,Clothing > Sweatpants > Cargo,Clothing > Bottoms > Pants > Cargo Pants,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T076,T076,1,615
+L368,Clothing > Sweatpants > Flare,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T090; T091,2,175
+L369,Clothing > Sweatpants > Fleece,Clothing > Bottoms > Sweatpants > Fleece,SUPPORTED DRAFT,Both sweatpant garment and fleece material are explicit.,,T090,T090,1,463
+L370,Clothing > Sweatpants > Jogger,Clothing > Bottoms > Pants > Joggers,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T079,T079,1,468
+L371,Clothing > Sweatpants > Joggers,Clothing > Bottoms > Pants > Joggers,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T079,T079,1,401
+L372,Clothing > Sweatpants > Pants,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T090; T091,2,169
+L373,Clothing > Sweatpants > Slim & Straight,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T090; T091,2,231
+L374,Clothing > Sweatpants > Straight,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T090; T091,2,682
+L375,Clothing > Sweatpants > Sweatpants,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T090; T091,2,514
+L376,Clothing > Sweatpants > Track Pants,Clothing > Bottoms > Pants > Track Pants,SUPPORTED DRAFT,Source identifies garment style; selected leaf does not invent material or fit.,,T080,T080,1,683
+L377,Clothing > Sweatpants > Woven,,REVIEW,Source garment/fit needs additional detail or overlaps several approved leaves.,PRODUCT DETAIL,,T090; T091,2,609
+L378,Clothing > Sweatshirt > Long Sleeve Graphic Tees,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,853
+L379,Clothing > Sweatshirts > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,755
+L380,Clothing > Sweatshirts > Crew,Clothing > Hoodies & Sweatshirts > Sweatshirts > Crewneck Sweatshirts,SUPPORTED DRAFT,Source distinguishes sweater versus sweatshirt and crew neck.,,T100,T100,1,762
+L381,Clothing > Sweatshirts > Crewneck,Clothing > Hoodies & Sweatshirts > Sweatshirts > Crewneck Sweatshirts,SUPPORTED DRAFT,Source distinguishes sweater versus sweatshirt and crew neck.,,T100,T100,1,80
+L382,Clothing > Sweatshirts > Crewnecks,Clothing > Hoodies & Sweatshirts > Sweatshirts > Crewneck Sweatshirts,SUPPORTED DRAFT,Source distinguishes sweater versus sweatshirt and crew neck.,,T100,T100,1,700
+L383,Clothing > Sweatshirts > Cropped,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,265
+L384,Clothing > Sweatshirts > Fleece,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,243
+L385,Clothing > Sweatshirts > Pullover Hoodie,Clothing > Hoodies & Sweatshirts > Hoodies > Pullover Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T098,T098,1,55
+L386,Clothing > Sweatshirts > Pullover Hoodies,Clothing > Hoodies & Sweatshirts > Hoodies > Pullover Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T098,T098,1,478
+L387,Clothing > Sweatshirts > V-Neck,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,257
+L388,Clothing > Sweatshirts > Windbreakers,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,790
+L389,Clothing > Sweatshirts > Zip Up Hoodie,Clothing > Hoodies & Sweatshirts > Hoodies > Zip-Up Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T099,T099,1,450
+L390,Clothing > Sweatshirts > Zip Up Hoodies,Clothing > Hoodies & Sweatshirts > Hoodies > Zip-Up Hoodies,SUPPORTED DRAFT,Source hoodie closure supplied.,,T099,T099,1,523
+L391,Clothing > Sweatshirts > Zip-up,,REVIEW,Source does not establish one sweater/sweatshirt/hoodie leaf.,PRODUCT DETAIL,,T156; T157; T158; T159; T160; T098; T099; T100; T101,9,242
+L392,Clothing > Swimwear > Swimwear,,REVIEW,Swim garment and subtype missing.,PRODUCT DETAIL,,T130; T131; T132; T133; T134; T135; T136; T137; T138; T139; T140; T141,12,281
+L393,Clothing > T-shirts > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,90
+L394,Clothing > T-shirts > Activewear,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,197
+L395,Clothing > T-shirts > Baseball Tees,Clothing > Tops > T-Shirts > Baseball Tees,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T161,T161,1,573
+L396,Clothing > T-shirts > Basic Tees,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,224
+L397,Clothing > T-shirts > Button Up,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,899
+L398,Clothing > T-shirts > Crewneck,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,784
+L399,Clothing > T-shirts > Cropped,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,499
+L400,Clothing > T-shirts > Cropped Tee,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,152
+L401,Clothing > T-shirts > Graphics,Clothing > Tops > T-Shirts > Graphic Tees,SUPPORTED DRAFT,T-shirt graphic family explicit; sleeve detail is retained in raw source.,,T162,T162,1,689
+L402,Clothing > T-shirts > Jersey,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,477
+L403,Clothing > T-shirts > Long Sleeve,Clothing > Tops > T-Shirts > Long Sleeve,SUPPORTED DRAFT,T-shirt context and sleeve length explicit.,,T163,T163,1,135
+L404,Clothing > T-shirts > Long Sleeve Buttondown Shirts,,REVIEW,T-shirts conflicts with Long Sleeve Buttondown Shirts; inspect garment before prioritizing the child label.,SOURCE CONFLICT,,T152,1,561
+L405,Clothing > T-shirts > Long Sleeve Graphic Tees,Clothing > Tops > T-Shirts > Graphic Tees,SUPPORTED DRAFT,T-shirt graphic family explicit; sleeve detail is retained in raw source.,,T162,T162,1,630
+L406,Clothing > T-shirts > Long sleeves,Clothing > Tops > T-Shirts > Long Sleeve,SUPPORTED DRAFT,T-shirt context and sleeve length explicit.,,T163,T163,1,761
+L407,Clothing > T-shirts > Shirts,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,219
+L408,Clothing > T-shirts > Short Sleeve,Clothing > Tops > T-Shirts > Short Sleeve,SUPPORTED DRAFT,T-shirt context and sleeve length explicit.,,T166,T166,1,374
+L409,Clothing > T-shirts > Short Sleeve Graphic Tees,Clothing > Tops > T-Shirts > Graphic Tees,SUPPORTED DRAFT,T-shirt graphic family explicit; sleeve detail is retained in raw source.,,T162,T162,1,50
+L410,Clothing > T-shirts > Short sleeves,Clothing > Tops > T-Shirts > Short Sleeve,SUPPORTED DRAFT,T-shirt context and sleeve length explicit.,,T166,T166,1,405
+L411,Clothing > T-shirts > Sleeveless,,REVIEW,Tank/sleeveless overlap requires product evidence.,PRODUCT DETAIL,,T170; T171; T164; T167,4,549
+L412,Clothing > T-shirts > T-long sleeve,Clothing > Tops > T-Shirts > Long Sleeve,SUPPORTED DRAFT,T-shirt context and sleeve length explicit.,,T163,T163,1,581
+L413,Clothing > T-shirts > Tank Tops,,REVIEW,Tank/sleeveless overlap requires product evidence.,PRODUCT DETAIL,,T170; T171; T164; T167,4,669
+L414,Clothing > T-shirts > Varsity,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,798
+L415,Clothing > Tank Tops > Cropped,,REVIEW,Athletic versus casual tank not supplied.,PRODUCT DETAIL,,T170; T171,2,857
+L416,Clothing > Tank Tops > Graphic Tank Tops,,REVIEW,Athletic versus casual tank not supplied.,PRODUCT DETAIL,,T170; T171,2,834
+L417,Clothing > Tank Tops > Jersey,,REVIEW,Athletic versus casual tank not supplied.,PRODUCT DETAIL,,T170; T171,2,172
+L418,Clothing > Tops > Bodysuit,,REVIEW,Bodysuit sleeve detail missing.,PRODUCT DETAIL,,T145; T146,2,604
+L419,Clothing > Tops > Bra,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,851
+L420,Clothing > Tops > Button-up,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,668
+L421,Clothing > Tops > Cardigans,Clothing > Tops > Sweaters & Knits > Cardigans,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T156,T156,1,862
+L422,Clothing > Tops > Crew,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,757
+L423,Clothing > Tops > Crewneck,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,747
+L424,Clothing > Tops > Crewnecks,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,207
+L425,Clothing > Tops > Cropped,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,184
+L426,Clothing > Tops > Cropped Tee,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,550
+L427,Clothing > Tops > FALSE,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,726
+L428,Clothing > Tops > Flannel,Clothing > Tops > Shirts & Blouses > Flannel,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T151,T151,1,881
+L429,Clothing > Tops > Jacket,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,446
+L430,Clothing > Tops > Jersey,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,59
+L431,Clothing > Tops > Knit Tops,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,283
+L432,Clothing > Tops > Long Sleeve,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,503
+L433,Clothing > Tops > Long Sleeve Buttondown Shirts,Clothing > Tops > Shirts & Blouses > Long Sleeve Button-Up Shirts,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T152,T152,1,639
+L434,Clothing > Tops > Long Sleeve Graphic Tees,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,189
+L435,Clothing > Tops > Long sleeves,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,188
+L436,Clothing > Tops > Polos,,REVIEW,Polo sleeve length missing.,PRODUCT DETAIL,,T149; T150,2,831
+L437,Clothing > Tops > Short Sleeve,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,525
+L438,Clothing > Tops > Short Sleeve Buttondown Shirts,Clothing > Tops > Shirts & Blouses > Short Sleeve Button-Up Shirts,SUPPORTED DRAFT,Specific garment detail names the approved leaf; spelling alias recorded as draft.,,T154,T154,1,94
+L439,Clothing > Tops > Short Sleeve Graphic Tees,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,496
+L440,Clothing > Tops > Short sleeves,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,697
+L441,Clothing > Tops > Sports Bras,Clothing > Intimates & Sleepwear > Bras > Sports Bras,SUPPORTED DRAFT,Explicit underwear/bra family with approved leaf.,,T103,T103,1,575
+L442,Clothing > Tops > Sweatshirts,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,624
+L443,Clothing > Tops > T-Shirts,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,30
+L444,Clothing > Tops > T-shirt,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,817
+L445,Clothing > Tops > Tank,,REVIEW,Tank/sleeveless overlap requires product evidence.,PRODUCT DETAIL,,T170; T171; T164; T167,4,622
+L446,Clothing > Tops > Tank Tops,,REVIEW,Tank/sleeveless overlap requires product evidence.,PRODUCT DETAIL,,T170; T171; T164; T167,4,116
+L447,Clothing > Tops > Tees,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,274
+L448,Clothing > Tops > Tops,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,254
+L449,Clothing > Tops > Track,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,852
+L450,Clothing > Tops > Tube,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,65
+L451,Clothing > Tops > Winter Vests,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,273
+L452,Clothing > Tops > Woven,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,202
+L453,Clothing > Tops > Wovens,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,629
+L454,Clothing > Tops > Zip-Up,,REVIEW,Old top label does not prove one full approved path.,PRODUCT DETAIL,,T145; T146; T147; T148; T149; T150; T151; T152; T153; T154; T155; T156; T157; T158; T159; T160; T161; T162; T163; T164; T165; T166; T167; T168; T169; T170; T171,27,838
+L455,Clothing > Underwear > Boxer Brief,Clothing > Intimates & Sleepwear > Underwear > Boxer Briefs,SUPPORTED DRAFT,Explicit underwear/bra family with approved leaf.,,T107,T107,1,483
+L456,Clothing > Underwear > Boxers,Clothing > Intimates & Sleepwear > Underwear > Boxers,SUPPORTED DRAFT,Explicit underwear/bra family with approved leaf.,,T108,T108,1,848
+L457,Clothing > Underwear > Socks & Underwear,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC17: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,718
+L458,Clothing > Vests > Outerwear,,REVIEW,Vest insulation/material needs evidence.,PRODUCT DETAIL,,T127; T128; T129,3,727
+L459,Clothing > Vests > Utility Vests,Clothing > Outerwear & Jackets > Vests > Utility Vests,SUPPORTED DRAFT,Utility type explicit.,,T129,T129,1,538
+L460,Clothing > Vests > Winter Vests,,REVIEW,Vest insulation/material needs evidence.,PRODUCT DETAIL,,T127; T128; T129,3,558
+L461,Footwear >  > ,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,381
+L462,Footwear > 0 > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,562
+L463,Footwear > Athletic > Basketball,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T238; T239; T240,3,123
+L464,Footwear > Athletic > Basketball Shoe,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T238; T239; T240,3,501
+L465,Footwear > Athletic > FALSE,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,"248, 361"
+L466,Footwear > Athletic > Lifestyle,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T241; T242; T243; T244; T245; T246; T247; T248,8,"206, 360"
+L467,Footwear > Athletic > Running,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T249; T250; T251,3,185
+L468,Footwear > Athletic > Soccer,Footwear > Athletic Footwear > Field Sports > Soccer Footwear,PO APPROVED,"PO ruling 2026-10-06, LC18: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T268,,0,543
+L469,Footwear > Boat Shoes > Boat,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T193; T194,2,733
+L470,Footwear > Boat Shoes > Boat Shoes,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T193; T194,2,"268, 362"
+L471,Footwear > Boots > ,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,824
+L472,Footwear > Boots > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,"91, 284"
+L473,Footwear > Boots > 6 Inch Premium,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,"68, 286"
+L474,Footwear > Boots > 6-Inch Boot,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,"192, 285"
+L475,Footwear > Boots > Ankle Boots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,"45, 287"
+L476,Footwear > Boots > Athletic,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,745
+L477,Footwear > Boots > Basketball Shoe,,REVIEW,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,SOURCE CONFLICT,,,0,818
+L478,Footwear > Boots > Block Heel,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,730
+L479,Footwear > Boots > Booties,Footwear > Boots > Fashion Boots > Booties,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T178,T178,1,"77, 288"
+L480,Footwear > Boots > Boots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,"149, 289"
+L481,Footwear > Boots > Chelsea,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T173; T174,2,551
+L482,Footwear > Boots > Chukka,Footwear > Boots > Casual Boots > Chukka Boots,SUPPORTED DRAFT,Chukka boot type explicit.,,T172,T172,1,"157, 290"
+L483,Footwear > Boots > Chunky,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,409
+L484,Footwear > Boots > Clogs,,REVIEW,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,SOURCE CONFLICT,,,0,531
+L485,Footwear > Boots > Combat Boot,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T175; T176; T177,3,447
+L486,Footwear > Boots > Combat Boots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T175; T176; T177,3,387
+L487,Footwear > Boots > Core,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,839
+L488,Footwear > Boots > Cowboy Boots,Footwear > Boots > Western Boots > Cowboy Boots,SUPPORTED DRAFT,Cowboy/Western boot family explicitly named.,,T189,T189,1,510
+L489,Footwear > Boots > Duck Boots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,493
+L490,Footwear > Boots > Fashion Boots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T178; T179; T180; T181; T182; T183; T184; T185; T186,9,28
+L491,Footwear > Boots > Flat,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,466
+L492,Footwear > Boots > Flats,,REVIEW,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,SOURCE CONFLICT,,,0,396
+L493,Footwear > Boots > Fringe,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,764
+L494,Footwear > Boots > Fur,Footwear > Boots > Fashion Boots > Fur Boots,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T179,T179,1,490
+L495,Footwear > Boots > Fur boots,Footwear > Boots > Fashion Boots > Fur Boots,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T179,T179,1,"61, 291"
+L496,Footwear > Boots > Gravity Wedge,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,749
+L497,Footwear > Boots > Heel,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,781
+L498,Footwear > Boots > Heels,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,440
+L499,Footwear > Boots > High Heel,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,616
+L500,Footwear > Boots > High Heels,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,"78, 292"
+L501,Footwear > Boots > Jeans,,REVIEW,Footwear source contains a garment/conflicting label; inspect product.,DEPARTMENT,,,0,441
+L502,Footwear > Boots > Knee Boot,Footwear > Boots > Fashion Boots > Knee-High,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T180,T180,1,826
+L503,Footwear > Boots > Knee High Boots,Footwear > Boots > Fashion Boots > Knee-High,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T180,T180,1,"105, 293"
+L504,Footwear > Boots > Leggings,,REVIEW,Footwear source contains a garment/conflicting label; inspect product.,DEPARTMENT,,,0,634
+L505,Footwear > Boots > Lifestyle,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,393
+L506,Footwear > Boots > Low Heel,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,370
+L507,Footwear > Boots > Mid,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,832
+L508,Footwear > Boots > Mid Calf Boots,Footwear > Boots > Fashion Boots > Mid-Calf Boots,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T182,T182,1,"83, 294"
+L509,Footwear > Boots > Mid-Calf,Footwear > Boots > Fashion Boots > Mid-Calf Boots,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T182,T182,1,892
+L510,Footwear > Boots > Over The Knee,Footwear > Boots > Fashion Boots > Over-The-Knee,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T183,T183,1,460
+L511,Footwear > Boots > Oxfords,,REVIEW,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,SOURCE CONFLICT,,,0,723
+L512,Footwear > Boots > Platform,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,553
+L513,Footwear > Boots > Platforms,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,653
+L514,Footwear > Boots > Puffer,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,"136, 295"
+L515,Footwear > Boots > Rain,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T187; T188,2,"239, 296"
+L516,Footwear > Boots > Rain & Snow,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,439
+L517,Footwear > Boots > Rain Boots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T187; T188,2,"57, 297"
+L518,Footwear > Boots > Rainboots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T187; T188,2,"223, 298"
+L519,Footwear > Boots > Riding Boots,Footwear > Boots > Fashion Boots > Riding Boots,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T184,T184,1,"92, 299"
+L520,Footwear > Boots > Sneaker,,REVIEW,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,SOURCE CONFLICT,,,0,708
+L521,Footwear > Boots > Sneakers,,REVIEW,Boots class conflicts with the named footwear family; no vetted candidate until product evidence resolves it.,SOURCE CONFLICT,,,0,778
+L522,Footwear > Boots > Stiletto,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,423
+L523,Footwear > Boots > Thigh High Boots,Footwear > Boots > Fashion Boots > Thigh-High,SUPPORTED DRAFT,Boot type/height explicitly supports leaf.,,T186,T186,1,"95, 300"
+L524,Footwear > Boots > Water Proof,,REVIEW,Waterproof alone does not prove Winter & Weather use; review context.,PRODUCT DETAIL,,T192,1,"111, 301"
+L525,Footwear > Boots > Wedges,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T172; T173; T174; T175; T176; T177; T178; T179; T180; T181; T182; T183; T184; T185; T186; T187; T188; T189; T190; T191; T192,21,597
+L526,Footwear > Boots > Western,Footwear > Boots > Western Boots > Cowboy Boots,SUPPORTED DRAFT,Cowboy/Western boot family explicitly named.,,T189,T189,1,389
+L527,Footwear > Boots > Work Boots,,REVIEW,Boot subtype detail missing or source labels conflict; generic rain/chelsea never implies height/material.,PRODUCT DETAIL,,T175; T176; T177,3,"244, 302"
+L528,Footwear > Casual > Flat,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,495
+L529,Footwear > Casual > Flats,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,"93, 303"
+L530,Footwear > Casual > Footwear,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,724
+L531,Footwear > Casual > Lifestyle,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,"53, 304"
+L532,Footwear > Casual > Loafer,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,732
+L533,Footwear > Casual > Loafers,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,452
+L534,Footwear > Casual > Moccasins,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,900
+L535,Footwear > Casual > Oxfords,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,651
+L536,Footwear > Casual > Slip On,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,645
+L537,Footwear > Casual > Slipper,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,605
+L538,Footwear > Casual > Slippers,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,"52, 307"
+L539,Footwear > Casual > Sneaker,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,"96, 305"
+L540,Footwear > Casual > Sneakers,,REVIEW,Old Casual class spans several new footwear families.,PRODUCT DETAIL,,T193; T194; T195; T196; T197; T198; T199; T202; T203; T204; T205; T206; T207; T208; T209; T210; T235; T236; T237; T233; T234,21,"153, 306"
+L541,Footwear > Clogs > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,752
+L542,Footwear > Clogs > Casual,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T200; T201,2,"151, 308"
+L543,Footwear > Clogs > Mules,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T200; T201,2,"227, 309"
+L544,Footwear > Clogs > Slide,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T200; T201,2,717
+L545,Footwear > Clogs > Slip On,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T200; T201,2,788
+L546,Footwear > Clogs > Slipper,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T200; T201,2,771
+L547,Footwear > Dress > Heels,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,820
+L548,Footwear > Dress > Low Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,888
+L549,Footwear > Dressy > Heels,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,803
+L550,Footwear > Dressy > High Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,565
+L551,Footwear > Dressy > High Heels,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,411
+L552,Footwear > Dressy > Low Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,554
+L553,Footwear > Dressy > Oxfords,,REVIEW,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,PRODUCT DETAIL,,T208; T209; T210,3,842
+L554,Footwear > Dressy > Platform,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,"82, 363"
+L555,Footwear > Dressy > Strappy Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,874
+L556,Footwear > Dressy > Wedge,,REVIEW,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,PRODUCT DETAIL,,T228; T229; T230,3,779
+L557,Footwear > Flats > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,743
+L558,Footwear > Flats > Ballerina,Footwear > Casual Shoes > Flats > Ballet,SUPPORTED DRAFT,Ballerina/ballet flat explicitly identified.,,T197,T197,1,"221, 310"
+L559,Footwear > Flats > Casual,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC21: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,"203, 311"
+L560,Footwear > Flats > Flats,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC21: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,507
+L561,Footwear > Flats > Jelly,Footwear > Casual Shoes > Flats > Jelly Flats,PO APPROVED,"PO ruling 2026-10-06, LC20: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T270,,0,600
+L562,Footwear > Flats > Lifestyle,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC21: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,617
+L563,Footwear > Flats > Loafer,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC22: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,584
+L564,Footwear > Flats > Mules,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC22: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,"201, 312"
+L565,Footwear > Flats > Pumps,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC22: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,481
+L566,Footwear > Flats > Sandals,Footwear > Sandals & Wedges > Sandals > Flat,PO APPROVED,"PO ruling 2026-10-06, LC26: MAP BROADER; select the approved existing full path. Planning only; implementation HOLD.",,T219,,0,530
+L567,Footwear > Flats > Slip On,Footwear > Casual Shoes > Flats > Slip-On,SUPPORTED DRAFT,Flat class and slip-on type explicit.,,T198,T198,1,"39, 313"
+L568,Footwear > Flats > Slippers,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC22: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,782
+L569,Footwear > Flats > Toddler,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC21: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,637
+L570,Footwear > Footwear > Basketball,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T238; T239; T240,3,714
+L571,Footwear > Footwear > Casual,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,,0,795
+L572,Footwear > Footwear > Footwear,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,,0,"272, 364"
+L573,Footwear > Footwear > Lifestyle,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T241; T242; T243; T244; T245; T246; T247; T248,8,"217, 365"
+L574,Footwear > High Heels > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,470
+L575,Footwear > High Heels > Adjustable,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,476
+L576,Footwear > High Heels > Block Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,375
+L577,Footwear > High Heels > Booties,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,437
+L578,Footwear > High Heels > Boots,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,603
+L579,Footwear > High Heels > Chunky,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,438
+L580,Footwear > High Heels > Dress Shoes,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,621
+L581,Footwear > High Heels > Dresses,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,479
+L582,Footwear > High Heels > Dressy,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,545
+L583,Footwear > High Heels > Exotic,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,691
+L584,Footwear > High Heels > Fur boots,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,418
+L585,Footwear > High Heels > Gladiator,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,884
+L586,Footwear > High Heels > Heels,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,391
+L587,Footwear > High Heels > High Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,482
+L588,Footwear > High Heels > High Heels,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,"43, 314"
+L589,Footwear > High Heels > Jeweled,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,417
+L590,Footwear > High Heels > Knee High Boots,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,500
+L591,Footwear > High Heels > Lace up,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,494
+L592,Footwear > High Heels > Lifestyle,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,435
+L593,Footwear > High Heels > Loafers,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,625
+L594,Footwear > High Heels > Low Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,383
+L595,Footwear > High Heels > Mules,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,449
+L596,Footwear > High Heels > Open Toe,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,379
+L597,Footwear > High Heels > Peep Toe,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,766
+L598,Footwear > High Heels > Platform,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,421
+L599,Footwear > High Heels > Platforms,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,394
+L600,Footwear > High Heels > Pump,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,508
+L601,Footwear > High Heels > Pumps,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,"47, 315"
+L602,Footwear > High Heels > Pumps & Stilettos,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,29
+L603,Footwear > High Heels > Sandals,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,395
+L604,Footwear > High Heels > Slingback,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,610
+L605,Footwear > High Heels > Slip On,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,367
+L606,Footwear > High Heels > Stiletto,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,390
+L607,Footwear > High Heels > Stocking,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,679
+L608,Footwear > High Heels > Strappy,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,404
+L609,Footwear > High Heels > Strappy Heel,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,"76, 316"
+L610,Footwear > High Heels > Thigh High Boots,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,883
+L611,Footwear > High Heels > Thong,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,588
+L612,Footwear > High Heels > Wedge,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,734
+L613,Footwear > High Heels > Wedges,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,498
+L614,Footwear > High Heels > Wrap Around,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,444
+L615,Footwear > Knee High Boots > High Heels,,REVIEW,Height/class conflict or heel detail requires product review.,PRODUCT DETAIL,,T180; T186,2,756
+L616,Footwear > Knee High Boots > Knee High Boots,,REVIEW,Height/class conflict or heel detail requires product review.,PRODUCT DETAIL,,T180; T186,2,628
+L617,Footwear > Knee High Boots > Platform,,REVIEW,Height/class conflict or heel detail requires product review.,PRODUCT DETAIL,,T180; T186,2,618
+L618,Footwear > Knee High Boots > Stiletto,,REVIEW,Height/class conflict or heel detail requires product review.,PRODUCT DETAIL,,T180; T186,2,484
+L619,Footwear > Knee High Boots > Thigh High Boots,,REVIEW,Height/class conflict or heel detail requires product review.,PRODUCT DETAIL,,T180; T186,2,667
+L620,Footwear > Knee High Boots > Western,,REVIEW,Height/class conflict or heel detail requires product review.,PRODUCT DETAIL,,T180; T186,2,699
+L621,Footwear > Lifestyle > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,"161, 366"
+L622,Footwear > Moccasin > Moccasins,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T199,1,882
+L623,Footwear > Moccasin > Slip On,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T199,1,889
+L624,Footwear > Oxford > Casual,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,455
+L625,Footwear > Oxford > Dress Shoes,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,589
+L626,Footwear > Oxford > Flats,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,802
+L627,Footwear > Oxford > Lace up,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,598
+L628,Footwear > Oxford > Lifestyle,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,489
+L629,Footwear > Oxford > Oxfords,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,533
+L630,Footwear > Oxford > Sneakers,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,"148, 317"
+L631,Footwear > Oxford > Toddler,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T208; T209; T210,3,"89, 318"
+L632,Footwear > Pants > Joggers,,REVIEW,Footwear source contains a garment/conflicting label; inspect product.,DEPARTMENT,,,0,896
+L633,Footwear > Platform > Booties,,REVIEW,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,PRODUCT DETAIL,,T178,1,696
+L634,Footwear > Platform > High Heels,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,800
+L635,Footwear > Platform > Lifestyle,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,872
+L636,Footwear > Platform > Loafers,,REVIEW,Candidate family follows the explicit garment type; missing style detail or platform context still requires review.,PRODUCT DETAIL,,T203; T204; T205,3,516
+L637,Footwear > Platform > Pumps,,REVIEW,Heel description does not prove one pump/platform construction; avoid narrowing by default.,PRODUCT DETAIL,,T211; T212; T213; T214; T215; T216; T217,7,773
+L638,Footwear > Running > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,860
+L639,Footwear > Sandal > Clogs,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,"125, 319"
+L640,Footwear > Sandal > Flat,Footwear > Sandals & Wedges > Sandals > Flat,SUPPORTED DRAFT,Sandal context explicitly supplies the approved form.,,T219,T219,1,377
+L641,Footwear > Sandal > Flip Flop,Footwear > Sandals & Wedges > Slides & Flip-Flops > Flip-Flops,SUPPORTED DRAFT,Flip-flop explicit.,,T225,T225,1,429
+L642,Footwear > Sandal > Gladiator,Footwear > Sandals & Wedges > Sandals > Gladiator,SUPPORTED DRAFT,Sandal context explicitly supplies the approved form.,,T220,T220,1,541
+L643,Footwear > Sandal > Jelly,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,672
+L644,Footwear > Sandal > Lifestyle,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,547
+L645,Footwear > Sandal > Mules,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,877
+L646,Footwear > Sandal > Platform,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,408
+L647,Footwear > Sandal > Sandals,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,397
+L648,Footwear > Sandal > Slide,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,520
+L649,Footwear > Sandal > Slides,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,378
+L650,Footwear > Sandal > Slip On,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,"167, 320"
+L651,Footwear > Sandal > Strappy,Footwear > Sandals & Wedges > Sandals > Strappy,SUPPORTED DRAFT,Sandal context explicitly supplies the approved form.,,T222,T222,1,497
+L652,Footwear > Sandal > Thong,,REVIEW,Thong sandal is not necessarily a flip-flop; inspect product.,PRODUCT DETAIL,,T225,1,433
+L653,Footwear > Sandal > Wedge,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,513
+L654,Footwear > Sandal > Wrap Around,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,835
+L655,Footwear > Sandals > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,673
+L656,Footwear > Sandals > Animal Print,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,886
+L657,Footwear > Sandals > Bandals,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,740
+L658,Footwear > Sandals > Casual,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,369
+L659,Footwear > Sandals > Clogs,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,"79, 321"
+L660,Footwear > Sandals > Exotic,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,448
+L661,Footwear > Sandals > Flat,Footwear > Sandals & Wedges > Sandals > Flat,SUPPORTED DRAFT,Sandal context explicitly supplies the approved form.,,T219,T219,1,373
+L662,Footwear > Sandals > Flats,Footwear > Sandals & Wedges > Sandals > Flat,SUPPORTED DRAFT,Sandal context explicitly supplies the approved form.,,T219,T219,1,371
+L663,Footwear > Sandals > Flip Flop,Footwear > Sandals & Wedges > Slides & Flip-Flops > Flip-Flops,SUPPORTED DRAFT,Flip-flop explicit.,,T225,T225,1,454
+L664,Footwear > Sandals > Gladiator,Footwear > Sandals & Wedges > Sandals > Gladiator,SUPPORTED DRAFT,Sandal context explicitly supplies the approved form.,,T220,T220,1,407
+L665,Footwear > Sandals > Heels,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,768
+L666,Footwear > Sandals > High Heels,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,402
+L667,Footwear > Sandals > Jelly,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,"63, 322"
+L668,Footwear > Sandals > Jeweled,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,895
+L669,Footwear > Sandals > Lace up,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,480
+L670,Footwear > Sandals > Lifestyle,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,430
+L671,Footwear > Sandals > Loafers,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,631
+L672,Footwear > Sandals > Low Heel,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,386
+L673,Footwear > Sandals > Mules,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,722
+L674,Footwear > Sandals > Open Toe,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,505
+L675,Footwear > Sandals > Platform,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,464
+L676,Footwear > Sandals > Platforms,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,388
+L677,Footwear > Sandals > Sandals,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,385
+L678,Footwear > Sandals > Slide,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,372
+L679,Footwear > Sandals > Slides,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,"41, 323"
+L680,Footwear > Sandals > Slingback,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,"40, 324"
+L681,Footwear > Sandals > Slip On,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,415
+L682,Footwear > Sandals > Strappy,Footwear > Sandals & Wedges > Sandals > Strappy,SUPPORTED DRAFT,Sandal context explicitly supplies the approved form.,,T222,T222,1,403
+L683,Footwear > Sandals > Strappy Heel,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,715
+L684,Footwear > Sandals > Thong,,REVIEW,Thong sandal is not necessarily a flip-flop; inspect product.,PRODUCT DETAIL,,T225,1,399
+L685,Footwear > Sandals > Toddler,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,670
+L686,Footwear > Sandals > Wedge,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,427
+L687,Footwear > Sandals > Wedges,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,406
+L688,Footwear > Sandals > Wrap Around,,REVIEW,Sandal/slide/wedge features overlap; source does not establish one approved leaf.,PRODUCT DETAIL,,T218; T219; T220; T221; T222; T223; T224; T225; T226; T227; T228; T229; T230,13,453
+L689,Footwear > Shoes > Athletic,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,,0,893
+L690,Footwear > Shoes > Baseball,Footwear > Athletic Footwear > Field Sports > Baseball Footwear,PO APPROVED,"PO ruling 2026-10-06, LC19: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T269,,0,"235, 325"
+L691,Footwear > Shoes > Basketball,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T238; T239; T240,3,"194, 326"
+L692,Footwear > Shoes > Booties,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,462
+L693,Footwear > Shoes > Boots,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,567
+L694,Footwear > Shoes > Casual,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,,0,"158, 327"
+L695,Footwear > Shoes > Chunky,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC24: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,741
+L696,Footwear > Shoes > Clogs,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,716
+L697,Footwear > Shoes > Exotic,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC24: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,690
+L698,Footwear > Shoes > Flat,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC21: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,"187, 328"
+L699,Footwear > Shoes > Flats,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC21: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,491
+L700,Footwear > Shoes > High Heels,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,504
+L701,Footwear > Shoes > Lace up,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC24: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,457
+L702,Footwear > Shoes > Lifestyle,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T241; T242; T243; T244; T245; T246; T247; T248,8,"142, 329"
+L703,Footwear > Shoes > Loafers,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,"54, 330"
+L704,Footwear > Shoes > Low Heel,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,894
+L705,Footwear > Shoes > Moccasins,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,"237, 331"
+L706,Footwear > Shoes > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,434
+L707,Footwear > Shoes > Open Toe,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC24: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,392
+L708,Footwear > Shoes > Oxfords,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,704
+L709,Footwear > Shoes > Platform,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC24: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,627
+L710,Footwear > Shoes > Platforms,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC24: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,467
+L711,Footwear > Shoes > Pumps,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,"70, 332"
+L712,Footwear > Shoes > Sandals,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,398
+L713,Footwear > Shoes > Shoes,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,,0,"282, 333"
+L714,Footwear > Shoes > Skate,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T252; T253,2,"211, 334"
+L715,Footwear > Shoes > Slip On,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC24: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,"145, 335"
+L716,Footwear > Shoes > Sneaker,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,659
+L717,Footwear > Shoes > Sneakers,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,635
+L718,Footwear > Shoes > Strappy Heel,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,485
+L719,Footwear > Shoes > Wedges,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC23: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,432
+L720,Footwear > Slip-on > Booties,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T233; T234,2,"74, 336"
+L721,Footwear > Slip-on > Clogs,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T233; T234,2,799
+L722,Footwear > Slip-on > Lifestyle,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T233; T234,2,"229, 337"
+L723,Footwear > Slip-on > New Shoes,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T233; T234,2,"251, 338"
+L724,Footwear > Slip-on > Slides,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T233; T234,2,623
+L725,Footwear > Slippers > Casual,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,843
+L726,Footwear > Slippers > Clogs,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,663
+L727,Footwear > Slippers > Moccasins,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,650
+L728,Footwear > Slippers > Platform,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,770
+L729,Footwear > Slippers > Sandals,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,674
+L730,Footwear > Slippers > Slides,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,518
+L731,Footwear > Slippers > Slip On,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,"146, 339"
+L732,Footwear > Slippers > Slipper,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,"73, 340"
+L733,Footwear > Slippers > Slippers,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T235; T236; T237,3,"234, 341"
+L734,Footwear > Sneakers > 0,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,"56, 342"
+L735,Footwear > Sneakers > Action Sport,,REVIEW,Action Sport does not prove Skate; sport/use and subtype need evidence.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"230, 343"
+L736,Footwear > Sneakers > Active,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"67, 344"
+L737,Footwear > Sneakers > Athletic,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"193, 345"
+L738,Footwear > Sneakers > Ballet,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,"140, 346"
+L739,Footwear > Sneakers > Baseball,Footwear > Athletic Footwear > Field Sports > Baseball Footwear,PO APPROVED,"PO ruling 2026-10-06, LC19: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T269,,0,719
+L740,Footwear > Sneakers > Basics,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"236, 348"
+L741,Footwear > Sneakers > Basketball,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T238; T239; T240,3,"26, 49, 347"
+L742,Footwear > Sneakers > Basketball Shoe,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T238; T239; T240,3,368
+L743,Footwear > Sneakers > Casual,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"66, 349"
+L744,Footwear > Sneakers > Chunky / Block Sneaker,Footwear > Sneakers > Lifestyle > Chunky Sneakers,SUPPORTED DRAFT,Sneaker context and named form support the approved leaf.,,T241,T241,1,412
+L745,Footwear > Sneakers > Coaches Jacket,,REVIEW,Footwear source contains a garment/conflicting label; inspect product.,DEPARTMENT,,,0,806
+L746,Footwear > Sneakers > Exotic,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,754
+L747,Footwear > Sneakers > Flats,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,814
+L748,Footwear > Sneakers > Footwear,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,744
+L749,Footwear > Sneakers > Heels,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,707
+L750,Footwear > Sneakers > High-tops,,REVIEW,High-top construction does not establish Lifestyle versus basketball/other sport.,PRODUCT DETAIL,,T242,1,698
+L751,Footwear > Sneakers > Knee High Boots,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,701
+L752,Footwear > Sneakers > Lace up,,REVIEW,"Construction, generic label or age does not establish sneaker sport/style; product evidence needed.",PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,414
+L753,Footwear > Sneakers > Lifestyle,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T241; T242; T243; T244; T245; T246; T247; T248,8,"25, 42, 350"
+L754,Footwear > Sneakers > Loafer,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,854
+L755,Footwear > Sneakers > Mary Jane,Footwear > Sneakers > Lifestyle > Mary Jane,SUPPORTED DRAFT,Sneaker context and named form support the approved leaf.,,T245,T245,1,"130, 351"
+L756,Footwear > Sneakers > Moccasins,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,825
+L757,Footwear > Sneakers > New Shoes,,REVIEW,"Construction, generic label or age does not establish sneaker sport/style; product evidence needed.",PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"204, 352"
+L758,Footwear > Sneakers > None,,REVIEW,"Missing/placeholder source level; use product evidence and Completion Queue, never a default leaf.",INVALID SOURCE,,,0,165
+L759,Footwear > Sneakers > Oxfords,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,783
+L760,Footwear > Sneakers > Platform,Footwear > Sneakers > Lifestyle > Platform,SUPPORTED DRAFT,Sneaker context and named form support the approved leaf.,,T247,T247,1,"163, 353"
+L761,Footwear > Sneakers > Platform Sneakers,Footwear > Sneakers > Lifestyle > Platform,SUPPORTED DRAFT,Sneaker context and named form support the approved leaf.,,T247,T247,1,473
+L762,Footwear > Sneakers > Platforms,Footwear > Sneakers > Lifestyle > Platform,SUPPORTED DRAFT,Sneaker context and named form support the approved leaf.,,T247,T247,1,472
+L763,Footwear > Sneakers > Reversible,,REVIEW,Footwear source contains a garment/conflicting label; inspect product.,DEPARTMENT,,,0,548
+L764,Footwear > Sneakers > Running,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T249; T250; T251,3,27
+L765,Footwear > Sneakers > Runnins,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T249; T250; T251,3,595
+L766,Footwear > Sneakers > Shoes,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"144, 354"
+L767,Footwear > Sneakers > Skate,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T252; T253,2,572
+L768,Footwear > Sneakers > Skateboarding,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T252; T253,2,"132, 355"
+L769,Footwear > Sneakers > Slip On,,REVIEW,Slip-on construction does not establish Lifestyle versus skate/other use.,PRODUCT DETAIL,,T248,1,"117, 356"
+L770,Footwear > Sneakers > Sneaker,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,626
+L771,Footwear > Sneakers > Sneakers,,REVIEW,Generic shoe/sneaker type does not establish full path.,PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,"124, 358"
+L772,Footwear > Sneakers > Soccer,Footwear > Athletic Footwear > Field Sports > Soccer Footwear,PO APPROVED,"PO ruling 2026-10-06, LC18: ADD LEAF; select the approved new full path. Planning only; implementation HOLD.",,T268,,0,"147, 357"
+L773,Footwear > Sneakers > Tennis,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T254; T255,2,"102, 359"
+L774,Footwear > Sneakers > Toddler,,REVIEW,"Construction, generic label or age does not establish sneaker sport/style; product evidence needed.",PRODUCT DETAIL,,T238; T239; T240; T241; T242; T243; T244; T245; T246; T247; T248; T249; T250; T251; T252; T253; T254; T255; T256; T257,20,656
+L775,Footwear > Sneakers > Training,,REVIEW,"Sport/family supplied, but required performance/style subtype absent.",PRODUCT DETAIL,,T256; T257,2,649
+L776,Footwear > Sneakers > Wedges,,REVIEW,Sneaker class conflicts with the source subtype; inspect the actual product.,SOURCE CONFLICT,,,0,537
+L777,Footwear > Soles > Shoe Care,,PO decided: unmapped pending broad-label policy,"PO ruling 2026-10-06, LC25: LEAVE UNMAPPED. Retain source evidence and blank target pending broad-label policy; no product-detail Completion Queue task.",BROAD-LABEL POLICY,,,0,657
+L778,Footwear > Wedges > Platforms,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T228; T229; T230,3,380
+L779,Footwear > Wedges > Sandals,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T228; T229; T230,3,871
+L780,Footwear > Wedges > Strappy,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T228; T229; T230,3,739
+L781,Footwear > Wedges > Wedges,,REVIEW,Source family lacks required material/style detail; a sole remaining candidate does not prove that detail.,PRODUCT DETAIL,,T228; T229; T230,3,502
+L782,Intimates > Accessories > Sports bra,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,792
+L783,Intimates > Bra > Bralette,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,602
+L784,Intimates > Bras > Sports bra,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,512
+L785,Intimates > Shorts > Boy short,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,880
+L786,Intimates > Socks & Underwear > Boxer Brief,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,459
+L787,Intimates > Underwear > 0,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,191
+L788,Intimates > Underwear > Boxer Brief,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,534
+L789,Intimates > Underwear > Boy short,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,100
+L790,Intimates > Underwear > Thong,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,785
+L791,MEN > Accessories > Backpacks,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,20
+L792,MEN > Accessories > Beanies,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,18
+L793,MEN > Accessories > Crossbody Bags,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,19
+L794,MEN > Accessories > Hats,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,16
+L795,MEN > Accessories > Socks,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,17
+L796,MEN > Accessories > Watches,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,21
+L797,MEN > Clothing > Hoodies & Sweatshirts,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,12
+L798,MEN > Clothing > Jackets,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,13
+L799,MEN > Clothing > Jeans,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,9
+L800,MEN > Clothing > Jerseys,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,14
+L801,MEN > Clothing > Joggers,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,10
+L802,MEN > Clothing > Shorts,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,15
+L803,MEN > Clothing > T-Shirts,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,8
+L804,MEN > Clothing > Track Pants,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,11
+L805,MEN > SHOES > Basketball,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,3
+L806,MEN > SHOES > Boots,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,7
+L807,MEN > SHOES > Running,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,4
+L808,MEN > SHOES > Skate,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,6
+L809,MEN > SHOES > Slides,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,5
+L810,MEN > SHOES > Sneakers,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,2
+L811,Subscription > Bags > Handbags and Purses,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,735
+L812,WOMEN > Clothing > Leggings,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,22
+L813,WOMEN > Clothing > Sports Bras,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,23
+L814,WOMEN > Clothing > Tank Top,,REVIEW,Incoming Department is outside the approved shared business Department values; verify source meaning before classification.,DEPARTMENT,,,0,24

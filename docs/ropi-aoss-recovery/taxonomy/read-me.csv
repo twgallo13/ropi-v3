@@ -1,0 +1,23 @@
+Topic,Meaning
+Purpose,Draft taxonomy maps for PO review. Planning only; implementation HOLD.
+Cleanup authority,C1-C10 plus the 13 ADD LEAF paths approved on 3G2026-10-06. Cleaned hierarchy 270 paths; existingT001-T257 IDs preserved; T258-T270 appended. No app/registry/source-sheet edits.
+Approved legacy source,"PO-approved and reaffirmed Feed Shiekh OLD column:814 unique/899 occurrences. Attached 534-row OLD column is a subset, missing 280; historical Master identity unverified and nonblocking. Evidence on 3C."
+No stale targets,Neither the stale 3→4 sheet targets nor the scratch workbook NEW column was used to construct either map.
+SUPPORTED DRAFT,"A specific source-supported proposal, not PO map approval, runtime configuration or external-contract approval. Legacy source designation is approved separately."
+REVIEW,Selected target is blank; remaining evidence/legacy-output review. PO-decided unmapped rows have their own assessment and stay outside product-detail work.
+Where to start,"PO coverage decisions records all 76 rows:33 mapped,43PO-decided unmapped. Uncertain rows contains 643 other review rows (594 imports+49 website). PO added paths traces 13 approved additions. Complete map tabs own the targets."
+Two directions,Import map suggests a full primary path from old values; Website fill map supplies old values from primary choice. The maps are not inverses.
+Keep primary detail,Many primary leaves share one website tuple. An unchanged re-import of that tuple must preserve an existing valid primary choice; ambiguous roundtrips are not new conflicts.
+Department,"Shared department only. No department_key, no new authority key, no outgoing cross-Department target. Missing Beauty/Home & Tech branches remain open."
+PO APPROVED,33 import targets applied from 3G; the 12 previously approved website-fill choices preserved. 12 new website targets are supported drafts; one new website row remains review. No blanket external-contract approval.
+Other business choices,PO RULING2026-10-06: map changes never auto-refill existing products. Apply to new imports and explicit classify/reset actions only; affected products listed for separately approved updates. Broad-label policy remains deferred for 43PO-decided unmapped rows.
+Product detail work,"477PRODUCT DETAIL rows unchanged. All 76 coverage decisions remain separately indexed;43 are deliberately unmapped pending broad-label policy, not product-detail tasks."
+Next checks,"No-developer Admin maintenance is required (3A); six remaining design gaps, external consumers, saved configuration, Department coverage and unapproved map outputs remain open."
+Cleaned path count,270
+Old unique tuple count,814
+Import proposed / review,144 supported draft /33 PO approved /594 review /43 PO decided: unmapped pending broad-label policy
+Website draft / approved / review,209 supported draft /12 PO approved /49 review
+Input occurrences / dispositions,899 OLD source occurrences retained;258 base +54 comparator-only =312 cleanup dispositions.
+Map version,taxonomy-planning-2026-10-06-v1.4; applies the 3G rulings and 3A no-auto-refill policy. Attachment/source notes incorporated. Replaces v1.3.
+Independent verification,"PASS — independent AI verified exact approved paths, selected references, unchanged rows, Department preservation, indexes and formulas. Selected website outputs: 221; roundtrip: 86 same, 135 review/unmapped, 0 different; 43 shared legacy targets. Maps are not reversible; preserve primary choices and overrides."
+No-developer maintenance,"Routine hierarchy, mappings, aliases and legacy-value maintenance must be Admin-managed in-app without development. Governing requirements and remaining six design gaps: https://app.notion.com/p/3f145ee1ec5a81c9a491c2cc4aa89e3c"
